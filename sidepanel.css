@@ -269,3 +269,16 @@ header {
 .badge-pve { background: #172554; color: #93c5fd; border: 1px solid #1e40af; }
 .badge-pvp { background: #450a0a; color: #fca5a5; border: 1px solid #991b1b; }
 .badge-armor { background: #333; color: #aaa; border: 1px solid #555; }
+
+/* --- TASTEFUL BLACKOUT STATE --- */
+.stat-btn.unavailable {
+    background-color: #080808 !important; /* Deep, deep charcoal */
+    color: #333 !important;               /* Very dim text */
+    border-color: #111 !important;        /* Barely visible border */
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;                 /* completely non-interactive */
+    box-shadow: inset 0 0 10px #000;      /* Inner shadow makes it look "sunken" */
+    transform: scale(0.95);               /* Slight shrink effect */
+}
+

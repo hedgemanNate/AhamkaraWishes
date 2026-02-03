@@ -1,13 +1,16 @@
-// --- CONFIG: ARMOR DATA ---
+// --- CONFIG: ARMOR 3.0 DATA ---
+// Updated to use "Effect" names. "Recovery" is now "Class".
 const ARCHETYPES = [
-    { id: 'paragon', name: 'PARAGON', stats: ['Intellect', 'Strength'] },
-    { id: 'brawler', name: 'BRAWLER', stats: ['Strength', 'Resilience'] },
-    { id: 'gunner',  name: 'GUNNER',  stats: ['Discipline', 'Recovery'] },
-    { id: 'special', name: 'SPECIALIST', stats: ['Recovery', 'Discipline'] },
-    { id: 'grenadr', name: 'GRENADIER', stats: ['Discipline', 'Intellect'] },
-    { id: 'bulwark', name: 'BULWARK',   stats: ['Resilience', 'Recovery'] }
+    { id: 'paragon', name: 'PARAGON', stats: ['Super', 'Melee'] },
+    { id: 'brawler', name: 'BRAWLER', stats: ['Melee', 'Health'] },
+    { id: 'gunner',  name: 'GUNNER',  stats: ['Grenade', 'Class'] }, // Fixed
+    { id: 'special', name: 'SPECIALIST', stats: ['Class', 'Grenade'] },
+    { id: 'grenadr', name: 'GRENADIER', stats: ['Grenade', 'Super'] },
+    { id: 'bulwark', name: 'BULWARK',   stats: ['Health', 'Class'] } // Fixed
 ];
-const STATS = ['Mobility', 'Resilience', 'Recovery', 'Discipline', 'Intellect', 'Strength'];
+
+// The 6 Core Stats (Recovery -> Class)
+const STATS = ['Mobility', 'Health', 'Class', 'Grenade', 'Super', 'Melee'];
 
 // --- STATE ---
 let currentArchetype = null;
@@ -51,15 +54,15 @@ function loadLists() {
         container.innerHTML = ''; 
 
         if (!result.dimData || !result.dimData.lists) {
-            emptyState.classList.remove('hidden');
+            if(emptyState) emptyState.classList.remove('hidden');
             return;
         } else {
-            emptyState.classList.add('hidden');
+            if(emptyState) emptyState.classList.add('hidden');
         }
 
         const activeList = result.dimData.lists['default'];
         if (!activeList || !activeList.items || Object.keys(activeList.items).length === 0) {
-            emptyState.classList.remove('hidden');
+            if(emptyState) emptyState.classList.remove('hidden');
             return;
         }
 
@@ -84,12 +87,17 @@ function createItemCard(hash, item) {
             const tag = wish.tags[0] || 'pve';
             const badgeClass = tag === 'pvp' ? 'badge-pvp' : 'badge-pve';
             
-            // For weapons, show perks? For now just show "Saved Roll"
+            // Display Logic: Show Perks for Weapons, Stats for Armor
+            let detailText = `Roll #${index + 1}`;
+            if (item.static.type === 'armor' && wish.config) {
+                detailText = `${wish.config.archetype} + ${wish.config.spark}`;
+            }
+
             wishesHtml += `
                 <div class="roll-row">
                     <div>
                         <span class="badge ${badgeClass}">${tag}</span>
-                        <span>Roll #${index + 1}</span>
+                        <span>${detailText}</span>
                     </div>
                     <button class="btn-del" data-hash="${hash}" data-idx="${index}">🗑️</button>
                 </div>
@@ -139,34 +147,39 @@ function setupArmorUI() {
     const sparkGrid = document.getElementById('spark-grid');
     const actionArea = document.querySelector('.action-area');
 
-    // 1. INJECT TOGGLE into Action Area (Before the button)
-    const toggleDiv = document.createElement('div');
-    toggleDiv.className = 'toggle-container pve';
-    toggleDiv.style.marginBottom = '10px';
-    toggleDiv.style.justifyContent = 'center';
-    toggleDiv.innerHTML = `
-        <div class="opt-pve" style="flex:1; text-align:center; padding:10px; background:#1e3a8a; color:white;">PvE</div>
-        <div class="opt-pvp" style="flex:1; text-align:center; padding:10px; background:transparent; color:#555;">PvP</div>
-    `;
-    
-    // Toggle Logic
-    toggleDiv.addEventListener('click', () => {
-        if(currentMode === 'pve') {
-            currentMode = 'pvp';
-            toggleDiv.className = 'toggle-container pvp';
-            toggleDiv.querySelector('.opt-pve').style.cssText = "flex:1; text-align:center; padding:10px; background:transparent; color:#555;";
-            toggleDiv.querySelector('.opt-pvp').style.cssText = "flex:1; text-align:center; padding:10px; background:#991b1b; color:white;";
-        } else {
-            currentMode = 'pve';
-            toggleDiv.className = 'toggle-container pve';
-            toggleDiv.querySelector('.opt-pve').style.cssText = "flex:1; text-align:center; padding:10px; background:#1e3a8a; color:white;";
-            toggleDiv.querySelector('.opt-pvp').style.cssText = "flex:1; text-align:center; padding:10px; background:transparent; color:#555;";
-        }
-    });
+    // 1. INJECT TOGGLE into Action Area (Check if exists first to prevent dupes)
+    if (!document.querySelector('.toggle-container')) {
+        const toggleDiv = document.createElement('div');
+        toggleDiv.className = 'toggle-container pve';
+        toggleDiv.style.marginBottom = '10px';
+        toggleDiv.style.justifyContent = 'center';
+        toggleDiv.innerHTML = `
+            <div class="opt-pve" style="flex:1; text-align:center; padding:10px; background:#1e3a8a; color:white;">PvE</div>
+            <div class="opt-pvp" style="flex:1; text-align:center; padding:10px; background:transparent; color:#555;">PvP</div>
+        `;
+        
+        // Toggle Logic
+        toggleDiv.addEventListener('click', () => {
+            if(currentMode === 'pve') {
+                currentMode = 'pvp';
+                toggleDiv.className = 'toggle-container pvp';
+                toggleDiv.querySelector('.opt-pve').style.cssText = "flex:1; text-align:center; padding:10px; background:transparent; color:#555;";
+                toggleDiv.querySelector('.opt-pvp').style.cssText = "flex:1; text-align:center; padding:10px; background:#991b1b; color:white;";
+            } else {
+                currentMode = 'pve';
+                toggleDiv.className = 'toggle-container pve';
+                toggleDiv.querySelector('.opt-pve').style.cssText = "flex:1; text-align:center; padding:10px; background:#1e3a8a; color:white;";
+                toggleDiv.querySelector('.opt-pvp').style.cssText = "flex:1; text-align:center; padding:10px; background:transparent; color:#555;";
+            }
+        });
 
-    actionArea.insertBefore(toggleDiv, document.getElementById('btn-create-armor'));
+        actionArea.insertBefore(toggleDiv, document.getElementById('btn-create-armor'));
+    }
 
-    // 2. Setup Buttons (Existing Logic)
+    // 2. Setup Buttons (Clear first to prevent dupes on reload)
+    archGrid.innerHTML = '';
+    sparkGrid.innerHTML = '';
+
     ARCHETYPES.forEach(arch => {
         const btn = document.createElement('div');
         btn.className = 'stat-btn';
@@ -185,15 +198,20 @@ function setupArmorUI() {
     });
 
     // 3. Save Logic
-    document.getElementById('btn-create-armor').addEventListener('click', saveArmorWish);
+    const createBtn = document.getElementById('btn-create-armor');
+    // Remove old listeners to prevent duplicates (simple clone hack)
+    const newBtn = createBtn.cloneNode(true);
+    createBtn.parentNode.replaceChild(newBtn, createBtn);
+    
+    newBtn.addEventListener('click', saveArmorWish);
 }
 
 function saveArmorWish() {
     if (!currentArchetype || !currentSpark) return;
 
-    // Use a placeholder name since we don't have a search bar yet
+    // Placeholder Name until we add Search
     const armorName = "Armor Wish"; 
-    const hash = "armor_" + Date.now(); // Temp unique ID
+    const hash = "armor_" + Date.now(); 
 
     chrome.storage.local.get(['dimData'], (result) => {
         let data = result.dimData || { activeId: 'default', lists: { 'default': { name: 'Main Wishlist', items: {} } } };
@@ -207,19 +225,27 @@ function saveArmorWish() {
             wishes: [{
                 tags: [currentMode],
                 config: { archetype: currentArchetype.name, spark: currentSpark },
-                raw: `name:"${armorName}"`, // Placeholder raw string
+                raw: `name:"${armorName}"`, 
                 added: Date.now()
             }]
         };
 
         chrome.storage.local.set({ dimData: data }, () => {
-            alert(`Saved ${currentMode.toUpperCase()} Armor Wish!`);
-            // Reset UI?
+            // Visual Feedback
+            const btn = document.getElementById('btn-create-armor');
+            const originalText = btn.textContent;
+            btn.textContent = "SAVED!";
+            btn.style.borderColor = "#4ade80"; // Green
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.borderColor = ""; 
+                loadLists(); // Refresh view
+            }, 1000);
         });
     });
 }
 
-// Helpers (Same as before)
+// Helpers
 function selectArchetype(arch, btnElement) {
     currentArchetype = arch;
     document.querySelectorAll('#archetype-grid .stat-btn').forEach(b => b.classList.remove('selected'));
@@ -238,14 +264,21 @@ function selectSpark(stat, btnElement) {
 
 function updateSparkAvailability() {
     if (!currentArchetype) return;
+
     document.querySelectorAll('#spark-grid .stat-btn').forEach(btn => {
         const statName = btn.dataset.stat;
+        
+        // Check if this stat is already used by the Archetype
         if (currentArchetype.stats.includes(statName)) {
-            btn.disabled = true;
+            // APPLY THE BLACKOUT
+            btn.classList.add('unavailable');
             btn.classList.remove('selected');
+            
+            // If the user had previously selected this unavailable stat, deselect it
             if (currentSpark === statName) currentSpark = null;
         } else {
-            btn.disabled = false;
+            // RESTORE TO NORMAL
+            btn.classList.remove('unavailable');
         }
     });
 }

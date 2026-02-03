@@ -1,5 +1,5 @@
 // --- CONFIGURATION ---
-const API_KEY = "aa53f073572f4396a5b63bcee158e99f"; 
+const API_KEY = "fee720e84d6c4239aeb7d442b4d39f38"; 
 // ---------------------
 
 let lastSavedString = "";
@@ -79,23 +79,6 @@ function injectD2Button(anchorBtn, inputContainer) {
     inputContainer.parentNode.insertBefore(myBtn, inputContainer.nextSibling);
 }
 
-// =========================================================
-// 2. GLOBAL LISTENER (Fallback for DIM)
-// =========================================================
-document.addEventListener("click", () => {
-    setTimeout(async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            
-            if (text.startsWith("dimwishlist:")) {
-                if (document.activeElement && document.activeElement.id === "ahamkara-btn") return;
-
-                // showToast("Clipboard detected..."); 
-                processRoll(text);
-            }
-        } catch (err) { /* Ignore */ }
-    }, 200);
-});
 
 // =========================================================
 // 3. CORE LOGIC

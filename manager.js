@@ -72,7 +72,7 @@ function renderUI() {
             
             row.innerHTML = `
                 <span style="font-family:monospace; color:#888;">${displayText}</span>
-                <button class="btn-del" title="Delete">×</button>
+                <button class="btn-del" title="Delete">&#x1F5D1;&#xFE0F;</button>
             `;
             // Note: We use a wrapper function for the listener to avoid closure issues
             row.querySelector('.btn-del').addEventListener('click', () => deleteRoll(weapon.hash, index));

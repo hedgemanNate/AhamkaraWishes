@@ -2,147 +2,142 @@
 const API_KEY = "fee720e84d6c4239aeb7d442b4d39f38"; 
 // ---------------------
 
-let lastSavedString = "";
+let currentMode = 'pve'; // Default to PvE
 
 // =========================================================
-// 1. D2FOUNDRY INJECTOR (UI Updated)
+// 1. D2FOUNDRY INJECTOR (With Toggle)
 // =========================================================
 const observer = new MutationObserver((mutations) => {
-    // 1. Find the Anchor (The Copy Button)
     const anchorBtn = document.querySelector('button[aria-label="Copy DIM Wishlist Item"]');
-
-    // 2. Find the Wrapper (The box holding the Input + Copy Button)
-    // We want to inject AFTER this box, not inside it.
     const inputContainer = anchorBtn ? anchorBtn.parentNode : null;
 
-    if (inputContainer && !document.getElementById("ahamkara-btn")) {
-        injectD2Button(anchorBtn, inputContainer);
+    if (inputContainer && !document.getElementById("ahamkara-wrapper")) {
+        injectControls(inputContainer);
     }
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
 
-function injectD2Button(anchorBtn, inputContainer) {
-    const myBtn = document.createElement("button");
-    myBtn.id = "ahamkara-btn";
-    myBtn.innerText = "Make Ahamkara Wish"; 
+function injectControls(inputContainer) {
+    // Wrapper to hold Toggle + Button side-by-side
+    const wrapper = document.createElement("div");
+    wrapper.id = "ahamkara-wrapper";
+    wrapper.style.cssText = "display: flex; align-items: center; margin-top: 10px; gap: 8px;";
+
+    // 1. THE TOGGLE (PvE | PvP)
+    const toggle = document.createElement("div");
+    toggle.className = "toggle-container pve"; // Default class
+    toggle.style.cssText = "display: flex; border: 1px solid #444; border-radius: 4px; background: #000; cursor: pointer; overflow: hidden;";
     
-    // Copy classes (keeps fonts/sizing consistent)
-    myBtn.className = anchorBtn.className.replace(/Share_copyButton__[a-zA-Z0-9]+/, "");
-    
-    // 1. DEFAULT STATE: Black Background, Gold Text & Border
-    Object.assign(myBtn.style, {
-        width: "100%",
-        marginTop: "10px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "8px",
-        backgroundColor: "black",      // Black
-        color: "#FFFFFF",              // White Text
-        border: "1px solid #D4AF37",   // Gold Border
-        fontWeight: "bold",
-        borderRadius: "4px",
-        cursor: "pointer",
-        transition: "all 0.2s ease"    // Smooth color change
-    });
+    toggle.innerHTML = `
+        <div class="opt-pve" style="padding: 8px 12px; font-weight: bold; font-size: 12px; color: #fff; background: #1e3a8a;">PvE</div>
+        <div class="opt-pvp" style="padding: 8px 12px; font-weight: bold; font-size: 12px; color: #555; background: transparent;">PvP</div>
+    `;
 
-    // 2. HOVER STATE: Charcoal Background, Bright Yellow Border
-    myBtn.addEventListener("mouseenter", () => {
-        myBtn.style.backgroundColor = "#333333"; // Charcoal
-        myBtn.style.borderColor = "#FFD700";     // Bright Yellow
-        myBtn.style.color = "#FFD700";           // Text matches border
-    });
-
-    // 3. RESET STATE: Back to Black/Gold
-    myBtn.addEventListener("mouseleave", () => {
-        myBtn.style.backgroundColor = "black";
-        myBtn.style.borderColor = "#D4AF37";
-        myBtn.style.color = "#FFFFFF";
-    });
-
-    // Logic: Grab the input value
-    myBtn.addEventListener("click", (e) => {
-        e.stopPropagation(); 
-        e.preventDefault();
-
-        const inputField = document.getElementById("dim-input");
-        if (inputField && inputField.value) {
-            showToast("Captured from D2Foundry!");
-            processRoll(inputField.value);
+    // Toggle Click Event
+    toggle.addEventListener('click', () => {
+        if (currentMode === 'pve') {
+            currentMode = 'pvp';
+            toggle.className = "toggle-container pvp";
+            toggle.querySelector('.opt-pve').style.cssText = "padding: 8px 12px; font-weight: bold; font-size: 12px; color: #555; background: transparent;";
+            toggle.querySelector('.opt-pvp').style.cssText = "padding: 8px 12px; font-weight: bold; font-size: 12px; color: #fff; background: #991b1b;";
         } else {
-            showToast("Error: Could not read 'dim-input' field.");
+            currentMode = 'pve';
+            toggle.className = "toggle-container pve";
+            toggle.querySelector('.opt-pve').style.cssText = "padding: 8px 12px; font-weight: bold; font-size: 12px; color: #fff; background: #1e3a8a;";
+            toggle.querySelector('.opt-pvp').style.cssText = "padding: 8px 12px; font-weight: bold; font-size: 12px; color: #555; background: transparent;";
         }
     });
 
-    // INJECTION POINT
-    inputContainer.parentNode.insertBefore(myBtn, inputContainer.nextSibling);
+    // 2. THE BUTTON
+    const btn = document.createElement("button");
+    btn.innerText = "MAKE WISH";
+    btn.style.cssText = "flex: 1; background: black; color: white; border: 1px solid #d4af37; padding: 8px; font-weight: bold; border-radius: 4px; cursor: pointer;";
+    
+    btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const inputField = document.getElementById("dim-input");
+        if (inputField && inputField.value) {
+            processRoll(inputField.value);
+        } else {
+            showToast("Error: No wish string found.");
+        }
+    });
+
+    wrapper.appendChild(toggle);
+    wrapper.appendChild(btn);
+
+    // INJECT
+    inputContainer.parentNode.insertBefore(wrapper, inputContainer.nextSibling);
 }
 
-
 // =========================================================
-// 3. CORE LOGIC
+// 2. CORE LOGIC (New Data Structure)
 // =========================================================
 async function processRoll(dimString) {
     const params = new URLSearchParams(dimString.split('dimwishlist:')[1]);
-    const rawHash = params.get('item');
-    
-    // 500 Error Fix
-    const safeHash = (Number(rawHash) >> 0).toString();
+    const safeHash = params.get('item');
+    const perks = params.get('perks'); // Capture perks for config
 
     let weaponName = "Unknown Weapon";
 
     try {
-        if (!API_KEY || API_KEY.includes("PASTE_YOUR_KEY")) {
-            throw new Error("Missing API Key");
-        }
         weaponName = await fetchWeaponName(safeHash);
     } catch (e) {
-        console.error("Ahamkara Error:", e);
-        weaponName = "API Error"; 
-        showToast("Error connecting to Bungie");
+        console.error("API Error", e);
+        showToast("Warning: Could not fetch name");
     }
 
-    saveToActiveList(dimString, rawHash, weaponName);
+    saveItem(safeHash, weaponName, "weapon", dimString, { perks: perks });
 }
 
 async function fetchWeaponName(hash) {
-    const url = `https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/${hash}/`;
-    
-    const response = await fetch(url, {
-        method: 'GET',
+    const response = await fetch(`https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/${hash}/`, {
         headers: { 'X-API-Key': API_KEY }
     });
-
-    if (!response.ok) throw new Error(`Status: ${response.status}`);
-
     const data = await response.json();
     return data.Response?.displayProperties?.name || "Unknown Item";
 }
 
-function saveToActiveList(rawString, hash, name) {
-    const newEntry = {
-        id: Date.now(),
-        raw: rawString,
-        date: new Date().toLocaleTimeString()
-    };
-
+function saveItem(hash, name, type, rawString, config) {
     chrome.storage.local.get(['dimData'], (result) => {
-        let data = result.dimData || { activeId: 'default', lists: { 'default': { name: 'Main Wishlist', items: {} } } };
-        const activeList = data.lists[data.activeId];
-
-        if (!activeList.items) activeList.items = {};
+        // Initialize Structure if missing
+        let data = result.dimData || { 
+            activeId: 'default', 
+            lists: { 'default': { name: 'Main Wishlist', items: {} } } 
+        };
         
+        const activeList = data.lists[data.activeId];
+        if (!activeList.items) activeList.items = {};
+
+        // 1. Create Item Container if missing
         if (!activeList.items[hash]) {
-            activeList.items[hash] = { name: name, hash: hash, rolls: [] };
-        } else if (name !== "API Error" && !name.includes("Unknown")) {
-            activeList.items[hash].name = name;
+            activeList.items[hash] = {
+                static: { name: name, type: type, set: null },
+                wishes: []
+            };
         }
 
-        activeList.items[hash].rolls.push(newEntry);
+        // 2. Check for Duplicates (The "Optimal" Check)
+        const existingWishes = activeList.items[hash].wishes;
+        const isDuplicate = existingWishes.some(w => w.raw === rawString && w.tags.includes(currentMode));
 
+        if (isDuplicate) {
+            showToast("Duplicate: You already wished for this!");
+            return; // EXIT
+        }
+
+        // 3. Add New Wish
+        activeList.items[hash].wishes.push({
+            tags: [currentMode], // ['pve'] or ['pvp']
+            config: config,
+            raw: rawString,
+            added: Date.now()
+        });
+
+        // 4. Save
         chrome.storage.local.set({ dimData: data }, () => {
-            if (name !== "API Error") showToast(`Saved: ${name}`);
+            showToast(`Saved ${currentMode.toUpperCase()}: ${name}`);
         });
     });
 }

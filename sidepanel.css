@@ -1,0 +1,271 @@
+:root {
+    --bg-dark: #1e1e24;
+    --bg-card: #2b2b36;
+    --accent-gold: #d4af37;
+    --text-main: #ffffff;
+    --text-sub: #aaaaaa;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* HEADER & TABS */
+header {
+    background: #111;
+    padding: 15px;
+    border-bottom: 2px solid var(--accent-gold);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo-area h1 { margin: 0; font-size: 18px; letter-spacing: 2px; color: var(--accent-gold); }
+.subtitle { font-size: 10px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 4px; }
+
+.tab-switcher {
+    display: flex;
+    margin-top: 15px;
+    gap: 10px;
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #444;
+    color: #777;
+    padding: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 12px;
+    transition: 0.2s;
+}
+
+.tab-btn.active {
+    background: var(--accent-gold);
+    color: #000;
+    border-color: var(--accent-gold);
+}
+
+/* CONTENT ZONES */
+.content-view { display: none; padding: 15px; padding-bottom: 80px; }
+.active-view { display: block; }
+.hidden { display: none; }
+
+/* WEAPON CARDS */
+.weapon-card {
+    background: var(--bg-card);
+    border-left: 4px solid var(--accent-gold);
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #444;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.card-title { font-weight: bold; font-size: 15px; color: #fff; }
+.card-id { font-size: 10px; color: #555; font-family: monospace; }
+
+.roll-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-sub);
+    padding: 4px 0;
+    border-bottom: 1px solid #333;
+}
+.roll-row:last-child { border-bottom: none; }
+
+.btn-del {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.6;
+    transition: 0.2s;
+}
+.btn-del:hover { opacity: 1; transform: scale(1.1); }
+
+/* ARMOR CREATOR */
+.step-label {
+    font-size: 12px;
+    color: var(--accent-gold);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 10px;
+}
+
+.grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 25px; }
+
+.stat-btn {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 12px 5px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.stat-btn strong { display: block; margin-bottom: 4px; font-size: 13px; }
+.stat-sub { font-size: 10px; color: #777; }
+
+.stat-btn:hover { background: #333; border-color: #666; }
+.stat-btn.selected {
+    border-color: var(--accent-gold);
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--accent-gold);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+}
+.stat-btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
+
+/* ACTION BUTTON */
+.btn-primary {
+    width: 100%;
+    padding: 15px;
+    background: var(--accent-gold);
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    color: #000;
+    font-size: 14px;
+    text-transform: uppercase;
+    border-radius: 4px;
+    transition: 0.2s;
+}
+.btn-primary:disabled { background: #333; color: #555; cursor: default; }
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #555;
+    font-style: italic;
+}
+
+/* --- ACCORDION LISTS --- */
+.accordion-header {
+    background-color: #111;
+    color: var(--accent-gold);
+    padding: 15px;
+    border: 1px solid #333;
+    border-left: 4px solid var(--accent-gold);
+    margin-bottom: 2px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+    transition: background 0.2s;
+}
+
+.accordion-header:hover {
+    background-color: #1a1a1a;
+}
+
+.accordion-header.active {
+    background-color: #222;
+    border-bottom: none;
+}
+
+.accordion-content {
+    display: none; /* Hidden by default */
+    padding: 10px;
+    background-color: #161618;
+    border: 1px solid #333;
+    border-top: none;
+    margin-bottom: 10px;
+}
+
+.accordion-content.show {
+    display: block; /* Show when open */
+}
+
+.list-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 14px;
+}
+.btn-icon:hover { color: #fff; }
+
+/* --- TOGGLE SWITCH (Pill Shape) --- */
+.toggle-container {
+    display: flex;
+    background: #000;
+    border: 1px solid #444;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.toggle-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+    transition: 0.2s;
+    text-transform: uppercase;
+}
+
+/* PvE State (Default) */
+.toggle-container.pve .opt-pve {
+    background: #1e3a8a; /* Vanguard Blue */
+    color: #fff;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* PvP State */
+.toggle-container.pvp .opt-pvp {
+    background: #991b1b; /* Crucible Red */
+    color: #fff;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* --- BADGES (Inside Cards) --- */
+.badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-right: 8px;
+    display: inline-block;
+}
+
+.badge-pve { background: #172554; color: #93c5fd; border: 1px solid #1e40af; }
+.badge-pvp { background: #450a0a; color: #fca5a5; border: 1px solid #991b1b; }
+.badge-armor { background: #333; color: #aaa; border: 1px solid #555; }

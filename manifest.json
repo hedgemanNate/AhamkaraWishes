@@ -1,17 +1,27 @@
 {
   "manifest_version": 3,
-  "name": "DIM Wishlist Monitor",
-  "version": "2.0",
-  "permissions": ["storage", "clipboardRead"],
+  "name": "Ahamkara Wishes",
+  "version": "7.0",
+  "permissions": ["storage", "clipboardRead", "sidePanel"],
+  "host_permissions": ["https://www.bungie.net/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
-      "matches": ["https://app.destinyitemmanager.com/*", "https://beta.destinyitemmanager.com/*"],
+      "matches": [
+        "https://app.destinyitemmanager.com/*", 
+        "https://beta.destinyitemmanager.com/*",
+        "https://d2foundry.gg/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "Wishlist Manager"
+    "default_title": "Make Ahamkara Wishes"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   }
 }

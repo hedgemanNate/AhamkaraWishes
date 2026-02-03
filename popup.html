@@ -3,52 +3,28 @@
 <head>
     <style>
         body { width: 350px; background: #111; color: #ccc; font-family: sans-serif; padding: 10px; }
-        
-        /* Header Controls */
         .controls { display: flex; gap: 5px; margin-bottom: 15px; }
         select { flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 5px; }
         button { cursor: pointer; border: 1px solid #444; background: #333; color: #fff; }
-        button:hover { background: #444; }
-        
-        /* The Accordion List */
         #weaponList { max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 5px; margin-bottom: 10px; }
-        
-        /* Weapon Header */
         details { margin-bottom: 5px; border-bottom: 1px solid #222; }
-        summary { 
-            cursor: pointer; padding: 8px; font-weight: bold; color: #e8a534; 
-            list-style: none; 
-        }
-        summary:hover { background: #1a1a1a; }
-        
-        /* Individual Roll Rows */
-        .roll-row { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 5px 10px; font-size: 11px; background: #000; border-top: 1px solid #222; 
-        }
-        .roll-info { font-family: monospace; color: #888; }
-        .btn-del { color: #d33; background: none; border: none; font-weight: bold; font-size: 14px; }
-        .btn-del:hover { color: #f00; background: none; }
-        
-        /* Main Action Buttons */
-        .actions { display: flex; flex-direction: column; gap: 5px; }
-        .btn-big { padding: 10px; background: #e8a534; color: black; font-weight: bold; border: none; }
-        .btn-big:hover { background: #d69528; }
+        summary { cursor: pointer; padding: 8px; font-weight: bold; color: #e8a534; list-style: none; }
+        .roll-row { display: flex; justify-content: space-between; padding: 5px; font-size: 11px; background: #000; border-top: 1px solid #222; }
+        .btn-del { color: #d33; background: none; border: none; font-weight: bold; }
+        .btn-big { width: 100%; padding: 10px; background: #e8a534; color: black; font-weight: bold; border: none; margin-bottom: 5px; }
     </style>
 </head>
 <body>
     <div class="controls">
         <select id="listSelector"></select>
         <button id="newListBtn" title="Create New List">+</button>
-        <button id="deleteListBtn" title="Delete Active List">🗑️</button>
+        <button id="deleteListBtn" title="Delete Active List">&#x1F5D1;&#xFE0F;</button>
     </div>
 
     <div id="weaponList"></div>
 
-    <div class="actions">
-        <button id="downloadBtn" class="btn-big">Download Wishlist</button>
-        <button id="clearBtn">Clear All Rolls</button>
-    </div>
+    <button id="downloadBtn" class="btn-big">Download Wishlist</button>
+    <button id="clearBtn" style="width:100%; background:#222; color:#888; border:none; padding:5px;">Clear Rolls</button>
 
     <script src="popup.js"></script>
 </body>

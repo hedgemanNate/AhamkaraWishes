@@ -1,16 +1,13 @@
-// State
 let allData = null;
 
 document.addEventListener('DOMContentLoaded', init);
 
-// Event Listeners
 document.getElementById('newListBtn').addEventListener('click', createNewList);
-document.getElementById('deleteListBtn').addEventListener('click', deleteCurrentList); // <--- NEW LISTENER
+document.getElementById('deleteListBtn').addEventListener('click', deleteCurrentList);
 document.getElementById('downloadBtn').addEventListener('click', downloadList);
 document.getElementById('clearBtn').addEventListener('click', clearList);
 document.getElementById('listSelector').addEventListener('change', switchList);
 
-// 1. Initialization
 function init() {
     chrome.storage.local.get(['dimData'], (result) => {
         if (!result.dimData) {
@@ -23,12 +20,10 @@ function init() {
     });
 }
 
-// 2. Render the Interface
 function renderUI() {
     const selector = document.getElementById('listSelector');
     const container = document.getElementById('weaponList');
     
-    // A. Populate Dropdown
     selector.innerHTML = '';
     Object.keys(allData.lists).forEach(listId => {
         const option = document.createElement('option');
@@ -38,10 +33,8 @@ function renderUI() {
         selector.appendChild(option);
     });
 
-    // B. Populate Weapon List
     container.innerHTML = '';
     const activeList = allData.lists[allData.activeId];
-    
     const weapons = Object.values(activeList.items || {}).sort((a, b) => a.name.localeCompare(b.name));
 
     if (weapons.length === 0) {
@@ -51,7 +44,6 @@ function renderUI() {
 
     weapons.forEach(weapon => {
         const details = document.createElement('details');
-        
         const summary = document.createElement('summary');
         summary.textContent = `${weapon.name} (${weapon.rolls.length})`;
         details.appendChild(summary);
@@ -59,25 +51,18 @@ function renderUI() {
         weapon.rolls.forEach((roll, index) => {
             const row = document.createElement('div');
             row.className = 'roll-row';
-            const displayText = roll.date ? `Saved: ${roll.date}` : `Roll #${index + 1}`;
+            const displayText = roll.date ? `${roll.date}` : `Roll #${index + 1}`;
             
             row.innerHTML = `
-                <span class="roll-info">${displayText}</span>
-                <button class="btn-del" title="Delete Roll">×</button>
+                <span style="font-family:monospace; color:#888;">${displayText}</span>
+                <button class="btn-del" title="Delete">×</button>
             `;
-
-            row.querySelector('.btn-del').addEventListener('click', () => {
-                deleteRoll(weapon.hash, index);
-            });
-
+            row.querySelector('.btn-del').addEventListener('click', () => deleteRoll(weapon.hash, index));
             details.appendChild(row);
         });
-
         container.appendChild(details);
     });
 }
-
-// 3. Logic Functions
 
 function createNewList() {
     const name = prompt("New List Name:");
@@ -89,76 +74,46 @@ function createNewList() {
     }
 }
 
-// NEW: Delete the entire list
 function deleteCurrentList() {
-    const listIds = Object.keys(allData.lists);
-    
-    // Prevent deleting the last list
-    if (listIds.length <= 1) {
-        alert("You cannot delete the only list you have.");
-        return;
-    }
-
-    const currentListName = allData.lists[allData.activeId].name;
-    
-    if (confirm(`Are you sure you want to permanently delete "${currentListName}"?`)) {
-        // Remove the list
+    if (Object.keys(allData.lists).length <= 1) return alert("Cannot delete only list.");
+    if (confirm("Delete this list?")) {
         delete allData.lists[allData.activeId];
-        
-        // Switch to the first available list remaining
         allData.activeId = Object.keys(allData.lists)[0];
-        
         saveData();
     }
 }
 
 function switchList(e) {
     allData.activeId = e.target.value;
-    saveData(); // Save selection so it remembers next time
+    saveData();
     renderUI();
 }
 
-function deleteRoll(itemHash, rollIndex) {
-    const activeList = allData.lists[allData.activeId];
-    const weapon = activeList.items[itemHash];
-    
-    weapon.rolls.splice(rollIndex, 1);
-    
-    if (weapon.rolls.length === 0) {
-        delete activeList.items[itemHash];
-    }
-    
+function deleteRoll(hash, index) {
+    const list = allData.lists[allData.activeId];
+    list.items[hash].rolls.splice(index, 1);
+    if (list.items[hash].rolls.length === 0) delete list.items[hash];
     saveData();
 }
 
 function clearList() {
-    if (confirm("Delete all items in this list?")) {
+    if (confirm("Clear all?")) {
         allData.lists[allData.activeId].items = {};
         saveData();
     }
 }
 
 function downloadList() {
-    const activeList = allData.lists[allData.activeId];
-    const weapons = Object.values(activeList.items || {});
-    
-    if (weapons.length === 0) return alert("Nothing to download.");
-
-    let content = `title: ${activeList.name}\ndescription: Generated by DIM Extension\n\n`;
-
-    weapons.forEach(weapon => {
-        content += `// ${weapon.name}\n`;
-        weapon.rolls.forEach(roll => {
-            content += `${roll.raw}\n`;
-        });
+    const list = allData.lists[allData.activeId];
+    let content = `title: ${list.name}\ndescription: Generated by DIM Extension\n\n`;
+    Object.values(list.items || {}).forEach(w => {
+        content += `// ${w.name}\n`;
+        w.rolls.forEach(r => content += `${r.raw}\n`);
         content += `\n`;
     });
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `${activeList.name}.txt`;
+    a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'}));
+    a.download = `${list.name}.txt`;
     a.click();
 }
 

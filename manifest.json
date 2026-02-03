@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "DIM Wishlist Monitor",
+  "version": "2.0",
+  "permissions": ["storage", "clipboardRead"],
+  "content_scripts": [
+    {
+      "matches": ["https://app.destinyitemmanager.com/*", "https://beta.destinyitemmanager.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Wishlist Manager"
+  }
+}

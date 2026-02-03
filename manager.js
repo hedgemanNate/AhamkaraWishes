@@ -24,6 +24,13 @@ function renderUI() {
     const selector = document.getElementById('listSelector');
     const container = document.getElementById('weaponList');
     
+    // 1. MEMORY: Save the IDs of any currently open accordions
+    const openHashes = new Set();
+    container.querySelectorAll('details[open]').forEach(el => {
+        if (el.dataset.hash) openHashes.add(el.dataset.hash);
+    });
+
+    // Update Selector (unchanged)
     selector.innerHTML = '';
     Object.keys(allData.lists).forEach(listId => {
         const option = document.createElement('option');
@@ -33,6 +40,7 @@ function renderUI() {
         selector.appendChild(option);
     });
 
+    // Clear and Rebuild List
     container.innerHTML = '';
     const activeList = allData.lists[allData.activeId];
     const weapons = Object.values(activeList.items || {}).sort((a, b) => a.name.localeCompare(b.name));
@@ -44,6 +52,15 @@ function renderUI() {
 
     weapons.forEach(weapon => {
         const details = document.createElement('details');
+        
+        // 2. TAG: Add the hash to the element so we can track it
+        details.dataset.hash = weapon.hash; 
+        
+        // 3. RESTORE: If it was open before, keep it open now
+        if (openHashes.has(weapon.hash)) {
+            details.open = true;
+        }
+
         const summary = document.createElement('summary');
         summary.textContent = `${weapon.name} (${weapon.rolls.length})`;
         details.appendChild(summary);
@@ -57,6 +74,7 @@ function renderUI() {
                 <span style="font-family:monospace; color:#888;">${displayText}</span>
                 <button class="btn-del" title="Delete">×</button>
             `;
+            // Note: We use a wrapper function for the listener to avoid closure issues
             row.querySelector('.btn-del').addEventListener('click', () => deleteRoll(weapon.hash, index));
             details.appendChild(row);
         });

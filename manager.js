@@ -120,3 +120,17 @@ function downloadList() {
 function saveData() {
     chrome.storage.local.set({ dimData: allData }, renderUI);
 }
+
+// ==========================================
+// AUTO-UPDATE LISTENER
+// ==========================================
+chrome.storage.onChanged.addListener((changes, namespace) => {
+    // Only listen for changes to 'dimData' in local storage
+    if (namespace === 'local' && changes.dimData) {
+        // Update our local variable with the new data from storage
+        allData = changes.dimData.newValue;
+        
+        // Redraw the UI instantly
+        renderUI();
+    }
+});

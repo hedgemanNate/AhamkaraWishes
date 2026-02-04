@@ -614,6 +614,28 @@ header {
     background: #333; /* Background of the bar */
 }
 
+/* --- STAT ICON DEFINITIONS (2026 RENEGADES) --- */
+.stat-icon-mini {
+    width: 14px;
+    height: 14px;
+    background-color: currentColor; /* Icon inherits the color of its bar */
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    opacity: 0.8;
+}
+
+/* Individual Stat Paths */
+.icon-health   { -webkit-mask-image: url('icons/stat-health.svg');  mask-image: url('icons/stat-health.svg'); }
+.icon-melee    { -webkit-mask-image: url('icons/stat-melee.svg');   mask-image: url('icons/stat-melee.svg'); }
+.icon-grenade  { -webkit-mask-image: url('icons/stat-grenade.svg'); mask-image: url('icons/stat-grenade.svg'); }
+.icon-super    { -webkit-mask-image: url('icons/stat-super.svg');   mask-image: url('icons/stat-super.svg'); }
+.icon-class    { -webkit-mask-image: url('icons/stat-class.svg');   mask-image: url('icons/stat-class.svg'); }
+.icon-weapons  { -webkit-mask-image: url('icons/stat-weapons.svg'); mask-image: url('icons/stat-weapons.svg'); }
+
 .bar-progress {
     height: 100%;
     width: 70%; /* Placeholder width */

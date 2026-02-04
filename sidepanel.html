@@ -20,8 +20,7 @@
         </header>
 
         <div id="view-weapons" class="content-view active-view">
-            <div id="weapon-list" class="card-list">
-                </div>
+            <div id="weapon-list" class="card-list"></div>
             <div id="empty-state" class="empty-state hidden">
                 <p>No wishes yet.</p>
                 <small>Visit D2Foundry to make a wish.</small>
@@ -29,31 +28,15 @@
         </div>
 
         <div id="view-armor" class="content-view hidden">
+            <div class="armor-creator"></div> 
             
-            <div class="class-selector">
-                <select id="classSelect">
-                    <option value="0">Titan</option>
-                    <option value="1">Hunter</option>
-                    <option value="2">Warlock</option>
-                </select>
-            </div>
-
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="e.g. Iron, Artifice, Noble...">
-                <button id="searchBtn">Search</button>
-            </div>
-
-            <div id="statusMessage" class="status"></div>
-
-            <div id="resultsGrid" class="armor-grid">
-                </div>
-
-            <div class="cache-controls">
-                <button id="clearCacheBtn" class="secondary-btn">Clear Cache</button>
+            <div class="cache-controls" style="text-align: center; margin-top: 20px;">
+                <button id="clearCacheBtn" class="secondary-btn">Reset Manifest Cache</button>
             </div>
         </div>
     </div>
 
     <script src="manager.js"></script>
+    <script src="ui-creator.js"></script>
 </body>
 </html>

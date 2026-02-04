@@ -542,3 +542,125 @@ header {
 #view-armor {
     padding-bottom: 75px; 
 }
+
+/* --- THE 3-BAR ARMOR CARD --- */
+.armor-card {
+    background: #1a1a1f;
+    border: 1px solid #333;
+    display: flex;
+    padding: 10px;
+    gap: 12px;
+    position: relative;
+    transition: border-color 0.2s, transform 0.2s;
+    user-select: none;
+}
+
+/* Selection State */
+.armor-card.selected {
+    border-color: var(--accent-gold);
+}
+
+.card-img-side {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    background: #000;
+}
+
+.card-img-side img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-info-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.card-armor-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--accent-gold);
+}
+
+.card-archetype-sub {
+    font-size: 9px;
+    color: #777;
+    text-transform: uppercase;
+}
+
+/* --- STAT GRAPH (RIGHT SIDE) --- */
+.card-stats-side {
+    width: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: center;
+}
+
+.stat-row-mini {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 6px;
+}
+
+.stat-bar-fill {
+    flex: 1;
+    height: 100%;
+    background: #333; /* Background of the bar */
+}
+
+.bar-progress {
+    height: 100%;
+    width: 70%; /* Placeholder width */
+}
+
+/* Bar Colors (Renegades 2026) */
+.bar-pri { background: var(--accent-gold); }
+.bar-spark { background: #555; } /* Dull White */
+
+/* Muted Secondary Colors */
+.bar-sec-weapons { background: #4a6fa5; } /* Steel Blue */
+.bar-sec-health  { background: #5d7a5d; } /* Sage Green */
+.bar-sec-class   { background: #9c7c4a; } /* Amber */
+.bar-sec-grenade { background: #a35d41; } /* Burnt Orange */
+.bar-sec-super   { background: #6a4a8a; } /* Royal Amethyst */
+.bar-sec-melee   { background: #8a3a3a; } /* Deep Maroon */
+
+.stat-icon-mini {
+    width: 10px;
+    height: 10px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.7;
+}
+
+/* --- DELETION OVERLAY --- */
+.delete-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 10;
+}
+
+.armor-card.deleting .delete-overlay { display: flex; }
+
+.del-btn, .cancel-btn {
+    background: transparent;
+    border: none;
+    font-weight: bold;
+    font-size: 11px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.del-btn { color: #ff4444; }
+.cancel-btn { color: #ffffff; }

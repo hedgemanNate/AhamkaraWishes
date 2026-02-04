@@ -330,9 +330,15 @@ function handleSaveWish() {
 /**
  * Renders the Armor List grouped by Set.
  */
+/**
+ * Renders the Armor List grouped by Set.
+ * Corrected: Ensures set containers exist before injecting cards.
+ */
 function refreshArmorList() {
     chrome.storage.local.get(['dimData'], (result) => {
         const container = document.getElementById('armor-list-container');
+        if (!container) return;
+        
         container.innerHTML = '';
 
         const data = result.dimData;
@@ -344,19 +350,20 @@ function refreshArmorList() {
         const items = data.lists.default.items;
         const armorSets = {};
 
-        // Grouping logic: Organize items by their set name
+        // 1. Grouping logic: Organize items by their set name
         Object.keys(items).forEach(hash => {
             const item = items[hash];
-            if (item.static.type !== 'armor') return;
+            // Only process items explicitly marked as armor wishes
+            if (item.static.type !== 'armor' || !item.wishes) return;
 
-            // Simple set name extraction (removes slot names like "Helm")
+            // Extract set name (e.g., "Iron Forerunner")
             const setName = item.static.name.replace(/(Mask|Vest|Grips|Strides|Cloak|Gauntlets|Plate|Helm|Greaves|Mark|Gloves|Robes|Bond)/gi, '').trim();
             
             if (!armorSets[setName]) armorSets[setName] = [];
             armorSets[setName].push({ hash, ...item });
         });
 
-        // Create the UI for each set
+        // 2. Create the UI for each set
         Object.keys(armorSets).forEach(setName => {
             const setContainer = document.createElement('div');
             setContainer.className = 'armor-set-row';
@@ -371,18 +378,87 @@ function refreshArmorList() {
                         <div class="expansion-badge" title="Renegades Expansion"></div>
                     </div>
                 </div>
-                <div class="set-content" id="set-content-${setName.replace(/\s+/g, '')}">
-                    </div>
+                <div class="set-content" id="set-content-${setName.replace(/\s+/g, '')}" style="display: none;">
+                </div>
             `;
 
-            // Toggle expansion on click
-            setContainer.querySelector('.set-header').onclick = () => {
-                const content = setContainer.querySelector('.set-content');
-                const isExpanded = content.style.display === 'flex';
-                content.style.display = isExpanded ? 'none' : 'flex';
+            const contentArea = setContainer.querySelector('.set-content');
+
+            // 3. Inject cards into the newly created set-content area
+            armorSets[setName].forEach(item => {
+                const card = createArmorCard(item);
+                contentArea.appendChild(card);
+            });
+
+            // Toggle expansion logic
+            const header = setContainer.querySelector('.set-header');
+            header.onclick = () => {
+                const isExpanded = contentArea.style.display === 'flex';
+                contentArea.style.display = isExpanded ? 'none' : 'flex';
             };
 
             container.appendChild(setContainer);
         });
+
+        // 4. Handle completely empty armor list state
+        if (Object.keys(armorSets).length === 0) {
+            container.innerHTML = '<div class="empty-list-text">No Armor Wishes yet.</div>';
+        }
     });
+}
+
+function createArmorCard(item) {
+    const card = document.createElement('div');
+    card.className = 'armor-card';
+    
+    // Get stats from wish config
+    const archName = item.wishes[0].config.archetype;
+    const spark = item.wishes[0].config.spark;
+    const archetype = ARCHETYPES.find(a => a.name === archName);
+    const secStat = archetype ? archetype.stats[1].toLowerCase() : 'weapons';
+
+    card.innerHTML = `
+        <div class="card-img-side">
+            <img src="${item.static.icon}" alt="">
+        </div>
+        <div class="card-info-side">
+            <div class="card-armor-name">${item.static.name}</div>
+            <div class="card-archetype-sub">${archName} SYNERGY</div>
+        </div>
+        <div class="card-stats-side">
+            <div class="stat-row-mini"><div class="stat-bar-fill"><div class="bar-progress bar-pri"></div></div><div class="stat-icon-mini"></div></div>
+            <div class="stat-row-mini"><div class="stat-bar-fill"><div class="bar-progress bar-sec-${secStat}"></div></div><div class="stat-icon-mini"></div></div>
+            <div class="stat-row-mini"><div class="stat-bar-fill"><div class="bar-progress bar-spark"></div></div><div class="stat-icon-mini"></div></div>
+        </div>
+        <div class="delete-overlay">
+            <button class="del-btn">DELETE</button>
+            <button class="cancel-btn">CANCEL</button>
+        </div>
+    `;
+
+    // Single Click: Selection
+    card.onclick = (e) => {
+        if (card.classList.contains('deleting')) return;
+        card.classList.toggle('selected');
+    };
+
+    // Double Click: Delete Mode
+    card.ondblclick = (e) => {
+        e.stopPropagation();
+        card.classList.add('deleting');
+    };
+
+    // Overlay Buttons
+    card.querySelector('.cancel-btn').onclick = (e) => {
+        e.stopPropagation();
+        card.classList.remove('deleting');
+    };
+
+    card.querySelector('.del-btn').onclick = (e) => {
+        e.stopPropagation();
+        // Future Feature: deleteWish(item.hash, 0); 
+        card.remove();
+    };
+
+    return card;
 }

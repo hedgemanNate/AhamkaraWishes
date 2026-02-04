@@ -561,8 +561,8 @@ header {
 }
 
 .card-img-side {
-    width: 48px;
-    height: 48px;
+    width: 64px;
+    height: 64px;
     flex-shrink: 0;
     background: #000;
 }
@@ -583,7 +583,7 @@ header {
 .card-armor-name {
     font-size: 13px;
     font-weight: bold;
-    color: var(--accent-gold);
+    color: #d8d8d8;
 }
 
 .card-archetype-sub {
@@ -594,7 +594,7 @@ header {
 
 /* --- STAT GRAPH (RIGHT SIDE) --- */
 .card-stats-side {
-    width: 140px;
+    width: 180px;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -654,11 +654,12 @@ header {
 .bar-sec-melee   { background: #8a3a3a; } /* Deep Maroon */
 
 .stat-icon-mini {
-    width: 10px;
-    height: 10px;
+    width: 16px;
+    height: 16px;
     background-size: contain;
     background-repeat: no-repeat;
     opacity: 0.7;
+    flex-shrink: 0;
 }
 
 /* --- DELETION OVERLAY --- */

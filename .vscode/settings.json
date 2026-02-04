@@ -1,0 +1,6 @@
+{
+    "git.enableCommitSigning": false,
+    "github.copilot.chat.pullRequestDescriptionGeneration.instructions": [
+        
+    ]
+}

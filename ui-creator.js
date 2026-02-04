@@ -78,6 +78,16 @@ function attachListeners() {
         };
     }
 
+    // Inside attachListeners() -> Section 3 (Bottom Nav Slider)
+    navList.onclick = () => {
+        navList.classList.add('active');
+        navCraft.classList.remove('active');
+        armorSlider.className = 'armor-view-slider show-list';
+        
+        // Trigger the list refresh!
+        refreshArmorList(); 
+    };
+
     // 4. Class Selection Pill
     document.querySelectorAll('.class-btn').forEach(btn => {
         btn.onclick = (e) => {
@@ -315,4 +325,64 @@ function handleSaveWish() {
     btn.classList.remove("success");
     updatePrimaryBtn();
   }, 2000);
+}
+
+/**
+ * Renders the Armor List grouped by Set.
+ */
+function refreshArmorList() {
+    chrome.storage.local.get(['dimData'], (result) => {
+        const container = document.getElementById('armor-list-container');
+        container.innerHTML = '';
+
+        const data = result.dimData;
+        if (!data || !data.lists || !data.lists.default) {
+            container.innerHTML = '<div class="empty-list-text">No Armor Wishes yet.</div>';
+            return;
+        }
+
+        const items = data.lists.default.items;
+        const armorSets = {};
+
+        // Grouping logic: Organize items by their set name
+        Object.keys(items).forEach(hash => {
+            const item = items[hash];
+            if (item.static.type !== 'armor') return;
+
+            // Simple set name extraction (removes slot names like "Helm")
+            const setName = item.static.name.replace(/(Mask|Vest|Grips|Strides|Cloak|Gauntlets|Plate|Helm|Greaves|Mark|Gloves|Robes|Bond)/gi, '').trim();
+            
+            if (!armorSets[setName]) armorSets[setName] = [];
+            armorSets[setName].push({ hash, ...item });
+        });
+
+        // Create the UI for each set
+        Object.keys(armorSets).forEach(setName => {
+            const setContainer = document.createElement('div');
+            setContainer.className = 'armor-set-row';
+            
+            setContainer.innerHTML = `
+                <div class="set-header">
+                    <div class="set-name-area">
+                        <span class="set-name-text">${setName}</span>
+                        <span class="set-count-text">${armorSets[setName].length} / 5 PIECES</span>
+                    </div>
+                    <div class="set-badge-area">
+                        <div class="expansion-badge" title="Renegades Expansion"></div>
+                    </div>
+                </div>
+                <div class="set-content" id="set-content-${setName.replace(/\s+/g, '')}">
+                    </div>
+            `;
+
+            // Toggle expansion on click
+            setContainer.querySelector('.set-header').onclick = () => {
+                const content = setContainer.querySelector('.set-content');
+                const isExpanded = content.style.display === 'flex';
+                content.style.display = isExpanded ? 'none' : 'flex';
+            };
+
+            container.appendChild(setContainer);
+        });
+    });
 }

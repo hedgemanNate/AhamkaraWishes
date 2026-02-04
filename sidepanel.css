@@ -205,6 +205,78 @@ header {
     transition: color 0.3s ease, transform 0.3s ease;
 }
 
+/* --- ARMOR LIST: SET ROWS --- */
+.armor-set-row {
+    margin-bottom: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #333;
+}
+
+.set-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #111;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-left: 3px solid var(--accent-gold);
+}
+
+.set-header:hover {
+    background: #1a1a1a;
+}
+
+.set-name-area {
+    display: flex;
+    flex-direction: column;
+}
+
+.set-name-text {
+    font-weight: bold;
+    font-size: 13px;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.set-count-text {
+    font-size: 9px;
+    color: #555;
+    text-transform: uppercase;
+}
+
+.set-badge-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* The Renegades/Lawless Badge */
+.expansion-badge {
+    width: 20px;
+    height: 20px;
+    background: #d4af37; /* Placeholder color for the 2026 badge */
+    mask: url('icons/renegades-badge.svg') no-repeat center; /* Future icon path */
+    -webkit-mask: url('icons/renegades-badge.svg') no-repeat center;
+    background-size: contain;
+    opacity: 0.8;
+}
+
+.set-content {
+    display: none; /* Hidden by default */
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    flex-direction: column;
+    gap: 8px;
+}
+
+.set-row.expanded .set-content {
+    display: flex;
+}
+
 .slot-label {
   position: absolute;
   bottom: 2px;

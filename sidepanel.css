@@ -1,3 +1,4 @@
+/* --- EXISTING STYLES (Keep your variables & basics) --- */
 :root {
     --bg-dark: #1e1e24;
     --bg-card: #2b2b36;
@@ -59,7 +60,155 @@ header {
 .active-view { display: block; }
 .hidden { display: none; }
 
-/* WEAPON CARDS */
+/* --- NEW: CLASS SELECTOR (Square Pill) --- */
+.class-selector {
+    display: flex;
+    border: 1px solid #444;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    background: #000;
+}
+
+.class-btn {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: 0.2s;
+    background: transparent;
+    border: none; /* Reset standard btn styles */
+}
+
+.class-btn:hover { background: #111; color: #888; }
+
+.class-btn.active {
+    background: var(--accent-gold);
+    color: #000;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+}
+
+/* --- NEW: ARMOR SEARCH & GRID --- */
+.armor-search-container {
+    margin-bottom: 20px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px;
+    background: #111;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    box-sizing: border-box; /* Ensures padding doesn't break width */
+    margin-bottom: 10px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+}
+
+.armor-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.armor-box {
+    aspect-ratio: 1; /* Perfect square */
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: 0.2s;
+}
+
+.armor-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.5; /* Dim by default */
+    transition: 0.2s;
+}
+
+.armor-box:hover { border-color: #666; }
+.armor-box:hover img { opacity: 0.8; }
+
+.armor-box.selected {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+.armor-box.selected img {
+    opacity: 1;
+}
+
+/* Loading State for Boxes */
+.armor-box.loading {
+    animation: pulse 1.5s infinite;
+    background: #111;
+}
+
+@keyframes pulse {
+    0% { background: #111; }
+    50% { background: #222; }
+    100% { background: #111; }
+}
+
+/* --- EXISTING: STAT BUTTONS --- */
+.step-label {
+    font-size: 12px;
+    color: var(--accent-gold);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 20px;
+}
+
+.grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 25px; }
+
+.stat-btn {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 12px 5px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+.stat-btn strong { display: block; margin-bottom: 4px; font-size: 13px; }
+.stat-btn.selected {
+    border-color: var(--accent-gold);
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--accent-gold);
+}
+.stat-btn.unavailable {
+    background-color: #080808 !important;
+    color: #333 !important;
+    border-color: #111 !important;
+    opacity: 0.5;
+    pointer-events: none;
+    box-shadow: inset 0 0 10px #000;
+    transform: scale(0.95);
+}
+
+/* --- WEAPON CARDS --- */
 .weapon-card {
     background: var(--bg-card);
     border-left: 4px solid var(--accent-gold);
@@ -68,7 +217,6 @@ header {
     border-radius: 4px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
-
 .card-header {
     display: flex;
     justify-content: space-between;
@@ -77,7 +225,6 @@ header {
     padding-bottom: 8px;
     margin-bottom: 8px;
 }
-
 .card-title { font-weight: bold; font-size: 15px; color: #fff; }
 .card-id { font-size: 10px; color: #555; font-family: monospace; }
 
@@ -100,50 +247,18 @@ header {
     opacity: 0.6;
     transition: 0.2s;
 }
-.btn-del:hover { opacity: 1; transform: scale(1.1); }
 
-/* ARMOR CREATOR */
-.step-label {
-    font-size: 12px;
-    color: var(--accent-gold);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 10px;
-}
-
-.grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-.grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 25px; }
-
-.stat-btn {
-    background: #2a2a2a;
-    border: 1px solid #444;
-    color: #ccc;
-    padding: 12px 5px;
-    cursor: pointer;
-    text-align: center;
-    font-size: 12px;
-    border-radius: 4px;
+/* --- TOGGLE & BTN --- */
+.toggle-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s;
+    background: #000;
+    border: 1px solid #444;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-right: 10px;
+    cursor: pointer;
 }
-
-.stat-btn strong { display: block; margin-bottom: 4px; font-size: 13px; }
-.stat-sub { font-size: 10px; color: #777; }
-
-.stat-btn:hover { background: #333; border-color: #666; }
-.stat-btn.selected {
-    border-color: var(--accent-gold);
-    background: rgba(212, 175, 55, 0.15);
-    color: var(--accent-gold);
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
-}
-.stat-btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
-
-/* ACTION BUTTON */
+.toggle-btn { padding: 8px 12px; font-size: 12px; font-weight: bold; color: #666; }
 .btn-primary {
     width: 100%;
     padding: 15px;
@@ -155,130 +270,9 @@ header {
     font-size: 14px;
     text-transform: uppercase;
     border-radius: 4px;
-    transition: 0.2s;
 }
 .btn-primary:disabled { background: #333; color: #555; cursor: default; }
 
-.empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: #555;
-    font-style: italic;
-}
-
-/* --- ACCORDION LISTS --- */
-.accordion-header {
-    background-color: #111;
-    color: var(--accent-gold);
-    padding: 15px;
-    border: 1px solid #333;
-    border-left: 4px solid var(--accent-gold);
-    margin-bottom: 2px;
-    cursor: pointer;
-    font-weight: bold;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-transform: uppercase;
-    font-size: 13px;
-    letter-spacing: 1px;
-    transition: background 0.2s;
-}
-
-.accordion-header:hover {
-    background-color: #1a1a1a;
-}
-
-.accordion-header.active {
-    background-color: #222;
-    border-bottom: none;
-}
-
-.accordion-content {
-    display: none; /* Hidden by default */
-    padding: 10px;
-    background-color: #161618;
-    border: 1px solid #333;
-    border-top: none;
-    margin-bottom: 10px;
-}
-
-.accordion-content.show {
-    display: block; /* Show when open */
-}
-
-.list-controls {
-    display: flex;
-    gap: 10px;
-}
-
-.btn-icon {
-    background: none;
-    border: none;
-    color: #666;
-    cursor: pointer;
-    font-size: 14px;
-}
-.btn-icon:hover { color: #fff; }
-
-/* --- TOGGLE SWITCH (Pill Shape) --- */
-.toggle-container {
-    display: flex;
-    background: #000;
-    border: 1px solid #444;
-    border-radius: 20px;
-    overflow: hidden;
-    margin-right: 10px;
-    cursor: pointer;
-}
-
-.toggle-btn {
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: bold;
-    color: #666;
-    transition: 0.2s;
-    text-transform: uppercase;
-}
-
-/* PvE State (Default) */
-.toggle-container.pve .opt-pve {
-    background: #1e3a8a; /* Vanguard Blue */
-    color: #fff;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-}
-
-/* PvP State */
-.toggle-container.pvp .opt-pvp {
-    background: #991b1b; /* Crucible Red */
-    color: #fff;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-}
-
-/* --- BADGES (Inside Cards) --- */
-.badge {
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
-    margin-right: 8px;
-    display: inline-block;
-}
-
+.badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-right: 8px; display: inline-block; }
 .badge-pve { background: #172554; color: #93c5fd; border: 1px solid #1e40af; }
 .badge-pvp { background: #450a0a; color: #fca5a5; border: 1px solid #991b1b; }
-.badge-armor { background: #333; color: #aaa; border: 1px solid #555; }
-
-/* --- TASTEFUL BLACKOUT STATE --- */
-.stat-btn.unavailable {
-    background-color: #080808 !important; /* Deep, deep charcoal */
-    color: #333 !important;               /* Very dim text */
-    border-color: #111 !important;        /* Barely visible border */
-    opacity: 0.5;
-    cursor: default;
-    pointer-events: none;                 /* completely non-interactive */
-    box-shadow: inset 0 0 10px #000;      /* Inner shadow makes it look "sunken" */
-    transform: scale(0.95);               /* Slight shrink effect */
-}
-

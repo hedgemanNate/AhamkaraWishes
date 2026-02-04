@@ -1,7 +1,6 @@
 /**
  * UI-CREATOR.JS
- * Handles all DOM construction and UI state for the Armor Wizard.
- * Communicates with manager.js for data and search.
+ * Separated UI Logic Layer. Uses manager.js for data.
  */
 
 // --- UI STATE ---
@@ -12,106 +11,60 @@ let currentArchetype = null;
 let currentSpark = null;
 let currentMode = 'pve';
 
-// Initialize UI when the tab is clicked or loaded
 document.addEventListener('DOMContentLoaded', () => {
-    buildArmorWizard();
+    initArmorWizard();
 });
 
 /**
- * Builds the main UI structure for the Armor Creator tab.
+ * Entry point for UI setup.
  */
-function buildArmorWizard() {
-    const container = document.querySelector('.armor-creator');
-    if (!container) return;
-
-    container.innerHTML = `
-        <div class="class-selector">
-            <button class="class-btn active" data-class="0">TITAN</button>
-            <button class="class-btn" data-class="2">WARLOCK</button>
-            <button class="class-btn" data-class="1">HUNTER</button>
-        </div>
-
-        <div class="armor-search-container">
-            <div class="step-label">1. SEARCH ARMOR (Set Name)</div>
-            <input type="text" class="search-input" id="armor-query" placeholder="e.g. Iron, Artifice, Darkhollow...">
-            <div class="armor-grid" id="armor-grid">
-                <div class="armor-box" data-slot="Head"></div>
-                <div class="armor-box" data-slot="Arms"></div>
-                <div class="armor-box" data-slot="Chest"></div>
-                <div class="armor-box" data-slot="Legs"></div>
-                <div class="armor-box" data-slot="Class"></div>
-            </div>
-        </div>
-
-        <div class="step-container">
-            <div class="step-label">2. CHOOSE ARCHETYPE</div>
-            <div class="grid-2col" id="archetype-grid"></div>
-        </div>
-
-        <div class="step-container">
-            <div class="step-label">3. CHOOSE SPARK</div>
-            <div class="grid-3col" id="spark-grid"></div>
-        </div>
-
-        <div class="action-area" style="margin-top: 20px;">
-            <div class="toggle-container pve" id="ui-mode-toggle">
-                <div class="opt-pve">PvE</div>
-                <div class="opt-pvp">PvP</div>
-            </div>
-            <button id="btn-create-armor" class="btn-primary" disabled>
-                SELECT ARMOR PIECE FIRST
-            </button>
-        </div>
-    `;
-
-    attachUIEventListeners();
-    populateStats();
+function initArmorWizard() {
+    attachListeners();
+    populateStatGrids();
 }
 
 /**
- * Attaches listeners for search, class switching, and the mode toggle.
+ * Attaches all event listeners for buttons, inputs, and toggles.
  */
-function attachUIEventListeners() {
-    // Class Selection
+function attachListeners() {
+    // 1. Class Selection Pill
     document.querySelectorAll('.class-btn').forEach(btn => {
         btn.onclick = (e) => {
             document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             currentClass = parseInt(e.target.dataset.class);
             
-            // Re-trigger search if input has content
             const query = document.getElementById('armor-query').value;
-            if (query.length >= 2) performArmorSearch(query);
+            if (query.length >= 2) triggerSearch(query);
         };
     });
 
-    // Search Input (Debounced)
+    // 2. Search Input (Debounced)
     const searchInput = document.getElementById('armor-query');
     searchInput.oninput = (e) => {
         clearTimeout(searchTimeout);
         const query = e.target.value.trim();
-        
         if (query.length < 2) return;
 
         document.querySelectorAll('.armor-box').forEach(b => b.classList.add('loading'));
-        searchTimeout = setTimeout(() => performArmorSearch(query), 500);
+        searchTimeout = setTimeout(() => triggerSearch(query), 500);
     };
 
-    // Mode Toggle (PvE/PvP)
+    // 3. Muted Mode Toggle (PvE/PvP)
     const toggle = document.getElementById('ui-mode-toggle');
     toggle.onclick = () => {
-        currentMode = currentMode === 'pve' ? 'pvp' : 'pve';
+        currentMode = (currentMode === 'pve') ? 'pvp' : 'pve';
         toggle.className = `toggle-container ${currentMode}`;
     };
 
-    // Save Button
-    document.getElementById('btn-create-armor').onclick = saveArmorWish;
+    // 4. Save Wish Button
+    document.getElementById('btn-create-armor').onclick = handleSaveWish;
 }
 
 /**
- * Bridging function: Calls the local search in manager.js and updates the UI.
+ * Searches the local manifest via manager.js and updates the grid.
  */
-async function performArmorSearch(query) {
+async function triggerSearch(query) {
     try {
         const results = await searchArmorLocally(query, currentClass);
         
@@ -123,91 +76,80 @@ async function performArmorSearch(query) {
             Class: results.find(i => i.bucketHash === BUCKET_HASHES.CLASS_ITEM)
         };
 
-        updateArmorGrid(buckets);
+        refreshArmorDisplay(buckets);
     } catch (e) {
-        console.error("[UI-CREATOR] Search bridge failed:", e);
+        console.error("[UI] Search Error:", e);
     }
 }
 
 /**
- * Populates the archetype and spark stat buttons from backend constants.
+ * Builds buttons for Archetypes and Sparks using constants from manager.js.
  */
-function populateStats() {
+function populateStatGrids() {
     const archGrid = document.getElementById('archetype-grid');
     const sparkGrid = document.getElementById('spark-grid');
-
+    
+    // ARCHETYPES from manager.js
     ARCHETYPES.forEach(arch => {
         const btn = document.createElement('div');
         btn.className = 'stat-btn';
         btn.innerHTML = `<strong>${arch.name}</strong><span class="stat-sub">${arch.stats.join(' + ')}</span>`;
-        btn.onclick = () => selectArchetype(arch, btn);
+        btn.onclick = () => {
+            document.querySelectorAll('#archetype-grid .stat-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            currentArchetype = arch;
+            syncSparkAvailability(arch.stats);
+            updatePrimaryBtn();
+        };
         archGrid.appendChild(btn);
     });
 
+    // STATS from manager.js
     STATS.forEach(stat => {
         const btn = document.createElement('div');
         btn.className = 'stat-btn';
         btn.innerHTML = `<strong>${stat.substring(0,3).toUpperCase()}</strong>`; 
         btn.dataset.stat = stat; 
-        btn.onclick = () => selectSpark(stat, btn);
+        btn.onclick = () => {
+            if (btn.classList.contains('unavailable')) return;
+            document.querySelectorAll('#spark-grid .stat-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            currentSpark = stat;
+            updatePrimaryBtn();
+        };
         sparkGrid.appendChild(btn);
     });
 }
 
 /**
- * Visual update for the 5-slot armor boxes.
+ * Refreshes the armor icons in Step 1.
  */
-function updateArmorGrid(buckets) {
-    const grid = document.getElementById('armor-grid');
+function refreshArmorDisplay(buckets) {
     const slots = ['Head', 'Arms', 'Chest', 'Legs', 'Class'];
-    
     slots.forEach(slot => {
-        const box = grid.querySelector(`[data-slot="${slot}"]`);
+        const box = document.querySelector(`.armor-box[data-slot="${slot}"]`);
         box.classList.remove('loading', 'selected');
         box.innerHTML = `<span class="slot-label">${slot.toUpperCase()}</span>`;
         
         const item = buckets[slot];
         if (item) {
             const img = document.createElement('img');
-            img.src = item.icon; // Already prefixed by backend
+            img.src = item.icon; 
             box.appendChild(img);
             box.onclick = () => {
                 document.querySelectorAll('.armor-box').forEach(b => b.classList.remove('selected'));
                 box.classList.add('selected');
                 armorSelection = item;
-                checkButtonState();
+                updatePrimaryBtn();
             };
         }
     });
 }
 
 /**
- * Handles Archetype selection and updates Spark availability.
+ * Prevents picking a spark stat already covered by the archetype.
  */
-function selectArchetype(arch, btn) {
-    document.querySelectorAll('#archetype-grid .stat-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    currentArchetype = arch;
-    
-    updateSparkAvailability(arch.stats);
-    checkButtonState();
-}
-
-/**
- * Handles Spark selection.
- */
-function selectSpark(stat, btn) {
-    if (btn.classList.contains('unavailable')) return;
-    document.querySelectorAll('#spark-grid .stat-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    currentSpark = stat;
-    checkButtonState();
-}
-
-/**
- * Disables Sparks that are already part of the chosen Archetype.
- */
-function updateSparkAvailability(usedStats) {
+function syncSparkAvailability(usedStats) {
     document.querySelectorAll('#spark-grid .stat-btn').forEach(btn => {
         const stat = btn.dataset.stat;
         if (usedStats.includes(stat)) {
@@ -221,40 +163,9 @@ function updateSparkAvailability(usedStats) {
 }
 
 /**
- * Gathers UI state and sends the "Wish" to backend storage.
+ * Handles the logic for enabling and labeling the final Save button.
  */
-function saveArmorWish() {
-    if (!armorSelection || !currentArchetype || !currentSpark) return;
-
-    // Call backend save function (manager.js)
-    saveItem(
-        armorSelection.hash, 
-        armorSelection.name, 
-        'armor', 
-        `armor-wish:${armorSelection.hash}`, 
-        { 
-            archetype: currentArchetype.name, 
-            spark: currentSpark,
-            icon: armorSelection.icon.replace(BUNGIE_ROOT, "") // Store relative path
-        }
-    );
-
-    // Visual Feedback
-    const btn = document.getElementById('btn-create-armor');
-    const originalText = btn.textContent;
-    btn.textContent = "WISH GRANTED!";
-    btn.classList.add('success'); // Ensure success class is in CSS
-    
-    setTimeout(() => {
-        btn.classList.remove('success');
-        checkButtonState();
-    }, 2000);
-}
-
-/**
- * Final validation for the "Save" button.
- */
-function checkButtonState() {
+function updatePrimaryBtn() {
     const btn = document.getElementById('btn-create-armor');
     if (!armorSelection) {
         btn.disabled = true;
@@ -264,6 +175,31 @@ function checkButtonState() {
         btn.textContent = "SELECT STATS ABOVE";
     } else {
         btn.disabled = false;
-        btn.textContent = `ADD: ${currentArchetype.name} + ${currentSpark.toUpperCase()}`;
+        btn.textContent = `MAKE WISH: ${currentArchetype.name} + ${currentSpark.toUpperCase()}`;
     }
+}
+
+/**
+ * Final step: Passes selection to the backend saveItem() in manager.js.
+ */
+function handleSaveWish() {
+  saveItem(
+    armorSelection.hash,
+    armorSelection.name,
+    "armor",
+    `armor-wish:${armorSelection.hash}`,
+    `armor-wish:${armorSelection.hash}`,
+    { archetype: currentArchetype.name, spark: currentSpark },
+    currentMode
+  );
+
+  const btn = document.getElementById("btn-create-armor");
+  const originalText = btn.textContent;
+  btn.textContent = "WISH GRANTED!";
+  btn.classList.add("success");
+
+  setTimeout(() => {
+    btn.classList.remove("success");
+    updatePrimaryBtn();
+  }, 2000);
 }

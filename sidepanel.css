@@ -48,7 +48,8 @@ header {
 .tab-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
 
 /* VIEWS */
-.content-view { display: block; }
+.content-view { display: none; }
+.content-view.active-view { display: block; }
 .hidden { display: none !important; }
 
 /* SEARCH UI (New) */
@@ -154,3 +155,59 @@ header {
   cursor: pointer;
 }
 .secondary-btn:hover { color: #999; }
+
+/* --- MUTED TOGGLE STYLES --- */
+.toggle-container {
+    display: flex;
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.toggle-container:hover {
+    border-color: #444;
+}
+
+/* Base style for toggle options */
+.toggle-container div {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #555; /* Default unselected text */
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+/* PvE Muted Blue (Slate/Steel Blue) */
+.toggle-container.pve .opt-pve {
+    background: #2e3b52; /* Muted Navy/Slate */
+    color: #cbd5e1;      /* Light Grey-Blue text */
+}
+
+/* PvP Muted Red (Dusty Crimson/Brick) */
+.toggle-container.pvp .opt-pvp {
+    background: #5c2d2d; /* Muted Brick/Crimson */
+    color: #fecaca;      /* Soft Rose text */
+}
+
+/* --- STATE CLASSES --- */
+.stat-btn.unavailable {
+    background-color: #0d0d0d !important;
+    color: #222 !important;
+    border-color: #1a1a1a !important;
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: scale(0.98);
+}
+
+.btn-primary.success {
+    background: #3d5a45 !important; /* Muted Forest Green */
+    color: #a7f3d0 !important;
+    border: 1px solid #064e3b;
+}

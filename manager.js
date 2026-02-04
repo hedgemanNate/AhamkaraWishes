@@ -346,6 +346,58 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     }
 });
 
+// Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
+// Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
+function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null) {
+  chrome.storage.local.get(["dimData"], (result) => {
+    let data = result.dimData || {
+      activeId: "default",
+      lists: { default: { name: "Main Wishlist", items: {} } }
+    };
+
+    const activeList = data.lists[data.activeId] || data.lists["default"];
+    if (!activeList.items) activeList.items = {};
+
+    // Create container if missing
+    if (!activeList.items[hash]) {
+      activeList.items[hash] = {
+        static: { name, type, set: null, icon: icon || null },
+        wishes: []
+      };
+    } else {
+      // Backfill metadata if missing
+      if (name && !activeList.items[hash].static?.name) activeList.items[hash].static.name = name;
+      if (type && !activeList.items[hash].static?.type) activeList.items[hash].static.type = type;
+
+      // Backfill icon if we now have one
+      if (icon && (!activeList.items[hash].static || !activeList.items[hash].static.icon)) {
+        activeList.items[hash].static.icon = icon;
+      }
+    }
+
+    const existingWishes = activeList.items[hash].wishes || [];
+    activeList.items[hash].wishes = existingWishes;
+
+    // Duplicate check (same raw + same mode tag)
+    const isDuplicate = existingWishes.some(
+      (w) => w?.raw === rawString && (w?.tags || []).includes(mode)
+    );
+    if (isDuplicate) return;
+
+    // Add new wish
+    existingWishes.push({
+      tags: [mode],          // ['pve'] or ['pvp']
+      config,               // your armor/weapon config
+      raw: rawString,       // original string
+      added: Date.now()
+    });
+
+    chrome.storage.local.set({ dimData: data }, () => {
+      loadLists(); // refresh UI
+    });
+  });
+}
+
 function setupTabs() {
     const btnWeapons = document.getElementById('tab-weapons');
     const btnArmor = document.getElementById('tab-armor');
@@ -397,57 +449,72 @@ function loadLists() {
 }
 
 function createItemCard(hash, item) {
-    const card = document.createElement('div');
-    card.className = 'weapon-card';
+  const card = document.createElement('div');
+  card.className = 'weapon-card';
 
-    let wishesHtml = '';
-    
-    // Header Info (Uses Icon if available)
-    const iconHtml = item.static.icon ? 
-        `<img src="${BUNGIE_ROOT}${item.static.icon}" style="width:24px; height:24px; margin-right:8px; vertical-align:middle; border-radius:2px;">` : '';
+  const safeName = item?.static?.name || '(unknown)';
+  const safeType = (item?.static?.type || 'item').toString();
 
-    if (item.wishes && item.wishes.length > 0) {
-        item.wishes.forEach((wish, index) => {
-            const tag = wish.tags[0] || 'pve';
-            const badgeClass = tag === 'pvp' ? 'badge-pvp' : 'badge-pve';
-            
-            let detailText = `Roll #${index + 1}`;
-            if (item.static.type === 'armor' && wish.config) {
-                detailText = `${wish.config.archetype} + ${wish.config.spark}`;
-            }
+  // Normalize icon:
+  // - if icon is already absolute (starts with http), use as-is
+  // - if it's a relative Bungie path, prefix with BUNGIE_ROOT
+  const iconValue = item?.static?.icon;
+  const iconUrl =
+    iconValue
+      ? (iconValue.startsWith('http') ? iconValue : `${BUNGIE_ROOT}${iconValue}`)
+      : '';
 
-            wishesHtml += `
-                <div class="roll-row">
-                    <div>
-                        <span class="badge ${badgeClass}">${tag}</span>
-                        <span>${detailText}</span>
-                    </div>
-                    <button class="btn-del" data-hash="${hash}" data-idx="${index}">🗑️</button>
-                </div>
-            `;
-        });
+  const iconHtml = iconUrl
+    ? `<img src="${iconUrl}" class="card-icon" alt="">`
+    : '';
+
+  let wishesHtml = '';
+  const wishes = Array.isArray(item?.wishes) ? item.wishes : [];
+
+  wishes.forEach((wish, index) => {
+    const tag = (wish?.tags && wish.tags[0]) ? wish.tags[0] : 'pve';
+    const badgeClass = tag === 'pvp' ? 'badge-pvp' : 'badge-pve';
+
+    let detailText = `Roll #${index + 1}`;
+    if (safeType === 'armor' && wish?.config) {
+      const arch = wish.config.archetype || '';
+      const spark = wish.config.spark || '';
+      detailText = `${arch} + ${spark}`;
     }
 
-    card.innerHTML = `
-        <div class="card-header">
-            <div style="display:flex; align-items:center;">
-                ${iconHtml}
-                <span class="card-title">${item.static.name}</span>
-            </div>
-            <span class="card-id">${item.static.type.toUpperCase()}</span>
+    wishesHtml += `
+      <div class="roll-row">
+        <div>
+          <span class="badge ${badgeClass}">${tag}</span>
+          <span>${detailText}</span>
         </div>
-        <div class="card-body">
-            ${wishesHtml}
-        </div>
+        <button class="btn-del" data-hash="${hash}" data-idx="${index}" type="button">🗑️</button>
+      </div>
     `;
+  });
 
-    card.querySelectorAll('.btn-del').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            deleteWish(hash, e.target.dataset.idx);
-        });
+  card.innerHTML = `
+    <div class="card-header">
+      <div style="display:flex; align-items:center;">
+        ${iconHtml}
+        <span class="card-title">${safeName}</span>
+      </div>
+      <span class="card-id">${safeType.toUpperCase()}</span>
+    </div>
+    <div class="card-body">
+      ${wishesHtml}
+    </div>
+  `;
+
+  // IMPORTANT: use currentTarget so dataset is always correct
+  card.querySelectorAll('.btn-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = Number(e.currentTarget.dataset.idx);
+      deleteWish(hash, idx);
     });
+  });
 
-    return card;
+  return card;
 }
 
 function deleteWish(hash, index) {

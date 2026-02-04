@@ -39,7 +39,7 @@ function attachListeners() {
         };
     });
 
-    // 2. Search Input (Debounced)
+    // 2. Search Input
     const searchInput = document.getElementById('armor-query');
     searchInput.oninput = (e) => {
         clearTimeout(searchTimeout);
@@ -50,15 +50,71 @@ function attachListeners() {
         searchTimeout = setTimeout(() => triggerSearch(query), 500);
     };
 
-    // 3. Muted Mode Toggle (PvE/PvP)
+    // 3. Nameplate Reset Logic (Red Hover Reset)
+    const nameplate = document.getElementById('armor-set-name');
+    if (nameplate) {
+        nameplate.onclick = () => {
+            // Reset state variables
+            armorSelection = null;
+            currentArchetype = null;
+            currentSpark = null;
+
+            // Clear the actual text input field
+            const input = document.getElementById('armor-query');
+            if (input) input.value = "";
+
+            // Reset armor icons to their label-only state
+            document.querySelectorAll('.armor-box').forEach(b => {
+                b.classList.remove('selected', 'dimmed', 'loading');
+                b.innerHTML = `<span class="slot-label">${b.dataset.slot.toUpperCase()}</span>`;
+            });
+
+            // Clear selected stats in the grids
+            document.querySelectorAll('.stat-btn').forEach(b => {
+                b.classList.remove('selected', 'unavailable');
+            });
+            
+            // Wipe the nameplate text to hide it
+            nameplate.textContent = "";
+
+            // Refresh the main button state
+            updatePrimaryBtn();
+        };
+    }
+
+    // 4. Muted Mode Toggle
     const toggle = document.getElementById('ui-mode-toggle');
     toggle.onclick = () => {
         currentMode = (currentMode === 'pve') ? 'pvp' : 'pve';
         toggle.className = `toggle-container ${currentMode}`;
     };
 
-    // 4. Save Wish Button
-    document.getElementById('btn-create-armor').onclick = handleSaveWish;
+    // 5. Save Wish Button (Restored to ensure functionality)
+    const saveBtn = document.getElementById('btn-create-armor');
+    if (saveBtn) {
+        saveBtn.onclick = handleSaveWish;
+    }
+
+    // 6. Reset Panel Size (Top Label Double Click)
+    const labelTrigger = document.getElementById('panel-reset-trigger');
+    if (labelTrigger) {
+        labelTrigger.ondblclick = () => {
+            // Instead of resizing the frame (which Chrome blocks), 
+            // we reset the content to fill the panel and clear selections.
+            document.body.style.width = "100%"; 
+            
+            // Clear the annoying text highlight from the double-click
+            window.getSelection().removeAllRanges();
+
+            // Visual feedback that the command was received
+            labelTrigger.style.color = "#ff0000";
+            setTimeout(() => {
+                labelTrigger.style.color = "var(--accent-gold)";
+            }, 300);
+            
+            console.log("[UI] Layout reset to 100% of available panel width.");
+        };
+    }
 }
 
 /**
@@ -88,6 +144,10 @@ async function triggerSearch(query) {
 function populateStatGrids() {
     const archGrid = document.getElementById('archetype-grid');
     const sparkGrid = document.getElementById('spark-grid');
+
+    // Ensure grids are clear before populating
+    archGrid.innerHTML = '';
+    sparkGrid.innerHTML = '';
     
     // ARCHETYPES from manager.js
     ARCHETYPES.forEach(arch => {
@@ -124,21 +184,30 @@ function populateStatGrids() {
 /**
  * Refreshes the armor icons in Step 1.
  */
+/**
+ * Refreshes the armor icons in Step 1.
+ * Handles set name detection, selective dimming, and individual name updates.
+ */
 function refreshArmorDisplay(buckets) {
     const slots = ['Head', 'Arms', 'Chest', 'Legs', 'Class'];
     const nameplate = document.getElementById('armor-set-name');
     
-    // Update the Set Name using the first available item found
     const firstItem = Object.values(buckets).find(item => item !== undefined);
     if (nameplate) {
-        nameplate.textContent = firstItem ? firstItem.name : "";
+        if (firstItem) {
+            // Display general set name in White
+            nameplate.textContent = firstItem.name.replace(/(Mask|Vest|Grips|Strides|Cloak|Gauntlets|Plate|Helm|Greaves|Mark|Gloves|Robes|Bond)/gi, '').trim();
+            nameplate.style.color = "#ffffff"; 
+        } else {
+            nameplate.textContent = ""; 
+        }
     }
 
     slots.forEach(slot => {
         const box = document.querySelector(`.armor-box[data-slot="${slot}"]`);
         if (!box) return;
         
-        box.classList.remove('loading', 'selected');
+        box.classList.remove('loading', 'selected', 'dimmed');
         box.innerHTML = `<span class="slot-label">${slot.toUpperCase()}</span>`;
         
         const item = buckets[slot];
@@ -146,9 +215,23 @@ function refreshArmorDisplay(buckets) {
             const img = document.createElement('img');
             img.src = item.icon; 
             box.appendChild(img);
+            
             box.onclick = () => {
-                document.querySelectorAll('.armor-box').forEach(b => b.classList.remove('selected'));
+                // Dim others, highlight selected
+                document.querySelectorAll('.armor-box').forEach(b => {
+                    b.classList.remove('selected');
+                    b.classList.add('dimmed');
+                });
+                
+                box.classList.remove('dimmed');
                 box.classList.add('selected');
+                
+                // Update nameplate to specific piece in Gold
+                if (nameplate) {
+                    nameplate.textContent = item.name;
+                    nameplate.style.color = "var(--accent-gold)";
+                }
+
                 armorSelection = item;
                 updatePrimaryBtn();
             };

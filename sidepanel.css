@@ -14,6 +14,9 @@ body {
   color: var(--text-main);
   width: 100%;
   min-height: 100vh;
+
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden; /* Prevents scrollbars during resize */
 }
 
 .app-container { padding: 16px; }
@@ -27,6 +30,12 @@ header {
   top: 0;
   z-index: 100;
   margin: -16px -16px 16px -16px;
+}
+
+#panel-reset-trigger {
+    cursor: pointer;
+    user-select: none; /* Prevents text selection on double-click */
+    transition: color 0.3s ease;
 }
 
 .logo-area h1 { margin: 0; font-size: 18px; letter-spacing: 2px; color: var(--accent-gold); text-align: center; }
@@ -73,6 +82,7 @@ header {
   font-weight: bold;
   border-bottom: 1px solid #333;
   padding-bottom: 4px;
+  padding-top: 8px;
 }
 
 /* --- HORIZONTAL ARMOR GRID --- */
@@ -97,6 +107,18 @@ header {
     min-height: 8px;      /* Prevents layout jump when empty */
     text-transform: uppercase;
     letter-spacing: 1px;
+    cursor: pointer; /* Indicates it can be clicked */
+    transition: color 0.3s ease;
+}
+
+/* Hover effect turns it bright red */
+#armor-set-name:hover {
+    color: #ff0000 !important;
+    transform: translateX(-2px); /* Subtle nudge to show it's active */
+}
+
+#armor-set-name:empty {
+    display: none;
 }
 
 /* Ensure the grid wraps so the name stays on top */
@@ -135,6 +157,28 @@ header {
   z-index: 2;
 }
 
+/* --- SELECTIVE DIMMING --- */
+
+/* When any armor box is selected, we apply the dimmed state to the others via JS */
+.armor-box.dimmed {
+    opacity: 0.7;
+    filter: grayscale(0.5);
+    transform: scale(0.95);
+}
+
+/* Ensure the selected piece stays bright and centered */
+.armor-box.selected {
+    opacity: 1 !important;
+    filter: grayscale(0) !important;
+    transform: scale(1.05);
+    border-color: var(--accent-gold);
+    z-index: 10;
+}
+
+#armor-set-name {
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
 .slot-label {
   position: absolute;
   bottom: 2px;
@@ -168,11 +212,19 @@ header {
   text-align: center;
   cursor: pointer;
   border-radius: 2px;
-  transition: 0.2s;
+  transition: 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .stat-btn strong { display: block; font-size: 11px; color: #fff; }
-.stat-sub { font-size: 9px; color: var(--text-sub); }
+.stat-sub { 
+  font-size: 8px; /* Smaller font for the focus labels */
+  color: var(--text-sub); 
+  text-transform: uppercase;
+  margin-top: 2px;
+}
 
 .stat-btn:hover { background: #333; }
 .stat-btn.selected {

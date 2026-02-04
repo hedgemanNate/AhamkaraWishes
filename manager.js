@@ -315,15 +315,16 @@ async function searchArmorLocally(query, currentClassType) {
 
 
 const ARCHETYPES = [
-    { id: 'paragon', name: 'PARAGON', stats: ['Super', 'Melee'] },
-    { id: 'brawler', name: 'BRAWLER', stats: ['Melee', 'Health'] },
-    { id: 'gunner',  name: 'GUNNER',  stats: ['Grenade', 'Class'] }, 
-    { id: 'special', name: 'SPECIALIST', stats: ['Class', 'Grenade'] },
-    { id: 'grenadr', name: 'GRENADIER', stats: ['Grenade', 'Super'] },
-    { id: 'bulwark', name: 'BULWARK',   stats: ['Health', 'Class'] } 
+    { id: 'paragon',   name: 'PARAGON',   stats: ['Super', 'Melee'] },
+    { id: 'grenadr',   name: 'GRENADIER', stats: ['Grenade', 'Super'] },
+    { id: 'special',   name: 'SPECIALIST',stats: ['Class', 'Weapons'] },
+    { id: 'brawler',   name: 'BRAWLER',   stats: ['Melee', 'Health'] },
+    { id: 'bulwark',   name: 'BULWARK',   stats: ['Health', 'Class'] },
+    { id: 'gunner',    name: 'GUNNER',    stats: ['Weapons', 'Grenade'] }
 ];
 
-const STATS = ['Mobility', 'Health', 'Class', 'Grenade', 'Super', 'Melee'];
+// 'Weapons' replaces 'Mobility' in the Renegades expansion meta.
+const STATS = ['Weapons', 'Health', 'Class', 'Grenade', 'Super', 'Melee'];
 
 
 // --- INITIALIZATION ---

@@ -115,6 +115,25 @@ function attachListeners() {
             console.log("[UI] Layout reset to 100% of available panel width.");
         };
     }
+    
+    // 7. Bottom Nav Toggle (Armor View)
+    const navCraft = document.getElementById('nav-craft');
+    const navList = document.getElementById('nav-list');
+
+    if (navCraft && navList) {
+        const handleNavClick = (clickedBtn, otherBtn) => {
+            clickedBtn.classList.add('active');
+            otherBtn.classList.remove('active');
+            
+            // Logical Toggle: Hide/Show components based on selection
+            const armorWizard = document.querySelector('.armor-creator') || document.getElementById('view-armor');
+            // If you create a separate list div later, you can toggle visibility here
+            console.log(`[UI] Switched to Armor ${clickedBtn.textContent} view.`);
+        };
+
+        navCraft.onclick = () => handleNavClick(navCraft, navList);
+        navList.onclick = () => handleNavClick(navList, navCraft);
+    }
 }
 
 /**

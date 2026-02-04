@@ -389,3 +389,58 @@ header {
     color: #888;
     background: rgba(255, 255, 255, 0.05);
 }
+
+/* --- BOTTOM NAVIGATION PILL --- */
+/* --- FULL-WIDTH FIXED BOTTOM NAV --- */
+.bottom-nav-container {
+    position: fixed;
+    bottom: 0; /* Flush with the bottom */
+    left: 0;
+    width: 100%; /* Spans the entire width */
+    height: 55px; /* Increased height for better thumb targeting */
+    display: flex;
+    z-index: 2000;
+    background: #000;
+}
+
+.bottom-nav-pill {
+    display: flex;
+    width: 100%; /* Stretches the pill to 100% */
+    height: 100%; /* Stretches the buttons to the full height of container */
+    overflow: hidden;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5); /* Shadow on TOP of the bar */
+}
+
+.nav-btn {
+    flex: 1; /* Each button takes exactly 50% */
+    height: 100%; /* Reaches from top to bottom of the bar */
+    background: transparent;
+    color: #777;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 11px;
+    border: none;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+}
+
+/* Selected: Gold background, Black text */
+.nav-btn.active {
+    background: var(--accent-gold);
+    color: #000;
+}
+
+/* Unselected: Black background */
+.nav-btn:not(.active) {
+    background: #000;
+}
+
+/* Prevent content from being hidden behind the bar */
+#view-armor {
+    padding-bottom: 75px; 
+}

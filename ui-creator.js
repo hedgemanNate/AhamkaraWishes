@@ -11,6 +11,15 @@ let currentArchetype = null;
 let currentSpark = null;
 let currentMode = 'pve';
 
+const STAT_RANK = {
+    "Health": 1,
+    "Melee": 2,
+    "Grenade": 3,
+    "Super": 4,
+    "Class": 5,
+    "Weapons": 6
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     initArmorWizard();
 });
@@ -411,11 +420,39 @@ function createArmorCard(item) {
     const card = document.createElement('div');
     card.className = 'armor-card';
     
-    // Get stats from wish config
-    const archName = item.wishes[0].config.archetype;
-    const spark = item.wishes[0].config.spark;
+    // Safety check for 2026 wish data integrity
+    if (!item.wishes || !item.wishes[0]) return card;
+
+    const wishConfig = item.wishes[0].config;
+    const archName = wishConfig.archetype;
+    const sparkName = wishConfig.spark;
     const archetype = ARCHETYPES.find(a => a.name === archName);
-    const secStat = archetype ? archetype.stats[1].toLowerCase() : 'weapons';
+
+    // 1. Assemble the 3 stats into a list for sorting
+    const statsToDisplay = [
+        { name: archetype.stats[0], type: 'pri', weight: 85 },
+        { name: archetype.stats[1], type: 'sec', weight: 60 },
+        { name: sparkName.toLowerCase(), type: 'spark', weight: 40 }
+    ];
+
+    // 2. Sort stats by in-game Rank (Health at top, Weapons at bottom)
+    statsToDisplay.sort((a, b) => STAT_RANK[a.name] - STAT_RANK[b.name]);
+
+    // 3. Map the sorted stats to HTML rows
+    const statRowsHTML = statsToDisplay.map(stat => {
+        const lowerName = stat.name.toLowerCase();
+        // Secondary stats use the stat-specific muted colors we brainstormed
+        const colorClass = (stat.type === 'sec') ? `bar-sec-${lowerName}` : `bar-${stat.type}`;
+        
+        return `
+            <div class="stat-row-mini">
+                <div class="stat-bar-fill">
+                    <div class="bar-progress ${colorClass}" style="width: ${stat.weight}%"></div>
+                </div>
+                <div class="stat-icon-mini icon-${lowerName}"></div>
+            </div>
+        `;
+    }).join('');
 
     card.innerHTML = `
         <div class="card-img-side">
@@ -423,12 +460,10 @@ function createArmorCard(item) {
         </div>
         <div class="card-info-side">
             <div class="card-armor-name">${item.static.name}</div>
-            <div class="card-archetype-sub">${archName} SYNERGY</div>
+            <div class="card-archetype-sub">${archName} +${sparkName.toLowerCase()}</div>
         </div>
         <div class="card-stats-side">
-            <div class="stat-row-mini"><div class="stat-bar-fill"><div class="bar-progress bar-pri"></div></div><div class="stat-icon-mini"></div></div>
-            <div class="stat-row-mini"><div class="stat-bar-fill"><div class="bar-progress bar-sec-${secStat}"></div></div><div class="stat-icon-mini"></div></div>
-            <div class="stat-row-mini"><div class="stat-bar-fill"><div class="bar-progress bar-spark"></div></div><div class="stat-icon-mini"></div></div>
+            ${statRowsHTML}
         </div>
         <div class="delete-overlay">
             <button class="del-btn">DELETE</button>

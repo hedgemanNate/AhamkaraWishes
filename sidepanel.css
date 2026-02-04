@@ -594,18 +594,18 @@ header {
 
 /* --- STAT GRAPH (RIGHT SIDE) --- */
 .card-stats-side {
-    width: 100px;
+    width: 140px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     justify-content: center;
 }
 
 .stat-row-mini {
     display: flex;
     align-items: center;
-    gap: 6px;
-    height: 6px;
+    gap: 8px;
+    height: 14px;
 }
 
 .stat-bar-fill {

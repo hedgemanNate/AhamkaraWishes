@@ -126,8 +126,18 @@ function populateStatGrids() {
  */
 function refreshArmorDisplay(buckets) {
     const slots = ['Head', 'Arms', 'Chest', 'Legs', 'Class'];
+    const nameplate = document.getElementById('armor-set-name');
+    
+    // Update the Set Name using the first available item found
+    const firstItem = Object.values(buckets).find(item => item !== undefined);
+    if (nameplate) {
+        nameplate.textContent = firstItem ? firstItem.name : "";
+    }
+
     slots.forEach(slot => {
         const box = document.querySelector(`.armor-box[data-slot="${slot}"]`);
+        if (!box) return;
+        
         box.classList.remove('loading', 'selected');
         box.innerHTML = `<span class="slot-label">${slot.toUpperCase()}</span>`;
         

@@ -456,9 +456,42 @@ function createArmorCard(item) {
 
     card.querySelector('.del-btn').onclick = (e) => {
         e.stopPropagation();
-        // Future Feature: deleteWish(item.hash, 0); 
-        card.remove();
+        // Visual feedback: Shrink and fade before it vanishes
+        card.style.transform = "scale(0.9)";
+        card.style.opacity = "0";
+        card.style.transition = "0.3s ease";
+
+        // Delay the data deletion slightly so the animation finishes
+        setTimeout(() => {
+            deleteArmorWish(item.hash);
+        }, 300);
     };
 
     return card;
+}
+
+/**
+ * Deletes an armor wish from local storage.
+ */
+function deleteArmorWish(hash) {
+    chrome.storage.local.get(['dimData'], (result) => {
+        let data = result.dimData;
+
+        // Safety check: ensure the data structure exists
+        if (data && data.lists && data.lists.default && data.lists.default.items) {
+            
+            // Remove the item using its unique hash
+            if (data.lists.default.items[hash]) {
+                delete data.lists.default.items[hash];
+
+                // Save the updated list back to storage
+                chrome.storage.local.set({ dimData: data }, () => {
+                    console.log(`[Manager] Wish rescinded for hash: ${hash}`);
+                    
+                    // Refresh the UI to reflect the removal
+                    refreshArmorList();
+                });
+            }
+        }
+    });
 }

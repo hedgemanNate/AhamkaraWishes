@@ -233,13 +233,27 @@ function saveArmorWish() {
         chrome.storage.local.set({ dimData: data }, () => {
             // Visual Feedback
             const btn = document.getElementById('btn-create-armor');
-            const originalText = btn.textContent;
             btn.textContent = "SAVED!";
             btn.style.borderColor = "#4ade80"; // Green
+            
             setTimeout(() => {
-                btn.textContent = originalText;
+                // 1. Reset Button Visuals
+                btn.textContent = "SELECT STATS ABOVE";
                 btn.style.borderColor = ""; 
-                loadLists(); // Refresh view
+                btn.disabled = true;
+                
+                // 2. Clear Data State
+                currentArchetype = null;
+                currentSpark = null;
+
+                // 3. Clear Grid Visuals
+                document.querySelectorAll('.stat-btn').forEach(b => {
+                    b.classList.remove('selected');
+                    b.classList.remove('unavailable');
+                });
+
+                // 4. Refresh List
+                loadLists(); 
             }, 1000);
         });
     });

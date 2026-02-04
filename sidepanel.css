@@ -18,7 +18,7 @@ body {
 
 .app-container { padding: 16px; }
 
-/* HEADER */
+/* --- HEADER & NAVIGATION --- */
 header {
   background: #111;
   padding: 15px;
@@ -26,7 +26,7 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
-  margin: -16px -16px 16px -16px; /* Offset parent padding */
+  margin: -16px -16px 16px -16px;
 }
 
 .logo-area h1 { margin: 0; font-size: 18px; letter-spacing: 2px; color: var(--accent-gold); text-align: center; }
@@ -47,71 +47,187 @@ header {
 }
 .tab-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
 
-/* VIEWS */
+/* --- VIEWS --- */
 .content-view { display: none; }
 .content-view.active-view { display: block; }
 .hidden { display: none !important; }
 
-/* SEARCH UI (New) */
-.class-selector select {
-  width: 100%;
-  padding: 8px;
-  background: #000;
-  color: #fff;
-  border: 1px solid #444;
-  margin-bottom: 12px;
-  border-radius: 4px;
+/* --- ARMOR WIZARD LAYOUT --- */
+.armor-creator {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.search-box { display: flex; gap: 8px; margin-bottom: 12px; }
-.search-box input {
-  flex-grow: 1;
-  padding: 8px;
+.step-container, .armor-search-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  padding-bottom: 4px;
+}
+
+/* --- HORIZONTAL ARMOR GRID --- */
+.armor-grid {
+  display: flex;
+  flex-direction: row; /* Horizontal alignment */
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #222;
+}
+
+.armor-box {
+  flex: 1;
+  aspect-ratio: 1 / 1; /* Force perfect squares */
+  background: #111;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.armor-box:hover {
+  border-color: #555;
+  background: #1a1a1a;
+}
+
+.armor-box.selected {
+  border-color: var(--accent-gold);
+  box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.armor-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 2;
+}
+
+.slot-label {
+  position: absolute;
+  bottom: 2px;
+  font-size: 7px;
+  color: #555;
+  text-transform: uppercase;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* --- SEARCH INPUT --- */
+.search-input {
+  width: 100%;
+  padding: 10px;
   background: #2b2e35;
   border: 1px solid #444;
   color: #fff;
   border-radius: 4px;
-}
-.search-box button {
-  padding: 8px 16px;
-  background: var(--accent-gold);
-  border: none;
-  border-radius: 4px;
-  color: #000;
-  font-weight: bold;
-  cursor: pointer;
+  box-sizing: border-box;
 }
 
-.status { height: 20px; font-size: 12px; color: #aaa; margin-bottom: 8px; }
+/* --- STAT BUTTONS --- */
+.grid-2col, .grid-3col { display: grid; gap: 8px; }
+.grid-2col { grid-template-columns: 1fr 1fr; }
+.grid-3col { grid-template-columns: 1fr 1fr 1fr; }
 
-/* RESULT GRID */
-.armor-grid { display: flex; flex-direction: column; gap: 8px; }
-
-.armor-card {
-  display: flex;
-  align-items: center;
-  background: #25282e;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #333;
-}
-.armor-card img { width: 40px; height: 40px; margin-right: 12px; border-radius: 4px; }
-.armor-card .info { flex-grow: 1; }
-.armor-card .name { font-size: 14px; font-weight: 600; }
-.armor-card .type { font-size: 11px; color: #888; }
-
-.add-btn {
-  background: transparent;
-  color: #aaa;
+.stat-btn {
+  background: #25252d;
   border: 1px solid #444;
-  padding: 4px 10px;
-  font-size: 16px;
+  padding: 10px 5px;
+  text-align: center;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 2px;
+  transition: 0.2s;
 }
-.add-btn:hover { color: #fff; border-color: #fff; }
 
-/* EXISTING CARD STYLES (For Weapon Tab) */
+.stat-btn strong { display: block; font-size: 11px; color: #fff; }
+.stat-sub { font-size: 9px; color: var(--text-sub); }
+
+.stat-btn:hover { background: #333; }
+.stat-btn.selected {
+  background: #3a3a4a;
+  border-color: var(--accent-gold);
+}
+
+.stat-btn.unavailable {
+  opacity: 0.3;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+/* --- MUTED MODE TOGGLE --- */
+.toggle-container {
+  display: flex;
+  background: #000;
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.toggle-container div {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+/* Muted Slate Blue for PvE */
+.toggle-container.pve .opt-pve {
+  background: #2e3b52;
+  color: #cbd5e1;
+}
+
+/* Muted Dusty Crimson for PvP */
+.toggle-container.pvp .opt-pvp {
+  background: #5c2d2d;
+  color: #fecaca;
+}
+
+/* --- PRIMARY BUTTON --- */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent-gold);
+  color: #000;
+  border: none;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn-primary:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.btn-primary.success {
+  background: #3d5a45 !important;
+  color: #a7f3d0 !important;
+}
+
+/* --- WEAPON TAB STYLES --- */
 .weapon-card {
   background: var(--bg-card);
   border-left: 4px solid var(--accent-gold);
@@ -119,95 +235,6 @@ header {
   padding: 12px;
   border-radius: 4px;
 }
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #444;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-}
+.card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 8px; margin-bottom: 8px; }
 .card-icon { width: 24px; height: 24px; margin-right: 8px; border-radius: 2px; }
-.card-title { font-weight: bold; font-size: 15px; color: #fff; }
-.card-id { font-size: 10px; color: #555; font-family: monospace; }
-.roll-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  color: var(--text-sub);
-  padding: 4px 0;
-  border-bottom: 1px solid #333;
-}
-.badge { padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; margin-right: 8px; }
-.badge-pve { background: #172554; color: #93c5fd; border: 1px solid #1e40af; }
-.badge-pvp { background: #450a0a; color: #fca5a5; border: 1px solid #991b1b; }
-
-.btn-del { background: transparent; border: none; cursor: pointer; opacity: 0.6; }
-
-.secondary-btn {
-  background: transparent;
-  color: #666;
-  font-size: 10px;
-  margin-top: 20px;
-  padding: 0;
-  border: none;
-  cursor: pointer;
-}
-.secondary-btn:hover { color: #999; }
-
-/* --- MUTED TOGGLE STYLES --- */
-.toggle-container {
-    display: flex;
-    background: #000;
-    border: 1px solid #333;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 15px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-}
-
-.toggle-container:hover {
-    border-color: #444;
-}
-
-/* Base style for toggle options */
-.toggle-container div {
-    flex: 1;
-    padding: 10px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: bold;
-    color: #555; /* Default unselected text */
-    text-transform: uppercase;
-    transition: all 0.2s ease;
-}
-
-/* PvE Muted Blue (Slate/Steel Blue) */
-.toggle-container.pve .opt-pve {
-    background: #2e3b52; /* Muted Navy/Slate */
-    color: #cbd5e1;      /* Light Grey-Blue text */
-}
-
-/* PvP Muted Red (Dusty Crimson/Brick) */
-.toggle-container.pvp .opt-pvp {
-    background: #5c2d2d; /* Muted Brick/Crimson */
-    color: #fecaca;      /* Soft Rose text */
-}
-
-/* --- STATE CLASSES --- */
-.stat-btn.unavailable {
-    background-color: #0d0d0d !important;
-    color: #222 !important;
-    border-color: #1a1a1a !important;
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: scale(0.98);
-}
-
-.btn-primary.success {
-    background: #3d5a45 !important; /* Muted Forest Green */
-    color: #a7f3d0 !important;
-    border: 1px solid #064e3b;
-}
+.card-title { font-weight: bold; font-size: 15px; color: #fff

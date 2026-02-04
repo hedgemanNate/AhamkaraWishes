@@ -357,7 +357,7 @@ function refreshArmorList() {
             if (item.static.type !== 'armor' || !item.wishes) return;
 
             // Extract set name (e.g., "Iron Forerunner")
-            const setName = item.static.name.replace(/(Mask|Vest|Grips|Strides|Cloak|Gauntlets|Plate|Helm|Greaves|Mark|Gloves|Robes|Bond)/gi, '').trim();
+            const setName = getArmorSetName(item.static.name);
             
             if (!armorSets[setName]) armorSets[setName] = [];
             armorSets[setName].push({ hash, ...item });
@@ -494,4 +494,29 @@ function deleteArmorWish(hash) {
             }
         }
     });
+}
+
+/**
+ * Cleans armor names to extract the base Set Name.
+ * Optimized for 2026 Renegades slot naming conventions.
+ */
+function getArmorSetName(fullName) {
+    if (!fullName) return "Unknown Set";
+    
+    // Comprehensive list of slot keywords across all 3 classes (2026 update)
+    const slotKeywords = [
+        "Mask", "Vest", "Grips", "Strides", "Cloak",              // Hunter
+        "Helm", "Gauntlets", "Plate", "Greaves", "Mark",            // Titan
+        "Hood", "Gloves", "Robes", "Boots", "Bond", "Cover",        // Warlock
+        "Helmet", "Chest", "Arms", "Legs", "Class Item"            // Generic
+    ];
+
+    // Create a dynamic Regex to strip slot names and trailing spaces
+    const regex = new RegExp(`\\b(${slotKeywords.join('|')})\\b`, 'gi');
+    
+    // Remove slot keywords and any double spaces/trailing punctuation
+    let cleaned = fullName.replace(regex, '').replace(/\s\s+/g, ' ').trim();
+    
+    // If the name is empty after cleaning (rare), fallback to the full name
+    return cleaned || fullName;
 }

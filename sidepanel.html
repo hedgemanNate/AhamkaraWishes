@@ -21,69 +21,79 @@
       </div>
     </header>
 
-    <!-- WEAPONS VIEW -->
     <div id="view-weapons" class="content-view active-view">
       <div id="empty-state" class="hidden">No wishes yet.</div>
       <div id="weapon-list"></div>
     </div>
 
-    <!-- ARMOR VIEW -->
     <div id="view-armor" class="content-view">
-      <div class="class-selector">
-        <button class="class-btn active" data-class="0">TITAN</button>
-        <button class="class-btn" data-class="2">WARLOCK</button>
-        <button class="class-btn" data-class="1">HUNTER</button>
-      </div>
-
-      <div class="armor-search-container">
-        <div class="step-label">1. SEARCH ARMOR (Set Name)</div>
-        <input type="text" class="search-input" id="armor-query" placeholder="e.g. Iron, Artifice, Noble...">
-
-        <div class="armor-grid" id="armor-grid">
-          <div id="armor-set-name"></div>
-
-          <div class="armor-box" data-slot="Head"><span class="slot-label">HEAD</span></div>
-          <div class="armor-box" data-slot="Arms"><span class="slot-label">ARMS</span></div>
-          <div class="armor-box" data-slot="Chest"><span class="slot-label">CHEST</span></div>
-          <div class="armor-box" data-slot="Legs"><span class="slot-label">LEGS</span></div>
-          <div class="armor-box" data-slot="Class"><span class="slot-label">CLASS</span></div>
-        </div>
-      </div>
-
-      <div class="step-container">
-        <div class="step-label">2. CHOOSE ARCHETYPE</div>
-        <div class="grid-2col" id="archetype-grid"></div>
-      </div>
-
-      <div class="step-container">
-        <div class="step-label">3. CHOOSE SPARK</div>
-        <div class="grid-3col" id="spark-grid"></div>
-      </div>
-
-      <div class="action-area" style="margin-top: 20px;">
-        <div class="toggle-container pve" id="ui-mode-toggle">
-          <div class="opt-pve">PvE</div>
-          <div class="opt-pvp">PvP</div>
-        </div>
-
-        <button id="btn-create-armor" class="btn-primary" disabled>
-          SELECT ARMOR PIECE FIRST
-        </button>
-      </div>
-
-      <div class="cache-controls" style="text-align: center; margin-top: 20px;">
-        <button id="clearCacheBtn" class="secondary-btn">Reset Manifest Cache</button>
-      </div>
-      <div class="bottom-nav-container">
-            <div class="bottom-nav-pill">
-                <button id="nav-craft" class="nav-btn active">CRAFT</button>
-                <button id="nav-list" class="nav-btn">LIST</button>
+      
+      <div class="armor-view-stage">
+        <div class="armor-view-slider show-craft" id="armor-slider">
+          
+          <div class="armor-internal-view" id="pane-craft">
+            <div class="class-selector">
+              <button class="class-btn active" data-class="0">TITAN</button>
+              <button class="class-btn" data-class="2">WARLOCK</button>
+              <button class="class-btn" data-class="1">HUNTER</button>
             </div>
+
+            <div class="armor-search-container">
+              <div class="step-label">1. SEARCH ARMOR (Set Name)</div>
+              <input type="text" class="search-input" id="armor-query" placeholder="e.g. Iron, Artifice, Noble...">
+
+              <div class="armor-grid" id="armor-grid">
+                <div id="armor-set-name"></div>
+                <div class="armor-box" data-slot="Head"><span class="slot-label">HEAD</span></div>
+                <div class="armor-box" data-slot="Arms"><span class="slot-label">ARMS</span></div>
+                <div class="armor-box" data-slot="Chest"><span class="slot-label">CHEST</span></div>
+                <div class="armor-box" data-slot="Legs"><span class="slot-label">LEGS</span></div>
+                <div class="armor-box" data-slot="Class"><span class="slot-label">CLASS</span></div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step-label">2. CHOOSE ARCHETYPE</div>
+              <div class="grid-2col" id="archetype-grid"></div>
+            </div>
+
+            <div class="step-container">
+              <div class="step-label">3. CHOOSE SPARK</div>
+              <div class="grid-3col" id="spark-grid"></div>
+            </div>
+
+            <div class="action-area" style="margin-top: 20px;">
+              <div class="toggle-container pve" id="ui-mode-toggle">
+                <div class="opt-pve">PvE</div>
+                <div class="opt-pvp">PvP</div>
+              </div>
+              <button id="btn-create-armor" class="btn-primary" disabled>SELECT ARMOR PIECE FIRST</button>
+            </div>
+
+            <div class="cache-controls" style="text-align: center; margin-top: 20px;">
+              <button id="clearCacheBtn" class="secondary-btn">Reset Manifest Cache</button>
+            </div>
+          </div>
+
+          <div class="armor-internal-view" id="pane-list">
+             <div id="armor-list-container">
+                <div class="empty-list-text">No Armor Wishes yet.</div>
+             </div>
+          </div>
+
         </div>
+      </div>
+
+      <div class="bottom-nav-container">
+        <div class="bottom-nav-pill">
+          <button id="nav-craft" class="nav-btn active">CRAFT</button>
+          <button id="nav-list" class="nav-btn">LIST</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- IMPORTANT: manager.js must load before ui-creator.js -->
   <script src="manager.js"></script>
   <script src="ui-creator.js"></script>
 </body>

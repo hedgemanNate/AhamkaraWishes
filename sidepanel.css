@@ -19,6 +19,32 @@ body {
   overflow-x: hidden; /* Prevents scrollbars during resize */
 }
 
+/* --- VIEW SLIDE INFRASTRUCTURE --- */
+.armor-view-stage {
+  width: 100%;
+  overflow: hidden; 
+  position: relative;
+}
+
+.armor-view-slider {
+  display: flex;
+  width: 200%; /* Holds two panes side-by-side */
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.armor-internal-view {
+  width: 50%; /* Each pane is one panel width */
+  flex-shrink: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  padding-bottom: 80px; /* Space for fixed bottom nav */
+}
+
+/* Slider States */
+.show-craft { transform: translateX(0); }
+.show-list { transform: translateX(-50%); }
+
 .app-container { padding: 16px; }
 
 /* --- HEADER & NAVIGATION --- */

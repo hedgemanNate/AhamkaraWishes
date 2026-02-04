@@ -27,7 +27,58 @@ function initArmorWizard() {
  * Attaches all event listeners for buttons, inputs, and toggles.
  */
 function attachListeners() {
-    // 1. Class Selection Pill
+    // 1. Header Reset (Double Click) - Resets panel width and flashes red
+    const labelTrigger = document.getElementById('panel-reset-trigger');
+    if (labelTrigger) {
+        labelTrigger.ondblclick = () => {
+            document.body.style.width = "100%"; 
+            window.getSelection().removeAllRanges();
+            labelTrigger.style.color = "#ff0000";
+            setTimeout(() => {
+                labelTrigger.style.color = "var(--accent-gold)";
+            }, 300);
+        };
+    }
+
+    // 2. Tab Switching (Global: Weapons vs Armor)
+    const btnWeapons = document.getElementById('tab-weapons');
+    const btnArmor = document.getElementById('tab-armor');
+    if (btnWeapons && btnArmor) {
+        btnWeapons.onclick = () => {
+            btnWeapons.classList.add('active');
+            btnArmor.classList.remove('active');
+            document.getElementById('view-weapons').classList.add('active-view');
+            document.getElementById('view-armor').classList.remove('active-view');
+        };
+        btnArmor.onclick = () => {
+            btnArmor.classList.add('active');
+            btnWeapons.classList.remove('active');
+            document.getElementById('view-armor').classList.add('active-view');
+            document.getElementById('view-weapons').classList.remove('active-view');
+        };
+    }
+
+    // 3. Bottom Nav Slider (Internal Armor Toggle: Craft vs List)
+    const navCraft = document.getElementById('nav-craft');
+    const navList = document.getElementById('nav-list');
+    const armorSlider = document.getElementById('armor-slider');
+
+    if (navCraft && navList && armorSlider) {
+        navCraft.onclick = () => {
+            navCraft.classList.add('active');
+            navList.classList.remove('active');
+            armorSlider.className = 'armor-view-slider show-craft';
+        };
+
+        navList.onclick = () => {
+            navList.classList.add('active');
+            navCraft.classList.remove('active');
+            armorSlider.className = 'armor-view-slider show-list';
+            // Placeholder for Feature 2: loadArmorList();
+        };
+    }
+
+    // 4. Class Selection Pill
     document.querySelectorAll('.class-btn').forEach(btn => {
         btn.onclick = (e) => {
             document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
@@ -39,100 +90,50 @@ function attachListeners() {
         };
     });
 
-    // 2. Search Input
+    // 5. Search Input Logic
     const searchInput = document.getElementById('armor-query');
-    searchInput.oninput = (e) => {
-        clearTimeout(searchTimeout);
-        const query = e.target.value.trim();
-        if (query.length < 2) return;
+    if (searchInput) {
+        searchInput.oninput = (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            if (query.length < 2) return;
+            document.querySelectorAll('.armor-box').forEach(b => b.classList.add('loading'));
+            searchTimeout = setTimeout(() => triggerSearch(query), 500);
+        };
+    }
 
-        document.querySelectorAll('.armor-box').forEach(b => b.classList.add('loading'));
-        searchTimeout = setTimeout(() => triggerSearch(query), 500);
-    };
-
-    // 3. Nameplate Reset Logic (Red Hover Reset)
+    // 6. Nameplate Reset (Red Hover Reset)
     const nameplate = document.getElementById('armor-set-name');
     if (nameplate) {
         nameplate.onclick = () => {
-            // Reset state variables
             armorSelection = null;
             currentArchetype = null;
             currentSpark = null;
-
-            // Clear the actual text input field
             const input = document.getElementById('armor-query');
             if (input) input.value = "";
-
-            // Reset armor icons to their label-only state
             document.querySelectorAll('.armor-box').forEach(b => {
                 b.classList.remove('selected', 'dimmed', 'loading');
                 b.innerHTML = `<span class="slot-label">${b.dataset.slot.toUpperCase()}</span>`;
             });
-
-            // Clear selected stats in the grids
-            document.querySelectorAll('.stat-btn').forEach(b => {
-                b.classList.remove('selected', 'unavailable');
-            });
-            
-            // Wipe the nameplate text to hide it
+            document.querySelectorAll('.stat-btn').forEach(b => b.classList.remove('selected', 'unavailable'));
             nameplate.textContent = "";
-
-            // Refresh the main button state
             updatePrimaryBtn();
         };
     }
 
-    // 4. Muted Mode Toggle
+    // 7. Mode Toggle (PvE/PvP)
     const toggle = document.getElementById('ui-mode-toggle');
-    toggle.onclick = () => {
-        currentMode = (currentMode === 'pve') ? 'pvp' : 'pve';
-        toggle.className = `toggle-container ${currentMode}`;
-    };
+    if (toggle) {
+        toggle.onclick = () => {
+            currentMode = (currentMode === 'pve') ? 'pvp' : 'pve';
+            toggle.className = `toggle-container ${currentMode}`;
+        };
+    }
 
-    // 5. Save Wish Button (Restored to ensure functionality)
+    // 8. Save Wish Button
     const saveBtn = document.getElementById('btn-create-armor');
     if (saveBtn) {
         saveBtn.onclick = handleSaveWish;
-    }
-
-    // 6. Reset Panel Size (Top Label Double Click)
-    const labelTrigger = document.getElementById('panel-reset-trigger');
-    if (labelTrigger) {
-        labelTrigger.ondblclick = () => {
-            // Instead of resizing the frame (which Chrome blocks), 
-            // we reset the content to fill the panel and clear selections.
-            document.body.style.width = "100%"; 
-            
-            // Clear the annoying text highlight from the double-click
-            window.getSelection().removeAllRanges();
-
-            // Visual feedback that the command was received
-            labelTrigger.style.color = "#ff0000";
-            setTimeout(() => {
-                labelTrigger.style.color = "var(--accent-gold)";
-            }, 300);
-            
-            console.log("[UI] Layout reset to 100% of available panel width.");
-        };
-    }
-    
-    // 7. Bottom Nav Toggle (Armor View)
-    const navCraft = document.getElementById('nav-craft');
-    const navList = document.getElementById('nav-list');
-
-    if (navCraft && navList) {
-        const handleNavClick = (clickedBtn, otherBtn) => {
-            clickedBtn.classList.add('active');
-            otherBtn.classList.remove('active');
-            
-            // Logical Toggle: Hide/Show components based on selection
-            const armorWizard = document.querySelector('.armor-creator') || document.getElementById('view-armor');
-            // If you create a separate list div later, you can toggle visibility here
-            console.log(`[UI] Switched to Armor ${clickedBtn.textContent} view.`);
-        };
-
-        navCraft.onclick = () => handleNavClick(navCraft, navList);
-        navList.onclick = () => handleNavClick(navList, navCraft);
     }
 }
 

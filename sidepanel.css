@@ -1,278 +1,156 @@
-/* --- EXISTING STYLES (Keep your variables & basics) --- */
 :root {
-    --bg-dark: #1e1e24;
-    --bg-card: #2b2b36;
-    --accent-gold: #d4af37;
-    --text-main: #ffffff;
-    --text-sub: #aaaaaa;
+  --bg-dark: #1e1e24;
+  --bg-card: #2b2b36;
+  --accent-gold: #d4af37;
+  --text-main: #ffffff;
+  --text-sub: #aaaaaa;
 }
 
 body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    width: 100%;
-    min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  width: 100%;
+  min-height: 100vh;
 }
 
-/* HEADER & TABS */
+.app-container { padding: 16px; }
+
+/* HEADER */
 header {
-    background: #111;
-    padding: 15px;
-    border-bottom: 2px solid var(--accent-gold);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+  background: #111;
+  padding: 15px;
+  border-bottom: 2px solid var(--accent-gold);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin: -16px -16px 16px -16px; /* Offset parent padding */
 }
 
-.logo-area h1 { margin: 0; font-size: 18px; letter-spacing: 2px; color: var(--accent-gold); }
-.subtitle { font-size: 10px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 4px; }
+.logo-area h1 { margin: 0; font-size: 18px; letter-spacing: 2px; color: var(--accent-gold); text-align: center; }
+.subtitle { display: block; text-align: center; font-size: 10px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 4px; }
 
-.tab-switcher {
-    display: flex;
-    margin-top: 15px;
-    gap: 10px;
-}
-
+.tab-switcher { display: flex; margin-top: 15px; gap: 10px; padding: 0 10px; }
 .tab-btn {
-    flex: 1;
-    background: transparent;
-    border: 1px solid #444;
-    color: #777;
-    padding: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    text-transform: uppercase;
-    font-size: 12px;
-    transition: 0.2s;
+  flex: 1;
+  background: transparent;
+  border: 1px solid #444;
+  color: #777;
+  padding: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 11px;
+  transition: 0.2s;
+}
+.tab-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
+
+/* VIEWS */
+.content-view { display: block; }
+.hidden { display: none !important; }
+
+/* SEARCH UI (New) */
+.class-selector select {
+  width: 100%;
+  padding: 8px;
+  background: #000;
+  color: #fff;
+  border: 1px solid #444;
+  margin-bottom: 12px;
+  border-radius: 4px;
 }
 
-.tab-btn.active {
-    background: var(--accent-gold);
-    color: #000;
-    border-color: var(--accent-gold);
+.search-box { display: flex; gap: 8px; margin-bottom: 12px; }
+.search-box input {
+  flex-grow: 1;
+  padding: 8px;
+  background: #2b2e35;
+  border: 1px solid #444;
+  color: #fff;
+  border-radius: 4px;
+}
+.search-box button {
+  padding: 8px 16px;
+  background: var(--accent-gold);
+  border: none;
+  border-radius: 4px;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
 }
 
-/* CONTENT ZONES */
-.content-view { display: none; padding: 15px; padding-bottom: 80px; }
-.active-view { display: block; }
-.hidden { display: none; }
+.status { height: 20px; font-size: 12px; color: #aaa; margin-bottom: 8px; }
 
-/* --- NEW: CLASS SELECTOR (Square Pill) --- */
-.class-selector {
-    display: flex;
-    border: 1px solid #444;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 15px;
-    background: #000;
+/* RESULT GRID */
+.armor-grid { display: flex; flex-direction: column; gap: 8px; }
+
+.armor-card {
+  display: flex;
+  align-items: center;
+  background: #25282e;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #333;
 }
+.armor-card img { width: 40px; height: 40px; margin-right: 12px; border-radius: 4px; }
+.armor-card .info { flex-grow: 1; }
+.armor-card .name { font-size: 14px; font-weight: 600; }
+.armor-card .type { font-size: 11px; color: #888; }
 
-.class-btn {
-    flex: 1;
-    padding: 10px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: bold;
-    color: #555;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: 0.2s;
-    background: transparent;
-    border: none; /* Reset standard btn styles */
+.add-btn {
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #444;
+  padding: 4px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
 }
+.add-btn:hover { color: #fff; border-color: #fff; }
 
-.class-btn:hover { background: #111; color: #888; }
-
-.class-btn.active {
-    background: var(--accent-gold);
-    color: #000;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
-}
-
-/* --- NEW: ARMOR SEARCH & GRID --- */
-.armor-search-container {
-    margin-bottom: 20px;
-}
-
-.search-input {
-    width: 100%;
-    padding: 12px;
-    background: #111;
-    border: 1px solid #444;
-    color: #fff;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 13px;
-    box-sizing: border-box; /* Ensures padding doesn't break width */
-    margin-bottom: 10px;
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: var(--accent-gold);
-}
-
-.armor-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-}
-
-.armor-box {
-    aspect-ratio: 1; /* Perfect square */
-    background: #000;
-    border: 1px solid #333;
-    border-radius: 4px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: 0.2s;
-}
-
-.armor-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.5; /* Dim by default */
-    transition: 0.2s;
-}
-
-.armor-box:hover { border-color: #666; }
-.armor-box:hover img { opacity: 0.8; }
-
-.armor-box.selected {
-    border-color: var(--accent-gold);
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
-}
-
-.armor-box.selected img {
-    opacity: 1;
-}
-
-/* Loading State for Boxes */
-.armor-box.loading {
-    animation: pulse 1.5s infinite;
-    background: #111;
-}
-
-@keyframes pulse {
-    0% { background: #111; }
-    50% { background: #222; }
-    100% { background: #111; }
-}
-
-/* --- EXISTING: STAT BUTTONS --- */
-.step-label {
-    font-size: 12px;
-    color: var(--accent-gold);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 20px;
-}
-
-.grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-.grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 25px; }
-
-.stat-btn {
-    background: #2a2a2a;
-    border: 1px solid #444;
-    color: #ccc;
-    padding: 12px 5px;
-    cursor: pointer;
-    text-align: center;
-    font-size: 12px;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s;
-}
-.stat-btn strong { display: block; margin-bottom: 4px; font-size: 13px; }
-.stat-btn.selected {
-    border-color: var(--accent-gold);
-    background: rgba(212, 175, 55, 0.15);
-    color: var(--accent-gold);
-}
-.stat-btn.unavailable {
-    background-color: #080808 !important;
-    color: #333 !important;
-    border-color: #111 !important;
-    opacity: 0.5;
-    pointer-events: none;
-    box-shadow: inset 0 0 10px #000;
-    transform: scale(0.95);
-}
-
-/* --- WEAPON CARDS --- */
+/* EXISTING CARD STYLES (For Weapon Tab) */
 .weapon-card {
-    background: var(--bg-card);
-    border-left: 4px solid var(--accent-gold);
-    margin-bottom: 12px;
-    padding: 12px;
-    border-radius: 4px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  background: var(--bg-card);
+  border-left: 4px solid var(--accent-gold);
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 4px;
 }
 .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #444;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
 }
+.card-icon { width: 24px; height: 24px; margin-right: 8px; border-radius: 2px; }
 .card-title { font-weight: bold; font-size: 15px; color: #fff; }
 .card-id { font-size: 10px; color: #555; font-family: monospace; }
-
 .roll-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    color: var(--text-sub);
-    padding: 4px 0;
-    border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-sub);
+  padding: 4px 0;
+  border-bottom: 1px solid #333;
 }
-.roll-row:last-child { border-bottom: none; }
-
-.btn-del {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    opacity: 0.6;
-    transition: 0.2s;
-}
-
-/* --- TOGGLE & BTN --- */
-.toggle-container {
-    display: flex;
-    background: #000;
-    border: 1px solid #444;
-    border-radius: 20px;
-    overflow: hidden;
-    margin-right: 10px;
-    cursor: pointer;
-}
-.toggle-btn { padding: 8px 12px; font-size: 12px; font-weight: bold; color: #666; }
-.btn-primary {
-    width: 100%;
-    padding: 15px;
-    background: var(--accent-gold);
-    border: none;
-    font-weight: bold;
-    cursor: pointer;
-    color: #000;
-    font-size: 14px;
-    text-transform: uppercase;
-    border-radius: 4px;
-}
-.btn-primary:disabled { background: #333; color: #555; cursor: default; }
-
-.badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-right: 8px; display: inline-block; }
+.badge { padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; margin-right: 8px; }
 .badge-pve { background: #172554; color: #93c5fd; border: 1px solid #1e40af; }
 .badge-pvp { background: #450a0a; color: #fca5a5; border: 1px solid #991b1b; }
+
+.btn-del { background: transparent; border: none; cursor: pointer; opacity: 0.6; }
+
+.secondary-btn {
+  background: transparent;
+  color: #666;
+  font-size: 10px;
+  margin-top: 20px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+.secondary-btn:hover { color: #999; }

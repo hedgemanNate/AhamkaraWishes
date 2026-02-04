@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ahamkara Wishes</title>
-    <link rel="stylesheet" href="sidepanel.css"> <meta charset="UTF-8">
+    <link rel="stylesheet" href="sidepanel.css">
 </head>
 <body>
     <div class="app-container">
@@ -13,7 +15,7 @@
             </div>
             <div class="tab-switcher">
                 <button id="tab-weapons" class="tab-btn active">WEAPONS</button>
-                <button id="tab-armor" class="tab-btn">ARMOR</button>
+                <button id="tab-armor" class="tab-btn">ARMOR SEARCH</button>
             </div>
         </header>
 
@@ -26,19 +28,28 @@
             </div>
         </div>
 
-        <div id="view-armor" class="content-view hidden-view">
-            <div class="armor-creator">
-                <div class="step-label">1. CHOOSE ARCHETYPE</div>
-                <div class="grid-2col" id="archetype-grid">
-                    </div>
+        <div id="view-armor" class="content-view hidden">
+            
+            <div class="class-selector">
+                <select id="classSelect">
+                    <option value="0">Titan</option>
+                    <option value="1">Hunter</option>
+                    <option value="2">Warlock</option>
+                </select>
+            </div>
 
-                <div class="step-label">2. CHOOSE SPARK (3rd Stat)</div>
-                <div class="grid-3col" id="spark-grid">
-                    </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="e.g. Iron, Artifice, Noble...">
+                <button id="searchBtn">Search</button>
+            </div>
 
-                <div class="action-area">
-                    <button id="btn-create-armor" class="btn-primary" disabled>SELECT STATS ABOVE</button>
+            <div id="statusMessage" class="status"></div>
+
+            <div id="resultsGrid" class="armor-grid">
                 </div>
+
+            <div class="cache-controls">
+                <button id="clearCacheBtn" class="secondary-btn">Clear Cache</button>
             </div>
         </div>
     </div>

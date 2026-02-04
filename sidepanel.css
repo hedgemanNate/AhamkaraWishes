@@ -397,7 +397,7 @@ header {
     bottom: 0; /* Flush with the bottom */
     left: 0;
     width: 100%; /* Spans the entire width */
-    height: 55px; /* Increased height for better thumb targeting */
+    height: 40px; /* Increased height for better thumb targeting */
     display: flex;
     z-index: 2000;
     background: #000;

@@ -349,7 +349,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 // Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
 // Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
-function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null) {
+function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null) {
   chrome.storage.local.get(["dimData"], (result) => {
     let data = result.dimData || {
       activeId: "default",
@@ -362,7 +362,7 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
     // Create container if missing
     if (!activeList.items[hash]) {
       activeList.items[hash] = {
-        static: { name, type, set: null, icon: icon || null },
+        static: { name, type, set: null, icon: icon || null, classType, bucketHash, slotName, setName },
         wishes: []
       };
     } else {
@@ -374,6 +374,12 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
       if (icon && (!activeList.items[hash].static || !activeList.items[hash].static.icon)) {
         activeList.items[hash].static.icon = icon;
       }
+      
+      // Backfill filter data if missing
+      if (classType !== null && !activeList.items[hash].static?.classType) activeList.items[hash].static.classType = classType;
+      if (bucketHash !== null && !activeList.items[hash].static?.bucketHash) activeList.items[hash].static.bucketHash = bucketHash;
+      if (slotName && !activeList.items[hash].static?.slotName) activeList.items[hash].static.slotName = slotName;
+      if (setName && !activeList.items[hash].static?.setName) activeList.items[hash].static.setName = setName;
     }
 
     const existingWishes = activeList.items[hash].wishes || [];

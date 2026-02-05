@@ -76,6 +76,25 @@
           </div>
 
           <div class="armor-internal-view" id="pane-list">
+             <!-- FILTER SECTION (INSIDE PANE-LIST SO ONLY VISIBLE IN LIST VIEW) -->
+             <div class="armor-filter-section">
+               <div class="filter-search">
+                 <input type="text" id="armor-name-search" class="filter-input" placeholder="Search armor names...">
+               </div>
+               
+               <div class="filter-toggle-buttons">
+                 <button id="filter-btn-archetype" class="filter-toggle-btn">ARCHETYPE</button>
+                 <button id="filter-btn-class" class="filter-toggle-btn">CLASS</button>
+               </div>
+               
+               <div id="filter-buttons-container" class="filter-buttons-container"></div>
+               
+               <div class="filter-clear-buttons">
+                 <button id="filter-clear" class="filter-clear-btn">Clear</button>
+                 <button id="filter-clear-all" class="filter-clear-all-btn">Clear All</button>
+               </div>
+             </div>
+
              <div id="armor-list-container">
                 <div class="empty-list-text">No Armor Wishes yet.</div>
              </div>

@@ -16,7 +16,7 @@ body {
   min-height: 100vh;
 
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-x: hidden; /* Prevents scrollbars during resize */
+  overflow: hidden; /* Remove ALL scrolling */
 }
 
 /* --- VIEW SLIDE INFRASTRUCTURE --- */
@@ -38,7 +38,12 @@ body {
   flex-shrink: 0;
   padding: 16px;
   box-sizing: border-box;
-  padding-bottom: 80px; /* Space for fixed bottom nav */
+  padding-bottom: 60px; /* Space for fixed bottom nav */
+}
+
+/* Armor List Pane */
+#pane-list {
+  /* Clean slate - no scroll overrides */
 }
 
 /* Slider States */
@@ -333,6 +338,132 @@ header {
   text-transform: uppercase;
   z-index: 1;
   pointer-events: none;
+}
+
+/* --- ARMOR FILTER SECTION --- */
+.armor-filter-section {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 0;
+    background: var(--bg-dark);
+}
+
+.filter-search {
+    display: flex;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 10px;
+    background: #2b2e35;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 12px;
+}
+
+.filter-input::placeholder {
+    color: #666;
+}
+
+.filter-toggle-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.filter-toggle-btn {
+    flex: 1;
+    padding: 10px;
+    background: #25252d;
+    border: 1px solid #444;
+    color: #777;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.filter-toggle-btn:hover {
+    background: #333;
+    color: #999;
+}
+
+.filter-toggle-btn.active {
+    background: #d4af37;
+    color: #000;
+    border-color: #d4af37;
+}
+
+.filter-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 0;
+}
+
+.filter-btn {
+    padding: 8px 12px;
+    background: #25252d;
+    border: 1px solid #444;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background: #333;
+    border-color: #555;
+}
+
+.filter-btn.selected {
+    background: #4a7c4a;
+    color: #d1f3d1;
+    border-color: #6a9c6a;
+}
+
+.filter-clear-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.filter-clear-btn,
+.filter-clear-all-btn {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid #444;
+    color: #777;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.filter-clear-btn:hover,
+.filter-clear-all-btn:hover {
+    border-color: #666;
+    color: #999;
+}
+
+.filter-clear-all-btn {
+    border-color: #555;
+    color: #d4af37;
 }
 
 /* --- SEARCH INPUT --- */

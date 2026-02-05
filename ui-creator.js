@@ -11,6 +11,13 @@ let currentArchetype = null;
 let currentSpark = null;
 let currentMode = 'pve';
 
+// --- FILTER STATE ---
+let filterMode = null; // 'archetype' or 'class'
+let selectedArchetypes = [];
+let selectedClasses = [];
+let armorNameSearch = '';
+let filterTimeout = null;
+
 const STAT_RANK = {
     "Health": 1,
     "Melee": 2,
@@ -20,9 +27,197 @@ const STAT_RANK = {
     "Weapons": 6
 };
 
+/**
+ * Helper: Get friendly slot name from bucketHash
+ */
+function getBucketName(bucketHash) {
+    if (bucketHash === BUCKET_HASHES.HELMET) return "Head";
+    if (bucketHash === BUCKET_HASHES.GAUNTLETS) return "Arms";
+    if (bucketHash === BUCKET_HASHES.CHEST) return "Chest";
+    if (bucketHash === BUCKET_HASHES.LEGS) return "Legs";
+    if (bucketHash === BUCKET_HASHES.CLASS_ITEM) return "Class";
+    return "Unknown";
+}
+
+/**
+ * Helper: Get friendly class name from classType
+ */
+function getClassName(classType) {
+    if (classType === 0) return "Titan";
+    if (classType === 1) return "Hunter";
+    if (classType === 2) return "Warlock";
+    return "Unknown";
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initArmorWizard();
 });
+
+/**
+ * Populates filter buttons based on current filterMode
+ */
+function populateFilterButtons() {
+    const container = document.getElementById('filter-buttons-container');
+    const btnArchetype = document.getElementById('filter-btn-archetype');
+    const btnClass = document.getElementById('filter-btn-class');
+
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    // Update toggle button states
+    if (btnArchetype) btnArchetype.classList.toggle('active', filterMode === 'archetype');
+    if (btnClass) btnClass.classList.toggle('active', filterMode === 'class');
+
+    if (filterMode === 'archetype') {
+        ARCHETYPES.forEach(arch => {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn';
+            if (selectedArchetypes.includes(arch.name)) btn.classList.add('selected');
+            btn.textContent = arch.name;
+            btn.onclick = () => {
+                if (selectedArchetypes.includes(arch.name)) {
+                    selectedArchetypes = selectedArchetypes.filter(a => a !== arch.name);
+                } else {
+                    selectedArchetypes.push(arch.name);
+                }
+                populateFilterButtons();
+                applyArmorFilters();
+            };
+            container.appendChild(btn);
+        });
+    } else if (filterMode === 'class') {
+        const classes = [
+            { value: 0, name: 'Titan' },
+            { value: 1, name: 'Hunter' },
+            { value: 2, name: 'Warlock' }
+        ];
+        classes.forEach(cls => {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn';
+            if (selectedClasses.includes(cls.value)) btn.classList.add('selected');
+            btn.textContent = cls.name;
+            btn.onclick = () => {
+                if (selectedClasses.includes(cls.value)) {
+                    selectedClasses = selectedClasses.filter(c => c !== cls.value);
+                } else {
+                    selectedClasses.push(cls.value);
+                }
+                populateFilterButtons();
+                applyArmorFilters();
+            };
+            container.appendChild(btn);
+        });
+    }
+}
+
+/**
+ * Applies all active filters and refreshes armor list
+ */
+function applyArmorFilters() {
+    chrome.storage.local.get(['dimData'], (result) => {
+        const container = document.getElementById('armor-list-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const data = result.dimData;
+        if (!data || !data.lists || !data.lists.default) {
+            container.innerHTML = '<div class="empty-list-text">No Armor Wishes yet.</div>';
+            return;
+        }
+
+        const items = data.lists.default.items;
+        const filteredItems = {};
+
+        // Apply filters
+        Object.keys(items).forEach(hash => {
+            const item = items[hash];
+            if (item.static.type !== 'armor') return;
+
+            // Filter by armor name
+            if (armorNameSearch) {
+                const itemName = item.static.name.toLowerCase();
+                if (!itemName.includes(armorNameSearch)) return;
+            }
+
+            // Filter by archetype
+            if (selectedArchetypes.length > 0 && item.wishes && item.wishes[0]) {
+                const itemArchetype = item.wishes[0].config?.archetype;
+                if (!selectedArchetypes.includes(itemArchetype)) return;
+            }
+
+            // Filter by class
+            if (selectedClasses.length > 0) {
+                if (!selectedClasses.includes(item.static.classType)) return;
+            }
+
+            filteredItems[hash] = item;
+        });
+
+        // Group by set name
+        const armorSets = {};
+        Object.keys(filteredItems).forEach(hash => {
+            const item = filteredItems[hash];
+            const setName = getArmorSetName(item.static.name);
+            if (!armorSets[setName]) armorSets[setName] = [];
+            armorSets[setName].push({ hash, ...item });
+        });
+
+        // Render sets
+        if (Object.keys(armorSets).length === 0) {
+            container.innerHTML = '<div class="empty-list-text">No results found.</div>';
+            return;
+        }
+
+        Object.keys(armorSets).forEach(setName => {
+            const setContainer = document.createElement('div');
+            setContainer.className = 'armor-set-row';
+            
+            const piecesBackgroundHtml = armorSets[setName]
+                .map(item => {
+                    const iconUrl = item.static.icon
+                        ? (item.static.icon.startsWith('http') ? item.static.icon : `${BUNGIE_ROOT}${item.static.icon}`)
+                        : '';
+                    return `<img src="${iconUrl}" class="set-piece-bg" alt=""/>`;
+                })
+                .join('');
+            
+            setContainer.innerHTML = `
+                <div class="set-header">
+                    <div class="set-pieces-background">
+                        <div class="set-pieces-container">${piecesBackgroundHtml}</div>
+                        <div class="set-pieces-overlay"></div>
+                    </div>
+                    <div class="set-name-area">
+                        <span class="set-name-text">${setName}</span>
+                        <span class="set-count-text">${armorSets[setName].length} / 5 PIECES</span>
+                    </div>
+                    <div class="set-badge-area">
+                        <div class="expansion-badge" title="Renegades Expansion"></div>
+                    </div>
+                </div>
+                <div class="set-content" id="set-content-${setName.replace(/\s+/g, '')}" style="display: none;">
+                </div>
+            `;
+
+            const contentArea = setContainer.querySelector('.set-content');
+
+            armorSets[setName].forEach(item => {
+                const card = createArmorCard(item);
+                contentArea.appendChild(card);
+            });
+
+            const header = setContainer.querySelector('.set-header');
+            header.onclick = () => {
+                const isExpanded = contentArea.style.display === 'flex';
+                contentArea.style.display = isExpanded ? 'none' : 'flex';
+            };
+
+            container.appendChild(setContainer);
+        });
+    });
+}
 
 /**
  * Entry point for UI setup.
@@ -153,6 +348,59 @@ function attachListeners() {
     const saveBtn = document.getElementById('btn-create-armor');
     if (saveBtn) {
         saveBtn.onclick = handleSaveWish;
+    }
+
+    // 9. Armor List Filter UI
+    const filterBtnArchetype = document.getElementById('filter-btn-archetype');
+    const filterBtnClass = document.getElementById('filter-btn-class');
+    const filterNameSearch = document.getElementById('armor-name-search');
+    const filterClear = document.getElementById('filter-clear');
+    const filterClearAll = document.getElementById('filter-clear-all');
+
+    if (filterBtnArchetype) {
+        filterBtnArchetype.onclick = () => {
+            filterMode = (filterMode === 'archetype') ? null : 'archetype';
+            populateFilterButtons();
+        };
+    }
+
+    if (filterBtnClass) {
+        filterBtnClass.onclick = () => {
+            filterMode = (filterMode === 'class') ? null : 'class';
+            populateFilterButtons();
+        };
+    }
+
+    if (filterNameSearch) {
+        filterNameSearch.oninput = (e) => {
+            clearTimeout(filterTimeout);
+            armorNameSearch = e.target.value.trim().toLowerCase();
+            filterTimeout = setTimeout(() => applyArmorFilters(), 300);
+        };
+    }
+
+    if (filterClear) {
+        filterClear.onclick = () => {
+            if (filterMode === 'archetype') {
+                selectedArchetypes = [];
+            } else if (filterMode === 'class') {
+                selectedClasses = [];
+            }
+            populateFilterButtons();
+            applyArmorFilters();
+        };
+    }
+
+    if (filterClearAll) {
+        filterClearAll.onclick = () => {
+            filterMode = null;
+            selectedArchetypes = [];
+            selectedClasses = [];
+            armorNameSearch = '';
+            if (filterNameSearch) filterNameSearch.value = '';
+            populateFilterButtons();
+            applyArmorFilters();
+        };
     }
 }
 
@@ -315,6 +563,10 @@ function updatePrimaryBtn() {
  * Final step: Passes selection to the backend saveItem() in manager.js.
  */
 function handleSaveWish() {
+  const slotName = getBucketName(armorSelection.bucketHash);
+  const className = getClassName(armorSelection.classType);
+  const setName = getArmorSetName(armorSelection.name);
+  
   saveItem(
     armorSelection.hash,
     armorSelection.name,
@@ -323,7 +575,11 @@ function handleSaveWish() {
     `armor-wish:${armorSelection.hash}`,
     { archetype: currentArchetype.name, spark: currentSpark },
     currentMode,
-    armorSelection.icon
+    armorSelection.icon,
+    armorSelection.classType,
+    armorSelection.bucketHash,
+    slotName,
+    setName
   );
 
   const btn = document.getElementById("btn-create-armor");
@@ -342,88 +598,10 @@ function handleSaveWish() {
  */
 /**
  * Renders the Armor List grouped by Set.
- * Corrected: Ensures set containers exist before injecting cards.
+ * Now delegates to applyArmorFilters() for filtering logic.
  */
 function refreshArmorList() {
-    chrome.storage.local.get(['dimData'], (result) => {
-        const container = document.getElementById('armor-list-container');
-        if (!container) return;
-        
-        container.innerHTML = '';
-
-        const data = result.dimData;
-        if (!data || !data.lists || !data.lists.default) {
-            container.innerHTML = '<div class="empty-list-text">No Armor Wishes yet.</div>';
-            return;
-        }
-
-        const items = data.lists.default.items;
-        const armorSets = {};
-
-        // 1. Grouping logic: Organize items by their set name
-        Object.keys(items).forEach(hash => {
-            const item = items[hash];
-            // Only process items explicitly marked as armor wishes
-            if (item.static.type !== 'armor' || !item.wishes) return;
-
-            // Extract set name (e.g., "Iron Forerunner")
-            const setName = getArmorSetName(item.static.name);
-            
-            if (!armorSets[setName]) armorSets[setName] = [];
-            armorSets[setName].push({ hash, ...item });
-        });
-
-        // 2. Create the UI for each set
-        Object.keys(armorSets).forEach(setName => {
-            const setContainer = document.createElement('div');
-            setContainer.className = 'armor-set-row';
-            
-            // Build background piece images HTML
-            const piecesBackgroundHtml = armorSets[setName]
-                .map(item => `<img src="${item.static.icon}" class="set-piece-bg" alt=""/>`)
-                .join('');
-            
-            setContainer.innerHTML = `
-                <div class="set-header">
-                    <div class="set-pieces-background">
-                        <div class="set-pieces-container">${piecesBackgroundHtml}</div>
-                        <div class="set-pieces-overlay"></div>
-                    </div>
-                    <div class="set-name-area">
-                        <span class="set-name-text">${setName}</span>
-                        <span class="set-count-text">${armorSets[setName].length} / 5 PIECES</span>
-                    </div>
-                    <div class="set-badge-area">
-                        <div class="expansion-badge" title="Renegades Expansion"></div>
-                    </div>
-                </div>
-                <div class="set-content" id="set-content-${setName.replace(/\s+/g, '')}" style="display: none;">
-                </div>
-            `;
-
-            const contentArea = setContainer.querySelector('.set-content');
-
-            // 3. Inject cards into the newly created set-content area
-            armorSets[setName].forEach(item => {
-                const card = createArmorCard(item);
-                contentArea.appendChild(card);
-            });
-
-            // Toggle expansion logic
-            const header = setContainer.querySelector('.set-header');
-            header.onclick = () => {
-                const isExpanded = contentArea.style.display === 'flex';
-                contentArea.style.display = isExpanded ? 'none' : 'flex';
-            };
-
-            container.appendChild(setContainer);
-        });
-
-        // 4. Handle completely empty armor list state
-        if (Object.keys(armorSets).length === 0) {
-            container.innerHTML = '<div class="empty-list-text">No Armor Wishes yet.</div>';
-        }
-    });
+    applyArmorFilters();
 }
 
 function createArmorCard(item) {

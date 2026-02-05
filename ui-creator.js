@@ -72,7 +72,8 @@ function populateFilterButtons() {
     if (filterMode === 'archetype') {
         ARCHETYPES.forEach(arch => {
             const btn = document.createElement('button');
-            btn.className = 'filter-btn';
+            btn.className = 'filter-btn filter-btn-arch';
+            btn.dataset.arch = arch.id;
             if (selectedArchetypes.includes(arch.name)) btn.classList.add('selected');
             btn.textContent = arch.name;
             btn.onclick = () => {

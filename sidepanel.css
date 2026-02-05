@@ -4,6 +4,12 @@
   --accent-gold: #d4af37;
   --text-main: #ffffff;
   --text-sub: #aaaaaa;
+    --stat-weapons: #4a6fa5;
+    --stat-health: #5d7a5d;
+    --stat-class: #9c7c4a;
+    --stat-grenade: #a35d41;
+    --stat-super: #6a4a8a;
+    --stat-melee: #8a3a3a;
 }
 
 html,
@@ -496,6 +502,43 @@ header {
     border-color: #6a9c6a;
 }
 
+/* Archetype filter buttons: main-stat color on hover + keep when selected */
+.filter-btn.filter-btn-arch:hover,
+.filter-btn.filter-btn-arch.selected {
+    color: #fff;
+    border-color: #555;
+}
+
+.filter-btn.filter-btn-arch[data-arch="paragon"]:hover,
+.filter-btn.filter-btn-arch[data-arch="paragon"].selected {
+    background: var(--stat-super);
+}
+
+.filter-btn.filter-btn-arch[data-arch="grenadr"]:hover,
+.filter-btn.filter-btn-arch[data-arch="grenadr"].selected {
+    background: var(--stat-grenade);
+}
+
+.filter-btn.filter-btn-arch[data-arch="special"]:hover,
+.filter-btn.filter-btn-arch[data-arch="special"].selected {
+    background: var(--stat-class);
+}
+
+.filter-btn.filter-btn-arch[data-arch="brawler"]:hover,
+.filter-btn.filter-btn-arch[data-arch="brawler"].selected {
+    background: var(--stat-melee);
+}
+
+.filter-btn.filter-btn-arch[data-arch="bulwark"]:hover,
+.filter-btn.filter-btn-arch[data-arch="bulwark"].selected {
+    background: var(--stat-health);
+}
+
+.filter-btn.filter-btn-arch[data-arch="gunner"]:hover,
+.filter-btn.filter-btn-arch[data-arch="gunner"].selected {
+    background: var(--stat-weapons);
+}
+
 .filter-clear-buttons {
     display: flex;
     gap: 8px;
@@ -888,12 +931,12 @@ header {
 .bar-spark { background: #555; } /* Dull White */
 
 /* Muted Secondary Colors */
-.bar-sec-weapons { background: #4a6fa5; } /* Steel Blue */
-.bar-sec-health  { background: #5d7a5d; } /* Sage Green */
-.bar-sec-class   { background: #9c7c4a; } /* Amber */
-.bar-sec-grenade { background: #a35d41; } /* Burnt Orange */
-.bar-sec-super   { background: #6a4a8a; } /* Royal Amethyst */
-.bar-sec-melee   { background: #8a3a3a; } /* Deep Maroon */
+.bar-sec-weapons { background: var(--stat-weapons); } /* Steel Blue */
+.bar-sec-health  { background: var(--stat-health); } /* Sage Green */
+.bar-sec-class   { background: var(--stat-class); } /* Amber */
+.bar-sec-grenade { background: var(--stat-grenade); } /* Burnt Orange */
+.bar-sec-super   { background: var(--stat-super); } /* Royal Amethyst */
+.bar-sec-melee   { background: var(--stat-melee); } /* Deep Maroon */
 
 .stat-icon-mini {
     width: 16px;

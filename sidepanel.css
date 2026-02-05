@@ -527,10 +527,22 @@ header {
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
+/* Archetype button gradient when active */
+#filter-btn-archetype.filter-toggle-btn.active {
+    background: linear-gradient(67deg, #6a4a8a, #a35d41, #9c7c4a, #8a3a3a, #5d7a5d, #4a6fa5);
+    color: #fff;
+}
+
+/* Class button gradient when active */
+#filter-btn-class.filter-toggle-btn.active {
+    background: linear-gradient(67deg, #3d4f3d, #5c3b3b, #5c533b);
+    color: #fff;
+}
+
 .filter-buttons-container {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 4px;
     min-height: 0;
     padding: 4px 0;
 }
@@ -538,7 +550,7 @@ header {
 .filter-btn {
     flex: 1 1 auto;
     text-align: center;
-    padding: 12px 14px;
+    padding: 12px 2px;
     background: var(--bg-card);
     border: 1px solid transparent;
     color: var(--text-sub);

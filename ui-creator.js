@@ -75,7 +75,7 @@ function populateFilterButtons() {
             btn.className = 'filter-btn filter-btn-arch';
             btn.dataset.arch = arch.id;
             if (selectedArchetypes.includes(arch.name)) btn.classList.add('selected');
-            btn.textContent = arch.name;
+            btn.textContent = arch.name.substring(0, 3);
             btn.onclick = () => {
                 if (selectedArchetypes.includes(arch.name)) {
                     selectedArchetypes = selectedArchetypes.filter(a => a !== arch.name);

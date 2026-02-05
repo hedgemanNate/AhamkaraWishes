@@ -6,6 +6,11 @@
   --text-sub: #aaaaaa;
 }
 
+html,
+body {
+    height: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -13,7 +18,8 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-main);
   width: 100%;
-  min-height: 100vh;
+    height: 100vh;
+    min-height: 100vh;
 
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden; /* Remove ALL scrolling */
@@ -24,6 +30,8 @@ body {
   width: 100%;
   overflow: hidden; 
   position: relative;
+    flex: 1;
+    min-height: 0;
 }
 
 .armor-view-slider {
@@ -31,6 +39,7 @@ body {
   width: 200%; /* Holds two panes side-by-side */
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
+    height: 100%;
 }
 
 .armor-internal-view {
@@ -39,18 +48,70 @@ body {
   padding: 16px;
   box-sizing: border-box;
   padding-bottom: 60px; /* Space for fixed bottom nav */
+    height: 100%;
+    overflow: hidden;
 }
 
-/* Armor List Pane */
+/* Armor List Pane - Flexbox for Fixed Search + Scrolling List */
 #pane-list {
-  /* Clean slate - no scroll overrides */
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  height: 100%; /* Fill the parent .armor-internal-view */
+  overflow: hidden; /* Prevent parent scroll */
+}
+
+/* --- SEARCH & FILTER (Fixed Header) --- */
+#pane-list .armor-filter-section {
+    position: static; /* No longer sticky, just the first flex item */
+    flex-shrink: 0;
+    margin: 0; 
+    border-bottom: 1px solid #333;
+}
+
+/* --- LIST CONTENT (Scrollable Body) --- */
+#armor-list-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 16px; 
+    padding-bottom: 80px; /* Space for nav */
+}
+
+/* --- DISCRETE SCROLLBAR --- */
+#armor-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+#armor-list-container::-webkit-scrollbar-track {
+    background: transparent; 
+}
+
+#armor-list-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.05); /* 5% Opaque */
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+#armor-list-container:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15); /* Slightly visible on container hover */
+}
+
+#armor-list-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4); /* Clearly visible when grabbing */
 }
 
 /* Slider States */
 .show-craft { transform: translateX(0); }
 .show-list { transform: translateX(-50%); }
 
-.app-container { padding: 16px; }
+.app-container {
+    padding: 16px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
 
 /* --- HEADER & NAVIGATION --- */
 header {
@@ -88,8 +149,8 @@ header {
 .tab-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
 
 /* --- VIEWS --- */
-.content-view { display: none; }
-.content-view.active-view { display: block; }
+.content-view { display: none; flex: 1; min-height: 0; }
+.content-view.active-view { display: flex; flex-direction: column; min-height: 0; }
 .hidden { display: none !important; }
 
 /* --- ARMOR WIZARD LAYOUT --- */
@@ -720,6 +781,8 @@ header {
 /* Prevent content from being hidden behind the bar */
 #view-armor {
     padding-bottom: 75px; 
+    flex: 1;
+    min-height: 0;
 }
 
 /* --- THE 3-BAR ARMOR CARD --- */

@@ -322,7 +322,8 @@ function handleSaveWish() {
     `armor-wish:${armorSelection.hash}`,
     `armor-wish:${armorSelection.hash}`,
     { archetype: currentArchetype.name, spark: currentSpark },
-    currentMode
+    currentMode,
+    armorSelection.icon
   );
 
   const btn = document.getElementById("btn-create-armor");
@@ -377,8 +378,17 @@ function refreshArmorList() {
             const setContainer = document.createElement('div');
             setContainer.className = 'armor-set-row';
             
+            // Build background piece images HTML
+            const piecesBackgroundHtml = armorSets[setName]
+                .map(item => `<img src="${item.static.icon}" class="set-piece-bg" alt=""/>`)
+                .join('');
+            
             setContainer.innerHTML = `
                 <div class="set-header">
+                    <div class="set-pieces-background">
+                        <div class="set-pieces-container">${piecesBackgroundHtml}</div>
+                        <div class="set-pieces-overlay"></div>
+                    </div>
                     <div class="set-name-area">
                         <span class="set-name-text">${setName}</span>
                         <span class="set-count-text">${armorSets[setName].length} / 5 PIECES</span>

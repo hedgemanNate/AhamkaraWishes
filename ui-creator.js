@@ -156,13 +156,13 @@ function applyArmorFilters() {
             filteredItems[hash] = item;
         });
 
-        // Group by set name
+        // Group by set ID (using gearset data or name parsing fallback)
         const armorSets = {};
         Object.keys(filteredItems).forEach(hash => {
             const item = filteredItems[hash];
-            const setName = getArmorSetName(item.static.name);
-            if (!armorSets[setName]) armorSets[setName] = [];
-            armorSets[setName].push({ hash, ...item });
+            const setId = getArmorSetId(item);
+            if (!armorSets[setId]) armorSets[setId] = [];
+            armorSets[setId].push({ hash, ...item });
         });
 
         // Render sets
@@ -171,11 +171,14 @@ function applyArmorFilters() {
             return;
         }
 
-        Object.keys(armorSets).forEach(setName => {
+        Object.keys(armorSets).forEach(setId => {
             const setContainer = document.createElement('div');
             setContainer.className = 'armor-set-row';
             
-            const piecesBackgroundHtml = armorSets[setName]
+            // Generate readable set name for display
+            const displayName = getSetDisplayName(armorSets[setId]);
+            
+            const piecesBackgroundHtml = armorSets[setId]
                 .map(item => {
                     const iconUrl = item.static.icon
                         ? (item.static.icon.startsWith('http') ? item.static.icon : `${BUNGIE_ROOT}${item.static.icon}`)
@@ -191,20 +194,20 @@ function applyArmorFilters() {
                         <div class="set-pieces-overlay"></div>
                     </div>
                     <div class="set-name-area">
-                        <span class="set-name-text">${setName}</span>
-                        <span class="set-count-text">${armorSets[setName].length} / 5 PIECES</span>
+                        <span class="set-name-text">${displayName}</span>
+                        <span class="set-count-text">${armorSets[setId].length} / 5 PIECES</span>
                     </div>
                     <div class="set-badge-area">
                         <div class="expansion-badge" title="Renegades Expansion"></div>
                     </div>
                 </div>
-                <div class="set-content" id="set-content-${setName.replace(/\s+/g, '')}" style="display: none;">
+                <div class="set-content" id="set-content-${setId.replace(/[\s-]+/g, '')}" style="display: none;">
                 </div>
             `;
 
             const contentArea = setContainer.querySelector('.set-content');
 
-            armorSets[setName].forEach(item => {
+            armorSets[setId].forEach(item => {
                 const card = createArmorCard(item);
                 contentArea.appendChild(card);
             });
@@ -580,7 +583,8 @@ function handleSaveWish() {
     armorSelection.classType,
     armorSelection.bucketHash,
     slotName,
-    setName
+    setName,
+    armorSelection.gearset
   );
 
   const btn = document.getElementById("btn-create-armor");
@@ -721,7 +725,42 @@ function deleteArmorWish(hash) {
 }
 
 /**
- * Cleans armor names to extract the base Set Name.
+ * Gets a consistent armor set identifier using gearset data with name parsing fallback.
+ * Primary method uses Bungie's official gearset.itemList hash arrays.
+ * Falls back to name parsing for items without gearset data.
+ */
+function getArmorSetId(item) {
+    // Primary method: Use Bungie's official gearset data
+    if (item.static?.gearset?.itemList?.length > 0) {
+        // Create consistent set ID from sorted item hashes
+        return item.static.gearset.itemList.sort().join('-');
+    }
+    
+    // For fresh armor selection (not stored yet), check direct gearset property
+    if (item.gearset?.itemList?.length > 0) {
+        return item.gearset.itemList.sort().join('-');
+    }
+    
+    // Fallback: Use name parsing for items without gearset data
+    const name = item.static?.name || item.name;
+    return getArmorSetName(name);
+}
+
+/**
+ * Generates a readable display name for an armor set group.
+ * Uses the cleaned name from the first item in the group.
+ */
+function getSetDisplayName(setItems) {
+    if (!setItems || setItems.length === 0) return "Unknown Set";
+    
+    // Use the first item's name and clean it for display
+    const firstName = setItems[0].static?.name || "Unknown";
+    return getArmorSetName(firstName);
+}
+
+/**
+ * Legacy function: Cleans armor names to extract the base Set Name.
+ * Now used as fallback when gearset data is unavailable.
  * Optimized for 2026 Renegades slot naming conventions.
  */
 function getArmorSetName(fullName) {
@@ -732,7 +771,7 @@ function getArmorSetName(fullName) {
         "Mask", "Vest", "Grips", "Strides", "Cloak",              // Hunter
         "Helm", "Gauntlets", "Plate", "Greaves", "Mark",            // Titan
         "Hood", "Gloves", "Robes", "Boots", "Bond", "Cover",        // Warlock
-        "Helmet", "Chest", "Arms", "Legs", "Class Item"            // Generic
+        "Helmet", "Chest", "Arms", "Legs", "Class Item", "Cowl"     // Generic + Fixed
     ];
 
     // Create a dynamic Regex to strip slot names and trailing spaces

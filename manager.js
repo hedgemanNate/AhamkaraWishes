@@ -305,7 +305,8 @@ async function searchArmorLocally(query, currentClassType) {
     name: item.displayProperties?.name || "",
     icon: item.displayProperties?.icon ? `${BUNGIE_ROOT}${item.displayProperties.icon}` : "",
     classType: item.classType,
-    bucketHash: item.inventory?.bucketTypeHash
+    bucketHash: item.inventory?.bucketTypeHash,
+    gearset: item.gearset || null
   }));
 
   console.timeEnd("[D2MANIFEST] search total");
@@ -349,7 +350,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 // Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
 // Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
-function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null) {
+function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null, gearset = null) {
   chrome.storage.local.get(["dimData"], (result) => {
     let data = result.dimData || {
       activeId: "default",
@@ -362,7 +363,7 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
     // Create container if missing
     if (!activeList.items[hash]) {
       activeList.items[hash] = {
-        static: { name, type, set: null, icon: icon || null, classType, bucketHash, slotName, setName },
+        static: { name, type, set: null, icon: icon || null, classType, bucketHash, slotName, setName, gearset },
         wishes: []
       };
     } else {
@@ -380,6 +381,7 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
       if (bucketHash !== null && !activeList.items[hash].static?.bucketHash) activeList.items[hash].static.bucketHash = bucketHash;
       if (slotName && !activeList.items[hash].static?.slotName) activeList.items[hash].static.slotName = slotName;
       if (setName && !activeList.items[hash].static?.setName) activeList.items[hash].static.setName = setName;
+      if (gearset && !activeList.items[hash].static?.gearset) activeList.items[hash].static.gearset = gearset;
     }
 
     const existingWishes = activeList.items[hash].wishes || [];

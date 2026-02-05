@@ -290,7 +290,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 14px;
+    padding: 12.5px 14px;
     background: #111;
     cursor: pointer;
     transition: background 0.2s;
@@ -355,14 +355,14 @@ header {
 .set-name-text {
     font-weight: bold;
     font-size: 13px;
-    color: var(--accent-gold);
+    color: var(--text-main);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 .set-count-text {
     font-size: 9px;
-    color: #555;
+    color: var(--accent-gold);
     text-transform: uppercase;
 }
 
@@ -849,6 +849,10 @@ header {
     width: 64px;
     height: 64px;
     flex-shrink: 0;
+    border: var(--accent-gold);
+    border-width: 2px;
+    border-style: solid;
+    border-radius: 0px;
     background: #000;
 }
 
@@ -873,7 +877,7 @@ header {
 
 .card-archetype-sub {
     font-size: 9px;
-    color: #777;
+    color: var(--accent-gold);
     text-transform: uppercase;
 }
 

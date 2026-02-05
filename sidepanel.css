@@ -325,7 +325,7 @@ header {
     width: auto;
     aspect-ratio: 1;
     object-fit: cover;
-    opacity: 0.3;
+    opacity: 1;
 }
 
 .set-pieces-overlay {

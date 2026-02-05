@@ -47,7 +47,7 @@ body {
   flex-shrink: 0;
   padding: 16px;
   box-sizing: border-box;
-  padding-bottom: 60px; /* Space for fixed bottom nav */
+    padding-bottom: 18px; /* Space for fixed bottom nav */
     height: 100%;
     overflow: hidden;
 }
@@ -75,7 +75,7 @@ body {
     overflow-y: auto;
     min-height: 0;
     padding: 16px; 
-    padding-bottom: 80px; /* Space for nav */
+    padding-bottom: 16px; 
 }
 
 /* --- DISCRETE SCROLLBAR --- */
@@ -780,7 +780,7 @@ header {
 
 /* Prevent content from being hidden behind the bar */
 #view-armor {
-    padding-bottom: 75px; 
+    padding-bottom: 26px; 
     flex: 1;
     min-height: 0;
 }

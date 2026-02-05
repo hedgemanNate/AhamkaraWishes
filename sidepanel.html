@@ -80,18 +80,25 @@
              <div class="armor-filter-section">
                <div class="filter-search">
                  <input type="text" id="armor-name-search" class="filter-input" placeholder="Search armor names...">
+                 <button id="filter-toggle-btn" class="filter-toggle-btn-icon" title="Toggle Filters">
+                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                     <path d="M10,18h4v-2h-4V18z M3,6v2h18V6H3z M6,13h12v-2H6V13z"/>
+                   </svg>
+                 </button>
                </div>
                
-               <div class="filter-toggle-buttons">
-                 <button id="filter-btn-archetype" class="filter-toggle-btn">ARCHETYPE</button>
-                 <button id="filter-btn-class" class="filter-toggle-btn">CLASS</button>
-               </div>
-               
-               <div id="filter-buttons-container" class="filter-buttons-container"></div>
-               
-               <div class="filter-clear-buttons">
-                 <button id="filter-clear" class="filter-clear-btn">Clear</button>
-                 <button id="filter-clear-all" class="filter-clear-all-btn">Clear All</button>
+               <div id="filter-controls" class="filter-controls">
+                 <div class="filter-toggle-buttons">
+                   <button id="filter-btn-archetype" class="filter-toggle-btn">ARCHETYPE</button>
+                   <button id="filter-btn-class" class="filter-toggle-btn">CLASS</button>
+                 </div>
+                 
+                 <div id="filter-buttons-container" class="filter-buttons-container"></div>
+                 
+                 <div class="filter-clear-buttons">
+                   <button id="filter-clear" class="filter-clear-btn">Clear</button>
+                   <button id="filter-clear-all" class="filter-clear-all-btn">Clear All</button>
+                 </div>
                </div>
              </div>
 

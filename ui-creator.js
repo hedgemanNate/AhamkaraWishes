@@ -96,6 +96,7 @@ function populateFilterButtons() {
         classes.forEach(cls => {
             const btn = document.createElement('button');
             btn.className = 'filter-btn';
+            btn.dataset.class = cls.value;
             if (selectedClasses.includes(cls.value)) btn.classList.add('selected');
             btn.textContent = cls.name;
             btn.onclick = () => {
@@ -320,7 +321,30 @@ function attachListeners() {
         };
     }
 
-    // 6. Nameplate Reset (Red Hover Reset)
+    // 6. Filter Toggle Button Logic (for armor list view)
+    const filterToggleBtn = document.getElementById('filter-toggle-btn');
+    const filterControls = document.getElementById('filter-controls');
+    let filtersExpanded = true; // Start with filters expanded
+    
+    if (filterToggleBtn && filterControls) {
+        filterToggleBtn.onclick = () => {
+            filtersExpanded = !filtersExpanded;
+            
+            if (filtersExpanded) {
+                // Expand filters
+                filterControls.classList.remove('collapsed');
+                filterToggleBtn.classList.remove('collapsed');
+                filterToggleBtn.title = 'Hide Filters';
+            } else {
+                // Collapse filters
+                filterControls.classList.add('collapsed');
+                filterToggleBtn.classList.add('collapsed');
+                filterToggleBtn.title = 'Show Filters';
+            }
+        };
+    }
+
+    // 7. Nameplate Reset (Red Hover Reset)
     const nameplate = document.getElementById('armor-set-name');
     if (nameplate) {
         nameplate.onclick = () => {
@@ -339,7 +363,7 @@ function attachListeners() {
         };
     }
 
-    // 7. Mode Toggle (PvE/PvP)
+    // 8. Mode Toggle (PvE/PvP)
     const toggle = document.getElementById('ui-mode-toggle');
     if (toggle) {
         toggle.onclick = () => {
@@ -348,13 +372,13 @@ function attachListeners() {
         };
     }
 
-    // 8. Save Wish Button
+    // 9. Save Wish Button
     const saveBtn = document.getElementById('btn-create-armor');
     if (saveBtn) {
         saveBtn.onclick = handleSaveWish;
     }
 
-    // 9. Armor List Filter UI
+    // 10. Armor List Filter UI
     const filterBtnArchetype = document.getElementById('filter-btn-archetype');
     const filterBtnClass = document.getElementById('filter-btn-class');
     const filterNameSearch = document.getElementById('armor-name-search');

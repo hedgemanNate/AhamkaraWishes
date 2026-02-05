@@ -414,7 +414,6 @@ header {
     z-index: 100;
     display: flex;
     flex-direction: column;
-    gap: 12px;
     padding: 16px;
     border-bottom: 1px solid #333;
     margin-bottom: 0;
@@ -423,10 +422,13 @@ header {
 
 .filter-search {
     display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
 }
 
 .filter-input {
-    width: 100%;
+    flex: 1;
     padding: 10px;
     background: #2b2e35;
     border: 1px solid #444;
@@ -440,16 +442,70 @@ header {
     color: #666;
 }
 
+/* Filter toggle button */
+.filter-toggle-btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #25252d;
+    color: #777;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.filter-toggle-btn-icon:hover {
+    background: #333;
+    color: #fff;
+    border-color: #555;
+}
+
+.filter-toggle-btn-icon.active {
+    background: #e94d36;
+    color: #fff;
+    border-color: #e94d36;
+}
+
+.filter-toggle-btn-icon svg {
+    transition: transform 0.2s ease;
+}
+
+.filter-toggle-btn-icon.collapsed svg {
+    transform: rotate(90deg);
+}
+
+/* Filter controls container with collapse animation */
+.filter-controls {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    max-height: 300px;
+    opacity: 1;
+}
+
+.filter-controls.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
 .filter-toggle-buttons {
     display: flex;
-    gap: 8px;
+    gap: 4px;
+    background: #111;
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid #333;
 }
 
 .filter-toggle-btn {
     flex: 1;
-    padding: 10px;
-    background: #25252d;
-    border: 1px solid #444;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
     color: #777;
     cursor: pointer;
     border-radius: 4px;
@@ -460,14 +516,15 @@ header {
 }
 
 .filter-toggle-btn:hover {
-    background: #333;
-    color: #999;
+    background: rgba(255, 255, 255, 0.05);
+    color: #bbb;
 }
 
 .filter-toggle-btn.active {
-    background: #d4af37;
+    background: var(--accent-gold);
     color: #000;
-    border-color: #d4af37;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .filter-buttons-container {
@@ -475,16 +532,19 @@ header {
     flex-wrap: wrap;
     gap: 8px;
     min-height: 0;
+    padding: 4px 0;
 }
 
 .filter-btn {
-    padding: 8px 12px;
-    background: #25252d;
-    border: 1px solid #444;
-    color: #fff;
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 12px 14px;
+    background: var(--bg-card);
+    border: 1px solid transparent;
+    color: var(--text-sub);
     cursor: pointer;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: bold;
     text-transform: uppercase;
     transition: all 0.2s ease;
@@ -492,14 +552,16 @@ header {
 }
 
 .filter-btn:hover {
-    background: #333;
+    background: #383842;
     border-color: #555;
+    color: var(--text-main);
 }
 
 .filter-btn.selected {
-    background: #4a7c4a;
-    color: #d1f3d1;
-    border-color: #6a9c6a;
+    background: #3d5a45;
+    color: #fff;
+    border-color: #4a7c4a;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
 }
 
 /* Archetype filter buttons: main-stat color on hover + keep when selected */
@@ -539,6 +601,28 @@ header {
     background: var(--stat-weapons);
 }
 
+/* Class filter buttons: matching class colors */
+.filter-btn[data-class="0"]:hover,
+.filter-btn[data-class="0"].selected {
+    background: #3d4f3d;
+    color: #d1d9d1;
+    border-color: #4f664f;
+}
+
+.filter-btn[data-class="1"]:hover,
+.filter-btn[data-class="1"].selected {
+    background: #5c3b3b;
+    color: #f1e1e1;
+    border-color: #7a4e4e;
+}
+
+.filter-btn[data-class="2"]:hover,
+.filter-btn[data-class="2"].selected {
+    background: #5c533b;
+    color: #f1ede1;
+    border-color: #7a6e4e;
+}
+
 .filter-clear-buttons {
     display: flex;
     gap: 8px;
@@ -547,13 +631,13 @@ header {
 .filter-clear-btn,
 .filter-clear-all-btn {
     flex: 1;
-    padding: 8px;
+    padding: 10px 12px;
     background: transparent;
     border: 1px solid #444;
     color: #777;
     cursor: pointer;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: bold;
     text-transform: uppercase;
     transition: all 0.2s ease;
@@ -721,54 +805,27 @@ header {
     transition: all 0.2s ease;
 }
 
-/* --- MUTED CLASS SELECTOR PILL --- */
-.class-selector {
-    display: flex;
-    background: #000;
-    border: 1px solid #333;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.class-btn {
-    flex: 1;
-    padding: 10px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: bold;
-    color: #555; /* Unselected text */
-    text-transform: uppercase;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-/* Specific Muted Active States */
+/* Specific Muted Active & Hover States */
 
 /* TITAN - Muted Forest/Sage Green */
+.class-btn[data-class="0"]:hover,
 .class-btn[data-class="0"].active {
     background: #3d4f3d; 
     color: #d1d9d1;
 }
 
 /* HUNTER - Muted Brick/Dusty Red */
+.class-btn[data-class="1"]:hover,
 .class-btn[data-class="1"].active {
     background: #5c3b3b;
     color: #f1e1e1;
 }
 
 /* WARLOCK - Muted Ochre/Gold Yellow */
+.class-btn[data-class="2"]:hover,
 .class-btn[data-class="2"].active {
     background: #5c533b;
     color: #f1ede1;
-}
-
-.class-btn:hover:not(.active) {
-    color: #888;
-    background: rgba(255, 255, 255, 0.05);
 }
 
 /* --- BOTTOM NAVIGATION PILL --- */

@@ -686,44 +686,128 @@ function handleSaveWish() {
   const itemsToSave = Object.values(selectedPieces);
   const selectedCount = itemsToSave.length;
   
-  // Save items sequentially with a small delay to avoid race conditions
-  itemsToSave.forEach((item, index) => {
-    setTimeout(() => {
-      const slotName = getBucketName(item.bucketHash);
-      const className = getClassName(item.classType);
-      const setName = item.static?.name || "Unknown";
-      
-      saveItem(
-        item.hash,
-        item.name,
-        "armor",
-        `armor-wish:${item.hash}`,
-        `armor-wish:${item.hash}`,
-        { archetype: currentArchetype.name, spark: currentSpark },
-        currentMode,
-        item.icon,
-        item.classType,
-        item.bucketHash,
-        slotName,
-        setName,
-        item.setHash
-      );
-    }, index * 100); // 100ms delay between each save
-  });
-
   const btn = document.getElementById("btn-create-armor");
-  const originalText = btn.textContent;
-  if (selectedCount === 1) {
-    btn.textContent = "WISH GRANTED!";
-  } else {
-    btn.textContent = `${selectedCount} WISHES GRANTED!`;
-  }
-  btn.classList.add("success");
+  
+  // Immediately show "Granting Wishes" and disable tabs
+  btn.textContent = "Granting Wishes";
+  btn.disabled = true;
+  disableTabButtons(true);
+  
+  // Chain saves to prevent race conditions
+  let saveChain = Promise.resolve();
+  let successCount = 0;
+  
+  itemsToSave.forEach((item) => {
+    saveChain = saveChain.then(() => {
+      return new Promise((resolve) => {
+        const slotName = getBucketName(item.bucketHash);
+        const setName = item.static?.name || "Unknown";
+        
+        // Temporarily override loadLists to signal when this save completes
+        const originalLoadLists = window.loadLists;
+        window.loadLists = function() {
+          originalLoadLists();
+          successCount++;
+          resolve(); // Signal completion to chain
+        };
+        
+        saveItem(
+          item.hash,
+          item.name,
+          "armor",
+          `armor-wish:${item.hash}`,
+          `armor-wish:${item.hash}`,
+          { archetype: currentArchetype.name, spark: currentSpark },
+          currentMode,
+          item.icon,
+          item.classType,
+          item.bucketHash,
+          slotName,
+          setName,
+          item.setHash
+        );
+      });
+    });
+  });
+  
+  // Create a 4-second timeout promise
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("Timeout")), 4000);
+  });
+  
+  // Race: whichever completes first
+  Promise.race([saveChain, timeoutPromise])
+    .then(() => {
+      // All saves completed before timeout
+      if (successCount === selectedCount) {
+        btn.textContent = "WISHES GRANTED!";
+        btn.classList.add("success");
+      } else {
+        btn.textContent = "WISH DENIED";
+        btn.classList.add("denied");
+      }
+    })
+    .catch((err) => {
+      // Timeout occurred or error
+      btn.textContent = "WISH DENIED";
+      btn.classList.add("denied");
+    })
+    .finally(() => {
+      // Re-enable tabs and reset button after 2 seconds
+      setTimeout(() => {
+        btn.classList.remove("success", "denied");
+        btn.disabled = false;
+        btn.textContent = "WISH GRANTED!";
+        disableTabButtons(false);
+        updatePrimaryBtn();
+      }, 2000);
+    });
+}
 
-  setTimeout(() => {
-    btn.classList.remove("success");
-    updatePrimaryBtn();
-  }, 2000);
+/**
+ * Disables or enables the tab buttons and nav buttons to prevent user navigation during wish granting.
+ */
+function disableTabButtons(disabled) {
+  const btnWeapons = document.getElementById('tab-weapons');
+  const btnArmor = document.getElementById('tab-armor');
+  const navCraft = document.getElementById('nav-craft');
+  const navList = document.getElementById('nav-list');
+  
+  if (btnWeapons) {
+    btnWeapons.disabled = disabled;
+    if (disabled) {
+      btnWeapons.classList.add('disabled');
+    } else {
+      btnWeapons.classList.remove('disabled');
+    }
+  }
+  
+  if (btnArmor) {
+    btnArmor.disabled = disabled;
+    if (disabled) {
+      btnArmor.classList.add('disabled');
+    } else {
+      btnArmor.classList.remove('disabled');
+    }
+  }
+
+  if (navCraft) {
+    navCraft.disabled = disabled;
+    if (disabled) {
+      navCraft.classList.add('disabled');
+    } else {
+      navCraft.classList.remove('disabled');
+    }
+  }
+
+  if (navList) {
+    navList.disabled = disabled;
+    if (disabled) {
+      navList.classList.add('disabled');
+    } else {
+      navList.classList.remove('disabled');
+    }
+  }
 }
 
 /**

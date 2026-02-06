@@ -683,31 +683,36 @@ function updatePrimaryBtn() {
  * Final step: Passes selection(s) to the backend saveItem() in manager.js.
  */
 function handleSaveWish() {
-  Object.values(selectedPieces).forEach(item => {
-    const slotName = getBucketName(item.bucketHash);
-    const className = getClassName(item.classType);
-    const setName = getArmorSetName(item.name);
-    
-    saveItem(
-      item.hash,
-      item.name,
-      "armor",
-      `armor-wish:${item.hash}`,
-      `armor-wish:${item.hash}`,
-      { archetype: currentArchetype.name, spark: currentSpark },
-      currentMode,
-      item.icon,
-      item.classType,
-      item.bucketHash,
-      slotName,
-      setName,
-      item.gearset
-    );
+  const itemsToSave = Object.values(selectedPieces);
+  const selectedCount = itemsToSave.length;
+  
+  // Save items sequentially with a small delay to avoid race conditions
+  itemsToSave.forEach((item, index) => {
+    setTimeout(() => {
+      const slotName = getBucketName(item.bucketHash);
+      const className = getClassName(item.classType);
+      const setName = getArmorSetName(item.name);
+      
+      saveItem(
+        item.hash,
+        item.name,
+        "armor",
+        `armor-wish:${item.hash}`,
+        `armor-wish:${item.hash}`,
+        { archetype: currentArchetype.name, spark: currentSpark },
+        currentMode,
+        item.icon,
+        item.classType,
+        item.bucketHash,
+        slotName,
+        setName,
+        item.gearset
+      );
+    }, index * 100); // 100ms delay between each save
   });
 
   const btn = document.getElementById("btn-create-armor");
   const originalText = btn.textContent;
-  const selectedCount = Object.keys(selectedPieces).length;
   if (selectedCount === 1) {
     btn.textContent = "WISH GRANTED!";
   } else {

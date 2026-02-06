@@ -19,6 +19,7 @@ let _invItemDefs = null;      // Map<stringHash, defObject>
 let _armorSetDefs = null;     // Map<setHash, setDefObject>
 let _nameIndex = null;        // Array<{h:string, n:string}>
 let _armorSetLookup = null;   // Map<setHash, {name, icon, description}>
+let _damageTypeDefs = null;   // Map<damageTypeHash, defObject>
 let _manifestVersion = null;  // string
 
 function d2log(...args) { console.log("[D2MANIFEST]", ...args); }
@@ -30,6 +31,7 @@ function resetManifestMemory() {
   _armorSetDefs = null;
   _nameIndex = null;
   _armorSetLookup = null;
+  _damageTypeDefs = null;
   _manifestVersion = null;
 }
 
@@ -282,6 +284,66 @@ async function ensureCollectibleDefsReady({ force = false } = {}) {
   }
 }
 
+// Download DestinyDamageTypeDefinition component JSON and cache it.
+async function ensureDamageTypeDefsReady({ force = false } = {}) {
+  console.groupCollapsed("[D2MANIFEST] ensureDamageTypeDefsReady");
+
+  try {
+    const meta = await fetchManifestMeta();
+    const liveVersion = meta.version;
+    d2log("Live manifest version:", liveVersion);
+
+    const cachedVersion = await idbGet("manifestVersion", STORE_META);
+    const haveCachedBlob = await idbGet("DestinyDamageTypeDefinition", STORE_BLOBS);
+    const needsDownload = force || !haveCachedBlob || !cachedVersion || cachedVersion !== liveVersion;
+
+    if (!needsDownload) {
+      d2log("Damage type defs cache is up-to-date. Skipping download.");
+      return true;
+    }
+
+    const lang = "en";
+    const comp = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyDamageTypeDefinition;
+    const world = meta.jsonWorldContentPaths?.[lang];
+
+    let path = comp || world;
+    if (!path) {
+      d2warn("Damage type defs not available in manifest meta; skipping.");
+      return false;
+    }
+    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
+    d2log("Downloading damage type definitions from:", path, "| component?", !!comp);
+
+    const r = await fetch(path, { headers: { "Accept": "application/json" } });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`Damage type defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
+    }
+    const buf = await r.arrayBuffer();
+    d2log("Downloaded bytes:", buf.byteLength);
+
+    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
+    const parsed = JSON.parse(text);
+
+    const damageTypeDefs = comp ? parsed : parsed?.DestinyDamageTypeDefinition;
+    if (!damageTypeDefs) {
+      const keys = Object.keys(parsed || {});
+      d2warn("Parsed manifest keys (sample):", keys.slice(0, 30));
+      throw new Error("Downloaded JSON did not contain DestinyDamageTypeDefinition data.");
+    }
+
+    await idbSet("DestinyDamageTypeDefinition", damageTypeDefs, STORE_BLOBS);
+    _damageTypeDefs = null;
+    d2log("Damage type defs cache updated successfully.");
+    return true;
+  } catch (e) {
+    d2err("ensureDamageTypeDefsReady FAILED:", e);
+    return false;
+  } finally {
+    console.groupEnd();
+  }
+}
+
 // --- MEMORY LOADING ---
 async function loadInventoryItemDefsToMemory() {
   if (_invItemDefs) return _invItemDefs;
@@ -328,6 +390,37 @@ async function loadArmorSetDefsToMemory() {
   d2log("Loaded armor set defs into memory:", count);
   console.groupEnd();
   return _armorSetDefs;
+}
+
+async function loadDamageTypeDefsToMemory() {
+  if (_damageTypeDefs) return _damageTypeDefs;
+
+  console.groupCollapsed("[D2MANIFEST] loadDamageTypeDefsToMemory");
+  const blob = await idbGet("DestinyDamageTypeDefinition", STORE_BLOBS);
+  if (!blob) {
+    d2warn("No cached damage type defs found. Attempting download...");
+    const ok = await ensureDamageTypeDefsReady({ force: false });
+    if (!ok) {
+      console.groupEnd();
+      return null;
+    }
+  }
+  const defsObj = await idbGet("DestinyDamageTypeDefinition", STORE_BLOBS);
+  if (!defsObj) {
+    console.groupEnd();
+    return null;
+  }
+
+  const map = new Map();
+  let count = 0;
+  for (const [hashStr, def] of Object.entries(defsObj)) {
+    map.set(String(hashStr), def);
+    count++;
+  }
+  _damageTypeDefs = map;
+  d2log("Loaded damage type defs into memory:", count);
+  console.groupEnd();
+  return _damageTypeDefs;
 }
 
 // --- LOOKUP TABLES ---
@@ -814,6 +907,15 @@ async function getPerkName(perkHash) {
   return def?.displayProperties?.name || "Unknown Perk";
 }
 
+/**
+ * Get damage type definitions.
+ *
+ * @returns {Promise<Map>} Map of damageTypeHash -> def
+ */
+async function getDamageTypeDefs() {
+  return loadDamageTypeDefsToMemory();
+}
+
 // --- EXPORTS ---
 // For use in other modules
 // All functions and constants are globally available:
@@ -823,6 +925,7 @@ async function getPerkName(perkHash) {
 // - ensureInventoryItemDefsReady()
 // - ensureEquippableItemSetDefsReady()
 // - ensureCollectibleDefsReady()
+// - ensureDamageTypeDefsReady()
 // - resetManifestMemory()
 // - searchArmorLocally()
 // - searchWeaponsLocally()
@@ -832,6 +935,7 @@ async function getPerkName(perkHash) {
 // - getWeaponSockets()
 // - getSocketPerks()
 // - getPerkName()
+// - getDamageTypeDefs()
 
 // --- GLOBAL NAMESPACE ---
 // Expose all manifest functions under window.__manifest__ for easy access
@@ -840,6 +944,7 @@ window.__manifest__ = {
   ensureInventoryItemDefsReady,
   ensureEquippableItemSetDefsReady,
   ensureCollectibleDefsReady,
+  ensureDamageTypeDefsReady,
   resetManifestMemory,
   
   // Armor functions
@@ -854,12 +959,16 @@ window.__manifest__ = {
   getWeaponSockets,
   getSocketPerks,
   getPerkName,
+  getDamageTypeDefs,
   WEAPON_BUCKET_HASHES,
   PERK_STAT_BONUSES,
   
   // Manifest data (will be populated after loading)
   get DestinyInventoryItemDefinition() {
     return _invItemDefs || new Map();
+  },
+  get DestinyDamageTypeDefinition() {
+    return _damageTypeDefs || new Map();
   }
 };
 

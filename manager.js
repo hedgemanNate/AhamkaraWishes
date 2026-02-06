@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ensureInventoryItemDefsReady({ force: false }),
         ensureEquippableItemSetDefsReady({ force: false }),
         ensureCollectibleDefsReady({ force: false }),
-        getArmorSetLookup()
+      ensureDamageTypeDefsReady({ force: false }),
+      getArmorSetLookup(),
+      window.__manifest__?.getDamageTypeDefs?.()
     ]).then(() => {
         // Initialize weapon system after manifest is ready
         return initializeWeaponSystem();
@@ -83,7 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     ensureInventoryItemDefsReady({ force: true }),
                     ensureEquippableItemSetDefsReady({ force: true }),
                     ensureCollectibleDefsReady({ force: true }),
-                    getArmorSetLookup()
+                  ensureDamageTypeDefsReady({ force: true }),
+                  getArmorSetLookup(),
+                  window.__manifest__?.getDamageTypeDefs?.()
                 ]);
 
                 if (window.weaponUI?.resetWeaponSearchWorker) {

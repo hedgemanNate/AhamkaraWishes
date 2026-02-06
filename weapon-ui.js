@@ -245,9 +245,20 @@ async function selectWeapon(weaponHash) {
     weaponHash,
     name: weaponDef.displayProperties?.name || 'Unknown',
     icon: weaponDef.displayProperties?.icon || '',
+    damageType:
+      (Array.isArray(weaponDef.damageTypeHashes) && weaponDef.damageTypeHashes[0]) ||
+      weaponDef.defaultDamageTypeHash ||
+      null,
     stats,
     sockets,
   };
+
+  d2log(
+    `Damage debug: hash=${weaponHash}, damageTypeHashes=${JSON.stringify(
+      weaponDef.damageTypeHashes || []
+    )}, defaultDamageTypeHash=${weaponDef.defaultDamageTypeHash || null}`,
+    'weapon-ui'
+  );
 
   // Reset perks for new weapon
   weaponState.selectedPerks = {};
@@ -274,7 +285,11 @@ async function selectWeapon(weaponHash) {
     if (typeEl) typeEl.textContent = itemType;
     
     // Set damage type with icon/color context
-    const damageType = getDamageTypeName(weaponDef.defaultDamageTypeHash);
+    const damageHash =
+      (Array.isArray(weaponDef.damageTypeHashes) && weaponDef.damageTypeHashes[0]) ||
+      weaponDef.defaultDamageTypeHash ||
+      null;
+    const damageType = getDamageTypeName(damageHash);
     if (damageEl) damageEl.textContent = damageType;
     
     // Set ammo type
@@ -704,9 +719,9 @@ async function populateFilterOptions(wishes) {
   const uniqueDamageTypes = new Map(); // hash -> name
 
   wishes.forEach((item) => {
-    if (item.weaponType) uniqueTypes.add(item.weaponType);
+    if (item.static?.type) uniqueTypes.add(item.static.type);
     if (item.icon && item.wish) {
-      const damageHash = item.damageType || null;
+      const damageHash = item.static?.damageType || null;
       if (damageHash && !uniqueDamageTypes.has(damageHash)) {
         // Map damage type hash to UI name
         const damageName = getDamageTypeName(damageHash);
@@ -741,6 +756,14 @@ async function populateFilterOptions(wishes) {
  * @returns {string} Display name (Solar, Arc, Void, Stasis, Strand, Kinetic)
  */
 function getDamageTypeName(damageHash) {
+  const normalizedHash = Number(damageHash);
+  if (!Number.isFinite(normalizedHash)) return 'Unknown';
+  const damageTypeDefs = window.__manifest__?.DestinyDamageTypeDefinition;
+  if (damageTypeDefs && typeof damageTypeDefs.get === 'function') {
+    const def = damageTypeDefs.get(String(normalizedHash));
+    const name = def?.displayProperties?.name || def?.name || null;
+    if (name) return name;
+  }
   const damageTypeMap = {
     1847026933: 'Kinetic',
     2303181850: 'Arc',
@@ -749,7 +772,7 @@ function getDamageTypeName(damageHash) {
     3949847137: 'Stasis',
     1461471453: 'Strand',
   };
-  return damageTypeMap[damageHash] || 'Unknown';
+  return damageTypeMap[normalizedHash] || 'Unknown';
 }
 
 /**

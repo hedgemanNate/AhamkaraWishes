@@ -40,7 +40,10 @@ async function saveWeaponWish(weaponHash, config, tags, displayString, options =
     // Get weapon static data from manifest
     const weaponCache = window.__manifest__ || {};
     const weaponDefs = weaponCache.DestinyInventoryItemDefinition || {};
-    const weaponDef = weaponDefs[weaponHash];
+    const weaponDef =
+      weaponDefs?.get?.(String(weaponHash)) ||
+      weaponDefs?.[weaponHash] ||
+      weaponDefs?.[String(weaponHash)];
 
     if (!weaponDef) {
       throw new Error(`Weapon ${weaponHash} not found in manifest`);
@@ -54,7 +57,10 @@ async function saveWeaponWish(weaponHash, config, tags, displayString, options =
           name: weaponDef.displayProperties?.name || 'Unknown Weapon',
           icon: weaponDef.displayProperties?.icon || '',
           type: weaponDef.itemTypeDisplayName || 'Weapon',
-          damageType: weaponDef.damageTypeHashes?.[0] || null,
+          damageType:
+            (Array.isArray(weaponDef.damageTypeHashes) && weaponDef.damageTypeHashes[0]) ||
+            weaponDef.defaultDamageTypeHash ||
+            null,
           rarity: weaponDef.inventory?.rarity || 'Common',
           slot: weaponDef.equipment?.slotTypeHash || null,
         },
@@ -125,6 +131,55 @@ async function loadWeaponWishes(listId) {
     }
 
     const items = dimData.lists[activeId].items || {};
+
+    // Backfill missing static fields from manifest for existing saved items
+    const weaponCache = window.__manifest__ || {};
+    const weaponDefs = weaponCache.DestinyInventoryItemDefinition || {};
+    let didUpdate = false;
+
+    for (const [hashKey, item] of Object.entries(items)) {
+      if (!item?.static) continue;
+      const weaponHash = Number(item.static.hash || hashKey);
+      const weaponDef =
+        weaponDefs?.get?.(String(weaponHash)) ||
+        weaponDefs?.[weaponHash] ||
+        weaponDefs?.[String(weaponHash)];
+      if (!weaponDef) continue;
+
+      if (!item.static.name) {
+        item.static.name = weaponDef.displayProperties?.name || 'Unknown Weapon';
+        didUpdate = true;
+      }
+      if (!item.static.icon) {
+        item.static.icon = weaponDef.displayProperties?.icon || '';
+        didUpdate = true;
+      }
+      if (!item.static.type) {
+        item.static.type = weaponDef.itemTypeDisplayName || 'Weapon';
+        didUpdate = true;
+      }
+      if (!item.static.damageType) {
+        item.static.damageType =
+          (Array.isArray(weaponDef.damageTypeHashes) && weaponDef.damageTypeHashes[0]) ||
+          weaponDef.defaultDamageTypeHash ||
+          null;
+        didUpdate = true;
+      }
+      if (!item.static.rarity) {
+        item.static.rarity = weaponDef.inventory?.rarity || 'Common';
+        didUpdate = true;
+      }
+      if (!item.static.slot) {
+        item.static.slot = weaponDef.equipment?.slotTypeHash || null;
+        didUpdate = true;
+      }
+    }
+
+    if (didUpdate) {
+      dimData.lists[activeId].items = items;
+      await chrome.storage.local.set({ dimData });
+    }
+
     return Object.values(items).filter((item) => item.wishes && item.wishes.length > 0);
   } catch (error) {
     d2log(`❌ Error loading weapon wishes: ${error.message}`, 'weapon-manager', 'error');

@@ -684,84 +684,61 @@ function updatePrimaryBtn() {
  */
 function handleSaveWish() {
   const itemsToSave = Object.values(selectedPieces);
-  const selectedCount = itemsToSave.length;
-  
   const btn = document.getElementById("btn-create-armor");
   
-  // Immediately show "Granting Wishes" and disable tabs
-  btn.textContent = "Granting Wishes";
-  btn.disabled = true;
-  disableTabButtons(true);
+  console.log("[SaveWish] Button clicked. Items to save:", itemsToSave.length);
+  console.log("[SaveWish] currentArchetype:", currentArchetype);
+  console.log("[SaveWish] currentSpark:", currentSpark);
+  console.log("[SaveWish] currentMode:", currentMode);
   
-  // Chain saves to prevent race conditions
+  if (itemsToSave.length === 0) {
+    console.warn("[SaveWish] No items selected");
+    return;
+  }
+  
+  // Show feedback with green flash
+  btn.textContent = "WISH GRANTED!";
+  btn.classList.add("success");
+  
+  // Reset after 1.5 seconds
+  setTimeout(() => {
+    btn.classList.remove("success");
+    updatePrimaryBtn();
+  }, 1500);
+  
   let saveChain = Promise.resolve();
-  let successCount = 0;
   
-  itemsToSave.forEach((item) => {
+  itemsToSave.forEach((item, index) => {
     saveChain = saveChain.then(() => {
-      return new Promise((resolve) => {
-        const slotName = getBucketName(item.bucketHash);
-        const setName = item.static?.name || "Unknown";
-        
-        // Temporarily override loadLists to signal when this save completes
-        const originalLoadLists = window.loadLists;
-        window.loadLists = function() {
-          originalLoadLists();
-          successCount++;
-          resolve(); // Signal completion to chain
-        };
-        
-        saveItem(
-          item.hash,
-          item.name,
-          "armor",
-          `armor-wish:${item.hash}`,
-          `armor-wish:${item.hash}`,
-          { archetype: currentArchetype.name, spark: currentSpark },
-          currentMode,
-          item.icon,
-          item.classType,
-          item.bucketHash,
-          slotName,
-          setName,
-          item.setHash
-        );
+      console.log("[SaveWish] Starting save for item", index + 1, ":", item.name);
+      const slotName = getBucketName(item.bucketHash);
+      const setName = item.static?.name || "Unknown";
+      
+      return saveItem(
+        item.hash,
+        item.name,
+        "armor",
+        `armor-wish:${item.hash}`,
+        `armor-wish:${item.hash}`,
+        { archetype: currentArchetype.name, spark: currentSpark },
+        currentMode,
+        item.icon,
+        item.classType,
+        item.bucketHash,
+        slotName,
+        setName,
+        item.setHash
+      ).then(() => {
+        console.log("[SaveWish] Item saved successfully:", item.name);
+      }).catch(err => {
+        console.error("[SaveWish] Error saving item:", item.name, err);
       });
     });
   });
   
-  // Create a 4-second timeout promise
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Timeout")), 4000);
+  saveChain.catch(err => {
+    console.error("[SaveWish] Save chain failed:", err);
   });
-  
-  // Race: whichever completes first
-  Promise.race([saveChain, timeoutPromise])
-    .then(() => {
-      // All saves completed before timeout
-      if (successCount === selectedCount) {
-        btn.textContent = "WISHES GRANTED!";
-        btn.classList.add("success");
-      } else {
-        btn.textContent = "WISH DENIED";
-        btn.classList.add("denied");
-      }
-    })
-    .catch((err) => {
-      // Timeout occurred or error
-      btn.textContent = "WISH DENIED";
-      btn.classList.add("denied");
-    })
-    .finally(() => {
-      // Re-enable tabs and reset button after 2 seconds
-      setTimeout(() => {
-        btn.classList.remove("success", "denied");
-        btn.disabled = false;
-        btn.textContent = "WISH GRANTED!";
-        disableTabButtons(false);
-        updatePrimaryBtn();
-      }, 2000);
-    });
 }
 
 /**

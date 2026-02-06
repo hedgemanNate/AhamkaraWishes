@@ -23,30 +23,27 @@ document.addEventListener('DOMContentLoaded', () => {
     
     setupTabs();
     
-    // Wrap loadLists to hide the overlay when it completes
-    const originalLoadLists = loadLists;
-    loadLists = function() {
-        originalLoadLists();
-        // Manifest preflight: download/cache item defs and armor set defs
-        Promise.all([
-            ensureInventoryItemDefsReady({ force: false }),
-            ensureEquippableItemSetDefsReady({ force: false }),
-            getArmorSetLookup()
-        ]).then(() => {
-            // Hide loading overlay once all manifest data is ready (fade animation is 1.3s)
-            if (loadingOverlay) {
-                loadingOverlay.classList.add('hidden');
-            }
-        }).catch(err => {
-            console.warn("[D2MANIFEST] Preflight failed:", err);
-            // Hide overlay even on error
-            if (loadingOverlay) {
-                loadingOverlay.classList.add('hidden');
-            }
-        });
-    };
-    
-    loadLists();
+    // Load manifest data ONCE at startup
+    Promise.all([
+        ensureInventoryItemDefsReady({ force: false }),
+        ensureEquippableItemSetDefsReady({ force: false }),
+        getArmorSetLookup()
+    ]).then(() => {
+        // Hide loading overlay once all manifest data is ready (fade animation is 1.3s)
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+        }
+        // Now load and display the wishlist UI
+        loadLists();
+    }).catch(err => {
+        console.warn("[D2MANIFEST] Preflight failed:", err);
+        // Hide overlay even on error
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+        }
+        // Try to load UI anyway
+        loadLists();
+    });
 });
 
 // --- LIVE UPDATE LISTENER ---
@@ -58,60 +55,66 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 });
 
 // Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
-// Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
+// Returns a Promise that resolves after the storage operation completes
 function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null, setHash = null) {
-  chrome.storage.local.get(["dimData"], (result) => {
-    let data = result.dimData || {
-      activeId: "default",
-      lists: { default: { name: "Main Wishlist", items: {} } }
-    };
-
-    const activeList = data.lists[data.activeId] || data.lists["default"];
-    if (!activeList.items) activeList.items = {};
-
-    // Create container if missing
-    if (!activeList.items[hash]) {
-      activeList.items[hash] = {
-        static: { name, type, set: null, icon: icon || null, classType, bucketHash, slotName, setName, setHash },
-        wishes: []
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["dimData"], (result) => {
+      let data = result.dimData || {
+        activeId: "default",
+        lists: { default: { name: "Main Wishlist", items: {} } }
       };
-    } else {
-      // Backfill metadata if missing
-      if (name && !activeList.items[hash].static?.name) activeList.items[hash].static.name = name;
-      if (type && !activeList.items[hash].static?.type) activeList.items[hash].static.type = type;
 
-      // Backfill icon if we now have one
-      if (icon && (!activeList.items[hash].static || !activeList.items[hash].static.icon)) {
-        activeList.items[hash].static.icon = icon;
+      const activeList = data.lists[data.activeId] || data.lists["default"];
+      if (!activeList.items) activeList.items = {};
+
+      // Create container if missing
+      if (!activeList.items[hash]) {
+        activeList.items[hash] = {
+          static: { name, type, set: null, icon: icon || null, classType, bucketHash, slotName, setName, setHash },
+          wishes: []
+        };
+      } else {
+        // Backfill metadata if missing
+        if (name && !activeList.items[hash].static?.name) activeList.items[hash].static.name = name;
+        if (type && !activeList.items[hash].static?.type) activeList.items[hash].static.type = type;
+
+        // Backfill icon if we now have one
+        if (icon && (!activeList.items[hash].static || !activeList.items[hash].static.icon)) {
+          activeList.items[hash].static.icon = icon;
+        }
+        
+        // Backfill filter data if missing
+        if (classType !== null && !activeList.items[hash].static?.classType) activeList.items[hash].static.classType = classType;
+        if (bucketHash !== null && !activeList.items[hash].static?.bucketHash) activeList.items[hash].static.bucketHash = bucketHash;
+        if (slotName && !activeList.items[hash].static?.slotName) activeList.items[hash].static.slotName = slotName;
+        if (setName && !activeList.items[hash].static?.setName) activeList.items[hash].static.setName = setName;
+        if (setHash && !activeList.items[hash].static?.setHash) activeList.items[hash].static.setHash = setHash;
       }
-      
-      // Backfill filter data if missing
-      if (classType !== null && !activeList.items[hash].static?.classType) activeList.items[hash].static.classType = classType;
-      if (bucketHash !== null && !activeList.items[hash].static?.bucketHash) activeList.items[hash].static.bucketHash = bucketHash;
-      if (slotName && !activeList.items[hash].static?.slotName) activeList.items[hash].static.slotName = slotName;
-      if (setName && !activeList.items[hash].static?.setName) activeList.items[hash].static.setName = setName;
-      if (setHash && !activeList.items[hash].static?.setHash) activeList.items[hash].static.setHash = setHash;
-    }
 
-    const existingWishes = activeList.items[hash].wishes || [];
-    activeList.items[hash].wishes = existingWishes;
+      const existingWishes = activeList.items[hash].wishes || [];
+      activeList.items[hash].wishes = existingWishes;
 
-    // Duplicate check (same raw + same mode tag)
-    const isDuplicate = existingWishes.some(
-      (w) => w?.raw === rawString && (w?.tags || []).includes(mode)
-    );
-    if (isDuplicate) return;
+      // Duplicate check (same raw + same mode tag)
+      const isDuplicate = existingWishes.some(
+        (w) => w?.raw === rawString && (w?.tags || []).includes(mode)
+      );
+      if (isDuplicate) {
+        resolve();
+        return;
+      }
 
-    // Add new wish
-    existingWishes.push({
-      tags: [mode],          // ['pve'] or ['pvp']
-      config,               // your armor/weapon config
-      raw: rawString,       // original string
-      added: Date.now()
-    });
+      // Add new wish
+      existingWishes.push({
+        tags: [mode],          // ['pve'] or ['pvp']
+        config,               // your armor/weapon config
+        raw: rawString,       // original string
+        added: Date.now()
+      });
 
-    chrome.storage.local.set({ dimData: data }, () => {
-      loadLists(); // refresh UI
+      chrome.storage.local.set({ dimData: data }, () => {
+        resolve(); // Signal completion after storage operation completes
+        // Don't call loadLists here - onChanged listener will handle UI refresh
+      });
     });
   });
 }

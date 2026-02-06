@@ -161,11 +161,20 @@ function loadLists() {
             return;
         }
 
-        Object.keys(activeList.items).forEach(hash => {
+        Object.keys(activeList.items)
+          .sort((a, b) => {
+            const setA = (activeList.items[a]?.static?.setName || '').toString().toLowerCase();
+            const setB = (activeList.items[b]?.static?.setName || '').toString().toLowerCase();
+            const nameA = (activeList.items[a]?.static?.name || '').toString().toLowerCase();
+            const nameB = (activeList.items[b]?.static?.name || '').toString().toLowerCase();
+            const primary = setA.localeCompare(setB, 'en', { sensitivity: 'base' });
+            return primary !== 0 ? primary : nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
+          })
+          .forEach(hash => {
             const item = activeList.items[hash];
             const card = createItemCard(hash, item);
             container.appendChild(card);
-        });
+          });
     });
 }
 

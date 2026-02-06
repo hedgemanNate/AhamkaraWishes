@@ -173,7 +173,13 @@ function applyArmorFilters() {
             return;
         }
 
-        Object.keys(armorSets).forEach(setId => {
+        const sortedSetIds = Object.keys(armorSets).sort((a, b) => {
+            const nameA = getSetDisplayName(armorSets[a]).toString().toLowerCase();
+            const nameB = getSetDisplayName(armorSets[b]).toString().toLowerCase();
+            return nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
+        });
+
+        sortedSetIds.forEach(setId => {
             const setContainer = document.createElement('div');
             setContainer.className = 'armor-set-row';
             

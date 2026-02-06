@@ -503,12 +503,286 @@ async function searchArmorLocally(query, currentClassType) {
   return out;
 }
 
+// ===============================
+// WEAPON CRAFTING SYSTEM - Phase 1 Extension
+// ===============================
+
+// --- WEAPON BUCKET HASHES ---
+const WEAPON_BUCKET_HASHES = {
+  KINETIC: 1498876634,
+  SPECIAL: 2048327096,
+  HEAVY: 953998645,
+};
+
+// --- PERK STAT BONUSES LOOKUP TABLE ---
+// Maps perk hash → stat bonuses (static, non-conditional perks only)
+// Values are integer deltas (e.g., +5 reload)
+const PERK_STAT_BONUSES = {
+  // Barrel Perks
+  3142371805: { recoilDirection: 15, handling: 7 },           // Arrowhead Brake
+  1467527085: { recoilDirection: 10, stability: 4 },          // Chambered Compensator
+  2278692867: { stability: 5 },                               // Corkscrew Rifling
+  3300014278: { range: 8, stability: 3 },                     // Polygonal Rifling
+  3661387068: { handling: 10 },                               // SmallBore
+  1985240521: { range: 12 },                                  // Extended Barrel
+  1954620775: { handling: 12, stability: -5 },                // Fluted Barrel
+  2888870187: { range: 5, handling: 12 },                     // Tactical rig
+  3301904760: { stability: 10, handling: -5 },                // Full Bore
+
+  // Magazine Perks
+  2916594351: { magazine: 10, reload: -6 },                   // Armor Piercing Rounds
+  4071414230: { magazine: 14, reload: -8 },                   // High-Caliber Rounds
+  3370581552: { reload: 18 },                                 // Ricochet Rounds
+  679112144: { magazine: 12 },                                // Extended Mag
+  4152351501: { reload: 12 },                                 // Appended Mag
+  3147027646: { reload: 20, magazine: -4 },                   // Flared Magwell
+  2888870187: { magazine: 8 },                                // Particle Repeater
+  2255544896: { reload: 8 },                                  // Accurized Round
+
+  // Trait Perks (Primary stat effects only - no conditional effects like Rampage x1/x2/x3)
+  2652596479: { reload: 15 },                                 // Rampage (base bonus)
+  3708227201: { handling: 12 },                               // Kill Clip (base bonus)
+  2326428976: { range: 20 },                                  // Outlaw
+  1627120122: { stability: 18 },                              // Zen Moment
+  1090496154: { reload: 8, handling: 5 },                     // Elemental Time Dilation
+  1607674147: { reload: 25 },                                 // Feeding Frenzy
+};
+
+/**
+ * Search for weapons in the loaded manifest by name.
+ *
+ * @param {string} query - Search term (weapon name)
+ * @param {number} bucketHash - Optional bucket hash filter (KINETIC, SPECIAL, HEAVY)
+ * @returns {Array} Array of {hash, name, icon, type}
+ */
+async function searchWeaponsLocally(query, bucketHash = null) {
+  const q = String(query || "").trim().toLowerCase();
+  if (q.length < 2) return [];
+
+  d2log("searchWeaponsLocally:", q);
+
+  const ok = await ensureInventoryItemDefsReady({ force: false });
+  if (!ok) throw new Error("Manifest not available");
+
+  const defs = await loadInventoryItemDefsToMemory();
+  const idx = await buildNameIndexIfNeeded();
+
+  // Name index lookup
+  const hits = [];
+  for (const it of idx) {
+    if (it.n.includes(q)) hits.push(it.h);
+    if (hits.length >= 400) break;
+  }
+
+  // Filter by weapon criteria
+  const candidates = [];
+  for (const h of hits) {
+    const def = defs.get(String(h));
+    if (!isRealWeaponDef(def)) continue;
+    if (bucketHash && def.inventory?.bucketTypeHash !== bucketHash) continue;
+    candidates.push(def);
+    if (candidates.length >= 100) break;
+  }
+
+  const out = candidates.map((item) => ({
+    hash: item.hash,
+    name: item.displayProperties?.name || "",
+    icon: item.displayProperties?.icon ? `${BUNGIE_ROOT}${item.displayProperties.icon}` : "",
+    type: item.itemTypeDisplayName || "Weapon",
+    damageType: item.damageTypeHashes?.[0] || null,
+  }));
+
+  return out;
+}
+
+/**
+ * Helper: Check if a definition is a real weapon.
+ * Weapons have itemCategoryHash 1 (Weapon), are not exotic duplicates, etc.
+ */
+function isRealWeaponDef(def) {
+  if (!def || !def.itemCategory) return false;
+  // Item category 1 = Weapon
+  if (!def.itemCategory.some((h) => h === 1)) return false;
+  // Skip quest items, dummy items, etc.
+  if (def.displayProperties?.name?.includes("DEPRECATED")) return false;
+  if (!def.inventory || !def.inventory.bucketTypeHash) return false;
+  // Only kinetic, special, heavy
+  const bucket = def.inventory.bucketTypeHash;
+  if (
+    bucket !== WEAPON_BUCKET_HASHES.KINETIC &&
+    bucket !== WEAPON_BUCKET_HASHES.SPECIAL &&
+    bucket !== WEAPON_BUCKET_HASHES.HEAVY
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Get weapon stats (impact, range, stability, etc.).
+ *
+ * @param {number} weaponHash - Weapon inventory hash
+ * @returns {Object} {impact, range, stability, handling, reload, magazine, zoom, aimAssistance, recoilDirection}
+ */
+async function getWeaponStats(weaponHash) {
+  const defs = await loadInventoryItemDefsToMemory();
+  const def = defs.get(String(weaponHash));
+  if (!def) return {};
+
+  // Extract stats from definition
+  const stats = {};
+  const invStats = def.stats?.stats || {};
+  for (const [statHash, stat] of Object.entries(invStats)) {
+    const statDef = def.stats?.stats[statHash];
+    if (!statDef) continue;
+
+    // Map common stat hashes to friendly names
+    switch (parseInt(statHash)) {
+      case 4284049017:
+        stats.impact = statDef.value;
+        break; // Impact
+      case 1240592695:
+        stats.range = statDef.value;
+        break; // Range
+      case 155624089:
+        stats.stability = statDef.value;
+        break; // Stability
+      case 943549884:
+        stats.handling = statDef.value;
+        break; // Handling
+      case 4188031246:
+        stats.reload = statDef.value;
+        break; // Reload Speed
+      case 3871231066:
+        stats.magazine = statDef.value;
+        break; // Magazine
+      case 2996146976:
+        stats.zoom = statDef.value;
+        break; // Zoom
+      case 1345867579:
+        stats.aimAssistance = statDef.value;
+        break; // Aim Assistance
+      case 4043523819:
+        stats.recoilDirection = statDef.value;
+        break; // Recoil Direction
+    }
+  }
+
+  return stats;
+}
+
+/**
+ * Get weapon socket information (perk slots).
+ *
+ * @param {number} weaponHash - Weapon inventory hash
+ * @returns {Array} Array of {socketIndex, socketTypeHash, reusablePlugSetHash}
+ */
+async function getWeaponSockets(weaponHash) {
+  const defs = await loadInventoryItemDefsToMemory();
+  const def = defs.get(String(weaponHash));
+  if (!def || !def.sockets || !def.sockets.socketEntries) return [];
+
+  return def.sockets.socketEntries.map((socket, index) => ({
+    socketIndex: index,
+    socketTypeHash: socket.socketTypeHash,
+    reusablePlugSetHash: socket.reusablePlugSetHash,
+  }));
+}
+
+/**
+ * Get available perks for a specific weapon socket.
+ *
+ * @param {number} weaponHash - Weapon inventory hash
+ * @param {number} socketIndex - Socket index (0-4)
+ * @returns {Array} Array of {perkHash, perkName, statBonus}
+ */
+async function getSocketPerks(weaponHash, socketIndex) {
+  const defs = await loadInventoryItemDefsToMemory();
+  const def = defs.get(String(weaponHash));
+  if (!def || !def.sockets || !def.sockets.socketEntries[socketIndex]) return [];
+
+  const socket = def.sockets.socketEntries[socketIndex];
+  const plugSetHash = socket.reusablePlugSetHash;
+
+  // Load plug set definition
+  const plugSetDef = defs.get(String(plugSetHash));
+  if (!plugSetDef || !plugSetDef.reusablePlugItems) return [];
+
+  const perks = [];
+  for (const plugItem of plugSetDef.reusablePlugItems) {
+    const perkHash = plugItem.plugItemHash;
+    const perkDef = defs.get(String(perkHash));
+    if (!perkDef) continue;
+
+    const perkName = perkDef.displayProperties?.name || "Unknown Perk";
+    const statBonus = PERK_STAT_BONUSES[perkHash] || {};
+
+    perks.push({
+      perkHash,
+      perkName,
+      icon: perkDef.displayProperties?.icon || "",
+      statBonus,
+    });
+  }
+
+  return perks;
+}
+
+/**
+ * Get perk name by hash.
+ *
+ * @param {number} perkHash - Perk hash
+ * @returns {string} Perk display name
+ */
+async function getPerkName(perkHash) {
+  const defs = await loadInventoryItemDefsToMemory();
+  const def = defs.get(String(perkHash));
+  return def?.displayProperties?.name || "Unknown Perk";
+}
+
 // --- EXPORTS ---
 // For use in other modules
 // All functions and constants are globally available:
 // - BUCKET_HASHES
+// - WEAPON_BUCKET_HASHES
+// - PERK_STAT_BONUSES
 // - ensureInventoryItemDefsReady()
 // - ensureEquippableItemSetDefsReady()
 // - searchArmorLocally()
+// - searchWeaponsLocally()
 // - getArmorSetLookup()
 // - getArmorSetName()
+// - getWeaponStats()
+// - getWeaponSockets()
+// - getSocketPerks()
+// - getPerkName()
+
+// --- GLOBAL NAMESPACE ---
+// Expose all manifest functions under window.__manifest__ for easy access
+window.__manifest__ = {
+  // Initialization
+  ensureInventoryItemDefsReady,
+  ensureEquippableItemSetDefsReady,
+  
+  // Armor functions
+  searchArmorLocally,
+  getArmorSetLookup,
+  getArmorSetName,
+  BUCKET_HASHES,
+  
+  // Weapon functions
+  searchWeaponsLocally,
+  getWeaponStats,
+  getWeaponSockets,
+  getSocketPerks,
+  getPerkName,
+  WEAPON_BUCKET_HASHES,
+  PERK_STAT_BONUSES,
+  
+  // Manifest data (will be populated after loading)
+  get DestinyInventoryItemDefinition() {
+    return _invItemDefs || new Map();
+  }
+};
+
+d2log('✅ Manifest module loaded. Access via window.__manifest__');

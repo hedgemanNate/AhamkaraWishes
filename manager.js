@@ -155,6 +155,12 @@ function loadLists() {
     chrome.storage.local.get(['dimData'], (result) => {
         const container = document.getElementById('weapon-list');
         const emptyState = document.getElementById('empty-state');
+        
+        // Skip old weapon list if element doesn't exist (now handled by weapon-ui.js)
+        if (!container) {
+            return;
+        }
+        
         container.innerHTML = ''; 
 
         if (!result.dimData || !result.dimData.lists) {

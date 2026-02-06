@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ahamkara Wishes</title>
   <link rel="stylesheet" href="sidepanel.css" />
+  <link rel="stylesheet" href="weapon-sidepanel.css" />
 </head>
 
 <body>
@@ -26,8 +27,95 @@
     </header>
 
     <div id="view-weapons" class="content-view active-view">
-      <div id="empty-state" class="hidden">No wishes yet.</div>
-      <div id="weapon-list"></div>
+      <!-- WEAPON VIEW STAGE - Dual-pane slider (craft ↔ list) -->
+      <div id="weapon-view-stage" class="weapon-view-stage">
+        <div class="weapon-view-slider show-w-craft">
+          
+          <!-- PANE 1: CRAFT/BUILD VIEW -->
+          <div id="pane-w-craft" class="weapon-pane">
+            <!-- Search Section (Collapsible) -->
+            <div class="weapon-section open collapsible">
+              <div class="section-header open">
+                <span>SEARCH WEAPON</span>
+                <button class="toggle-arrow">▼</button>
+              </div>
+              <div class="section-content">
+                <input type="text" id="w-search-input" placeholder="Search weapon name...">
+                <div id="w-search-results"></div>
+              </div>
+            </div>
+
+            <!-- Perks Section (Collapsible) -->
+            <div class="weapon-section open collapsible">
+              <div class="section-header open">
+                <span>PERK SELECTION</span>
+                <button class="toggle-arrow">▼</button>
+              </div>
+              <div class="section-content">
+                <div id="w-perk-slots">
+                  <!-- Populated by weapon-ui.js on weapon select -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats Section (Collapsible) -->
+            <div class="weapon-section open collapsible">
+              <div class="section-header open">
+                <span>STAT PREVIEW</span>
+                <button class="toggle-arrow">▼</button>
+              </div>
+              <div class="section-content">
+                <div class="stats-table">
+                  <div class="stat-row" style="border-bottom: 1px solid #333; margin-bottom: 8px; padding-bottom: 8px;">
+                    <div class="stat-name">STAT</div>
+                    <div class="stat-value">BASE</div>
+                    <div class="stat-delta">ΔSTAT</div>
+                    <div class="stat-final">FINAL</div>
+                  </div>
+                  <div id="w-stats-table">
+                    <!-- Populated by weapon-ui.js on weapon select -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Area -->
+            <div class="weapon-action-area">
+              <div class="mode-toggle">
+                <button id="w-pve-btn" class="mode-btn active">PvE</button>
+                <button id="w-pvp-btn" class="mode-btn">PvP</button>
+              </div>
+              <button id="w-save-btn" class="primary-btn" disabled>SAVE WISH</button>
+            </div>
+          </div>
+
+          <!-- PANE 2: LIST VIEW -->
+          <div id="pane-w-list" class="weapon-pane">
+            <div class="weapon-filters">
+              <input type="text" id="w-list-search" placeholder="Search saved weapons...">
+              <div class="filter-toggles">
+                <button class="filter-toggle" data-filter="type">ALL TYPES</button>
+                <button class="filter-toggle" data-filter="damage">ALL ELEMENTS</button>
+                <button class="filter-toggle" data-filter="mode">ALL MODES</button>
+                <button id="w-clear-filters" style="margin-left: auto;">CLEAR</button>
+              </div>
+            </div>
+            <div id="w-weapon-list">
+              <!-- Populated by weapon-ui.js when switching to list view -->
+            </div>
+            <div id="w-empty-state" style="text-align: center; padding: 40px 20px; color: #666; display: none;">
+              No weapons saved yet.
+            </div>
+          </div>
+
+        </div>
+
+        <!-- BOTTOM NAV for pane switching -->
+        <nav class="weapon-nav">
+          <button id="nav-w-craft" class="nav-btn active">CRAFT</button>
+          <button id="nav-w-list" class="nav-btn">LIST</button>
+        </nav>
+      </div>
     </div>
 
     <div id="view-armor" class="content-view">
@@ -127,6 +215,8 @@
 
   <script src="destiny-manifest.js"></script>
   <script src="manager.js"></script>
+  <script src="weapon-manager.js"></script>
+  <script src="weapon-ui.js"></script>
   <script src="ui-creator.js"></script>
 </body>
 </html>

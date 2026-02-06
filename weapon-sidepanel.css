@@ -1,0 +1,687 @@
+/* ============================================
+   WEAPON-SIDEPANEL.CSS - Phase 3 Weapon Crafting System Styles
+   ============================================ */
+
+/* --- WEAPON VIEW INFRASTRUCTURE (Parallel to Armor) --- */
+.weapon-view-stage {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.weapon-view-slider {
+  display: flex;
+  width: 200%; /* Holds two panes: craft (0-50%) and list (50-100%) */
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  height: 100%;
+}
+
+.weapon-pane {
+  width: 50%;
+  flex-shrink: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  padding-bottom: 18px; /* Space for fixed bottom nav */
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Craft Pane - Allow scrolling independently */
+#pane-w-craft {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Discrete Scrollbar Styling (Craft Pane) */
+#pane-w-craft::-webkit-scrollbar {
+  width: 6px;
+}
+
+#pane-w-craft::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#pane-w-craft::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+#pane-w-craft:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#pane-w-craft::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Weapon List Pane - Flexbox for Fixed Search + Scrolling */
+#pane-w-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Fixed Filter/Search Header */
+.weapon-filters {
+  position: static;
+  flex-shrink: 0;
+  padding: 16px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Scrollable Weapon List Container */
+#w-weapon-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 16px;
+  padding-bottom: 16px;
+}
+
+/* Discrete Scrollbar (List Pane) */
+#w-weapon-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+#w-weapon-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#w-weapon-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+#w-weapon-list:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#w-weapon-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Slider Toggle States */
+.show-w-craft { transform: translateX(0); }
+.show-w-list { transform: translateX(-50%); }
+
+/* ============================================
+   COLLAPSIBLE SECTIONS (Search, Perks, Stats)
+   ============================================ */
+.weapon-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 1px solid #222;
+  overflow: hidden;
+}
+
+.weapon-section.collapsible .section-header {
+  cursor: pointer;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: #111;
+  transition: background 0.2s ease;
+  border-left: 3px solid var(--accent-gold, #d4af37);
+  user-select: none;
+}
+
+.section-header:hover {
+  background: #1a1a1a;
+}
+
+.section-header span {
+  font-weight: bold;
+  font-size: 12px;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.toggle-arrow {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  color: var(--accent-gold, #d4af37);
+  font-size: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.section-header.open .toggle-arrow {
+  transform: rotate(180deg);
+}
+
+.section-content {
+  display: none;
+  padding: 12px 14px;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.weapon-section.open .section-content {
+  display: flex;
+}
+
+/* ============================================
+   PERK SELECTION GRID
+   ============================================ */
+.perk-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  border: 1px solid #333;
+}
+
+.perk-slot-label {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--accent-gold, #d4af37);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 6px;
+}
+
+.perk-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 8px;
+}
+
+.perk-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px;
+  background: #25252d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #888;
+  font-size: 9px;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+  min-height: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.perk-btn:hover:not(.disabled) {
+  background: #383842;
+  border-color: #555;
+  color: #bbb;
+}
+
+.perk-btn.selected {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+}
+
+.perk-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+/* ============================================
+   STATS PREVIEW TABLE
+   ============================================ */
+.stats-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #333;
+  align-items: center;
+  font-size: 12px;
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-name {
+  color: #999;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.stat-value {
+  font-family: monospace;
+  color: #ccc;
+  text-align: right;
+}
+
+.stat-delta {
+  font-family: monospace;
+  font-weight: bold;
+  text-align: right;
+  min-width: 30px;
+}
+
+.stat-delta.positive {
+  color: #4ade80;
+}
+
+.stat-delta.negative {
+  color: #f87171;
+}
+
+.stat-delta.zero {
+  color: #999;
+}
+
+.stat-final {
+  font-family: monospace;
+  color: var(--accent-gold, #d4af37);
+  font-weight: bold;
+  text-align: right;
+}
+
+/* ============================================
+   MODE TOGGLE
+   ============================================ */
+.weapon-action-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #333;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 10px 16px;
+  background: #25252d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #888;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+  background: #383842;
+  border-color: #555;
+}
+
+.mode-btn.active {
+  background: var(--accent-gold, #d4af37);
+  color: #000;
+  border-color: var(--accent-gold, #d4af37);
+}
+
+.primary-btn {
+  flex: 1;
+  padding: 12px 20px;
+  background: #2563eb;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+}
+
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   FILTERS (LIST VIEW)
+   ============================================ */
+#w-list-search {
+  padding: 10px 12px;
+  background: #25252d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #ccc;
+  font-size: 12px;
+}
+
+#w-list-search::placeholder {
+  color: #666;
+}
+
+.filter-toggles {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-toggle {
+  padding: 8px 12px;
+  background: #25252d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #888;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-toggle:hover {
+  background: #383842;
+  border-color: #555;
+  color: #bbb;
+}
+
+.filter-toggle.active {
+  background: var(--accent-gold, #d4af37);
+  color: #000;
+  border-color: var(--accent-gold, #d4af37);
+}
+
+#w-clear-filters {
+  padding: 8px 12px;
+  background: #333;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #999;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#w-clear-filters:hover {
+  background: #444;
+  border-color: #666;
+  color: #bbb;
+}
+
+/* ============================================
+   WEAPON CARDS (LIST VIEW)
+   ============================================ */
+.weapon-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid #333;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.weapon-card:hover {
+  border-color: var(--accent-gold, #d4af37);
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.weapon-card-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.weapon-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background: #25252d;
+  border: 1px solid #444;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.weapon-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.weapon-header-text {
+  flex: 1;
+}
+
+.weapon-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.weapon-type-damage {
+  font-size: 10px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.weapon-card-delete {
+  padding: 6px 10px;
+  background: #8b0000;
+  border: 1px solid #b22222;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 9px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.weapon-card-delete:hover {
+  background: #a00000;
+  box-shadow: 0 0 8px rgba(177, 34, 34, 0.5);
+}
+
+.weapon-perks {
+  font-size: 11px;
+  color: #aaa;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.weapon-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.perk-badge {
+  padding: 2px 8px;
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  border-radius: 3px;
+  font-size: 9px;
+  color: #3b82f6;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.weapon-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 3px;
+  font-size: 9px;
+  color: var(--accent-gold, #d4af37);
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+/* ============================================
+   BOTTOM NAV
+   ============================================ */
+.weapon-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: #1a1a1a;
+  border-top: 1px solid #333;
+}
+
+.nav-btn {
+  flex: 1;
+  padding: 12px;
+  background: #25252d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #888;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: #383842;
+  border-color: #555;
+}
+
+.nav-btn.active {
+  background: var(--accent-gold, #d4af37);
+  color: #000;
+  border-color: var(--accent-gold, #d4af37);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.hidden {
+  display: none !important;
+}
+
+#w-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 12px;
+}
+
+/* ============================================
+   SEARCH RESULTS
+   ============================================ */
+#w-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.weapon-search-result {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.weapon-search-result:hover {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: var(--accent-gold, #d4af37);
+}
+
+.search-result-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: #25252d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.search-result-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.search-result-info {
+  flex: 1;
+}
+
+.search-result-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.search-result-meta {
+  font-size: 10px;
+  color: #666;
+  margin-top: 4px;
+}

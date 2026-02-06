@@ -35,44 +35,41 @@
           <div id="pane-w-craft" class="weapon-pane">
             <!-- Selected Weapon Header (Initially Hidden) -->
             <div id="w-selected-header" class="selected-weapon-header hidden">
-              <!-- Hero Banner Image with Overlaid Content -->
+              <!-- Hero Banner Image with Overlaid Flavor Text -->
               <div class="w-hero-banner">
                 <img id="w-selected-screenshot" src="" alt="Weapon Image" class="w-hero-image">
-                
-                <!-- New Overlay Container: Top Left -->
-                <div class="w-hero-info-top-left">
-                  <div id="w-selected-name" class="w-hero-name"></div>
-                  <div id="w-selected-type" class="w-hero-type"></div>
-                  
-                  <div class="w-hero-property-group">
-                    <div class="w-hero-label">DAMAGE TYPE</div>
-                    <div id="w-selected-damage" class="w-hero-damage"></div>
-                  </div>
-                  
-                  <div class="w-hero-property-group">
-                    <div class="w-hero-label">AMMO TYPE</div>
-                    <div id="w-selected-ammo" class="w-hero-ammo"></div>
-                  </div>
-                  
-                  <div class="w-hero-property-group">
-                    <div class="w-hero-label">DROPS FROM</div>
-                    <div id="w-selected-activity" class="w-hero-activity"></div>
-                  </div>
-                </div>
-
                 <!-- Flavor Text Overlay -->
                 <div id="w-selected-flavor" class="w-flavor-overlay"></div>
               </div>
               
-              <!-- Below Image: Properties + Drops From -->
+              <!-- Below Image: Left Column (Name, Type, Frame, Properties) + Right Column (Drops From) -->
               <div class="w-content-layout">
                 <!-- Left Column -->
                 <div class="w-left-column">
+                  <div class="w-name-section">
+                    <div id="w-selected-name" class="w-weapon-name"></div>
+                    <div id="w-selected-type" class="w-weapon-type"></div>
+                  </div>
                   
                   <div class="w-property-stack">
                     <div class="w-property-item">
                       <div class="w-property-label">WEAPON FRAME</div>
                       <div id="w-selected-frame" class="w-property-value"></div>
+                    </div>
+                    
+                    <div class="w-property-item">
+                      <div class="w-property-label">DAMAGE TYPE</div>
+                      <div id="w-selected-damage" class="w-property-value"></div>
+                    </div>
+                    
+                    <div class="w-property-item">
+                      <div class="w-property-label">AMMO TYPE</div>
+                      <div id="w-selected-ammo" class="w-property-value"></div>
+                    </div>
+                    
+                    <div class="w-property-item">
+                      <div class="w-property-label">DROPS FROM</div>
+                      <div id="w-selected-activity" class="w-property-value"></div>
                     </div>
                   </div>
                 </div>

@@ -21,6 +21,7 @@ const STATS = ['Weapons', 'Health', 'Class', 'Grenade', 'Super', 'Melee'];
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     const loadingOverlay = document.getElementById('loading-overlay');
+  const loadingText = loadingOverlay ? loadingOverlay.querySelector('.loading-text') : null;
     
     setupWeaponArmorTabs();
     
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     Promise.all([
         ensureInventoryItemDefsReady({ force: false }),
         ensureEquippableItemSetDefsReady({ force: false }),
+        ensureCollectibleDefsReady({ force: false }),
         getArmorSetLookup()
     ]).then(() => {
         // Initialize weapon system after manifest is ready
@@ -48,7 +50,106 @@ document.addEventListener('DOMContentLoaded', () => {
         // Try to load UI anyway
         loadLists();
     });
+
+    const clearCacheBtn = document.getElementById('clearCacheBtn');
+    if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', async () => {
+            const originalLabel = clearCacheBtn.textContent;
+            const originalLoadingText = loadingText ? loadingText.textContent : null;
+            clearCacheBtn.disabled = true;
+            clearCacheBtn.textContent = 'Resetting...';
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('hidden');
+            }
+            if (loadingText) {
+                loadingText.textContent = 'Resetting manifest cache...';
+            }
+
+            try {
+                if (window.weaponUI?.shutdownWeaponSearchWorker) {
+                    window.weaponUI.shutdownWeaponSearchWorker();
+                }
+
+                await deleteManifestCache({ retries: 3, delayMs: 700 });
+                if (window.__manifest__?.resetManifestMemory) {
+                    window.__manifest__.resetManifestMemory();
+                }
+
+                if (loadingText) {
+                    loadingText.textContent = 'Downloading manifest...';
+                }
+
+                await Promise.all([
+                    ensureInventoryItemDefsReady({ force: true }),
+                    ensureEquippableItemSetDefsReady({ force: true }),
+                    ensureCollectibleDefsReady({ force: true }),
+                    getArmorSetLookup()
+                ]);
+
+                if (window.weaponUI?.resetWeaponSearchWorker) {
+                    window.weaponUI.resetWeaponSearchWorker();
+                }
+
+                clearCacheBtn.textContent = 'Reset Complete';
+                setTimeout(() => {
+                    clearCacheBtn.textContent = originalLabel;
+                }, 1500);
+            } catch (err) {
+                const message = err?.message || String(err);
+                console.warn('[D2MANIFEST] Reset cache failed:', err);
+                if (loadingText && message.includes('blocked')) {
+                    loadingText.textContent = 'Close other extension views and retry.';
+                }
+                clearCacheBtn.textContent = message.includes('blocked') ? 'Reset Blocked' : 'Reset Failed';
+                setTimeout(() => {
+                    clearCacheBtn.textContent = originalLabel;
+                }, 2000);
+            } finally {
+                if (loadingText && originalLoadingText) {
+                    loadingText.textContent = originalLoadingText;
+                }
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                }
+                clearCacheBtn.disabled = false;
+            }
+        });
+    }
 });
+
+function deleteManifestCache({ retries = 3, delayMs = 700 } = {}) {
+    const attemptDelete = (remaining) =>
+        new Promise((resolve, reject) => {
+            let blocked = false;
+            let finished = false;
+            const req = indexedDB.deleteDatabase('d2_manifest_cache');
+
+            const retryTimer = setTimeout(() => {
+                if (finished) return;
+                if (blocked && remaining > 0) {
+                    attemptDelete(remaining - 1).then(resolve).catch(reject);
+                } else if (blocked) {
+                    reject(new Error('Manifest cache reset blocked by another tab.'));
+                }
+            }, delayMs);
+
+            req.onblocked = () => {
+                blocked = true;
+            };
+            req.onsuccess = () => {
+                finished = true;
+                clearTimeout(retryTimer);
+                resolve();
+            };
+            req.onerror = () => {
+                finished = true;
+                clearTimeout(retryTimer);
+                reject(req.error);
+            };
+        });
+
+    return attemptDelete(retries);
+}
 
 // --- LIVE UPDATE LISTENER ---
 // Triggers whenever data changes (e.g. from Content Script or internal save)

@@ -4,6 +4,7 @@ const STORE_BLOBS = "blobs";
 const BUNGIE_ROOT = "https://www.bungie.net";
 
 let itemDefs = null;
+let collectibleDefs = null;
 let nameIndex = null;
 let buildPromise = null;
 
@@ -34,6 +35,14 @@ async function loadItemDefs() {
   }
   itemDefs = defsObj;
   return itemDefs;
+}
+
+async function loadCollectibleDefs() {
+  if (collectibleDefs) return collectibleDefs;
+  const defsObj = await idbGet("DestinyCollectibleDefinition", STORE_BLOBS);
+  if (!defsObj) return null;
+  collectibleDefs = defsObj;
+  return collectibleDefs;
 }
 
 function isRealWeaponDef(def, bucketHash) {
@@ -84,6 +93,7 @@ async function searchWeapons(query, bucketHash) {
   if (q.length < 2) return [];
 
   const defs = await loadItemDefs();
+  const collectibles = await loadCollectibleDefs();
   const idx = await buildNameIndex();
 
   const hits = [];
@@ -97,6 +107,11 @@ async function searchWeapons(query, bucketHash) {
     const def = defs[h];
     if (!isRealWeaponDef(def, bucketHash)) continue;
     const icon = def.displayProperties?.icon ? `${BUNGIE_ROOT}${def.displayProperties.icon}` : "";
+    const collectibleHash = def.collectibleHash;
+    const sourceString =
+      collectibles && collectibleHash
+        ? collectibles[String(collectibleHash)]?.sourceString || ""
+        : "";
     results.push({
       hash: def.hash,
       name: def.displayProperties?.name || "",
@@ -104,6 +119,7 @@ async function searchWeapons(query, bucketHash) {
       type: def.itemTypeDisplayName || "Weapon",
       rarity: def.inventory?.rarity || "Common",
       damageType: Array.isArray(def.damageTypeHashes) ? def.damageTypeHashes[0] : null,
+      sourceString,
     });
     if (results.length >= 100) break;
   }

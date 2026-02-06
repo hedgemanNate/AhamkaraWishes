@@ -59,6 +59,18 @@ function initWeaponSearchWorker() {
   }
 }
 
+function shutdownWeaponSearchWorker() {
+  if (weaponSearchWorker) {
+    weaponSearchWorker.terminate();
+    weaponSearchWorker = null;
+  }
+}
+
+function resetWeaponSearchWorker() {
+  shutdownWeaponSearchWorker();
+  initWeaponSearchWorker();
+}
+
 /**
  * Initialize weapon crafting UI: attach event listeners, setup state.
  */
@@ -1053,6 +1065,8 @@ window.weaponUI = {
   renderWeaponPerks,
   attachPerkClickListeners,
   updateWeaponStatDeltas,
+  shutdownWeaponSearchWorker,
+  resetWeaponSearchWorker,
   weaponState,
 };
 

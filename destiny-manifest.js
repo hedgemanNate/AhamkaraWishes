@@ -25,6 +25,14 @@ function d2log(...args) { console.log("[D2MANIFEST]", ...args); }
 function d2warn(...args) { console.warn("[D2MANIFEST]", ...args); }
 function d2err(...args) { console.error("[D2MANIFEST]", ...args); }
 
+function resetManifestMemory() {
+  _invItemDefs = null;
+  _armorSetDefs = null;
+  _nameIndex = null;
+  _armorSetLookup = null;
+  _manifestVersion = null;
+}
+
 // --- DATABASE OPERATIONS ---
 function openD2DB() {
   return new Promise((resolve, reject) => {
@@ -209,6 +217,65 @@ async function ensureEquippableItemSetDefsReady({ force = false } = {}) {
     return true;
   } catch (e) {
     d2err("ensureEquippableItemSetDefsReady FAILED:", e);
+    return false;
+  } finally {
+    console.groupEnd();
+  }
+}
+
+// Download DestinyCollectibleDefinition component JSON and cache it.
+async function ensureCollectibleDefsReady({ force = false } = {}) {
+  console.groupCollapsed("[D2MANIFEST] ensureCollectibleDefsReady");
+
+  try {
+    const meta = await fetchManifestMeta();
+    const liveVersion = meta.version;
+    d2log("Live manifest version:", liveVersion);
+
+    const cachedVersion = await idbGet("manifestVersion", STORE_META);
+    const haveCachedBlob = await idbGet("DestinyCollectibleDefinition", STORE_BLOBS);
+    const needsDownload = force || !haveCachedBlob || !cachedVersion || cachedVersion !== liveVersion;
+
+    if (!needsDownload) {
+      d2log("Collectible defs cache is up-to-date. Skipping download.");
+      return true;
+    }
+
+    const lang = "en";
+    const comp = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyCollectibleDefinition;
+    const world = meta.jsonWorldContentPaths?.[lang];
+
+    let path = comp || world;
+    if (!path) {
+      d2warn("Collectible defs not available in manifest meta; skipping.");
+      return false;
+    }
+    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
+    d2log("Downloading collectible definitions from:", path, "| component?", !!comp);
+
+    const r = await fetch(path, { headers: { "Accept": "application/json" } });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`Collectible defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
+    }
+    const buf = await r.arrayBuffer();
+    d2log("Downloaded bytes:", buf.byteLength);
+
+    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
+    const parsed = JSON.parse(text);
+
+    const collectibleDefs = comp ? parsed : parsed?.DestinyCollectibleDefinition;
+    if (!collectibleDefs) {
+      const keys = Object.keys(parsed || {});
+      d2warn("Parsed manifest keys (sample):", keys.slice(0, 30));
+      throw new Error("Downloaded JSON did not contain DestinyCollectibleDefinition data.");
+    }
+
+    await idbSet("DestinyCollectibleDefinition", collectibleDefs, STORE_BLOBS);
+    d2log("Collectible defs cache updated successfully.");
+    return true;
+  } catch (e) {
+    d2err("ensureCollectibleDefsReady FAILED:", e);
     return false;
   } finally {
     console.groupEnd();
@@ -755,6 +822,8 @@ async function getPerkName(perkHash) {
 // - PERK_STAT_BONUSES
 // - ensureInventoryItemDefsReady()
 // - ensureEquippableItemSetDefsReady()
+// - ensureCollectibleDefsReady()
+// - resetManifestMemory()
 // - searchArmorLocally()
 // - searchWeaponsLocally()
 // - getArmorSetLookup()
@@ -770,6 +839,8 @@ window.__manifest__ = {
   // Initialization
   ensureInventoryItemDefsReady,
   ensureEquippableItemSetDefsReady,
+  ensureCollectibleDefsReady,
+  resetManifestMemory,
   
   // Armor functions
   searchArmorLocally,

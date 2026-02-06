@@ -18,10 +18,53 @@ const weaponState = {
   _selectedDamage: null, // Currently selected damage type hash
 };
 
+let weaponSearchWorker = null;
+let weaponSearchRequestId = 0;
+
+function initWeaponSearchWorker() {
+  if (weaponSearchWorker) return;
+
+  try {
+    const workerUrl =
+      typeof chrome !== 'undefined' && chrome.runtime?.getURL
+        ? chrome.runtime.getURL('weapon-search-worker.js')
+        : 'weapon-search-worker.js';
+    weaponSearchWorker = new Worker(workerUrl);
+
+    weaponSearchWorker.onmessage = (event) => {
+      const payload = event.data || {};
+      if (payload.type === 'results') {
+        if (payload.id !== weaponSearchRequestId) return;
+        renderWeaponSearchResults(payload.results);
+      } else if (payload.type === 'error') {
+        if (payload.id !== weaponSearchRequestId) return;
+        d2log(`Search worker error: ${payload.message}`, 'weapon-ui', 'error');
+        const resultsDiv = document.getElementById('w-search-results');
+        if (resultsDiv) {
+          resultsDiv.innerHTML =
+            '<div style="text-align: center; color: #c66; padding: 20px;">Manifest unavailable. Please check your internet connection.</div>';
+        }
+      }
+    };
+
+    weaponSearchWorker.onerror = (error) => {
+      d2log(`Search worker failed: ${error.message || error}`, 'weapon-ui', 'error');
+      weaponSearchWorker = null;
+    };
+
+    weaponSearchWorker.postMessage({ type: 'warmup' });
+  } catch (error) {
+    d2log(`Search worker init failed: ${error.message || error}`, 'weapon-ui', 'error');
+    weaponSearchWorker = null;
+  }
+}
+
 /**
  * Initialize weapon crafting UI: attach event listeners, setup state.
  */
 function initWeaponCraft() {
+  initWeaponSearchWorker();
+
   // Search input (debounced)
   const searchInput = document.getElementById('w-search-input');
   if (searchInput) {
@@ -97,7 +140,7 @@ function initWeaponCraft() {
  * @param {string} query - Search query (weapon name)
  * @param {string} type - Optional weapon type filter (e.g., "Auto Rifle")
  */
-function triggerWeaponSearch(query, type = null) {
+async function triggerWeaponSearch(query, type = null) {
   if (!query || query.length < 2) {
     const resultsDiv = document.getElementById('w-search-results');
     if (resultsDiv) {
@@ -106,9 +149,29 @@ function triggerWeaponSearch(query, type = null) {
     return;
   }
 
+  if (weaponSearchWorker) {
+    weaponSearchRequestId += 1;
+    weaponSearchWorker.postMessage({
+      type: 'search',
+      id: weaponSearchRequestId,
+      query,
+      bucketHash: type,
+    });
+    return;
+  }
+
   // Search using manifest function from Phase 1
-  const weapons = window.__manifest__.searchWeaponsLocally(query, type);
-  renderWeaponSearchResults(weapons);
+  try {
+    const weapons = await window.__manifest__.searchWeaponsLocally(query, type);
+    renderWeaponSearchResults(weapons);
+  } catch (error) {
+    d2log(`Search failed: ${error.message || error}`, 'weapon-ui', 'error');
+    const resultsDiv = document.getElementById('w-search-results');
+    if (resultsDiv) {
+      resultsDiv.innerHTML =
+        '<div style="text-align: center; color: #c66; padding: 20px;">Manifest unavailable. Please check your internet connection.</div>';
+    }
+  }
 }
 
 /**
@@ -120,7 +183,7 @@ function renderWeaponSearchResults(weapons) {
   const resultsDiv = document.getElementById('w-search-results');
   if (!resultsDiv) return;
 
-  if (!weapons || weapons.length === 0) {
+  if (!Array.isArray(weapons) || weapons.length === 0) {
     resultsDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No weapons found</div>';
     return;
   }
@@ -128,10 +191,10 @@ function renderWeaponSearchResults(weapons) {
   resultsDiv.innerHTML = weapons
     .slice(0, 15) // Limit to 15 results
     .map((weapon) => {
-      const icon = window.__manifest__.DestinyInventoryItemDefinition[weapon.hash]?.displayProperties?.icon || '';
-      const type = window.__manifest__.DestinyInventoryItemDefinition[weapon.hash]?.itemTypeDisplayName || 'Unknown';
-      const rarity =
-        window.__manifest__.DestinyInventoryItemDefinition[weapon.hash]?.inventory?.rarity || 'Common';
+      const icon = weapon.icon || '';
+      const def = window.__manifest__.DestinyInventoryItemDefinition?.get?.(String(weapon.hash));
+      const type = def?.itemTypeDisplayName || weapon.type || 'Unknown';
+      const rarity = def?.inventory?.rarity || weapon.rarity || 'Common';
 
       return `
         <div class="weapon-search-result" data-hash="${weapon.hash}">

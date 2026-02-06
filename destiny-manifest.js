@@ -375,14 +375,15 @@ async function buildNameIndexIfNeeded() {
   const defs = await loadInventoryItemDefsToMemory();
   const idx = [];
   let scanned = 0;
+  const YIELD_EVERY = 5000;
 
   for (const [h, def] of defs.entries()) {
     const name = def?.displayProperties?.name;
     if (!name) continue;
     idx.push({ h, n: name.toLowerCase() });
     scanned++;
-    if (scanned % 50000 === 0) {
-      await new Promise(r => setTimeout(r, 0));
+    if (scanned % YIELD_EVERY === 0) {
+      await new Promise((r) => setTimeout(r, 0));
     }
   }
 
@@ -600,9 +601,15 @@ async function searchWeaponsLocally(query, bucketHash = null) {
  * Weapons have itemCategoryHash 1 (Weapon), are not exotic duplicates, etc.
  */
 function isRealWeaponDef(def) {
-  if (!def || !def.itemCategory) return false;
+  if (!def) return false;
+  const categories = Array.isArray(def.itemCategoryHashes)
+    ? def.itemCategoryHashes
+    : Array.isArray(def.itemCategory)
+      ? def.itemCategory
+      : null;
+  if (!categories) return false;
   // Item category 1 = Weapon
-  if (!def.itemCategory.some((h) => h === 1)) return false;
+  if (!categories.some((h) => h === 1)) return false;
   // Skip quest items, dummy items, etc.
   if (def.displayProperties?.name?.includes("DEPRECATED")) return false;
   if (!def.inventory || !def.inventory.bucketTypeHash) return false;

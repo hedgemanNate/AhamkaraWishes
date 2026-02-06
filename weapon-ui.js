@@ -296,9 +296,29 @@ async function selectWeapon(weaponHash) {
       flavorEl.style.display = flavorText ? 'block' : 'none';
     }
     
-    // Set screenshot (prefer displayProperties.screenshot, fallback to icon)
-    const screenshotUrl = weaponDef.displayProperties?.screenshot || weaponDef.displayProperties?.icon || '';
-    if (screenshotEl) screenshotEl.src = screenshotUrl;
+    // Set screenshot (only displayProperties.screenshot; no icon fallback)
+    const screenshotPath = weaponDef.displayProperties?.screenshot || weaponDef.screenshot || '';
+    const bungieRoot = typeof BUNGIE_ROOT !== 'undefined' ? BUNGIE_ROOT : 'https://www.bungie.net';
+    const screenshotUrl = (() => {
+      if (!screenshotPath) return '';
+      if (
+        screenshotPath.startsWith('http') ||
+        screenshotPath.startsWith('data:') ||
+        screenshotPath.startsWith('blob:') ||
+        screenshotPath.startsWith('chrome-extension:') ||
+        screenshotPath.startsWith('moz-extension:')
+      ) {
+        return screenshotPath;
+      }
+      if (screenshotPath.startsWith('//')) return `https:${screenshotPath}`;
+      if (screenshotPath.startsWith('/')) return `${bungieRoot}${screenshotPath}`;
+      return screenshotPath;
+    })();
+
+    if (screenshotEl) {
+      screenshotEl.src = screenshotUrl;
+      screenshotEl.style.display = screenshotUrl ? 'block' : 'none';
+    }
     
     headerEl.classList.remove('hidden');
   }

@@ -226,7 +226,7 @@ function renderWeaponSearchResults(weapons) {
  */
 async function selectWeapon(weaponHash) {
   const weaponManifest = window.__manifest__ || {};
-  const weaponDef = weaponManifest.DestinyInventoryItemDefinition?.[weaponHash];
+  const weaponDef = weaponManifest.DestinyInventoryItemDefinition?.get?.(String(weaponHash));
 
   if (!weaponDef) {
     d2log(`Weapon ${weaponHash} not found in manifest`, 'weapon-ui', 'error');

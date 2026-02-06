@@ -118,9 +118,18 @@ function saveItem(hash, name, type, rawString, config) {
             };
         }
 
-        // 2. Check for Duplicates (The "Optimal" Check)
+        // 2. Check for Duplicates: armor compares config, weapons compare raw string
         const existingWishes = activeList.items[hash].wishes;
-        const isDuplicate = existingWishes.some(w => w.raw === rawString && w.tags.includes(currentMode));
+        const isDuplicate = existingWishes.some((w) => {
+            if (!w) return false;
+            const sameMode = (w.tags || []).includes(currentMode);
+            if (!sameMode) return false;
+            if (config?.archetype && config?.spark) {
+                return w.config?.archetype === config.archetype &&
+                       w.config?.spark === config.spark;
+            }
+            return w.raw === rawString;
+        });
 
         if (isDuplicate) {
             showToast("Duplicate: You already wished for this!");

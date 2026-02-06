@@ -94,10 +94,19 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
       const existingWishes = activeList.items[hash].wishes || [];
       activeList.items[hash].wishes = existingWishes;
 
-      // Duplicate check (same raw + same mode tag)
-      const isDuplicate = existingWishes.some(
-        (w) => w?.raw === rawString && (w?.tags || []).includes(mode)
-      );
+      // Duplicate check: armor compares config, weapons compare raw string
+      const isDuplicate = existingWishes.some((w) => {
+        if (!w) return false;
+        const sameMode = (w?.tags || []).includes(mode);
+        if (!sameMode) return false;
+        // Armor: same archetype + same spark + same mode = duplicate
+        if (config?.archetype && config?.spark) {
+          return w.config?.archetype === config.archetype &&
+                 w.config?.spark === config.spark;
+        }
+        // Weapons: same raw string + same mode = duplicate
+        return w?.raw === rawString;
+      });
       if (isDuplicate) {
         resolve();
         return;

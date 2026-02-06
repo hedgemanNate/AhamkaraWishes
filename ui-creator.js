@@ -131,40 +131,48 @@ function applyArmorFilters() {
         }
 
         const items = data.lists.default.items;
-        const filteredItems = {};
+        const virtualEntries = [];
 
-        // Apply filters
+        // Flatten: one virtual entry per wish, with per-wish filtering
         Object.keys(items).forEach(hash => {
             const item = items[hash];
             if (item.static.type !== 'armor') return;
 
-            // Filter by armor name
+            // Filter by armor name (item-level)
             if (armorNameSearch) {
                 const itemName = item.static.name.toLowerCase();
                 if (!itemName.includes(armorNameSearch)) return;
             }
 
-            // Filter by archetype
-            if (selectedArchetypes.length > 0 && item.wishes && item.wishes[0]) {
-                const itemArchetype = item.wishes[0].config?.archetype;
-                if (!selectedArchetypes.includes(itemArchetype)) return;
-            }
-
-            // Filter by class
+            // Filter by class (item-level)
             if (selectedClasses.length > 0) {
                 if (!selectedClasses.includes(item.static.classType)) return;
             }
 
-            filteredItems[hash] = item;
+            // Expand each wish into its own virtual entry
+            const wishes = item.wishes || [];
+            wishes.forEach((wish, wishIndex) => {
+                // Filter by archetype (per-wish)
+                if (selectedArchetypes.length > 0) {
+                    const wishArchetype = wish.config?.archetype;
+                    if (!selectedArchetypes.includes(wishArchetype)) return;
+                }
+
+                virtualEntries.push({
+                    hash,
+                    wishIndex,
+                    wish,
+                    static: item.static
+                });
+            });
         });
 
-        // Group by set ID (using gearset data only)
+        // Group virtual entries by set ID
         const armorSets = {};
-        Object.keys(filteredItems).forEach(hash => {
-            const item = filteredItems[hash];
-            const setId = getArmorSetId(item);
+        virtualEntries.forEach(entry => {
+            const setId = getArmorSetId(entry);
             if (!armorSets[setId]) armorSets[setId] = [];
-            armorSets[setId].push({ hash, ...item });
+            armorSets[setId].push(entry);
         });
 
         // Render sets
@@ -186,15 +194,22 @@ function applyArmorFilters() {
             // Generate readable set name for display
             const displayName = getSetDisplayName(armorSets[setId]);
             
+            // Deduplicate background icons by hash
+            const seenHashes = new Set();
             const piecesBackgroundHtml = armorSets[setId]
-                .map(item => {
-                    const iconUrl = item.static.icon
-                        ? (item.static.icon.startsWith('http') ? item.static.icon : `${BUNGIE_ROOT}${item.static.icon}`)
+                .filter(entry => {
+                    if (seenHashes.has(entry.hash)) return false;
+                    seenHashes.add(entry.hash);
+                    return true;
+                })
+                .map(entry => {
+                    const iconUrl = entry.static.icon
+                        ? (entry.static.icon.startsWith('http') ? entry.static.icon : `${BUNGIE_ROOT}${entry.static.icon}`)
                         : '';
                     return `<img src="${iconUrl}" class="set-piece-bg" alt=""/>`;
                 })
                 .join('');
-            
+
             setContainer.innerHTML = `
                 <div class="set-header">
                     <div class="set-pieces-background">
@@ -203,7 +218,7 @@ function applyArmorFilters() {
                     </div>
                     <div class="set-name-area">
                         <span class="set-name-text">${displayName}</span>
-                        <span class="set-count-text">${armorSets[setId].length} / 5 PIECES</span>
+                        <span class="set-count-text">${armorSets[setId].length} WISHES</span>
                     </div>
                     <div class="set-badge-area">
                         <div class="expansion-badge" title="Renegades Expansion"></div>
@@ -808,10 +823,10 @@ function createArmorCard(item) {
     const card = document.createElement('div');
     card.className = 'armor-card';
     
-    // Safety check for 2026 wish data integrity
-    if (!item.wishes || !item.wishes[0]) return card;
+    // Safety check for wish data integrity
+    if (!item.wish) return card;
 
-    const wishConfig = item.wishes[0].config;
+    const wishConfig = item.wish.config;
     const archName = wishConfig.archetype;
     const sparkName = wishConfig.spark;
     const archetype = ARCHETYPES.find(a => a.name === archName);
@@ -886,7 +901,7 @@ function createArmorCard(item) {
 
         // Delay the data deletion slightly so the animation finishes
         setTimeout(() => {
-            deleteArmorWish(item.hash);
+            deleteArmorWish(item.hash, item.wishIndex);
         }, 300);
     };
 
@@ -894,23 +909,28 @@ function createArmorCard(item) {
 }
 
 /**
- * Deletes an armor wish from local storage.
+ * Deletes a specific armor wish from local storage by index.
+ * Removes the entire item if no wishes remain.
  */
-function deleteArmorWish(hash) {
+function deleteArmorWish(hash, wishIndex) {
     chrome.storage.local.get(['dimData'], (result) => {
         let data = result.dimData;
 
         // Safety check: ensure the data structure exists
         if (data && data.lists && data.lists.default && data.lists.default.items) {
-            
-            // Remove the item using its unique hash
-            if (data.lists.default.items[hash]) {
-                delete data.lists.default.items[hash];
+            const item = data.lists.default.items[hash];
+            if (item && item.wishes && wishIndex < item.wishes.length) {
+                item.wishes.splice(wishIndex, 1);
+
+                // Remove item entirely if no wishes remain
+                if (item.wishes.length === 0) {
+                    delete data.lists.default.items[hash];
+                }
 
                 // Save the updated list back to storage
                 chrome.storage.local.set({ dimData: data }, () => {
-                    console.log(`[Manager] Wish rescinded for hash: ${hash}`);
-                    
+                    console.log(`[Manager] Wish rescinded for hash: ${hash}, index: ${wishIndex}`);
+
                     // Refresh the UI to reflect the removal
                     refreshArmorList();
                 });

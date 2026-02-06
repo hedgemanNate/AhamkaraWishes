@@ -11,6 +11,11 @@ const weaponState = {
   currentMode: 'pve', // "pve" or "pvp"
   currentFilters: {}, // Search/filter state
   currentPane: 'craft', // "craft" or "list"
+  // List view filter state
+  _weaponTypes: [], // Array of available weapon types
+  _damageTypes: new Map(), // Map of damageHash -> damageTypeName
+  _selectedType: null, // Currently selected weapon type
+  _selectedDamage: null, // Currently selected damage type hash
 };
 
 /**
@@ -63,7 +68,9 @@ function initWeaponCraft() {
     navWListBtn.addEventListener('click', () => {
       weaponState.currentPane = 'list';
       togglePane('list');
-      refreshWeaponList(); // Load list view
+      refreshWeaponList().then(() => {
+        attachFilterListeners();
+      });
     });
   }
 
@@ -154,7 +161,7 @@ function renderWeaponSearchResults(weapons) {
  *
  * @param {number} weaponHash - Destiny 2 weapon hash
  */
-function selectWeapon(weaponHash) {
+async function selectWeapon(weaponHash) {
   const weaponManifest = window.__manifest__ || {};
   const weaponDef = weaponManifest.DestinyInventoryItemDefinition?.[weaponHash];
 
@@ -164,8 +171,8 @@ function selectWeapon(weaponHash) {
   }
 
   // Load weapon data
-  const stats = window.__manifest__.getWeaponStats(weaponHash);
-  const sockets = window.__manifest__.getWeaponSockets(weaponHash);
+  const stats = await window.__manifest__.getWeaponStats(weaponHash);
+  const sockets = await window.__manifest__.getWeaponSockets(weaponHash);
 
   weaponState.currentWeapon = {
     weaponHash,
@@ -180,11 +187,13 @@ function selectWeapon(weaponHash) {
 
   d2log(`✅ Selected weapon: ${weaponState.currentWeapon.name}`, 'weapon-ui');
 
-  // Render weapon stats (base values only; Phase 6 adds delta calculation)
+  // Render weapon stats (base values only)
   renderWeaponStats();
 
-  // Render perk slots (Phase 6: add perk selection UI)
+  // Render perk slots and perks
   renderWeaponSockets();
+  await renderWeaponPerks();
+  attachPerkClickListeners();
 
   // Clear search results and focus on perks
   const resultsDiv = document.getElementById('w-search-results');
@@ -211,7 +220,7 @@ function renderWeaponStats() {
   const stats = weaponState.currentWeapon.stats || {};
 
   const statRow = (name, baseValue) => {
-    const finalValue = baseValue; // Phase 6: add perk deltas
+    const finalValue = baseValue;
     const delta = 0;
     const deltaClass = delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'zero';
 
@@ -277,6 +286,182 @@ function renderWeaponSockets() {
 }
 
 /**
+ * Populate perk slots with clickable perk buttons for each socket.
+ * Called after renderWeaponSockets() when weapon is selected.
+ *
+ * @returns {Promise<void>}
+ */
+async function renderWeaponPerks() {
+  if (!weaponState.currentWeapon) return;
+
+  const weaponHash = weaponState.currentWeapon.weaponHash;
+  const sockets = weaponState.currentWeapon.sockets || [];
+
+  for (let socketIndex = 0; socketIndex < sockets.length; socketIndex++) {
+    const perkContainer = document.getElementById(`perk-slot-${socketIndex}`);
+    if (!perkContainer) continue;
+
+    try {
+      const perks = await window.__manifest__.getSocketPerks(weaponHash, socketIndex);
+
+      if (!perks || perks.length === 0) {
+        perkContainer.innerHTML = '<div style="color: #666; font-size: 11px; padding: 10px;">No perks available</div>';
+        continue;
+      }
+
+      const perkHTML = perks
+        .map((perk) => {
+          const isSelected = weaponState.selectedPerks[socketIndex] === perk.perkHash;
+          const displayName = perk.perkName.length > 15 
+            ? perk.perkName.substring(0, 12) + '...' 
+            : perk.perkName;
+          
+          const iconStyle = perk.icon 
+            ? `background-image: url('${perk.icon}'); background-size: cover; background-position: center;`
+            : '';
+
+          return `
+            <button 
+              class="perk-btn ${isSelected ? 'selected' : ''}" 
+              data-perk-hash="${perk.perkHash}" 
+              data-socket-index="${socketIndex}"
+              title="${perk.perkName}"
+              type="button"
+            >
+              ${iconStyle ? `<div style="${iconStyle}; width: 100%; height: 40px; margin-bottom: 4px; border-radius: 3px;"></div>` : ''}
+              <span style="font-size: 8px; line-height: 1.2;">${displayName}</span>
+            </button>
+          `;
+        })
+        .join('');
+
+      perkContainer.innerHTML = perkHTML;
+    } catch (error) {
+      d2log(`Error loading perks for socket ${socketIndex}: ${error.message}`, 'weapon-ui', 'error');
+      perkContainer.innerHTML = '<div style="color: #f87171; font-size: 11px; padding: 10px;">Error loading perks</div>';
+    }
+  }
+
+  d2log(`✅ Rendered perks for ${sockets.length} sockets`, 'weapon-ui');
+}
+
+/**
+ * Attach click event listeners to all perk buttons.
+ * Handles perk selection toggling and stat recalculation.
+ */
+function attachPerkClickListeners() {
+  const perkButtons = document.querySelectorAll('.perk-btn');
+
+  perkButtons.forEach((button) => {
+    button.addEventListener('click', async () => {
+      const perkHash = parseInt(button.dataset.perkHash);
+      const socketIndex = parseInt(button.dataset.socketIndex);
+
+      // Toggle selection logic
+      const currentSelection = weaponState.selectedPerks[socketIndex];
+      
+      if (currentSelection === perkHash) {
+        // Deselect if clicking same perk
+        delete weaponState.selectedPerks[socketIndex];
+        button.classList.remove('selected');
+      } else {
+        // Select new perk
+        weaponState.selectedPerks[socketIndex] = perkHash;
+        
+        // Remove selected class from other perks in this socket
+        const socketContainer = document.getElementById(`perk-slot-${socketIndex}`);
+        if (socketContainer) {
+          socketContainer.querySelectorAll('.perk-btn').forEach((btn) => {
+            btn.classList.remove('selected');
+          });
+        }
+        
+        // Add selected class to clicked button
+        button.classList.add('selected');
+      }
+
+      d2log(`✅ Perk ${perkHash} toggled for socket ${socketIndex}`, 'weapon-ui');
+
+      // Recalculate stats
+      await updateWeaponStatDeltas();
+    });
+  });
+
+  d2log('✅ Perk click listeners attached', 'weapon-ui');
+}
+
+/**
+ * Calculate and update weapon stats based on selected perks.
+ * Applies color coding to stat deltas (green for +, red for -, gray for 0).
+ *
+ * @returns {Promise<void>}
+ */
+async function updateWeaponStatDeltas() {
+  if (!weaponState.currentWeapon) return;
+
+  const stats = weaponState.currentWeapon.stats || {};
+  const perkStatBonuses = window.__manifest__.PERK_STAT_BONUSES || {};
+
+  // Calculate total deltas from all selected perks
+  const statDeltas = {
+    impact: 0,
+    range: 0,
+    stability: 0,
+    handling: 0,
+    reload: 0,
+    magazine: 0,
+    zoom: 0,
+    aimAssistance: 0,
+    recoilDirection: 0,
+  };
+
+  for (const socketIndex in weaponState.selectedPerks) {
+    const perkHash = weaponState.selectedPerks[socketIndex];
+    const perkBonuses = perkStatBonuses[perkHash] || {};
+
+    for (const statName in perkBonuses) {
+      if (statDeltas.hasOwnProperty(statName)) {
+        statDeltas[statName] += perkBonuses[statName];
+      }
+    }
+  }
+
+  // Update stats table with deltas and final values
+  const statsTable = document.getElementById('w-stats-table');
+  if (!statsTable) return;
+
+  const statRow = (name, baseValue, statKey) => {
+    const delta = statDeltas[statKey] || 0;
+    const finalValue = baseValue + delta;
+    const deltaClass = delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'zero';
+
+    return `
+      <div class="stat-row">
+        <div class="stat-name">${name}</div>
+        <div class="stat-value">${baseValue || 0}</div>
+        <div class="stat-delta ${deltaClass}">${delta > 0 ? '+' : ''}${delta || 0}</div>
+        <div class="stat-final">${finalValue || 0}</div>
+      </div>
+    `;
+  };
+
+  statsTable.innerHTML = `
+    ${statRow('Impact', stats.impact || 0, 'impact')}
+    ${statRow('Range', stats.range || 0, 'range')}
+    ${statRow('Stability', stats.stability || 0, 'stability')}
+    ${statRow('Handling', stats.handling || 0, 'handling')}
+    ${statRow('Reload Speed', stats.reload || 0, 'reload')}
+    ${statRow('Magazine', stats.magazine || 0, 'magazine')}
+    ${statRow('Zoom', stats.zoom || 0, 'zoom')}
+    ${statRow('Aim Assist', stats.aimAssistance || 0, 'aimAssistance')}
+    ${statRow('Recoil Direction', stats.recoilDirection || 0, 'recoilDirection')}
+  `;
+
+  d2log('✅ Weapon stat deltas updated', 'weapon-ui');
+}
+
+
+/**
  * Toggle between craft and list panes.
  *
  * @param {string} pane - "craft" or "list"
@@ -337,17 +522,405 @@ function toggleCollapsible(header) {
 
 /**
  * Refresh weapon list view and populate with saved wishes.
- * Phase 8 will implement full list rendering.
+ * Phase 8: Complete list view rendering with live filtering.
+ *
+ * @returns {Promise<void>}
  */
-function refreshWeaponList() {
+async function refreshWeaponList() {
   d2log('📋 Loading weapon list...', 'weapon-ui');
 
-  // Phase 8: Implement full list rendering with filters
-  // For now, just stub it out
+  try {
+    // Load all wishes for active list
+    const wishes = await weaponManager.loadWeaponWishes();
+
+    // Show/hide empty state
+    const emptyState = document.getElementById('w-empty-state');
+    const listContainer = document.getElementById('w-weapon-list');
+
+    if (!wishes || wishes.length === 0) {
+      if (emptyState) emptyState.style.display = 'block';
+      if (listContainer) listContainer.innerHTML = '';
+      d2log('No weapons found', 'weapon-ui');
+      return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+
+    // Populate filter toggles with available options
+    await populateFilterOptions(wishes);
+
+    // Get filtered wishes and render cards
+    await updateListView();
+
+    d2log(`✅ Weapon list loaded (${wishes.length} total)`, 'weapon-ui');
+  } catch (error) {
+    d2log(`❌ Error loading weapon list: ${error.message}`, 'weapon-ui', 'error');
+    const listContainer = document.getElementById('w-weapon-list');
+    if (listContainer) {
+      listContainer.innerHTML = '<div style="text-align: center; color: #f87171; padding: 40px;">Error loading weapons</div>';
+    }
+  }
+}
+
+/**
+ * Populate filter toggle buttons with available weapon types and damage types.
+ *
+ * @param {Array} wishes - Array of loaded wishes
+ * @returns {Promise<void>}
+ */
+async function populateFilterOptions(wishes) {
+  const uniqueTypes = new Set();
+  const uniqueDamageTypes = new Map(); // hash -> name
+
+  wishes.forEach((item) => {
+    if (item.weaponType) uniqueTypes.add(item.weaponType);
+    if (item.icon && item.wish) {
+      const damageHash = item.damageType || null;
+      if (damageHash && !uniqueDamageTypes.has(damageHash)) {
+        // Map damage type hash to UI name
+        const damageName = getDamageTypeName(damageHash);
+        uniqueDamageTypes.set(damageHash, damageName);
+      }
+    }
+  });
+
+  // Update filter toggles
+  const filterToggles = document.querySelectorAll('.filter-toggle[data-filter]');
+  filterToggles.forEach((toggle) => {
+    const filterType = toggle.dataset.filter;
+
+    if (filterType === 'type' && uniqueTypes.size > 0) {
+      toggle.innerHTML = `${Array.from(uniqueTypes).length} TYPES`;
+      toggle.dataset.optionValue = null; // Will be set on click
+    } else if (filterType === 'damage' && uniqueDamageTypes.size > 0) {
+      toggle.innerHTML = `${Array.from(uniqueDamageTypes.values()).length} ELEMENTS`;
+      toggle.dataset.optionValue = null;
+    }
+  });
+
+  // Store for later use in filter click handlers
+  weaponState._weaponTypes = Array.from(uniqueTypes);
+  weaponState._damageTypes = uniqueDamageTypes;
+}
+
+/**
+ * Map damage type hash to display name.
+ *
+ * @param {number} damageHash - Destiny 2 damage type hash
+ * @returns {string} Display name (Solar, Arc, Void, Stasis, Strand, Kinetic)
+ */
+function getDamageTypeName(damageHash) {
+  const damageTypeMap = {
+    1847026933: 'Kinetic',
+    2303181850: 'Arc',
+    3469412976: 'Solar',
+    2654673791: 'Void',
+    3949847137: 'Stasis',
+    1461471453: 'Strand',
+  };
+  return damageTypeMap[damageHash] || 'Unknown';
+}
+
+/**
+ * Build filters object from UI state and apply them.
+ *
+ * @returns {Promise<Array>} Filtered wishes array
+ */
+async function applyFilters() {
+  const searchInput = document.getElementById('w-list-search');
+  const searchText = searchInput?.value?.trim() || '';
+
+  const filters = {};
+
+  // Search text filter
+  if (searchText) {
+    filters.searchText = searchText;
+  }
+
+  // Weapon type filter (string comparison)
+  if (weaponState._selectedType) {
+    filters.weaponType = weaponState._selectedType;
+  }
+
+  // Damage type filter (hash comparison)
+  if (weaponState._selectedDamage) {
+    filters.damageType = weaponState._selectedDamage;
+  }
+
+  // Mode filter (only if not default PvE)
+  if (weaponState.currentMode && weaponState.currentMode !== 'pve') {
+    filters.mode = weaponState.currentMode;
+  }
+
+  const filtered = await weaponManager.applyWeaponFilters(filters);
+  return filtered;
+}
+
+/**
+ * Render weapon cards from filtered wishes array.
+ *
+ * @param {Array} wishes - Array of filtered wishes
+ * @returns {void}
+ */
+function renderWeaponCards(wishes) {
+  const listContainer = document.getElementById('w-weapon-list');
+  if (!listContainer) return;
+
+  if (!wishes || wishes.length === 0) {
+    listContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No weapons match filters</div>';
+    return;
+  }
+
+  const cardsHTML = wishes
+    .map((item, index) => createWeaponCardHTML(item, index))
+    .join('');
+
+  listContainer.innerHTML = cardsHTML;
+
+  // Attach event listeners to delete buttons and weapon cards
+  attachWeaponCardListeners();
+}
+
+/**
+ * Create weapon card HTML element.
+ *
+ * @param {Object} item - Wish item {weaponHash, weaponName, weaponType, icon, wish, damageType}
+ * @param {number} index - Index in the wishes array
+ * @returns {string} HTML string for weapon card
+ */
+function createWeaponCardHTML(item, index) {
+  const { weaponHash, weaponName, weaponType, icon, wish, damageType } = item;
+
+  // Get perk information
+  const perks = getPerkDisplayInfo(wish);
+  const perksHTML = perks
+    .map((perk) => `<div class="weapon-perk-item"><span class="perk-badge">${perk}</span></div>`)
+    .join('');
+
+  // Damage type name
+  const damageTypeName = damageType ? getDamageTypeName(damageType) : 'Kinetic';
+
+  // Mode badge
+  const modeBadge = wish.mode ? wish.mode.toUpperCase() : 'PVE';
+
+  // Icon URL (handle full URL or CDN path)
+  const iconURL = icon && icon.startsWith('http') ? icon : `${icon || ''}`;
+
+  return `
+    <div class="weapon-card" data-weapon-hash="${weaponHash}" data-wish-index="${index}">
+      <div class="weapon-card-header">
+        <div class="weapon-icon">
+          ${icon ? `<img src="${iconURL}" alt="${weaponName}" onerror="this.style.display='none'">` : ''}
+        </div>
+        <div class="weapon-header-text">
+          <div class="weapon-name">${weaponName}</div>
+          <div class="weapon-type-damage">${weaponType} • ${damageTypeName}</div>
+        </div>
+        <button class="weapon-card-delete" data-weapon-hash="${weaponHash}" data-wish-index="${index}" type="button">DELETE</button>
+      </div>
+      <div class="weapon-perks">
+        ${perksHTML}
+        <div class="weapon-mode-badge">${modeBadge} MODE</div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Extract perk display info from wish config.
+ *
+ * @param {Object} wish - Wish object {config, displayString}
+ * @returns {Array<string>} Array of perk display strings
+ */
+function getPerkDisplayInfo(wish) {
+  if (!wish || !wish.config) return [];
+
+  // Parse displayString for perk names (e.g., "Arrowhead Brake + Ricochet Rounds + Rampage")
+  const displayString = wish.displayString || '';
+  if (!displayString) return [];
+
+  // Split by " + " to get individual perk names
+  const perkNames = displayString.split(/\s*\+\s*/).slice(0, 5); // Show up to 5 perks
+  return perkNames.map((name) => name.trim()).filter((name) => name.length > 0);
+}
+
+/**
+ * Update list view after filter changes.
+ * Called when search or filters change.
+ *
+ * @returns {Promise<void>}
+ */
+async function updateListView() {
+  try {
+    const filtered = await applyFilters();
+    renderWeaponCards(filtered);
+
+    // Update empty state visibility
+    const emptyState = document.getElementById('w-empty-state');
+    const listContainer = document.getElementById('w-weapon-list');
+
+    if (!filtered || filtered.length === 0) {
+      if (emptyState) emptyState.style.display = 'block';
+    } else {
+      if (emptyState) emptyState.style.display = 'none';
+    }
+
+    d2log(`Updated list view: ${filtered?.length || 0} weapons shown`, 'weapon-ui');
+  } catch (error) {
+    d2log(`❌ Error updating list view: ${error.message}`, 'weapon-ui', 'error');
+  }
+}
+
+/**
+ * Attach event listeners to filter toggles, search input, and delete buttons.
+ * Uses event delegation for dynamic elements.
+ *
+ * @returns {void}
+ */
+function attachFilterListeners() {
+  // Search input (debounced)
+  const searchInput = document.getElementById('w-list-search');
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        updateListView();
+      }, 300);
+    });
+  }
+
+  // Filter toggle buttons
+  const filterToggles = document.querySelectorAll('.filter-toggle[data-filter]');
+  filterToggles.forEach((toggle) => {
+    toggle.addEventListener('click', handleFilterToggleClick);
+  });
+
+  // Clear filters button
+  const clearFiltersBtn = document.getElementById('w-clear-filters');
+  if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener('click', () => {
+      // Reset filter state
+      weaponState._selectedType = null;
+      weaponState._selectedDamage = null;
+      weaponState.currentMode = 'pve';
+
+      // Clear search
+      const searchInput = document.getElementById('w-list-search');
+      if (searchInput) searchInput.value = '';
+
+      // Clear active classes and reset button labels
+      filterToggles.forEach((toggle) => {
+        toggle.classList.remove('active');
+        const filterType = toggle.dataset.filter;
+        if (filterType === 'type') {
+          toggle.innerHTML = 'ALL TYPES';
+        } else if (filterType === 'damage') {
+          toggle.innerHTML = 'ALL ELEMENTS';
+        } else if (filterType === 'mode') {
+          toggle.innerHTML = 'ALL MODES';
+        }
+      });
+
+      // Update PvE button to active
+      const pvePveBtn = document.getElementById('w-pve-btn');
+      const pvpPvpBtn = document.getElementById('w-pvp-btn');
+      if (pvePveBtn) pvePveBtn.classList.add('active');
+      if (pvpPvpBtn) pvpPvpBtn.classList.remove('active');
+
+      // Update list
+      updateListView();
+    });
+  }
+
+  // Weapon card delete buttons (delegated)
   const listContainer = document.getElementById('w-weapon-list');
   if (listContainer) {
-    listContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">Weapon list - Phase 6/8 implementation</div>';
+    listContainer.addEventListener('click', (event) => {
+      const deleteBtn = event.target.closest('.weapon-card-delete');
+      if (deleteBtn) {
+        const weaponHash = parseInt(deleteBtn.dataset.weaponHash);
+        const wishIndex = parseInt(deleteBtn.dataset.wishIndex);
+        handleDeleteWeapon(weaponHash, wishIndex);
+      }
+    });
   }
+
+  d2log('✅ Filter listeners attached', 'weapon-ui');
+}
+
+/**
+ * Handle filter toggle button clicks.
+ * Toggles active state and cycles through available filter options.
+ *
+ * @param {Event} event - Click event
+ * @returns {void}
+ */
+function handleFilterToggleClick(event) {
+  const toggle = event.currentTarget;
+  const filterType = toggle.dataset.filter;
+
+  if (filterType === 'type') {
+    toggle.classList.toggle('active');
+    if (toggle.classList.contains('active') && weaponState._weaponTypes?.length > 0) {
+      // Cycle to first available type
+      weaponState._selectedType = weaponState._weaponTypes[0];
+      toggle.innerHTML = `${weaponState._selectedType.toUpperCase()}`;
+    } else {
+      weaponState._selectedType = null;
+      toggle.innerHTML = 'ALL TYPES';
+      toggle.classList.remove('active');
+    }
+  } else if (filterType === 'damage') {
+    toggle.classList.toggle('active');
+    if (toggle.classList.contains('active') && weaponState._damageTypes?.size > 0) {
+      // Get first available damage type
+      const damageEntries = Array.from(weaponState._damageTypes.entries());
+      if (damageEntries.length > 0) {
+        const [hash, name] = damageEntries[0];
+        weaponState._selectedDamage = hash;
+        toggle.innerHTML = `${name.toUpperCase()}`;
+      }
+    } else {
+      weaponState._selectedDamage = null;
+      toggle.innerHTML = 'ALL ELEMENTS';
+      toggle.classList.remove('active');
+    }
+  }
+
+  updateListView();
+}
+
+/**
+ * Attach listeners to weapon card elements.
+ * Handles card clicks and delete button interactions.
+ *
+ * @returns {void}
+ */
+function attachWeaponCardListeners() {
+  const cards = document.querySelectorAll('.weapon-card');
+
+  cards.forEach((card) => {
+    const deleteBtn = card.querySelector('.weapon-card-delete');
+
+    // Card click (open craft pane with weapon selected) - Phase 9
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('.weapon-card-delete')) return; // Skip if delete button clicked
+      const weaponHash = parseInt(card.dataset.weaponHash);
+      selectWeapon(weaponHash);
+      togglePane('craft');
+    });
+
+    // Delete button styling on hover
+    if (deleteBtn) {
+      deleteBtn.addEventListener('mousedown', () => {
+        deleteBtn.style.opacity = '0.7';
+      });
+      deleteBtn.addEventListener('mouseup', () => {
+        deleteBtn.style.opacity = '1';
+      });
+    }
+  });
 }
 
 /**
@@ -367,12 +940,26 @@ async function handleSaveWeaponWish() {
 }
 
 /**
- * Handle delete button click - Phase 7 will fully implement this.
- * Stub for now.
+ * Handle delete button click - Delete a weapon wish.
+ *
+ * @param {number} weaponHash - Weapon inventory hash
+ * @param {number} wishIndex - Index of wish to delete in the wishes array
+ * @returns {Promise<void>}
  */
 async function handleDeleteWeapon(weaponHash, wishIndex) {
-  // Phase 7: Call weaponManager.deleteWeaponWish()
-  d2log('🗑️ Delete weapon - Phase 7 implementation pending', 'weapon-ui');
+  try {
+    const result = await weaponManager.deleteWeaponWish(weaponHash, wishIndex);
+
+    if (result.success) {
+      d2log(`🗑️ ${result.message}`, 'weapon-ui');
+      // Refresh list view
+      await updateListView();
+    } else {
+      d2log(`❌ Failed to delete: ${result.message}`, 'weapon-ui', 'error');
+    }
+  } catch (error) {
+    d2log(`❌ Error deleting weapon: ${error.message}`, 'weapon-ui', 'error');
+  }
 }
 
 /* ============================================================
@@ -387,11 +974,18 @@ window.weaponUI = {
   toggleModeButton,
   toggleCollapsible,
   refreshWeaponList,
+  renderWeaponCards,
+  updateListView,
+  applyFilters,
+  attachFilterListeners,
   handleSaveWeaponWish,
   handleDeleteWeapon,
   renderWeaponSearchResults,
   renderWeaponStats,
   renderWeaponSockets,
+  renderWeaponPerks,
+  attachPerkClickListeners,
+  updateWeaponStatDeltas,
   weaponState,
 };
 

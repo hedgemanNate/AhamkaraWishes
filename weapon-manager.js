@@ -235,6 +235,7 @@ async function applyWeaponFilters(filters = {}) {
           weaponName: item.static.name,
           weaponType: item.static.type,
           icon: item.static.icon,
+          damageType: item.static.damageType,
           wish: wish,
         });
       });

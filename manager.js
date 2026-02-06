@@ -1,6 +1,7 @@
 // --- IMPORTS ---
 // All manifest loading, caching, and searching handled by destiny-manifest.js
 // This file uses: ensureInventoryItemDefsReady, ensureEquippableItemSetDefsReady, searchArmorLocally, getArmorSetLookup, BUCKET_HASHES, BUNGIE_ROOT
+// Weapon system: weapon-manager.js (weaponManager global), weapon-ui.js (weaponUI global)
 
 // --- CONFIGURATION ---
 
@@ -21,7 +22,7 @@ const STATS = ['Weapons', 'Health', 'Class', 'Grenade', 'Super', 'Melee'];
 document.addEventListener('DOMContentLoaded', () => {
     const loadingOverlay = document.getElementById('loading-overlay');
     
-    setupTabs();
+    setupWeaponArmorTabs();
     
     // Load manifest data ONCE at startup
     Promise.all([
@@ -29,7 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ensureEquippableItemSetDefsReady({ force: false }),
         getArmorSetLookup()
     ]).then(() => {
-        // Hide loading overlay once all manifest data is ready (fade animation is 1.3s)
+        // Initialize weapon system after manifest is ready
+        return initializeWeaponSystem();
+    }).then(() => {
+        // Hide loading overlay once all systems are ready (fade animation is 1.3s)
         if (loadingOverlay) {
             loadingOverlay.classList.add('hidden');
         }
@@ -128,27 +132,112 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
   });
 }
 
-function setupTabs() {
+// --- WEAPON SYSTEM INITIALIZATION ---
+/**
+ * Verify weapon system modules are loaded and available.
+ * Tracks if window.weaponUI and window.weaponManager are defined.
+ *
+ * @returns {boolean} True if weapon system is ready
+ */
+function verifyWeaponScriptsLoaded() {
+    const weaponUIReady = window.weaponUI && typeof window.weaponUI.initWeaponCraft === 'function';
+    const weaponManagerReady = window.weaponManager && typeof window.weaponManager.loadWeaponWishes === 'function';
+    
+    if (weaponUIReady && weaponManagerReady) {
+        d2log('✅ Weapon system scripts verified', 'manager');
+        return true;
+    }
+    
+    if (!weaponUIReady) {
+        d2log('⚠️ weapon-ui module not found', 'manager');
+    }
+    if (!weaponManagerReady) {
+        d2log('⚠️ weapon-manager module not found', 'manager');
+    }
+    
+    return false;
+}
+
+/**
+ * Initialize weapon crafting system.
+ * Called after manifest data loads. Sets up UI listeners and loads saved weapons.
+ *
+ * @returns {Promise<void>}
+ */
+async function initializeWeaponSystem() {
+    try {
+        // Verify exports are available
+        if (!verifyWeaponScriptsLoaded()) {
+            d2log('⚠️ Weapon system unavailable, skipping initialization', 'manager');
+            return;
+        }
+        
+        // Initialize UI (attach event listeners)
+        window.weaponUI.initWeaponCraft();
+        
+        // Load saved weapons into list view
+        await window.weaponUI.refreshWeaponList();
+        
+        // Set initial pane to craft view
+        window.weaponUI.togglePane('craft');
+        
+        d2log('✅ Weapon system initialized', 'manager');
+    } catch (error) {
+        d2log(`❌ Error initializing weapon system: ${error.message}`, 'manager', 'error');
+        // Continue gracefully - armor system should still work
+    }
+}
+
+/**
+ * Setup weapon/armor tab switching.
+ * Manages #tab-weapons and #tab-armor button states and pane visibility.
+ */
+function setupWeaponArmorTabs() {
     const btnWeapons = document.getElementById('tab-weapons');
     const btnArmor = document.getElementById('tab-armor');
     const viewWeapons = document.getElementById('view-weapons');
     const viewArmor = document.getElementById('view-armor');
 
+    if (!btnWeapons || !btnArmor || !viewWeapons || !viewArmor) {
+        d2log('⚠️ Tab elements not found in DOM', 'manager');
+        return;
+    }
+
+    // Click handler for weapons tab
     btnWeapons.addEventListener('click', () => {
+        // Update tab buttons
         btnWeapons.classList.add('active');
         btnArmor.classList.remove('active');
+        
+        // Update view visibility
         viewWeapons.classList.add('active-view');
         viewArmor.classList.remove('active-view');
-        loadLists();
+        
+        // Ensure weapon craft pane is visible and refresh list
+        if (verifyWeaponScriptsLoaded()) {
+            window.weaponUI.togglePane('craft');
+            window.weaponUI.refreshWeaponList().catch(err => {
+                d2log(`⚠️ Could not refresh weapon list: ${err.message}`, 'manager');
+            });
+        }
+        
+        d2log('✅ Switched to weapons tab', 'manager');
     });
 
+    // Click handler for armor tab
     btnArmor.addEventListener('click', () => {
+        // Update tab buttons
         btnArmor.classList.add('active');
         btnWeapons.classList.remove('active');
+        
+        // Update view visibility
         viewArmor.classList.add('active-view');
         viewWeapons.classList.remove('active-view');
+        
+        d2log('✅ Switched to armor tab', 'manager');
     });
 }
+
 
 // --- VIEWER LOGIC ---
 function loadLists() {

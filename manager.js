@@ -285,6 +285,15 @@ async function searchArmorLocally(query, currentClassType) {
   }
   console.timeEnd("[D2MANIFEST] filter defs");
   d2log("Armor candidates:", candidates.length);
+  // DEBUG: Log ALL fields available in manifest item
+  if (candidates.length > 0) {
+    const first = candidates[0];
+    console.log("\n[DEBUG] FULL armor item structure:");
+    console.log("  All keys:", Object.keys(first).sort());
+    console.log("\n[DEBUG] Full object:");
+    console.log(JSON.stringify(first, null, 2).substring(0, 5000)); // First 5000 chars
+    console.log("[DEBUG] END\n");
+  }
 
   // Slot grouping by bucket hash
   const armorSet = { helmet: null, gauntlets: null, chest: null, legs: null, classItem: null };
@@ -306,7 +315,7 @@ async function searchArmorLocally(query, currentClassType) {
     icon: item.displayProperties?.icon ? `${BUNGIE_ROOT}${item.displayProperties.icon}` : "",
     classType: item.classType,
     bucketHash: item.inventory?.bucketTypeHash,
-    gearset: item.gearset || null
+    setHash: item.equippingBlock?.equipableItemSetHash || null
   }));
 
   console.timeEnd("[D2MANIFEST] search total");
@@ -350,7 +359,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 // Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
 // Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
-function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null, gearset = null) {
+function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null, setHash = null) {
   chrome.storage.local.get(["dimData"], (result) => {
     let data = result.dimData || {
       activeId: "default",
@@ -363,7 +372,7 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
     // Create container if missing
     if (!activeList.items[hash]) {
       activeList.items[hash] = {
-        static: { name, type, set: null, icon: icon || null, classType, bucketHash, slotName, setName, gearset },
+        static: { name, type, set: null, icon: icon || null, classType, bucketHash, slotName, setName, setHash },
         wishes: []
       };
     } else {
@@ -381,7 +390,7 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
       if (bucketHash !== null && !activeList.items[hash].static?.bucketHash) activeList.items[hash].static.bucketHash = bucketHash;
       if (slotName && !activeList.items[hash].static?.slotName) activeList.items[hash].static.slotName = slotName;
       if (setName && !activeList.items[hash].static?.setName) activeList.items[hash].static.setName = setName;
-      if (gearset && !activeList.items[hash].static?.gearset) activeList.items[hash].static.gearset = gearset;
+      if (setHash && !activeList.items[hash].static?.setHash) activeList.items[hash].static.setHash = setHash;
     }
 
     const existingWishes = activeList.items[hash].wishes || [];

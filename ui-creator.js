@@ -158,7 +158,7 @@ function applyArmorFilters() {
             filteredItems[hash] = item;
         });
 
-        // Group by set ID (using gearset data or name parsing fallback)
+        // Group by set ID (using gearset data only)
         const armorSets = {};
         Object.keys(filteredItems).forEach(hash => {
             const item = filteredItems[hash];
@@ -691,7 +691,7 @@ function handleSaveWish() {
     setTimeout(() => {
       const slotName = getBucketName(item.bucketHash);
       const className = getClassName(item.classType);
-      const setName = getArmorSetName(item.name);
+      const setName = item.static?.name || "Unknown";
       
       saveItem(
         item.hash,
@@ -706,7 +706,7 @@ function handleSaveWish() {
         item.bucketHash,
         slotName,
         setName,
-        item.gearset
+        item.setHash
       );
     }, index * 100); // 100ms delay between each save
   });
@@ -853,61 +853,45 @@ function deleteArmorWish(hash) {
 }
 
 /**
- * Gets a consistent armor set identifier using gearset data with name parsing fallback.
- * Primary method uses Bungie's official gearset.itemList hash arrays.
- * Falls back to name parsing for items without gearset data.
+ * Gets a consistent armor set identifier using ONLY Bungie's official gearset data.
+ * Items without gearset data are treated as individual ungrouped items.
  */
 function getArmorSetId(item) {
-    // Primary method: Use Bungie's official gearset data
-    if (item.static?.gearset?.itemList?.length > 0) {
-        // Create consistent set ID from sorted item hashes
-        return item.static.gearset.itemList.sort().join('-');
+    // Use Bungie's official equipableItemSetHash for grouping
+    const setHash = item.static?.setHash || item.setHash;
+    if (setHash) {
+        return `set-${setHash}`;
     }
     
-    // For fresh armor selection (not stored yet), check direct gearset property
-    if (item.gearset?.itemList?.length > 0) {
-        return item.gearset.itemList.sort().join('-');
-    }
-    
-    // Fallback: Use name parsing for items without gearset data
-    const name = item.static?.name || item.name;
-    return getArmorSetName(name);
+    // Items without set data get their own unique group (ungrouped)
+    return `ungrouped-${item.hash}`;
 }
 
 /**
  * Generates a readable display name for an armor set group.
- * Uses the cleaned name from the first item in the group.
+ * Uses the name of the first item in the set (typically they're all named the same set).
  */
 function getSetDisplayName(setItems) {
     if (!setItems || setItems.length === 0) return "Unknown Set";
     
-    // Use the first item's name and clean it for display
-    const firstName = setItems[0].static?.name || "Unknown";
-    return getArmorSetName(firstName);
+    const firstItem = setItems[0];
+    
+    // Use the item name to extract set name
+    // Armor sets typically have consistent naming patterns (e.g., "Swordmaster's Robes", "Swordmaster's Gaskets", etc.)
+    const itemName = firstItem.static?.name || "Unknown Set";
+    
+    // Try to extract set name by removing slot keywords
+    const slotKeywords = ['Helmet', 'Gauntlets', 'Armor', 'Chest', 'Legs', 'Class', 'Mark', 'Cloak', 'Bond', 'Robes', 'Gloves', 'Plate'];
+    let setName = itemName;
+    
+    for (const keyword of slotKeywords) {
+        const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+        if (regex.test(setName)) {
+            setName = setName.replace(regex, '').trim();
+            break;
+        }
+    }
+    
+    return setName || itemName;
 }
 
-/**
- * Legacy function: Cleans armor names to extract the base Set Name.
- * Now used as fallback when gearset data is unavailable.
- * Optimized for 2026 Renegades slot naming conventions.
- */
-function getArmorSetName(fullName) {
-    if (!fullName) return "Unknown Set";
-    
-    // Comprehensive list of slot keywords across all 3 classes (2026 update)
-    const slotKeywords = [
-        "Mask", "Vest", "Grips", "Strides", "Cloak",              // Hunter
-        "Helm", "Gauntlets", "Plate", "Greaves", "Mark",            // Titan
-        "Hood", "Gloves", "Robes", "Boots", "Bond", "Cover",        // Warlock
-        "Helmet", "Chest", "Arms", "Legs", "Class Item", "Cowl"     // Generic + Fixed
-    ];
-
-    // Create a dynamic Regex to strip slot names and trailing spaces
-    const regex = new RegExp(`\\b(${slotKeywords.join('|')})\\b`, 'gi');
-    
-    // Remove slot keywords and any double spaces/trailing punctuation
-    let cleaned = fullName.replace(regex, '').replace(/\s\s+/g, ' ').trim();
-    
-    // If the name is empty after cleaning (rare), fallback to the full name
-    return cleaned || fullName;
-}

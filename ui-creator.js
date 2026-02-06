@@ -6,7 +6,8 @@
 // --- UI STATE ---
 let currentClass = 0; 
 let searchTimeout = null; 
-let armorSelection = null; 
+let selectedPieces = {}; // Track currently selected pieces by slot
+let loadedArmorPieces = {}; // Track loaded pieces by slot
 let currentArchetype = null;
 let currentSpark = null;
 let currentMode = 'pve';
@@ -348,7 +349,8 @@ function attachListeners() {
     const nameplate = document.getElementById('armor-set-name');
     if (nameplate) {
         nameplate.onclick = () => {
-            armorSelection = null;
+            selectedPieces = {};
+            loadedArmorPieces = {};
             currentArchetype = null;
             currentSpark = null;
             const input = document.getElementById('armor-query');
@@ -359,11 +361,33 @@ function attachListeners() {
             });
             document.querySelectorAll('.stat-btn').forEach(b => b.classList.remove('selected', 'unavailable'));
             nameplate.textContent = "";
+            updateFullSetButton();
             updatePrimaryBtn();
         };
     }
 
-    // 8. Mode Toggle (PvE/PvP)
+    // 8. Select Full Set button
+    const fullSetBtn = document.getElementById('select-full-set-btn');
+    if (fullSetBtn) {
+        fullSetBtn.onclick = () => {
+            // Select all loaded pieces
+            selectedPieces = { ...loadedArmorPieces };
+            
+            // Update visual state
+            document.querySelectorAll('.armor-box').forEach(box => {
+                const slot = box.dataset.slot;
+                if (loadedArmorPieces[slot]) {
+                    box.classList.remove('dimmed');
+                    box.classList.add('selected');
+                }
+            });
+            
+            updateSelectionDisplay();
+            updatePrimaryBtn();
+        };
+    }
+
+    // 9. Mode Toggle (PvE/PvP)
     const toggle = document.getElementById('ui-mode-toggle');
     if (toggle) {
         toggle.onclick = () => {
@@ -372,7 +396,7 @@ function attachListeners() {
         };
     }
 
-    // 9. Save Wish Button
+    // 10. Save Wish Button
     const saveBtn = document.getElementById('btn-create-armor');
     if (saveBtn) {
         saveBtn.onclick = handleSaveWish;
@@ -468,6 +492,7 @@ function populateStatGrids() {
     ARCHETYPES.forEach(arch => {
         const btn = document.createElement('div');
         btn.className = 'stat-btn';
+        btn.dataset.archetype = arch.id;
         btn.innerHTML = `<strong>${arch.name}</strong><span class="stat-sub">${arch.stats.join(' + ')}</span>`;
         btn.onclick = () => {
             document.querySelectorAll('#archetype-grid .stat-btn').forEach(b => b.classList.remove('selected'));
@@ -497,6 +522,47 @@ function populateStatGrids() {
 }
 
 /**
+ * Check if all 5 armor pieces are loaded and show/hide the Select Full Set button
+ */
+function updateFullSetButton() {
+    const selectedCount = Object.keys(selectedPieces).length;
+    const fullSetBtn = document.getElementById('select-full-set-btn');
+    
+    if (fullSetBtn) {
+        if (selectedCount > 0) {
+            fullSetBtn.classList.remove('hidden');
+        } else {
+            fullSetBtn.classList.add('hidden');
+        }
+    }
+}
+
+/**
+ * Update display based on current selections
+ */
+function updateSelectionDisplay() {
+    const nameplate = document.getElementById('armor-set-name');
+    const selectedCount = Object.keys(selectedPieces).length;
+    
+    if (nameplate) {
+        if (selectedCount === 0) {
+            nameplate.textContent = "";
+        } else if (selectedCount === 1) {
+            const piece = Object.values(selectedPieces)[0];
+            nameplate.textContent = piece.name;
+            nameplate.style.color = "var(--accent-gold)";
+        } else {
+            const setName = Object.values(selectedPieces)[0]?.name
+                .replace(/(Mask|Vest|Grips|Strides|Cloak|Gauntlets|Plate|Helm|Greaves|Mark|Gloves|Robes|Bond)/gi, '').trim();
+            nameplate.textContent = `${setName} (${selectedCount} PIECES)`;
+            nameplate.style.color = "var(--accent-gold)";
+        }
+    }
+    
+    updateFullSetButton();
+}
+
+/**
  * Refreshes the armor icons in Step 1.
  */
 /**
@@ -507,8 +573,11 @@ function refreshArmorDisplay(buckets) {
     const slots = ['Head', 'Arms', 'Chest', 'Legs', 'Class'];
     const nameplate = document.getElementById('armor-set-name');
     
+    // Clear loaded pieces tracking
+    loadedArmorPieces = {};
+    
     const firstItem = Object.values(buckets).find(item => item !== undefined);
-    if (nameplate) {
+    if (nameplate && Object.keys(selectedPieces).length === 0) {
         if (firstItem) {
             // Display general set name in White
             nameplate.textContent = firstItem.name.replace(/(Mask|Vest|Grips|Strides|Cloak|Gauntlets|Plate|Helm|Greaves|Mark|Gloves|Robes|Bond)/gi, '').trim();
@@ -522,36 +591,53 @@ function refreshArmorDisplay(buckets) {
         const box = document.querySelector(`.armor-box[data-slot="${slot}"]`);
         if (!box) return;
         
-        box.classList.remove('loading', 'selected', 'dimmed');
+        box.classList.remove('loading');
         box.innerHTML = `<span class="slot-label">${slot.toUpperCase()}</span>`;
         
         const item = buckets[slot];
         if (item) {
+            // Track loaded pieces
+            loadedArmorPieces[slot] = item;
+            
             const img = document.createElement('img');
             img.src = item.icon; 
             box.appendChild(img);
             
-            box.onclick = () => {
-                // Dim others, highlight selected
-                document.querySelectorAll('.armor-box').forEach(b => {
-                    b.classList.remove('selected');
-                    b.classList.add('dimmed');
-                });
-                
-                box.classList.remove('dimmed');
+            // Set visual state based on current selection
+            if (selectedPieces[slot]) {
                 box.classList.add('selected');
-                
-                // Update nameplate to specific piece in Gold
-                if (nameplate) {
-                    nameplate.textContent = item.name;
-                    nameplate.style.color = "var(--accent-gold)";
+                box.classList.remove('dimmed');
+            } else {
+                box.classList.remove('selected');
+                box.classList.add('dimmed');
+            }
+            
+            box.onclick = () => {
+                // Toggle selection for this piece
+                if (selectedPieces[slot]) {
+                    // Deselect this piece
+                    delete selectedPieces[slot];
+                    box.classList.remove('selected');
+                    box.classList.add('dimmed');
+                } else {
+                    // Select this piece
+                    selectedPieces[slot] = item;
+                    box.classList.remove('dimmed');
+                    box.classList.add('selected');
                 }
 
-                armorSelection = item;
+                updateSelectionDisplay();
                 updatePrimaryBtn();
             };
+        } else {
+            // No item for this slot
+            box.classList.remove('selected', 'dimmed');
         }
     });
+    
+    // Update full set button visibility and selection display
+    updateFullSetButton();
+    updateSelectionDisplay();
 }
 
 /**
@@ -575,7 +661,9 @@ function syncSparkAvailability(usedStats) {
  */
 function updatePrimaryBtn() {
     const btn = document.getElementById('btn-create-armor');
-    if (!armorSelection) {
+    const selectedCount = Object.keys(selectedPieces).length;
+    
+    if (selectedCount === 0) {
         btn.disabled = true;
         btn.textContent = "SELECT ARMOR PIECE FIRST";
     } else if (!currentArchetype || !currentSpark) {
@@ -583,37 +671,48 @@ function updatePrimaryBtn() {
         btn.textContent = "SELECT STATS ABOVE";
     } else {
         btn.disabled = false;
-        btn.textContent = `MAKE WISH: ${currentArchetype.name} + ${currentSpark.toUpperCase()}`;
+        if (selectedCount === 1) {
+            btn.textContent = `MAKE WISH: ${currentArchetype.name} + ${currentSpark.toUpperCase()}`;
+        } else {
+            btn.textContent = `MAKE ${selectedCount} WISHES: ${currentArchetype.name} + ${currentSpark.toUpperCase()}`;
+        }
     }
 }
 
 /**
- * Final step: Passes selection to the backend saveItem() in manager.js.
+ * Final step: Passes selection(s) to the backend saveItem() in manager.js.
  */
 function handleSaveWish() {
-  const slotName = getBucketName(armorSelection.bucketHash);
-  const className = getClassName(armorSelection.classType);
-  const setName = getArmorSetName(armorSelection.name);
-  
-  saveItem(
-    armorSelection.hash,
-    armorSelection.name,
-    "armor",
-    `armor-wish:${armorSelection.hash}`,
-    `armor-wish:${armorSelection.hash}`,
-    { archetype: currentArchetype.name, spark: currentSpark },
-    currentMode,
-    armorSelection.icon,
-    armorSelection.classType,
-    armorSelection.bucketHash,
-    slotName,
-    setName,
-    armorSelection.gearset
-  );
+  Object.values(selectedPieces).forEach(item => {
+    const slotName = getBucketName(item.bucketHash);
+    const className = getClassName(item.classType);
+    const setName = getArmorSetName(item.name);
+    
+    saveItem(
+      item.hash,
+      item.name,
+      "armor",
+      `armor-wish:${item.hash}`,
+      `armor-wish:${item.hash}`,
+      { archetype: currentArchetype.name, spark: currentSpark },
+      currentMode,
+      item.icon,
+      item.classType,
+      item.bucketHash,
+      slotName,
+      setName,
+      item.gearset
+    );
+  });
 
   const btn = document.getElementById("btn-create-armor");
   const originalText = btn.textContent;
-  btn.textContent = "WISH GRANTED!";
+  const selectedCount = Object.keys(selectedPieces).length;
+  if (selectedCount === 1) {
+    btn.textContent = "WISH GRANTED!";
+  } else {
+    btn.textContent = `${selectedCount} WISHES GRANTED!`;
+  }
   btn.classList.add("success");
 
   setTimeout(() => {

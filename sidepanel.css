@@ -219,6 +219,31 @@ header {
     display: none;
 }
 
+/* Select Full Set button - mirrors armor-set-name text-label styling */
+.select-full-set-btn {
+    text-align: left;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 10px;
+    min-height: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease;
+    margin-top: 8px;
+    flex-basis: 100%;
+    width: auto;
+}
+
+.select-full-set-btn:hover {
+    color: #ff0000 !important;
+    transform: translateX(2px);
+}
+
+.select-full-set-btn.hidden {
+    display: none;
+}
+
 /* Ensure the grid wraps so the name stays on top */
 .armor-grid {
     flex-wrap: wrap;       
@@ -228,7 +253,7 @@ header {
   flex: 1;
   aspect-ratio: 1 / 1; /* Force perfect squares */
   background: #111;
-  border: 1px solid #333;
+  border: 2px solid #333;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -703,10 +728,103 @@ header {
   margin-top: 2px;
 }
 
-.stat-btn:hover { background: #333; }
+/* Base hover and selected styling like filter-btn */
+.stat-btn:hover {
+  background: #383842;
+  border-color: #555;
+  color: var(--text-main);
+}
+
 .stat-btn.selected {
-  background: #3a3a4a;
-  border-color: var(--accent-gold);
+  color: #fff;
+  border-color: #555;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+/* Specific colors for each stat type on hover and selected - higher specificity */
+.stat-btn[data-stat="Weapons"]:hover,
+.stat-btn[data-stat="Weapons"].selected {
+  background: var(--stat-weapons) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+.stat-btn[data-stat="Health"]:hover,
+.stat-btn[data-stat="Health"].selected {
+  background: var(--stat-health) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+.stat-btn[data-stat="Class"]:hover,
+.stat-btn[data-stat="Class"].selected {
+  background: var(--stat-class) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+.stat-btn[data-stat="Grenade"]:hover,
+.stat-btn[data-stat="Grenade"].selected {
+  background: var(--stat-grenade) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+.stat-btn[data-stat="Super"]:hover,
+.stat-btn[data-stat="Super"].selected {
+  background: var(--stat-super) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+.stat-btn[data-stat="Melee"]:hover,
+.stat-btn[data-stat="Melee"].selected {
+  background: var(--stat-melee) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+/* Archetype buttons in #archetype-grid - use primary stat colors */
+#archetype-grid .stat-btn[data-archetype="paragon"]:hover,
+#archetype-grid .stat-btn[data-archetype="paragon"].selected {
+  background: var(--stat-super) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+#archetype-grid .stat-btn[data-archetype="grenadr"]:hover,
+#archetype-grid .stat-btn[data-archetype="grenadr"].selected {
+  background: var(--stat-grenade) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+#archetype-grid .stat-btn[data-archetype="special"]:hover,
+#archetype-grid .stat-btn[data-archetype="special"].selected {
+  background: var(--stat-class) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+#archetype-grid .stat-btn[data-archetype="brawler"]:hover,
+#archetype-grid .stat-btn[data-archetype="brawler"].selected {
+  background: var(--stat-melee) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+#archetype-grid .stat-btn[data-archetype="bulwark"]:hover,
+#archetype-grid .stat-btn[data-archetype="bulwark"].selected {
+  background: var(--stat-health) !important;
+  color: #fff !important;
+  border-color: #555 !important;
+}
+
+#archetype-grid .stat-btn[data-archetype="gunner"]:hover,
+#archetype-grid .stat-btn[data-archetype="gunner"].selected {
+  background: var(--stat-weapons) !important;
+  color: #fff !important;
+  border-color: #555 !important;
 }
 
 .stat-btn.unavailable {

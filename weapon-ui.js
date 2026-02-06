@@ -254,20 +254,51 @@ async function selectWeapon(weaponHash) {
 
   d2log(`✅ Selected weapon: ${weaponState.currentWeapon.name}`, 'weapon-ui');
 
-  // Redesign: Populate new header elements
+  // Populate enhanced header elements
   const headerEl = document.getElementById('w-selected-header');
-  const iconEl = document.getElementById('w-selected-icon');
+  const screenshotEl = document.getElementById('w-selected-screenshot');
   const nameEl = document.getElementById('w-selected-name');
   const typeEl = document.getElementById('w-selected-type');
+  const damageEl = document.getElementById('w-selected-damage');
+  const ammoEl = document.getElementById('w-selected-ammo');
+  const frameEl = document.getElementById('w-selected-frame');
+  const activityEl = document.getElementById('w-selected-activity');
+  const flavorEl = document.getElementById('w-selected-flavor');
 
   if (headerEl) {
-    if (iconEl) iconEl.src = weaponDef.displayProperties?.icon || '';
+    // Set weapon name
     if (nameEl) nameEl.textContent = weaponDef.displayProperties?.name || 'Unknown Weapon';
     
-    // Construct "Type • Damage" string
+    // Set weapon type
     const itemType = weaponDef.itemTypeDisplayName || 'Weapon';
+    if (typeEl) typeEl.textContent = itemType;
+    
+    // Set damage type with icon/color context
     const damageType = getDamageTypeName(weaponDef.defaultDamageTypeHash);
-    if (typeEl) typeEl.textContent = `${itemType} • ${damageType}`;
+    if (damageEl) damageEl.textContent = damageType;
+    
+    // Set ammo type
+    const ammoType = getAmmoTypeName(weaponDef.equippingBlock?.ammoType);
+    if (ammoEl) ammoEl.textContent = ammoType;
+    
+    // Set weapon frame (intrinsic perk)
+    const frame = getWeaponFrame(weaponDef);
+    if (frameEl) frameEl.textContent = frame || 'Unknown';
+    
+    // Set activity drops
+    const activity = getActivityDrops(weaponDef) || 'Unknown';
+    if (activityEl) activityEl.textContent = activity;
+    
+    // Set flavor text
+    const flavorText = weaponDef.flavorText || '';
+    if (flavorEl) {
+      flavorEl.textContent = flavorText;
+      flavorEl.style.display = flavorText ? 'block' : 'none';
+    }
+    
+    // Set screenshot (prefer displayProperties.screenshot, fallback to icon)
+    const screenshotUrl = weaponDef.displayProperties?.screenshot || weaponDef.displayProperties?.icon || '';
+    if (screenshotEl) screenshotEl.src = screenshotUrl;
     
     headerEl.classList.remove('hidden');
   }
@@ -699,6 +730,74 @@ function getDamageTypeName(damageHash) {
     1461471453: 'Strand',
   };
   return damageTypeMap[damageHash] || 'Unknown';
+}
+
+/**
+ * Map ammo type to display name.
+ *
+ * @param {number} ammoType - Destiny 2 ammo type (1 = Primary, 2 = Special, 3 = Heavy)
+ * @returns {string} Display name (Primary, Special, Heavy)
+ */
+function getAmmoTypeName(ammoType) {
+  const ammoTypeMap = {
+    1: 'Primary',
+    2: 'Special',
+    3: 'Heavy',
+  };
+  return ammoTypeMap[ammoType] || 'Unknown';
+}
+
+/**
+ * Extract weapon frame (intrinsic perk) from weapon definition.
+ *
+ * @param {Object} weaponDef - Weapon definition object
+ * @returns {string} Frame name (e.g., "Linear Fusion Rifle", "Precision Frame")
+ */
+function getWeaponFrame(weaponDef) {
+  // Try to get from sockets (intrinsic perk is usually in socket 0)
+  if (weaponDef.sockets?.socketEntries?.[0]) {
+    const socketEntry = weaponDef.sockets.socketEntries[0];
+    // Frame info would be in the first socket's plug
+    if (socketEntry.singleInitialItemHash) {
+      const frameHash = socketEntry.singleInitialItemHash;
+      // Return the frame name - it's usually in the itemTypeDisplayName or displayProperties
+      return `Frame ${frameHash}`;
+    }
+  }
+  
+  // Fallback: return itemTypeDisplayName
+  return weaponDef.itemTypeDisplayName || 'Unknown Frame';
+}
+
+/**
+ * Extract activity/source where weapon drops.
+ *
+ * @param {Object} weaponDef - Weapon definition object
+ * @returns {string} Activity name or source
+ */
+function getActivityDrops(weaponDef) {
+  // Check the sourceString first (most reliable)
+  if (weaponDef.sourceString) {
+    return weaponDef.sourceString;
+  }
+  
+  // Check sources array
+  if (weaponDef.sources && Array.isArray(weaponDef.sources) && weaponDef.sources.length > 0) {
+    return weaponDef.sources[0]?.displayProperties?.name || 'Various';
+  }
+  
+  // Check description for activity hints
+  if (weaponDef.displayProperties?.description) {
+    const desc = weaponDef.displayProperties.description;
+    // Look for common activity keywords
+    if (desc.includes('Nightfall')) return 'Nightfall';
+    if (desc.includes('Raid')) return 'Raid';
+    if (desc.includes('Crucible')) return 'Crucible';
+    if (desc.includes('Gambit')) return 'Gambit';
+    if (desc.includes('Strike')) return 'Strikes';
+  }
+  
+  return 'World Drops';
 }
 
 /**

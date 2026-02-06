@@ -115,75 +115,51 @@
 .show-w-list { transform: translateX(-50%); }
 
 /* ============================================
-   COLLAPSIBLE SECTIONS (Search, Perks, Stats)
+   SELECTED WEAPON HEADER
    ============================================ */
-.weapon-section {
+.selected-weapon-header {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-bottom: 20px;
-  background: rgba(0, 0, 0, 0.2);
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid #333;
+  margin-bottom: 24px;
+  border-left: 4px solid var(--accent-gold);
+}
+
+.selected-weapon-header.hidden {
+  display: none !important;
+}
+
+#w-selected-icon {
+  width: 64px;
+  height: 64px;
   border-radius: 4px;
-  border: 1px solid #222;
-  overflow: hidden;
-}
-
-.weapon-section.collapsible .section-header {
-  cursor: pointer;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
+  border: 1px solid #444;
   background: #111;
-  transition: background 0.2s ease;
-  border-left: 3px solid var(--accent-gold, #d4af37);
-  user-select: none;
+  flex-shrink: 0;
 }
 
-.section-header:hover {
-  background: #1a1a1a;
-}
-
-.section-header span {
-  font-weight: bold;
-  font-size: 12px;
-  color: #ccc;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.toggle-arrow {
-  width: 16px;
-  height: 16px;
+.w-header-info {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease;
-  color: var(--accent-gold, #d4af37);
-  font-size: 12px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.section-header.open .toggle-arrow {
-  transform: rotate(180deg);
-}
-
-.section-content {
-  display: none;
-  padding: 12px 14px;
   flex-direction: column;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.1);
+  gap: 2px;
 }
 
-.weapon-section.open .section-content {
-  display: flex;
+#w-selected-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--accent-gold);
+  line-height: 1.2;
+}
+
+#w-selected-type {
+  font-size: 12px;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
 /* ============================================
@@ -194,9 +170,10 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
-  border: 1px solid #333;
+  border: 1px solid #222;
+  margin-bottom: 12px;
 }
 
 .perk-slot-label {
@@ -262,6 +239,10 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 1px solid #222;
+  padding: 12px;
 }
 
 .stat-row {
@@ -629,21 +610,26 @@
    SEARCH RESULTS
    ============================================ */
 #w-search-results {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .weapon-search-result {
   display: flex;
-  gap: 12px;
-  padding: 12px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid #333;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .weapon-search-result:hover {
@@ -652,8 +638,8 @@
 }
 
 .search-result-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   background: #25252d;
   border: 1px solid #444;
@@ -672,16 +658,23 @@
 
 .search-result-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0; /* Ensures text truncation works if needed */
 }
 
 .search-result-name {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: bold;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .search-result-meta {
-  font-size: 10px;
+  font-size: 11px;
   color: #666;
-  margin-top: 4px;
+  margin-top: 2px;
 }

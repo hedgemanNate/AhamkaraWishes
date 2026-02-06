@@ -117,14 +117,6 @@ function initWeaponCraft() {
     });
   }
 
-  // Collapsible sections
-  const collapsibleHeaders = document.querySelectorAll('.weapon-section.collapsible .section-header');
-  collapsibleHeaders.forEach((header) => {
-    header.addEventListener('click', () => {
-      toggleCollapsible(header);
-    });
-  });
-
   // Save button (Phase 6)
   const savBtn = document.getElementById('w-save-btn');
   if (savBtn) {
@@ -250,6 +242,26 @@ async function selectWeapon(weaponHash) {
 
   d2log(`✅ Selected weapon: ${weaponState.currentWeapon.name}`, 'weapon-ui');
 
+  // Redesign: Populate new header elements
+  const headerEl = document.getElementById('w-selected-header');
+  const iconEl = document.getElementById('w-selected-icon');
+  const nameEl = document.getElementById('w-selected-name');
+  const typeEl = document.getElementById('w-selected-type');
+
+  if (headerEl) {
+    if (iconEl) iconEl.src = weaponDef.displayProperties?.icon || '';
+    if (nameEl) nameEl.textContent = weaponDef.displayProperties?.name || 'Unknown Weapon';
+    
+    // Construct "Type • Damage" string
+    const itemType = weaponDef.itemTypeDisplayName || 'Weapon';
+    const damageType = getDamageTypeName(weaponDef.defaultDamageTypeHash);
+    if (typeEl) typeEl.textContent = `${itemType} • ${damageType}`;
+    
+    headerEl.classList.remove('hidden');
+  }
+
+  // NOTE: Rendering logic for perks/stats bypassed for UI rework
+  /*
   // Render weapon stats (base values only)
   renderWeaponStats();
 
@@ -258,16 +270,28 @@ async function selectWeapon(weaponHash) {
   await renderWeaponPerks();
   attachPerkClickListeners();
 
-  // Clear search results and focus on perks
+  // Clear search results and scroll to perks
   const resultsDiv = document.getElementById('w-search-results');
   if (resultsDiv) {
     resultsDiv.innerHTML = '';
+  }
+
+  const perkSlotsLabel = document.getElementById('w-perk-slots');
+  if (perkSlotsLabel) {
+    perkSlotsLabel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // Enable save button
   const saveBtn = document.getElementById('w-save-btn');
   if (saveBtn) {
     saveBtn.disabled = false;
+  }
+  */
+
+  // Clear results if still present
+  const resultsDiv = document.getElementById('w-search-results');
+  if (resultsDiv) {
+    resultsDiv.innerHTML = '';
   }
 }
 
@@ -562,25 +586,6 @@ function toggleModeButton(mode) {
   if (pvpPvpBtn) pvpPvpBtn.classList.toggle('active', mode === 'pvp');
 
   d2log(`✅ Switched to ${mode.toUpperCase()} mode`, 'weapon-ui');
-}
-
-/**
- * Toggle collapsible section (section header click).
- *
- * @param {HTMLElement} header - The section header element
- */
-function toggleCollapsible(header) {
-  const section = header.closest('.weapon-section');
-  if (!section) return;
-
-  section.classList.toggle('open');
-  const arrow = header.querySelector('.toggle-arrow');
-  if (arrow) {
-    const isOpen = section.classList.contains('open');
-    header.classList.toggle('open', isOpen);
-  }
-
-  d2log(`✅ Collapsible toggled`, 'weapon-ui');
 }
 
 /**
@@ -1035,7 +1040,6 @@ window.weaponUI = {
   selectWeapon,
   togglePane,
   toggleModeButton,
-  toggleCollapsible,
   refreshWeaponList,
   renderWeaponCards,
   updateListView,

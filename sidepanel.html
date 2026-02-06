@@ -33,59 +33,20 @@
           
           <!-- PANE 1: CRAFT/BUILD VIEW -->
           <div id="pane-w-craft" class="weapon-pane">
-            <!-- Search Section (Collapsible) -->
-            <div class="weapon-section open collapsible">
-              <div class="section-header open">
-                <span>SEARCH WEAPON</span>
-                <button class="toggle-arrow">▼</button>
-              </div>
-              <div class="section-content">
-                <input type="text" id="w-search-input" placeholder="Search weapon name...">
-                <div id="w-search-results"></div>
+            <!-- Selected Weapon Header (Initially Hidden) -->
+            <div id="w-selected-header" class="selected-weapon-header hidden">
+              <img id="w-selected-icon" src="" alt="">
+              <div class="w-header-info">
+                <div id="w-selected-name"></div>
+                <div id="w-selected-type"></div>
               </div>
             </div>
 
-            <!-- Perks Section (Collapsible) -->
-            <div class="weapon-section open collapsible">
-              <div class="section-header open">
-                <span>PERK SELECTION</span>
-                <button class="toggle-arrow">▼</button>
-              </div>
-              <div class="section-content">
-                <div id="w-perk-slots">
-                  <!-- Populated by weapon-ui.js on weapon select -->
-                </div>
-              </div>
-            </div>
-
-            <!-- Stats Section (Collapsible) -->
-            <div class="weapon-section open collapsible">
-              <div class="section-header open">
-                <span>STAT PREVIEW</span>
-                <button class="toggle-arrow">▼</button>
-              </div>
-              <div class="section-content">
-                <div class="stats-table">
-                  <div class="stat-row" style="border-bottom: 1px solid #333; margin-bottom: 8px; padding-bottom: 8px;">
-                    <div class="stat-name">STAT</div>
-                    <div class="stat-value">BASE</div>
-                    <div class="stat-delta">ΔSTAT</div>
-                    <div class="stat-final">FINAL</div>
-                  </div>
-                  <div id="w-stats-table">
-                    <!-- Populated by weapon-ui.js on weapon select -->
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Action Area -->
-            <div class="weapon-action-area">
-              <div class="mode-toggle">
-                <button id="w-pve-btn" class="mode-btn active">PvE</button>
-                <button id="w-pvp-btn" class="mode-btn">PvP</button>
-              </div>
-              <button id="w-save-btn" class="primary-btn" disabled>SAVE WISH</button>
+            <!-- Step 1: SEARCH WEAPON -->
+            <div class="step-container">
+              <div class="step-label">1. SEARCH WEAPON</div>
+              <input type="text" id="w-search-input" class="search-input" placeholder="Search weapon name...">
+              <div id="w-search-results"></div>
             </div>
           </div>
 

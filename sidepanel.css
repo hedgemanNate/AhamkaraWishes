@@ -132,6 +132,35 @@ body {
     overflow: hidden;
 }
 
+/* Allow the craft pane to scroll independently */
+#pane-craft {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* --- DISCRETE SCROLLBAR (craft pane) --- */
+#pane-craft::-webkit-scrollbar {
+    width: 6px;
+}
+
+#pane-craft::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#pane-craft::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+#pane-craft:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#pane-craft::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
 /* Armor List Pane - Flexbox for Fixed Search + Scrolling List */
 #pane-list {
   display: flex;

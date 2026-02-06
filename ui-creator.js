@@ -586,7 +586,7 @@ function refreshArmorDisplay(buckets) {
     if (nameplate && Object.keys(selectedPieces).length === 0) {
         if (firstItem) {
             // Display general set name in White
-            nameplate.textContent = firstItem.name.replace(/(Mask|Vest|Grips|Strides|Cloak|Gauntlets|Plate|Helm|Greaves|Mark|Gloves|Robes|Bond)/gi, '').trim();
+            nameplate.textContent = getArmorSetName(firstItem.setHash) || firstItem.name;
             nameplate.style.color = "#ffffff"; 
         } else {
             nameplate.textContent = ""; 
@@ -936,29 +936,19 @@ function getArmorSetId(item) {
 
 /**
  * Generates a readable display name for an armor set group.
- * Uses the name of the first item in the set (typically they're all named the same set).
+ * Uses the pre-built lookup table from the manifest (built at startup).
  */
 function getSetDisplayName(setItems) {
     if (!setItems || setItems.length === 0) return "Unknown Set";
-    
+
     const firstItem = setItems[0];
-    
-    // Use the item name to extract set name
-    // Armor sets typically have consistent naming patterns (e.g., "Swordmaster's Robes", "Swordmaster's Gaskets", etc.)
-    const itemName = firstItem.static?.name || "Unknown Set";
-    
-    // Try to extract set name by removing slot keywords
-    const slotKeywords = ['Helmet', 'Gauntlets', 'Armor', 'Chest', 'Legs', 'Class', 'Mark', 'Cloak', 'Bond', 'Robes', 'Gloves', 'Plate'];
-    let setName = itemName;
-    
-    for (const keyword of slotKeywords) {
-        const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-        if (regex.test(setName)) {
-            setName = setName.replace(regex, '').trim();
-            break;
-        }
+    const setHash = firstItem.static?.setHash || firstItem.setHash;
+
+    if (setHash) {
+        const lookupName = getArmorSetName(setHash);
+        if (lookupName) return lookupName;
     }
-    
-    return setName || itemName;
+
+    return firstItem.static?.name || "Unknown Set";
 }
 

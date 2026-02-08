@@ -393,6 +393,11 @@ async function selectWeapon(weaponHash) {
   if (resultsDiv) {
     resultsDiv.innerHTML = '';
   }
+
+  const searchInput = document.getElementById('w-search-input');
+  if (searchInput) {
+    searchInput.value = '';
+  }
 }
 
 /**

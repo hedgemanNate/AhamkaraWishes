@@ -298,7 +298,44 @@ async function selectWeapon(weaponHash) {
     
     // Set weapon frame (intrinsic perk)
     const frame = getWeaponFrame(weaponDef);
-    if (frameEl) frameEl.textContent = frame || 'Unknown';
+    if (frameEl) {
+      frameEl.innerHTML = '';
+      if (frame && frame.name) {
+        const frameWrap = document.createElement('div');
+        frameWrap.className = 'w-frame-value';
+
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'w-frame-icon';
+        const iconUrl = resolveBungieUrl(frame.icon);
+        if (iconUrl) {
+          iconWrap.style.backgroundImage = `url("${iconUrl}")`;
+        } else {
+          iconWrap.classList.add('w-frame-icon-empty');
+        }
+
+        const textWrap = document.createElement('div');
+        textWrap.className = 'w-frame-text';
+
+        const nameNode = document.createElement('div');
+        nameNode.className = 'w-frame-name';
+        nameNode.textContent = frame.name;
+
+        const descNode = document.createElement('div');
+        descNode.className = 'w-frame-desc';
+        descNode.textContent = frame.description || '';
+        if (!frame.description) {
+          descNode.style.display = 'none';
+        }
+
+        textWrap.appendChild(nameNode);
+        textWrap.appendChild(descNode);
+        frameWrap.appendChild(iconWrap);
+        frameWrap.appendChild(textWrap);
+        frameEl.appendChild(frameWrap);
+      } else {
+        frameEl.textContent = 'Unknown Frame';
+      }
+    }
     
     // Set activity drops
     const activity = getActivityDrops(weaponDef) || 'Unknown';
@@ -313,22 +350,7 @@ async function selectWeapon(weaponHash) {
     
     // Set screenshot (only displayProperties.screenshot; no icon fallback)
     const screenshotPath = weaponDef.displayProperties?.screenshot || weaponDef.screenshot || '';
-    const bungieRoot = typeof BUNGIE_ROOT !== 'undefined' ? BUNGIE_ROOT : 'https://www.bungie.net';
-    const screenshotUrl = (() => {
-      if (!screenshotPath) return '';
-      if (
-        screenshotPath.startsWith('http') ||
-        screenshotPath.startsWith('data:') ||
-        screenshotPath.startsWith('blob:') ||
-        screenshotPath.startsWith('chrome-extension:') ||
-        screenshotPath.startsWith('moz-extension:')
-      ) {
-        return screenshotPath;
-      }
-      if (screenshotPath.startsWith('//')) return `https:${screenshotPath}`;
-      if (screenshotPath.startsWith('/')) return `${bungieRoot}${screenshotPath}`;
-      return screenshotPath;
-    })();
+    const screenshotUrl = resolveBungieUrl(screenshotPath);
 
     if (screenshotEl) {
       screenshotEl.src = screenshotUrl;
@@ -794,22 +816,80 @@ function getAmmoTypeName(ammoType) {
  * Extract weapon frame (intrinsic perk) from weapon definition.
  *
  * @param {Object} weaponDef - Weapon definition object
- * @returns {string} Frame name (e.g., "Linear Fusion Rifle", "Precision Frame")
+ * @returns {Object} Frame info with name, description, and icon
  */
 function getWeaponFrame(weaponDef) {
-  // Try to get from sockets (intrinsic perk is usually in socket 0)
-  if (weaponDef.sockets?.socketEntries?.[0]) {
-    const socketEntry = weaponDef.sockets.socketEntries[0];
-    // Frame info would be in the first socket's plug
-    if (socketEntry.singleInitialItemHash) {
-      const frameHash = socketEntry.singleInitialItemHash;
-      // Return the frame name - it's usually in the itemTypeDisplayName or displayProperties
-      return `Frame ${frameHash}`;
-    }
+  const socketEntries = weaponDef?.sockets?.socketEntries;
+  if (!Array.isArray(socketEntries) || socketEntries.length === 0) {
+    return buildFrameFallback(weaponDef);
   }
-  
-  // Fallback: return itemTypeDisplayName
-  return weaponDef.itemTypeDisplayName || 'Unknown Frame';
+
+  const itemDefs = window.__manifest__?.DestinyInventoryItemDefinition;
+  const candidates = [];
+
+  socketEntries.forEach((socketEntry, index) => {
+    const plugHash = socketEntry?.singleInitialItemHash;
+    if (!plugHash || !itemDefs || typeof itemDefs.get !== 'function') return;
+    const plugDef = itemDefs.get(String(plugHash));
+    if (!plugDef) return;
+    const score = scoreIntrinsicPlug(plugDef);
+    candidates.push({ score, index, plugDef });
+  });
+
+  const best = candidates
+    .filter((candidate) => candidate.score > 0)
+    .sort((a, b) => b.score - a.score)[0];
+
+  const fallback = candidates.sort((a, b) => a.index - b.index)[0];
+  const chosen = best || fallback;
+  if (!chosen || !chosen.plugDef) {
+    return buildFrameFallback(weaponDef);
+  }
+
+  const display = chosen.plugDef.displayProperties || {};
+  const name = display.name || weaponDef.itemTypeDisplayName || 'Unknown Frame';
+  const description = display.description || '';
+  const icon = display.icon || '';
+
+  return { name, description, icon };
+}
+
+function buildFrameFallback(weaponDef) {
+  const name = weaponDef?.itemTypeDisplayName || 'Unknown Frame';
+  return { name, description: '', icon: '' };
+}
+
+function scoreIntrinsicPlug(plugDef) {
+  let score = 0;
+  const plugCategory = (plugDef?.plug?.plugCategoryIdentifier || '').toLowerCase();
+  const name = (plugDef?.displayProperties?.name || '').toLowerCase();
+  const typeName = (plugDef?.itemTypeDisplayName || '').toLowerCase();
+
+  if (plugCategory.includes('intrinsic')) score += 3;
+  if (plugCategory.includes('frame')) score += 2;
+  if (name.includes('frame')) score += 2;
+  if (typeName.includes('frame')) score += 2;
+
+  return score;
+}
+
+function resolveBungieUrl(assetPath) {
+  if (!assetPath) return '';
+  if (
+    assetPath.startsWith('http') ||
+    assetPath.startsWith('data:') ||
+    assetPath.startsWith('blob:') ||
+    assetPath.startsWith('chrome-extension:') ||
+    assetPath.startsWith('moz-extension:')
+  ) {
+    return assetPath;
+  }
+  if (assetPath.startsWith('//')) return `https:${assetPath}`;
+  if (assetPath.startsWith('/')) {
+    const bungieRoot = typeof BUNGIE_ROOT !== 'undefined' ? BUNGIE_ROOT : 'https://www.bungie.net';
+    return `${bungieRoot}${assetPath}`;
+  }
+  return assetPath;
 }
 
 /**

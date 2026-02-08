@@ -36,7 +36,13 @@
             <!-- Step 1: SEARCH WEAPON -->
             <div class="step-container">
               <div class="step-label">1. SEARCH WEAPON</div>
-              <input type="text" id="w-search-input" class="search-input" placeholder="Search weapon name...">
+              <div class="weapon-search-row">
+                <input type="text" id="w-search-input" class="search-input" placeholder="Search weapon name...">
+                <div class="weapon-search-actions">
+                  <button id="w-history-toggle" class="weapon-search-btn" type="button">HISTORY</button>
+                  <button id="w-history-clear" class="weapon-search-btn weapon-search-btn-clear" type="button">CLEAR</button>
+                </div>
+              </div>
               <div id="w-search-results"></div>
             </div>
 

@@ -805,6 +805,53 @@ header {
   box-sizing: border-box;
 }
 
+.weapon-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weapon-search-row .search-input {
+  flex: 1;
+}
+
+.weapon-search-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.weapon-search-btn {
+  padding: 10px 12px;
+  background: #25252d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #ccc;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.weapon-search-btn:hover {
+  background: #383842;
+  border-color: #555;
+  color: #fff;
+}
+
+.weapon-search-btn.active {
+  background: var(--accent-gold, #d4af37);
+  color: #000;
+  border-color: var(--accent-gold, #d4af37);
+}
+
+.weapon-search-btn-clear {
+  color: #d7b44a;
+}
+
 /* --- STAT BUTTONS --- */
 .grid-2col, .grid-3col { display: grid; gap: 8px; }
 .grid-2col { grid-template-columns: 1fr 1fr; }

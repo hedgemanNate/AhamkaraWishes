@@ -12,6 +12,7 @@ const weaponState = {
   currentFilters: {}, // Search/filter state
   currentPane: 'craft', // "craft" or "list"
   recentSelections: [], // Most recently selected weapons
+  showHistory: false,
   // List view filter state
   _weaponTypes: [], // Array of available weapon types
   _damageTypes: new Map(), // Map of damageHash -> damageTypeName
@@ -88,6 +89,30 @@ function initWeaponCraft() {
       searchTimeout = setTimeout(() => {
         triggerWeaponSearch(query);
       }, 300);
+    });
+  }
+
+  const historyToggleBtn = document.getElementById('w-history-toggle');
+  if (historyToggleBtn) {
+    historyToggleBtn.addEventListener('click', () => {
+      weaponState.showHistory = !weaponState.showHistory;
+      historyToggleBtn.classList.toggle('active', weaponState.showHistory);
+
+      const currentQuery = searchInput?.value?.trim() || '';
+      if (!currentQuery) {
+        renderRecentWeaponSelections();
+      }
+    });
+  }
+
+  const historyClearBtn = document.getElementById('w-history-clear');
+  if (historyClearBtn) {
+    historyClearBtn.addEventListener('click', () => {
+      weaponState.recentSelections = [];
+      const currentQuery = searchInput?.value?.trim() || '';
+      if (!currentQuery) {
+        renderRecentWeaponSelections();
+      }
     });
   }
 
@@ -433,8 +458,13 @@ function renderRecentWeaponSelections() {
   const resultsDiv = document.getElementById('w-search-results');
   if (!resultsDiv) return;
 
-  if (!weaponState.recentSelections.length) {
+  if (!weaponState.showHistory) {
     resultsDiv.innerHTML = '';
+    return;
+  }
+
+  if (!weaponState.recentSelections.length) {
+    resultsDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No recent weapons</div>';
     return;
   }
 

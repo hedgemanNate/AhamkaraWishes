@@ -20,6 +20,7 @@ let _armorSetDefs = null;     // Map<setHash, setDefObject>
 let _nameIndex = null;        // Array<{h:string, n:string}>
 let _armorSetLookup = null;   // Map<setHash, {name, icon, description}>
 let _damageTypeDefs = null;   // Map<damageTypeHash, defObject>
+let _statDefs = null;         // Map<statHash, defObject>
 let _manifestVersion = null;  // string
 
 function d2log(...args) { console.log("[D2MANIFEST]", ...args); }
@@ -32,6 +33,7 @@ function resetManifestMemory() {
   _nameIndex = null;
   _armorSetLookup = null;
   _damageTypeDefs = null;
+  _statDefs = null;
   _manifestVersion = null;
 }
 
@@ -344,6 +346,66 @@ async function ensureDamageTypeDefsReady({ force = false } = {}) {
   }
 }
 
+// Download DestinyStatDefinition component JSON and cache it.
+async function ensureStatDefsReady({ force = false } = {}) {
+  console.groupCollapsed("[D2MANIFEST] ensureStatDefsReady");
+
+  try {
+    const meta = await fetchManifestMeta();
+    const liveVersion = meta.version;
+    d2log("Live manifest version:", liveVersion);
+
+    const cachedVersion = await idbGet("manifestVersion", STORE_META);
+    const haveCachedBlob = await idbGet("DestinyStatDefinition", STORE_BLOBS);
+    const needsDownload = force || !haveCachedBlob || !cachedVersion || cachedVersion !== liveVersion;
+
+    if (!needsDownload) {
+      d2log("Stat defs cache is up-to-date. Skipping download.");
+      return true;
+    }
+
+    const lang = "en";
+    const comp = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyStatDefinition;
+    const world = meta.jsonWorldContentPaths?.[lang];
+
+    let path = comp || world;
+    if (!path) {
+      d2warn("Stat defs not available in manifest meta; skipping.");
+      return false;
+    }
+    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
+    d2log("Downloading stat definitions from:", path, "| component?", !!comp);
+
+    const r = await fetch(path, { headers: { "Accept": "application/json" } });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`Stat defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
+    }
+    const buf = await r.arrayBuffer();
+    d2log("Downloaded bytes:", buf.byteLength);
+
+    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
+    const parsed = JSON.parse(text);
+
+    const statDefs = comp ? parsed : parsed?.DestinyStatDefinition;
+    if (!statDefs) {
+      const keys = Object.keys(parsed || {});
+      d2warn("Parsed manifest keys (sample):", keys.slice(0, 30));
+      throw new Error("Downloaded JSON did not contain DestinyStatDefinition data.");
+    }
+
+    await idbSet("DestinyStatDefinition", statDefs, STORE_BLOBS);
+    _statDefs = null;
+    d2log("Stat defs cache updated successfully.");
+    return true;
+  } catch (e) {
+    d2err("ensureStatDefsReady FAILED:", e);
+    return false;
+  } finally {
+    console.groupEnd();
+  }
+}
+
 // --- MEMORY LOADING ---
 async function loadInventoryItemDefsToMemory() {
   if (_invItemDefs) return _invItemDefs;
@@ -421,6 +483,43 @@ async function loadDamageTypeDefsToMemory() {
   d2log("Loaded damage type defs into memory:", count);
   console.groupEnd();
   return _damageTypeDefs;
+}
+
+async function loadStatDefsToMemory() {
+  if (_statDefs) return _statDefs;
+
+  console.groupCollapsed("[D2MANIFEST] loadStatDefsToMemory");
+  const blob = await idbGet("DestinyStatDefinition", STORE_BLOBS);
+  if (!blob) {
+    d2warn("No cached stat defs found. Attempting download...");
+    const ok = await ensureStatDefsReady({ force: false });
+    if (!ok) {
+      console.groupEnd();
+      return null;
+    }
+  }
+  const defsObj = await idbGet("DestinyStatDefinition", STORE_BLOBS);
+  if (!defsObj) {
+    console.groupEnd();
+    return null;
+  }
+
+  const map = new Map();
+  let count = 0;
+  for (const [hashStr, def] of Object.entries(defsObj)) {
+    map.set(String(hashStr), def);
+    count++;
+  }
+  _statDefs = map;
+  d2log("Loaded stat defs into memory:", count);
+  console.groupEnd();
+  return _statDefs;
+}
+
+function normalizeStatName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z]/g, "");
 }
 
 // --- LOOKUP TABLES ---
@@ -799,9 +898,36 @@ async function getWeaponStats(weaponHash) {
   // Extract stats from definition
   const stats = {};
   const invStats = def.stats?.stats || {};
+  const statDefs = await loadStatDefsToMemory();
+
+  const nameToKey = {
+    impact: "impact",
+    range: "range",
+    stability: "stability",
+    handling: "handling",
+    reloadspeed: "reload",
+    reload: "reload",
+    magazine: "magazine",
+    zoom: "zoom",
+    aimassist: "aimAssistance",
+    aimassistance: "aimAssistance",
+    recoildirection: "recoilDirection",
+  };
+
   for (const [statHash, stat] of Object.entries(invStats)) {
     const statDef = def.stats?.stats[statHash];
     if (!statDef) continue;
+
+    if (statDefs) {
+      const defEntry = statDefs.get(String(statHash));
+      const displayName = defEntry?.displayProperties?.name || defEntry?.name || "";
+      const normalized = normalizeStatName(displayName);
+      const key = nameToKey[normalized];
+      if (key) {
+        stats[key] = statDef.value;
+        continue;
+      }
+    }
 
     // Map common stat hashes to friendly names
     switch (parseInt(statHash)) {
@@ -947,6 +1073,7 @@ window.__manifest__ = {
   ensureEquippableItemSetDefsReady,
   ensureCollectibleDefsReady,
   ensureDamageTypeDefsReady,
+  ensureStatDefsReady,
   resetManifestMemory,
   
   // Armor functions
@@ -962,6 +1089,7 @@ window.__manifest__ = {
   getSocketPerks,
   getPerkName,
   getDamageTypeDefs,
+  loadStatDefsToMemory,
   WEAPON_BUCKET_HASHES,
   PERK_STAT_BONUSES,
   
@@ -971,6 +1099,9 @@ window.__manifest__ = {
   },
   get DestinyDamageTypeDefinition() {
     return _damageTypeDefs || new Map();
+  },
+  get DestinyStatDefinition() {
+    return _statDefs || new Map();
   }
 };
 

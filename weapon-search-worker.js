@@ -73,7 +73,8 @@ async function buildNameIndex() {
     for (const [h, def] of Object.entries(defs)) {
       const name = def?.displayProperties?.name;
       if (!name) continue;
-      idx.push({ h, n: name.toLowerCase() });
+      const typeName = def?.itemTypeDisplayName || "";
+      idx.push({ h, n: `${name} ${typeName}`.toLowerCase() });
       scanned++;
       if (scanned % yieldEvery === 0) {
         await new Promise((r) => setTimeout(r, 0));

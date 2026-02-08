@@ -836,10 +836,17 @@ async function searchWeaponsLocally(query, bucketHash = null) {
 
   // Filter by weapon criteria
   const candidates = [];
-  for (const h of hits) {
-    const def = defs.get(String(h));
+  const hitsSet = new Set(hits.map((h) => String(h)));
+  for (const [hash, def] of defs.entries()) {
     if (!isRealWeaponDef(def)) continue;
     if (bucketHash && def.inventory?.bucketTypeHash !== bucketHash) continue;
+
+    const name = def.displayProperties?.name || "";
+    const typeName = def.itemTypeDisplayName || "";
+    const matchesName = hitsSet.has(String(hash));
+    const matchesType = typeName.toLowerCase().includes(q);
+
+    if (!matchesName && !matchesType) continue;
     candidates.push(def);
     if (candidates.length >= 100) break;
   }

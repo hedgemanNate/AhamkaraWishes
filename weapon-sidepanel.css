@@ -965,3 +965,124 @@
     grid-template-columns: 80px minmax(0, 1fr) 70px;
   }
 }
+
+/* --- PERK SELECTION UI (Phase 10) --- */
+.perk-selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.selector-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.selector-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  border: 1px solid transparent;
+}
+
+.selector-col:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.selector-col.active {
+  background-color: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.4);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.1);
+}
+
+.selector-col.disabled {
+  opacity: 0.2;
+  pointer-events: none;
+  filter: grayscale(100%);
+}
+
+.selector-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.selector-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+}
+
+/* Options Row - Horizontal Scroll */
+.options-row {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  overflow-x: auto;
+  min-height: 52px;
+  padding: 8px 4px 12px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.options-row::-webkit-scrollbar {
+  height: 4px;
+}
+
+.options-row::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.options-row::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+/* Perk Option Button */
+.option-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background-color: rgba(30, 30, 30, 0.8);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.option-btn:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+.option-btn.selected {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 1px #d4af37, 0 4px 8px rgba(0,0,0,0.5);
+}
+

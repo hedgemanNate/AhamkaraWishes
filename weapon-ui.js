@@ -9,6 +9,7 @@ const weaponState = {
   currentWeapon: null, // { weaponHash, name, stats, sockets }
   selectedPerks: {}, // { socketIndex: perkHash }
   currentMode: 'pve', // "pve" or "pvp"
+  // ... existing fields ...
   currentFilters: {}, // Search/filter state
   currentPane: 'craft', // "craft" or "list"
   recentSelections: [], // Most recently selected weapons
@@ -18,6 +19,12 @@ const weaponState = {
   _damageTypes: new Map(), // Map of damageHash -> damageTypeName
   _selectedType: null, // Currently selected weapon type
   _selectedDamage: null, // Currently selected damage type hash
+};
+
+const SOCKET_CATEGORY_HASHES = {
+  INTRINSIC_TRAITS: 3956125808,
+  WEAPON_PERKS: 4241085061, // Corrected from subagent to the one I researched: 4241085061
+  WEAPON_MODS: 2685412949
 };
 
 let weaponCraftInitialized = false;
@@ -295,18 +302,21 @@ async function selectWeapon(weaponHash) {
 
   // Load weapon data
   const stats = await window.__manifest__.getWeaponStats(weaponHash);
-  const sockets = await window.__manifest__.getWeaponSockets(weaponHash);
+  const detailedSockets = await window.__manifest__.getDetailedWeaponSockets(weaponHash);
 
   weaponState.currentWeapon = {
     weaponHash,
     name: weaponDef.displayProperties?.name || 'Unknown',
     icon: weaponDef.displayProperties?.icon || '',
+    type: weaponDef.itemTypeDisplayName || '',
     damageType:
       (Array.isArray(weaponDef.damageTypeHashes) && weaponDef.damageTypeHashes[0]) ||
       weaponDef.defaultDamageTypeHash ||
       null,
     stats,
-    sockets,
+    sockets: detailedSockets.sockets,
+    socketCategories: detailedSockets.socketCategories,
+    socketPerksMap: {}
   };
 
   d2log(
@@ -423,7 +433,7 @@ async function selectWeapon(weaponHash) {
   // Render perk slots and perks
   renderWeaponSockets();
   await renderWeaponPerks();
-  attachPerkClickListeners();
+  // attachPerkClickListeners() handled within render loop now
 
   // Clear search results and scroll to perks
   const resultsDiv = document.getElementById('w-search-results');
@@ -609,151 +619,215 @@ function renderWeaponStats(statDeltas = null) {
 }
 
 /**
- * Render perk socket slots (Phase 6 will add perk selection UI).
+ * Maps detailed sockets to the 7-column layout.
+ */
+function mapSocketsToColumns(sockets, categories) {
+  const columns = new Array(7).fill(null);
+  
+  if(!categories || !sockets) return columns;
+
+  // Find Categories Definitions
+  const perksCat = categories.find(c => c.socketCategoryHash === SOCKET_CATEGORY_HASHES.WEAPON_PERKS);
+  const intrinsicCat = categories.find(c => c.socketCategoryHash === SOCKET_CATEGORY_HASHES.INTRINSIC_TRAITS);  
+  const modsCat = categories.find(c => c.socketCategoryHash === SOCKET_CATEGORY_HASHES.WEAPON_MODS);
+
+  // Map Weapon Perks (Cols 0-3 and 4)
+  if (perksCat && perksCat.socketIndexes) {
+    const indexes = perksCat.socketIndexes;
+    // Cols 0-3: First 4 perks
+    for (let i = 0; i < 4; i++) {
+        if (indexes[i] !== undefined) columns[i] = sockets[indexes[i]];
+    }
+    // Col 4: Origin or 5th Perk
+    if (indexes[4] !== undefined) columns[4] = sockets[indexes[4]];
+  }
+
+  // Col 5: Intrinsic / Frame
+  if (intrinsicCat && intrinsicCat.socketIndexes && intrinsicCat.socketIndexes.length > 0) {
+      columns[5] = sockets[intrinsicCat.socketIndexes[0]];
+  }
+
+  // Col 6: Mods
+  if (modsCat && modsCat.socketIndexes && modsCat.socketIndexes.length > 0) {
+      columns[6] = sockets[modsCat.socketIndexes[0]];
+  }
+  
+  return columns;
+}
+
+function getSocketLabel(itemType, colIndex) {
+  const labels = [
+    "Barrel",   // 0
+    "Magazine", // 1
+    "Perk 1",   // 2
+    "Perk 2",   // 3
+    "Origin",   // 4
+    "Frame",    // 5
+    "Mod"       // 6
+  ];
+  
+  if (itemType && itemType.includes("Bow") && colIndex === 0) return "String";
+  if (itemType && itemType.includes("Bow") && colIndex === 1) return "Arrow";
+  if (itemType && itemType.includes("Sword") && colIndex === 0) return "Blade";
+  if (itemType && itemType.includes("Sword") && colIndex === 1) return "Guard";
+  if (itemType && (itemType.includes("Glaive")) && colIndex === 0) return "Haft";
+
+  return labels[colIndex] || "Socket";
+}
+
+/**
+ * Renders the 7-column selector grid.
  */
 function renderWeaponSockets() {
   if (!weaponState.currentWeapon) return;
 
-  const perkSlotsContainer = document.getElementById('w-perk-slots');
-  if (!perkSlotsContainer) return;
+  const container = document.getElementById('w-perk-slots');
+  if (!container) return;
 
-  const sockets = weaponState.currentWeapon.sockets || [];
-  if (sockets.length === 0) {
-    perkSlotsContainer.innerHTML = '<div style="color: #666; padding: 20px; text-align: center;">No weapon sockets found</div>';
-    return;
-  }
+  // Clear and setup grid structure
+  container.innerHTML = `
+    <div class="perk-selector-container">
+      <div class="selector-row" id="w-selector-row"></div>
+      <div class="options-row" id="w-options-row" style="display:none;"></div>
+    </div>
+  `;
 
-  const socketNames = ['Barrel', 'Magazine', 'Trait', 'Origin', 'Exotic Perk', 'Enhancement'];
-  const slotHTML = sockets
-    .map((socket, index) => {
-      const socketName = socketNames[index] || `Socket ${index + 1}`;
-      return `
-        <div class="perk-slot" data-socket-index="${index}">
-          <div class="perk-slot-label">${socketName}</div>
-          <div class="perk-buttons" id="perk-slot-${index}">
-            <!-- Phase 6: populate with available perks -->
-          </div>
-        </div>
-      `;
-    })
-    .join('');
+  const selectorRow = document.getElementById('w-selector-row');
+  const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories);
+  const weaponType = weaponState.currentWeapon.type || "";
 
-  perkSlotsContainer.innerHTML = slotHTML;
+  columns.forEach((socket, colIndex) => {
+    const el = document.createElement('div');
+    const label = getSocketLabel(weaponType, colIndex);
+    el.className = `selector-col ${!socket ? 'disabled' : ''}`;
+    el.innerHTML = `
+      <div class="selector-label">${label}</div>
+      <div class="selector-icon" id="w-socket-display-${colIndex}"></div>
+    `;
 
-  // Phase 6: Add perk selection logic here
-  d2log(`✅ Rendered ${sockets.length} socket slots`, 'weapon-ui');
+    if (socket) {
+      el.addEventListener('click', () => selectSocketColumn(colIndex, socket.socketIndex));
+    }
+
+    selectorRow.appendChild(el);
+  });
+  
+  d2log(`✅ Rendered 7 socket columns`, 'weapon-ui');
 }
 
 /**
- * Populate perk slots with clickable perk buttons for each socket.
- * Called after renderWeaponSockets() when weapon is selected.
- *
- * @returns {Promise<void>}
+ * Loads perk data without immediate rendering of buttons.
  */
 async function renderWeaponPerks() {
   if (!weaponState.currentWeapon) return;
-
-  const weaponHash = weaponState.currentWeapon.weaponHash;
-  const sockets = weaponState.currentWeapon.sockets || [];
+  const { sockets, weaponHash } = weaponState.currentWeapon;
 
   if (window.weaponStatsService?.ensureReady) {
     await window.weaponStatsService.ensureReady();
   }
+  
+  // Identify which sockets we care about
+  const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories);
 
-  for (let socketIndex = 0; socketIndex < sockets.length; socketIndex++) {
-    const perkContainer = document.getElementById(`perk-slot-${socketIndex}`);
-    if (!perkContainer) continue;
+  // Load perks for mapped sockets
+  for (const socket of sockets) {
+    // Only process if it's in our grid to save API calls
+    const isMapped = columns.some(s => s && s.socketIndex === socket.socketIndex);
+    if (!isMapped) continue;
 
     try {
-      const perks = await window.__manifest__.getSocketPerks(weaponHash, socketIndex);
-
-      if (!perks || perks.length === 0) {
-        perkContainer.innerHTML = '<div style="color: #666; font-size: 11px; padding: 10px;">No perks available</div>';
-        continue;
-      }
-
-      const perkHTML = perks
-        .map((perk) => {
-          const perkData = window.weaponStatsService?.getPerkData(perk.perkHash) || null;
-          const isConditional = !!perkData?.isConditional;
-          const isSelected = weaponState.selectedPerks[socketIndex] === perk.perkHash;
-          const displayName = perk.perkName.length > 15 
-            ? perk.perkName.substring(0, 12) + '...' 
-            : perk.perkName;
-          
-          const iconUrl = resolveBungieUrl(perk.icon || '');
-          const iconStyle = iconUrl 
-            ? `background-image: url('${iconUrl}'); background-size: cover; background-position: center;`
-            : '';
-
-          return `
-            <button 
-              class="perk-btn ${isSelected ? 'selected' : ''} ${isConditional ? 'conditional' : ''}" 
-              data-perk-hash="${perk.perkHash}" 
-              data-socket-index="${socketIndex}"
-              title="${perk.perkName}"
-              type="button"
-            >
-              ${iconStyle ? `<div style="${iconStyle}; width: 100%; height: 40px; margin-bottom: 4px; border-radius: 3px;"></div>` : ''}
-              <span style="font-size: 8px; line-height: 1.2;">${displayName}</span>
-            </button>
-          `;
-        })
-        .join('');
-
-      perkContainer.innerHTML = perkHTML;
-    } catch (error) {
-      d2log(`Error loading perks for socket ${socketIndex}: ${error.message}`, 'weapon-ui', 'error');
-      perkContainer.innerHTML = '<div style="color: #f87171; font-size: 11px; padding: 10px;">Error loading perks</div>';
+      const perks = await window.__manifest__.getSocketPerks(weaponHash, socket.socketIndex);
+      weaponState.socketPerksMap[socket.socketIndex] = perks || [];
+      
+      // Update the display to show current selection or default
+      updateSocketDisplayIcon(socket.socketIndex);
+    } catch (e) {
+      console.error(`Error loading perks for socket ${socket.socketIndex}`, e);
     }
   }
 
-  d2log(`✅ Rendered perks for ${sockets.length} sockets`, 'weapon-ui');
+  // Auto-select first active column (usually col 0) if available
+  const firstActive = columns.findIndex(c => c !== null);
+  if (firstActive !== -1) {
+    selectSocketColumn(firstActive, columns[firstActive].socketIndex);
+  }
 }
 
-/**
- * Attach click event listeners to all perk buttons.
- * Handles perk selection toggling and stat recalculation.
- */
-function attachPerkClickListeners() {
-  const perkButtons = document.querySelectorAll('.perk-btn');
+function updateSocketDisplayIcon(socketIndex) {
+  const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories);
+  const colIndex = columns.findIndex(s => s && s.socketIndex === socketIndex);
+  if (colIndex === -1) return;
 
-  perkButtons.forEach((button) => {
-    button.addEventListener('click', async () => {
-      const perkHash = parseInt(button.dataset.perkHash);
-      const socketIndex = parseInt(button.dataset.socketIndex);
+  const displayEl = document.getElementById(`w-socket-display-${colIndex}`);
+  if (!displayEl) return;
 
-      // Toggle selection logic
-      const currentSelection = weaponState.selectedPerks[socketIndex];
-      
-      if (currentSelection === perkHash) {
-        // Deselect if clicking same perk
-        delete weaponState.selectedPerks[socketIndex];
-        button.classList.remove('selected');
-      } else {
-        // Select new perk
-        weaponState.selectedPerks[socketIndex] = perkHash;
-        
-        // Remove selected class from other perks in this socket
-        const socketContainer = document.getElementById(`perk-slot-${socketIndex}`);
-        if (socketContainer) {
-          socketContainer.querySelectorAll('.perk-btn').forEach((btn) => {
-            btn.classList.remove('selected');
-          });
-        }
-        
-        // Add selected class to clicked button
-        button.classList.add('selected');
-      }
+  const perks = weaponState.socketPerksMap[socketIndex] || [];
+  const selectedHash = weaponState.selectedPerks[socketIndex];
+  
+  let activePerk = perks.find(p => p.perkHash === selectedHash);
+  
+  if (!activePerk) {
+     const socket = weaponState.currentWeapon.sockets.find(s => s.socketIndex === socketIndex);
+     if (socket && socket.singleInitialItemHash) {
+         activePerk = perks.find(p => p.perkHash === socket.singleInitialItemHash);
+     }
+  }
+  
+  if (!activePerk && perks.length > 0) activePerk = perks[0];
 
-      d2log(`✅ Perk ${perkHash} toggled for socket ${socketIndex}`, 'weapon-ui');
+  if (activePerk && activePerk.icon) {
+    const safeIcon = activePerk.icon.startsWith('http') ? activePerk.icon : `https://www.bungie.net${activePerk.icon}`;
+    displayEl.style.backgroundImage = `url('${safeIcon}')`;
+  } else {
+    displayEl.style.backgroundImage = 'none';
+  }
+}
 
-      // Recalculate stats
-      await updateWeaponStatDeltas();
-    });
+function selectSocketColumn(colIndex, socketIndex) {
+  document.querySelectorAll('.selector-col').forEach((el, idx) => {
+    el.classList.toggle('active', idx === colIndex);
   });
 
-  d2log('✅ Perk click listeners attached', 'weapon-ui');
+  const optionsRow = document.getElementById('w-options-row');
+  optionsRow.style.display = 'flex';
+  renderPerkOptions(socketIndex);
+}
+
+function renderPerkOptions(socketIndex) {
+  const optionsRow = document.getElementById('w-options-row');
+  optionsRow.innerHTML = '';
+
+  const perks = weaponState.socketPerksMap[socketIndex] || [];
+  
+  if (perks.length === 0) {
+    optionsRow.innerHTML = '<div style="color: #888; padding: 10px; font-size: 12px;">No options available</div>';
+    return;
+  }
+
+  perks.forEach(perk => {
+    const btn = document.createElement('div');
+    btn.className = 'option-btn';
+    if (weaponState.selectedPerks[socketIndex] === perk.perkHash) {
+      btn.classList.add('selected');
+    }
+
+    const safeIcon = perk.icon && perk.icon.startsWith('http') ? perk.icon : `https://www.bungie.net${perk.icon}`;
+    btn.style.backgroundImage = `url('${safeIcon}')`;
+    btn.title = perk.perkName;
+
+    btn.addEventListener('click', () => {
+       weaponState.selectedPerks[socketIndex] = perk.perkHash;
+       updateSocketDisplayIcon(socketIndex);
+       updateWeaponStatDeltas();
+       renderPerkOptions(socketIndex); 
+    });
+
+    optionsRow.appendChild(btn);
+  });
+}
+
+function attachPerkClickListeners() {
+  // Deprecated
 }
 
 /**

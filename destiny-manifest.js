@@ -1036,6 +1036,40 @@ async function getWeaponSockets(weaponHash) {
 }
 
 /**
+ * Get detailed weapon socket information including categories.
+ * Contains both socket entries and the category definitions needed for UI grouping.
+ *
+ * @param {number} weaponHash - Weapon inventory hash
+ * @returns {Object} { sockets: Array, socketCategories: Array }
+ */
+async function getDetailedWeaponSockets(weaponHash) {
+  const defs = await loadInventoryItemDefsToMemory();
+  const def = defs.get(String(weaponHash));
+  
+  // Return empty structure if not found or no sockets
+  if (!def || !def.sockets || !def.sockets.socketEntries) {
+    return { sockets: [], socketCategories: [] };
+  }
+
+  // Map sockets with all necessary internal fields
+  const sockets = def.sockets.socketEntries.map((socket, index) => ({
+    socketIndex: index,
+    socketTypeHash: socket.socketTypeHash,
+    singleInitialItemHash: socket.singleInitialItemHash,
+    reusablePlugSetHash: socket.reusablePlugSetHash,
+    randomizedPlugSetHash: socket.randomizedPlugSetHash,
+    plugSources: socket.plugSources,
+    preventInitializationOnVendorPurchase: socket.preventInitializationOnVendorPurchase,
+    hidePerksInItemTooltip: socket.hidePerksInItemTooltip
+  }));
+
+  // Pass categories through directly
+  const socketCategories = def.sockets.socketCategories || [];
+
+  return { sockets, socketCategories };
+}
+
+/**
  * Get available perks for a specific weapon socket.
  *
  * @param {number} weaponHash - Weapon inventory hash
@@ -1139,6 +1173,7 @@ window.__manifest__ = {
   searchWeaponsLocally,
   getWeaponStats,
   getWeaponSockets,
+  getDetailedWeaponSockets,
   getSocketPerks,
   getPerkName,
   getDamageTypeDefs,

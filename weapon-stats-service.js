@@ -65,6 +65,13 @@ async function initializeWeaponStats() {
   if (weaponStatsInitPromise) return weaponStatsInitPromise;
 
   weaponStatsInitPromise = (async () => {
+    if (!window.weaponStatsApi?.fetchWeaponStatsData) {
+      weaponStatsServiceError("Weapon stats API module not available.");
+    }
+    if (!window.weaponStatsProcessor?.buildPerkStatMap) {
+      weaponStatsServiceError("Weapon stats processor module not available.");
+    }
+
     const cached = loadCacheFromStorage();
     if (cached?.perks && isCacheValid(cached)) {
       weaponStatsCache = cached.perks;
@@ -75,6 +82,10 @@ async function initializeWeaponStats() {
     const staleCache = cached?.perks ? cached : null;
 
     try {
+      if (!window.weaponStatsApi?.fetchWeaponStatsData || !window.weaponStatsProcessor?.buildPerkStatMap) {
+        throw new Error("Weapon stats modules are not ready.");
+      }
+
       const perkDefs = await window.weaponStatsApi.fetchWeaponStatsData();
       const perkMap = window.weaponStatsProcessor.buildPerkStatMap(perkDefs);
 

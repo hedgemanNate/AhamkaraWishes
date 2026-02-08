@@ -3,7 +3,7 @@
    ============================================================ */
 
 const WEAPON_STATS_API_KEY = "fee720e84d6c4239aeb7d442b4d39f38";
-const WEAPON_STATS_BUNGIE_ROOT = "https://www.bungie.net";
+const WEAPON_STATS_API_BUNGIE_ROOT = "https://www.bungie.net";
 
 function weaponStatsLog(...args) {
   console.log("[WEAPON-STATS-API]", ...args);
@@ -18,7 +18,7 @@ function weaponStatsError(...args) {
 }
 
 async function fetchManifestMeta() {
-  const url = `${WEAPON_STATS_BUNGIE_ROOT}/Platform/Destiny2/Manifest/`;
+  const url = `${WEAPON_STATS_API_BUNGIE_ROOT}/Platform/Destiny2/Manifest/`;
   const response = await fetch(url, {
     headers: {
       "X-API-Key": WEAPON_STATS_API_KEY,
@@ -70,7 +70,7 @@ async function fetchWeaponStatsData() {
   }
 
   if (!path.startsWith("http")) {
-    path = `${WEAPON_STATS_BUNGIE_ROOT}${path}`;
+    path = `${WEAPON_STATS_API_BUNGIE_ROOT}${path}`;
   }
 
   const response = await fetch(path, { headers: { "Accept": "application/json" } });

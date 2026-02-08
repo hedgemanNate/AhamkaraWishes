@@ -2,7 +2,7 @@
    WEAPON-STATS-PROCESSOR.JS - Weapon Stat Data Transformation
    ============================================================ */
 
-const WEAPON_STATS_BUNGIE_ROOT = "https://www.bungie.net";
+const WEAPON_STATS_PROCESSOR_BUNGIE_ROOT = "https://www.bungie.net";
 
 const STAT_HASH_TO_KEY = {
   4284049017: "impact",
@@ -22,7 +22,7 @@ function resolveBungieIcon(iconPath) {
   if (!iconPath) return "";
   if (iconPath.startsWith("http")) return iconPath;
   if (iconPath.startsWith("//")) return `https:${iconPath}`;
-  if (iconPath.startsWith("/")) return `${WEAPON_STATS_BUNGIE_ROOT}${iconPath}`;
+  if (iconPath.startsWith("/")) return `${WEAPON_STATS_PROCESSOR_BUNGIE_ROOT}${iconPath}`;
   return iconPath;
 }
 

@@ -9,6 +9,7 @@ const weaponState = {
   currentWeapon: null, // { weaponHash, name, stats, sockets }
   selectedPerks: {}, // { socketIndex: perkHash }
   socketPerksMap: {}, // { socketIndex: perkData[] }
+  selectedMasterwork: null, // Currently selected masterwork stat type
   currentMode: 'pve', // "pve" or "pvp"
   // ... existing fields ...
   currentFilters: {}, // Search/filter state
@@ -26,6 +27,25 @@ const SOCKET_CATEGORY_HASHES = {
   INTRINSIC_TRAITS: 3956125808,
   WEAPON_PERKS: 4241085061, // Corrected from subagent to the one I researched: 4241085061
   WEAPON_MODS: 2685412949
+};
+
+// Masterwork stat options by weapon type (for stat preview purposes)
+const MASTERWORK_OPTIONS_BY_TYPE = {
+  "Assault Rifle": ["Range", "Stability", "Handling", "Reload Speed"],
+  "Hand Cannon": ["Range", "Stability", "Handling", "Reload Speed"],
+  "Pulse Rifle": ["Range", "Stability", "Handling", "Reload Speed"],
+  "Scout Rifle": ["Range", "Stability", "Handling", "Reload Speed"],
+  "Sniper Rifle": ["Range", "Handling", "Reload Speed", "Aim Assistance"],
+  "Shotgun": ["Range", "Stability", "Handling", "Reload Speed"],
+  "Submachine Gun": ["Range", "Stability", "Handling", "Reload Speed"],
+  "Fusion Rifle": ["Range", "Stability", "Handling", "Charge Time"],
+  "Linear Fusion Rifle": ["Range", "Stability", "Handling", "Charge Time"],
+  "Grenade Launcher": ["Blast Radius", "Stability", "Handling", "Reload Speed"],
+  "Rocket Launcher": ["Blast Radius", "Stability", "Handling", "Reload Speed"],
+  "Trace Rifle": ["Range", "Stability", "Handling", "Reload Speed"],
+  "Sword": ["Impact", "Speed", "Handling", "Reload Speed"],
+  "Glaive": ["Range", "Stability", "Handling", "Charge Time"],
+  "Bow": ["Draw Time", "Stability", "Handling", "Reload Speed"],
 };
 
 let weaponCraftInitialized = false;
@@ -643,10 +663,8 @@ function mapSocketsToColumns(sockets, categories) {
     if (indexes[4] !== undefined) columns[4] = sockets[indexes[4]];
   }
 
-  // Col 5: Intrinsic / Frame
-  if (intrinsicCat && intrinsicCat.socketIndexes && intrinsicCat.socketIndexes.length > 0) {
-      columns[5] = sockets[intrinsicCat.socketIndexes[0]];
-  }
+  // Col 5: MASTERWORK - Virtual selector (not a real socket, falls through to null)
+  // Masterwork is handled independently by weapon type in renderWeaponPerks()
 
   // Col 6: Mods
   if (modsCat && modsCat.socketIndexes && modsCat.socketIndexes.length > 0) {
@@ -663,7 +681,7 @@ function getSocketLabel(itemType, colIndex) {
     "Perk 1",   // 2
     "Perk 2",   // 3
     "Origin",   // 4
-    "Frame",    // 5
+    "Masterwork", // 5
     "Mod"       // 6
   ];
   
@@ -700,14 +718,18 @@ function renderWeaponSockets() {
   columns.forEach((socket, colIndex) => {
     const el = document.createElement('div');
     const label = getSocketLabel(weaponType, colIndex);
-    el.className = `selector-col ${!socket ? 'disabled' : ''}`;
+    const isMasterwork = colIndex === 5;
+    const isDisabled = !socket && !isMasterwork;
+
+    el.className = `selector-col ${isDisabled ? 'disabled' : ''}`;
     el.innerHTML = `
       <div class="selector-label">${label}</div>
       <div class="selector-icon" id="w-socket-display-${colIndex}"></div>
     `;
 
-    if (socket) {
-      el.addEventListener('click', () => selectSocketColumn(colIndex, socket.socketIndex));
+    if (socket || isMasterwork) {
+      const socketIndex = socket ? socket.socketIndex : null;
+      el.addEventListener('click', () => selectSocketColumn(colIndex, socketIndex));
     }
 
     selectorRow.appendChild(el);
@@ -747,11 +769,122 @@ async function renderWeaponPerks() {
     }
   }
 
+  // Load Masterwork options (virtual, based on weapon type)
+  const weaponType = weaponState.currentWeapon.type || "Assault Rifle";
+  const masterworkLabels = MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Assault Rifle"];
+  
+  // Create mock perk objects for masterwork options
+  weaponState.socketPerksMap["masterwork"] = masterworkLabels.map((label, idx) => ({
+    perkHash: `masterwork_${idx}`,
+    perkName: label,
+    icon: "",
+    isMasterwork: true
+  }));
+  updateMasterworkDisplayIcon();
+
   // Auto-select first active column (usually col 0) if available
   const firstActive = columns.findIndex(c => c !== null);
   if (firstActive !== -1) {
     selectSocketColumn(firstActive, columns[firstActive].socketIndex);
   }
+}
+
+function updateMasterworkDisplayIcon() {
+  const displayEl = document.getElementById(`w-socket-display-5`);
+  if (!displayEl) return;
+
+  const options = weaponState.socketPerksMap["masterwork"] || [];
+  const selectedLabel = weaponState.selectedMasterwork;
+  
+  let activeOption = selectedLabel ? options.find(o => o.perkName === selectedLabel) : options[0];
+  
+  const masterworkShortLabels = {
+    "Range": "RNG",
+    "Stability": "STB",
+    "Handling": "HAN",
+    "Reload Speed": "RLD",
+    "Aim Assistance": "AA",
+    "Recoil Direction": "RCL",
+    "Blast Radius": "BLST",
+    "Charge Time": "CHG",
+    "Impact": "IMP",
+    "Speed": "SPD",
+    "Draw Time": "DRW",
+  };
+
+  if (activeOption) {
+    displayEl.style.backgroundImage = 'none';
+    displayEl.title = activeOption.perkName;
+    displayEl.textContent = masterworkShortLabels[activeOption.perkName]
+      || activeOption.perkName.substring(0, 3).toUpperCase();
+    displayEl.style.display = 'flex';
+    displayEl.style.alignItems = 'center';
+    displayEl.style.justifyContent = 'center';
+    displayEl.style.fontSize = '9px';
+    displayEl.style.color = '#fff';
+    displayEl.style.fontWeight = '600';
+  } else {
+    displayEl.style.backgroundImage = 'none';
+    displayEl.textContent = '';
+  }
+}
+
+function selectSocketColumn(colIndex, socketIndex) {
+  // Special handling for Masterwork column (index 5)
+  if (colIndex === 5) {
+    document.querySelectorAll('.selector-col').forEach((el, idx) => {
+      el.classList.toggle('active', idx === colIndex);
+    });
+    const optionsRow = document.getElementById('w-options-row');
+    optionsRow.style.display = 'flex';
+    renderMasterworkOptions();
+    return;
+  }
+
+  document.querySelectorAll('.selector-col').forEach((el, idx) => {
+    el.classList.toggle('active', idx === colIndex);
+  });
+
+  const optionsRow = document.getElementById('w-options-row');
+  optionsRow.style.display = 'flex';
+  renderPerkOptions(socketIndex);
+}
+
+function renderMasterworkOptions() {
+  const optionsRow = document.getElementById('w-options-row');
+  optionsRow.innerHTML = '';
+
+  const options = weaponState.socketPerksMap["masterwork"] || [];
+  
+  if (options.length === 0) {
+    optionsRow.innerHTML = '<div style="color: #888; padding: 10px; font-size: 12px;">No masterwork options available</div>';
+    return;
+  }
+
+  options.forEach(option => {
+    const btn = document.createElement('div');
+    btn.className = 'option-btn';
+    if (weaponState.selectedMasterwork === option.perkName) {
+      btn.classList.add('selected');
+    }
+
+    btn.style.display = 'flex';
+    btn.style.alignItems = 'center';
+    btn.style.justifyContent = 'center';
+    btn.textContent = option.perkName;
+    btn.style.fontSize = '10px';
+    btn.style.color = '#fff';
+    btn.title = option.perkName;
+
+    btn.addEventListener('click', () => {
+       weaponState.selectedMasterwork = option.perkName;
+       updateMasterworkDisplayIcon();
+       updateWeaponStatDeltas();
+       renderMasterworkOptions(); 
+    });
+
+    optionsRow.appendChild(btn);
+  });
 }
 
 function updateSocketDisplayIcon(socketIndex) {
@@ -834,11 +967,23 @@ function attachPerkClickListeners() {
 }
 
 /**
- * Calculate and update weapon stats based on selected perks.
- * Applies color coding to stat deltas (green for +, red for -, gray for 0).
- *
- * @returns {Promise<void>}
+ * Calculate and update weapon stats based on selected perks and masterwork.
  */
+// Masterwork stat bonuses (hardcoded for now, these are standard D2 masterwork stat boosts)
+const MASTERWORK_STAT_BONUSES = {
+  "Range": { range: 10 },
+  "Stability": { stability: 10 },
+  "Handling": { handling: 10 },
+  "Reload Speed": { reloadSpeed: 10 },
+  "Aim Assistance": { aimAssistance: 10 },
+  "Recoil Direction": { recoilDirection: 10 },
+  "Blast Radius": { blastRadius: 10 },
+  "Charge Time": { chargeTime: -10 }, // Charge time decreases (negative is good)
+  "Impact": { impact: 10 },
+  "Speed": { speed: 10 },
+  "Draw Time": { drawTime: -10 }, // Draw time decreases (negative is good)
+};
+
 async function updateWeaponStatDeltas() {
   if (!weaponState.currentWeapon) return;
 
@@ -856,6 +1001,7 @@ async function updateWeaponStatDeltas() {
     });
   }
 
+  // Add socket-based perk bonuses
   for (const socketIndex in weaponState.selectedPerks) {
     const perkHash = weaponState.selectedPerks[socketIndex];
     const perkBonuses = window.weaponStatsService?.getStaticBonuses(perkHash) || {};
@@ -863,6 +1009,16 @@ async function updateWeaponStatDeltas() {
     for (const statName in perkBonuses) {
       if (statDeltas.hasOwnProperty(statName)) {
         statDeltas[statName] += perkBonuses[statName];
+      }
+    }
+  }
+
+  // Add masterwork bonuses
+  if (weaponState.selectedMasterwork) {
+    const masterworkBonuses = MASTERWORK_STAT_BONUSES[weaponState.selectedMasterwork] || {};
+    for (const statName in masterworkBonuses) {
+      if (statDeltas.hasOwnProperty(statName)) {
+        statDeltas[statName] += masterworkBonuses[statName];
       }
     }
   }

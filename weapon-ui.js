@@ -20,6 +20,8 @@ const weaponState = {
   _selectedDamage: null, // Currently selected damage type hash
 };
 
+let weaponCraftInitialized = false;
+
 let weaponSearchWorker = null;
 let weaponSearchRequestId = 0;
 
@@ -76,13 +78,27 @@ function resetWeaponSearchWorker() {
 /**
  * Initialize weapon crafting UI: attach event listeners, setup state.
  */
-function initWeaponCraft() {
+async function initWeaponCraft() {
+  if (weaponCraftInitialized) return;
+  weaponCraftInitialized = true;
+
+  if (window.weaponStatsService?.initializeWeaponStats) {
+    window.weaponStatsService
+      .initializeWeaponStats()
+      .catch((error) => {
+        d2log(`Weapon stats init failed: ${error.message || error}`, 'weapon-ui', 'error');
+      });
+  } else {
+    d2log('Weapon stats service unavailable at init', 'weapon-ui', 'error');
+  }
+
   initWeaponSearchWorker();
+
+  let searchTimeout;
 
   // Search input (debounced)
   const searchInput = document.getElementById('w-search-input');
   if (searchInput) {
-    let searchTimeout;
     searchInput.addEventListener('input', (event) => {
       clearTimeout(searchTimeout);
       const query = event.target.value.trim();
@@ -98,9 +114,18 @@ function initWeaponCraft() {
       weaponState.showHistory = !weaponState.showHistory;
       historyToggleBtn.classList.toggle('active', weaponState.showHistory);
 
-      const currentQuery = searchInput?.value?.trim() || '';
-      if (!currentQuery) {
+      if (weaponState.showHistory) {
+        clearTimeout(searchTimeout);
+        weaponSearchRequestId += 1;
+        if (searchInput) {
+          searchInput.value = '';
+        }
         renderRecentWeaponSelections();
+      } else {
+        const resultsDiv = document.getElementById('w-search-results');
+        if (resultsDiv) {
+          resultsDiv.innerHTML = '';
+        }
       }
     });
   }
@@ -392,8 +417,6 @@ async function selectWeapon(weaponHash) {
     headerEl.classList.remove('hidden');
   }
 
-  // NOTE: Rendering logic for perks/stats bypassed for UI rework
-  /*
   // Render weapon stats (base values only)
   renderWeaponStats();
 
@@ -418,13 +441,8 @@ async function selectWeapon(weaponHash) {
   if (saveBtn) {
     saveBtn.disabled = false;
   }
-  */
 
-  // Clear results if still present
-  const resultsDiv = document.getElementById('w-search-results');
-  if (resultsDiv) {
-    resultsDiv.innerHTML = '';
-  }
+  await updateWeaponStatDeltas();
 
   const searchInput = document.getElementById('w-search-input');
   if (searchInput) {
@@ -474,39 +492,71 @@ function renderRecentWeaponSelections() {
 /**
  * Render weapon stats table with base values.
  */
-function renderWeaponStats() {
+function clampStatValue(value) {
+  const numeric = Number(value || 0);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.min(100, Math.max(0, numeric));
+}
+
+function renderWeaponStats(statDeltas = null) {
   if (!weaponState.currentWeapon) return;
 
   const statsTable = document.getElementById('w-stats-table');
   if (!statsTable) return;
 
   const stats = weaponState.currentWeapon.stats || {};
+  const deltas = statDeltas || {
+    impact: 0,
+    range: 0,
+    stability: 0,
+    handling: 0,
+    reload: 0,
+    magazine: 0,
+    zoom: 0,
+    aimAssistance: 0,
+    recoilDirection: 0,
+  };
 
-  const statRow = (name, baseValue) => {
-    const finalValue = baseValue;
-    const delta = 0;
-    const deltaClass = delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'zero';
+  const statRow = (name, baseValue, statKey) => {
+    const base = clampStatValue(baseValue);
+    const rawDelta = Number(deltas[statKey] || 0);
+    const finalValue = clampStatValue(base + rawDelta);
+    const displayDelta = finalValue - base;
+    const deltaClass = displayDelta > 0 ? 'delta-positive' : displayDelta < 0 ? 'delta-negative' : 'delta-zero';
+
+    const baseWidth = base;
+    const deltaWidth = Math.abs(finalValue - base);
+    const deltaLeft = displayDelta >= 0 ? base : finalValue;
+    const deltaStyle = deltaWidth > 0
+      ? `width: ${deltaWidth}%; left: ${deltaLeft}%;`
+      : 'width: 0; left: 0;';
 
     return `
-      <div class="stat-row">
-        <div class="stat-name">${name}</div>
-        <div class="stat-value">${baseValue || 0}</div>
-        <div class="stat-delta ${deltaClass}">${delta > 0 ? '+' : ''}${delta || 0}</div>
-        <div class="stat-final">${finalValue || 0}</div>
+      <div class="stat-bar-row">
+        <div class="stat-bar-name">${name}</div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-base" style="width: ${baseWidth}%;"></div>
+          <div class="stat-bar-delta ${displayDelta >= 0 ? 'positive' : 'negative'}" style="${deltaStyle}"></div>
+        </div>
+        <div class="stat-bar-values">
+          ${base}
+          <span class="${deltaClass}">${displayDelta > 0 ? '+' : ''}${displayDelta}</span>
+          ${finalValue}
+        </div>
       </div>
     `;
   };
 
   statsTable.innerHTML = `
-    ${statRow('Impact', stats.impact || 0)}
-    ${statRow('Range', stats.range || 0)}
-    ${statRow('Stability', stats.stability || 0)}
-    ${statRow('Handling', stats.handling || 0)}
-    ${statRow('Reload Speed', stats.reload || 0)}
-    ${statRow('Magazine', stats.magazine || 0)}
-    ${statRow('Zoom', stats.zoom || 0)}
-    ${statRow('Aim Assist', stats.aimAssistance || 0)}
-    ${statRow('Recoil Direction', stats.recoilDirection || 0)}
+    ${statRow('Impact', stats.impact || 0, 'impact')}
+    ${statRow('Range', stats.range || 0, 'range')}
+    ${statRow('Stability', stats.stability || 0, 'stability')}
+    ${statRow('Handling', stats.handling || 0, 'handling')}
+    ${statRow('Reload Speed', stats.reload || 0, 'reload')}
+    ${statRow('Magazine', stats.magazine || 0, 'magazine')}
+    ${statRow('Zoom', stats.zoom || 0, 'zoom')}
+    ${statRow('Aim Assist', stats.aimAssistance || 0, 'aimAssistance')}
+    ${statRow('Recoil Direction', stats.recoilDirection || 0, 'recoilDirection')}
   `;
 
   d2log('✅ Weapon stats rendered', 'weapon-ui');
@@ -560,6 +610,10 @@ async function renderWeaponPerks() {
   const weaponHash = weaponState.currentWeapon.weaponHash;
   const sockets = weaponState.currentWeapon.sockets || [];
 
+  if (window.weaponStatsService?.ensureReady) {
+    await window.weaponStatsService.ensureReady();
+  }
+
   for (let socketIndex = 0; socketIndex < sockets.length; socketIndex++) {
     const perkContainer = document.getElementById(`perk-slot-${socketIndex}`);
     if (!perkContainer) continue;
@@ -574,18 +628,21 @@ async function renderWeaponPerks() {
 
       const perkHTML = perks
         .map((perk) => {
+          const perkData = window.weaponStatsService?.getPerkData(perk.perkHash) || null;
+          const isConditional = !!perkData?.isConditional;
           const isSelected = weaponState.selectedPerks[socketIndex] === perk.perkHash;
           const displayName = perk.perkName.length > 15 
             ? perk.perkName.substring(0, 12) + '...' 
             : perk.perkName;
           
-          const iconStyle = perk.icon 
-            ? `background-image: url('${perk.icon}'); background-size: cover; background-position: center;`
+          const iconUrl = resolveBungieUrl(perk.icon || '');
+          const iconStyle = iconUrl 
+            ? `background-image: url('${iconUrl}'); background-size: cover; background-position: center;`
             : '';
 
           return `
             <button 
-              class="perk-btn ${isSelected ? 'selected' : ''}" 
+              class="perk-btn ${isSelected ? 'selected' : ''} ${isConditional ? 'conditional' : ''}" 
               data-perk-hash="${perk.perkHash}" 
               data-socket-index="${socketIndex}"
               title="${perk.perkName}"
@@ -662,8 +719,9 @@ function attachPerkClickListeners() {
 async function updateWeaponStatDeltas() {
   if (!weaponState.currentWeapon) return;
 
-  const stats = weaponState.currentWeapon.stats || {};
-  const perkStatBonuses = window.__manifest__.PERK_STAT_BONUSES || {};
+  if (window.weaponStatsService?.ensureReady) {
+    await window.weaponStatsService.ensureReady();
+  }
 
   // Calculate total deltas from all selected perks
   const statDeltas = {
@@ -680,7 +738,7 @@ async function updateWeaponStatDeltas() {
 
   for (const socketIndex in weaponState.selectedPerks) {
     const perkHash = weaponState.selectedPerks[socketIndex];
-    const perkBonuses = perkStatBonuses[perkHash] || {};
+    const perkBonuses = window.weaponStatsService?.getStaticBonuses(perkHash) || {};
 
     for (const statName in perkBonuses) {
       if (statDeltas.hasOwnProperty(statName)) {
@@ -689,37 +747,7 @@ async function updateWeaponStatDeltas() {
     }
   }
 
-  // Update stats table with deltas and final values
-  const statsTable = document.getElementById('w-stats-table');
-  if (!statsTable) return;
-
-  const statRow = (name, baseValue, statKey) => {
-    const delta = statDeltas[statKey] || 0;
-    const finalValue = baseValue + delta;
-    const deltaClass = delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'zero';
-
-    return `
-      <div class="stat-row">
-        <div class="stat-name">${name}</div>
-        <div class="stat-value">${baseValue || 0}</div>
-        <div class="stat-delta ${deltaClass}">${delta > 0 ? '+' : ''}${delta || 0}</div>
-        <div class="stat-final">${finalValue || 0}</div>
-      </div>
-    `;
-  };
-
-  statsTable.innerHTML = `
-    ${statRow('Impact', stats.impact || 0, 'impact')}
-    ${statRow('Range', stats.range || 0, 'range')}
-    ${statRow('Stability', stats.stability || 0, 'stability')}
-    ${statRow('Handling', stats.handling || 0, 'handling')}
-    ${statRow('Reload Speed', stats.reload || 0, 'reload')}
-    ${statRow('Magazine', stats.magazine || 0, 'magazine')}
-    ${statRow('Zoom', stats.zoom || 0, 'zoom')}
-    ${statRow('Aim Assist', stats.aimAssistance || 0, 'aimAssistance')}
-    ${statRow('Recoil Direction', stats.recoilDirection || 0, 'recoilDirection')}
-  `;
-
+  renderWeaponStats(statDeltas);
   d2log('✅ Weapon stat deltas updated', 'weapon-ui');
 }
 
@@ -1370,6 +1398,8 @@ window.weaponUI = {
 
 // Auto-initialize when DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-  initWeaponCraft();
+  initWeaponCraft().catch((error) => {
+    d2log(`Weapon UI init failed: ${error.message || error}`, 'weapon-ui', 'error');
+  });
   d2log('✅ Weapon UI module loaded', 'weapon-ui');
 });

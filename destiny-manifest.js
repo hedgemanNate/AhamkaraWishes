@@ -882,12 +882,14 @@ async function getSocketPerks(weaponHash, socketIndex) {
     if (!perkDef) continue;
 
     const perkName = perkDef.displayProperties?.name || "Unknown Perk";
-    const statBonus = PERK_STAT_BONUSES[perkHash] || {};
+    const statBonus = window.weaponStatsService?.getStaticBonuses
+      ? window.weaponStatsService.getStaticBonuses(perkHash)
+      : PERK_STAT_BONUSES[perkHash] || {};
 
     perks.push({
       perkHash,
       perkName,
-      icon: perkDef.displayProperties?.icon || "",
+      icon: perkDef.displayProperties?.icon ? `${BUNGIE_ROOT}${perkDef.displayProperties.icon}` : "",
       statBonus,
     });
   }

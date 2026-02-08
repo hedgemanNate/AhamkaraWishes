@@ -829,3 +829,139 @@
   color: #666;
   margin-top: 2px;
 }
+
+/* ============================================
+   STATS + PERKS SECTION
+   ============================================ */
+.stats-perks-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  padding: 0 16px 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.stats-column,
+.perks-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.stats-section-title,
+.perks-section-title {
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.85);
+  font-weight: 700;
+}
+
+.stat-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-bar-row {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 86px;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-bar-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.stat-bar-track {
+  position: relative;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.stat-bar-base {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.stat-bar-delta {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.stat-bar-delta.positive {
+  background: rgba(34, 197, 94, 0.8);
+}
+
+.stat-bar-delta.negative {
+  background: rgba(239, 68, 68, 0.8);
+}
+
+.stat-bar-values {
+  font-size: 11px;
+  text-align: right;
+  color: rgba(255, 255, 255, 0.8);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-bar-values .delta-positive {
+  color: rgba(34, 197, 94, 0.9);
+}
+
+.stat-bar-values .delta-negative {
+  color: rgba(239, 68, 68, 0.9);
+}
+
+.stat-bar-values .delta-zero {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.perk-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.perk-btn.conditional {
+  border-color: rgba(212, 175, 55, 0.6);
+}
+
+.perk-btn.conditional::after {
+  content: "C";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.9);
+  color: #1b1b1b;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .stats-perks-section {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-bar-row {
+    grid-template-columns: 80px minmax(0, 1fr) 70px;
+  }
+}

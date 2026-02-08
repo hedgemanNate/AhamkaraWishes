@@ -278,7 +278,7 @@ async function initializeWeaponSystem() {
         }
         
         // Initialize UI (attach event listeners)
-        window.weaponUI.initWeaponCraft();
+        await window.weaponUI.initWeaponCraft();
         
         // Load saved weapons into list view
         await window.weaponUI.refreshWeaponList();

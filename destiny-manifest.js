@@ -903,16 +903,39 @@ async function getWeaponStats(weaponHash) {
   const nameToKey = {
     impact: "impact",
     range: "range",
+    accuracy: "accuracy",
     stability: "stability",
     handling: "handling",
     reloadspeed: "reload",
     reload: "reload",
     magazine: "magazine",
+    blastradius: "blastRadius",
+    velocity: "velocity",
+    chargetime: "chargeTime",
+    drawtime: "drawTime",
+    shieldduration: "shieldDuration",
+    guardresistance: "guardResistance",
+    guardefficiency: "guardEfficiency",
+    guardendurance: "guardEndurance",
     zoom: "zoom",
     aimassist: "aimAssistance",
     aimassistance: "aimAssistance",
     recoildirection: "recoilDirection",
   };
+
+  const hashToLabel = {
+    4284049017: "Impact",
+    1240592695: "Range",
+    155624089: "Stability",
+    943549884: "Handling",
+    4188031246: "Reload Speed",
+    3871231066: "Magazine",
+    2996146976: "Zoom",
+    1345867579: "Aim Assist",
+    4043523819: "Recoil Direction",
+  };
+
+  const statsList = [];
 
   for (const [statHash, stat] of Object.entries(invStats)) {
     const statDef = def.stats?.stats[statHash];
@@ -925,6 +948,11 @@ async function getWeaponStats(weaponHash) {
       const key = nameToKey[normalized];
       if (key) {
         stats[key] = statDef.value;
+        statsList.push({ key, name: displayName || key, value: statDef.value });
+        continue;
+      }
+      if (displayName) {
+        statsList.push({ key: null, name: displayName, value: statDef.value });
         continue;
       }
     }
@@ -933,33 +961,51 @@ async function getWeaponStats(weaponHash) {
     switch (parseInt(statHash)) {
       case 4284049017:
         stats.impact = statDef.value;
+        statsList.push({ key: "impact", name: hashToLabel[4284049017], value: statDef.value });
         break; // Impact
       case 1240592695:
         stats.range = statDef.value;
+        statsList.push({ key: "range", name: hashToLabel[1240592695], value: statDef.value });
         break; // Range
       case 155624089:
         stats.stability = statDef.value;
+        statsList.push({ key: "stability", name: hashToLabel[155624089], value: statDef.value });
         break; // Stability
       case 943549884:
         stats.handling = statDef.value;
+        statsList.push({ key: "handling", name: hashToLabel[943549884], value: statDef.value });
         break; // Handling
       case 4188031246:
         stats.reload = statDef.value;
+        statsList.push({ key: "reload", name: hashToLabel[4188031246], value: statDef.value });
         break; // Reload Speed
       case 3871231066:
         stats.magazine = statDef.value;
+        statsList.push({ key: "magazine", name: hashToLabel[3871231066], value: statDef.value });
         break; // Magazine
       case 2996146976:
         stats.zoom = statDef.value;
+        statsList.push({ key: "zoom", name: hashToLabel[2996146976], value: statDef.value });
         break; // Zoom
       case 1345867579:
         stats.aimAssistance = statDef.value;
+        statsList.push({ key: "aimAssistance", name: hashToLabel[1345867579], value: statDef.value });
         break; // Aim Assistance
       case 4043523819:
         stats.recoilDirection = statDef.value;
+        statsList.push({ key: "recoilDirection", name: hashToLabel[4043523819], value: statDef.value });
         break; // Recoil Direction
+      default:
+        statsList.push({
+          key: null,
+          name: hashToLabel[Number(statHash)] || `Stat ${statHash}`,
+          value: statDef.value,
+        });
+        break;
     }
   }
+
+  stats._list = statsList;
 
   return stats;
 }

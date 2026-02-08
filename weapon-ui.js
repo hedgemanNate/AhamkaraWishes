@@ -498,6 +498,56 @@ function clampStatValue(value) {
   return Math.min(100, Math.max(0, numeric));
 }
 
+function normalizeStatName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z]/g, "");
+}
+
+function buildStatDisplayList(stats) {
+  const list = Array.isArray(stats?._list) ? stats._list.slice() : [];
+  if (!list.length) return [];
+
+  const preferredOrder = [
+    "impact",
+    "range",
+    "accuracy",
+    "stability",
+    "handling",
+    "reload",
+    "magazine",
+    "aimAssistance",
+    "zoom",
+    "recoilDirection",
+    "blastRadius",
+    "velocity",
+    "chargeTime",
+    "drawTime",
+    "shieldDuration",
+    "guardResistance",
+    "guardEfficiency",
+    "guardEndurance",
+  ];
+
+  const orderMap = new Map(preferredOrder.map((key, index) => [key, index]));
+
+  return list
+    .filter((entry) => Number.isFinite(Number(entry?.value)))
+    .map((entry) => ({
+      key: entry?.key || null,
+      name: entry?.name || "Unknown",
+      value: Number(entry?.value || 0),
+    }))
+    .sort((a, b) => {
+      const aIndex = a.key ? orderMap.get(a.key) : undefined;
+      const bIndex = b.key ? orderMap.get(b.key) : undefined;
+      if (aIndex !== undefined || bIndex !== undefined) {
+        return (aIndex ?? 999) - (bIndex ?? 999);
+      }
+      return normalizeStatName(a.name).localeCompare(normalizeStatName(b.name));
+    });
+}
+
 function renderWeaponStats(statDeltas = null) {
   if (!weaponState.currentWeapon) return;
 
@@ -505,17 +555,8 @@ function renderWeaponStats(statDeltas = null) {
   if (!statsTable) return;
 
   const stats = weaponState.currentWeapon.stats || {};
-  const deltas = statDeltas || {
-    impact: 0,
-    range: 0,
-    stability: 0,
-    handling: 0,
-    reload: 0,
-    magazine: 0,
-    zoom: 0,
-    aimAssistance: 0,
-    recoilDirection: 0,
-  };
+  const deltas = statDeltas || {};
+  const statList = buildStatDisplayList(stats);
 
   const statRow = (name, baseValue, statKey) => {
     const base = clampStatValue(baseValue);
@@ -547,17 +588,14 @@ function renderWeaponStats(statDeltas = null) {
     `;
   };
 
-  statsTable.innerHTML = `
-    ${statRow('Impact', stats.impact || 0, 'impact')}
-    ${statRow('Range', stats.range || 0, 'range')}
-    ${statRow('Stability', stats.stability || 0, 'stability')}
-    ${statRow('Handling', stats.handling || 0, 'handling')}
-    ${statRow('Reload Speed', stats.reload || 0, 'reload')}
-    ${statRow('Magazine', stats.magazine || 0, 'magazine')}
-    ${statRow('Zoom', stats.zoom || 0, 'zoom')}
-    ${statRow('Aim Assist', stats.aimAssistance || 0, 'aimAssistance')}
-    ${statRow('Recoil Direction', stats.recoilDirection || 0, 'recoilDirection')}
-  `;
+  if (!statList.length) {
+    statsTable.innerHTML = '<div style="color: #666; padding: 12px; text-align: center;">No stats available</div>';
+    return;
+  }
+
+  statsTable.innerHTML = statList
+    .map((entry) => statRow(entry.name, entry.value, entry.key))
+    .join('');
 
   d2log('✅ Weapon stats rendered', 'weapon-ui');
 }
@@ -723,18 +761,15 @@ async function updateWeaponStatDeltas() {
     await window.weaponStatsService.ensureReady();
   }
 
-  // Calculate total deltas from all selected perks
-  const statDeltas = {
-    impact: 0,
-    range: 0,
-    stability: 0,
-    handling: 0,
-    reload: 0,
-    magazine: 0,
-    zoom: 0,
-    aimAssistance: 0,
-    recoilDirection: 0,
-  };
+  const stats = weaponState.currentWeapon.stats || {};
+  const statDeltas = {};
+  if (Array.isArray(stats._list)) {
+    stats._list.forEach((entry) => {
+      if (entry?.key) {
+        statDeltas[entry.key] = 0;
+      }
+    });
+  }
 
   for (const socketIndex in weaponState.selectedPerks) {
     const perkHash = weaponState.selectedPerks[socketIndex];

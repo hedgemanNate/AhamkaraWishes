@@ -11,6 +11,7 @@ const weaponState = {
   currentMode: 'pve', // "pve" or "pvp"
   currentFilters: {}, // Search/filter state
   currentPane: 'craft', // "craft" or "list"
+  recentSelections: [], // Most recently selected weapons
   // List view filter state
   _weaponTypes: [], // Array of available weapon types
   _damageTypes: new Map(), // Map of damageHash -> damageTypeName
@@ -145,7 +146,12 @@ function initWeaponCraft() {
  * @param {string} type - Optional weapon type filter (e.g., "Auto Rifle")
  */
 async function triggerWeaponSearch(query, type = null) {
-  if (!query || query.length < 2) {
+  if (!query) {
+    renderRecentWeaponSelections();
+    return;
+  }
+
+  if (query.length < 2) {
     const resultsDiv = document.getElementById('w-search-results');
     if (resultsDiv) {
       resultsDiv.innerHTML = '';
@@ -262,6 +268,7 @@ async function selectWeapon(weaponHash) {
 
   // Reset perks for new weapon
   weaponState.selectedPerks = {};
+  addRecentWeaponSelection(weaponDef, weaponHash);
 
   d2log(`✅ Selected weapon: ${weaponState.currentWeapon.name}`, 'weapon-ui');
 
@@ -398,6 +405,40 @@ async function selectWeapon(weaponHash) {
   if (searchInput) {
     searchInput.value = '';
   }
+
+  renderRecentWeaponSelections();
+}
+
+function addRecentWeaponSelection(weaponDef, weaponHash) {
+  const display = weaponDef?.displayProperties || {};
+  const icon = resolveBungieUrl(display.icon || '');
+  const entry = {
+    hash: weaponHash,
+    name: display.name || 'Unknown',
+    icon,
+    type: weaponDef?.itemTypeDisplayName || 'Unknown',
+    rarity: weaponDef?.inventory?.rarity || 'Common',
+  };
+
+  const existingIndex = weaponState.recentSelections.findIndex((item) => item.hash === weaponHash);
+  if (existingIndex !== -1) {
+    weaponState.recentSelections.splice(existingIndex, 1);
+  }
+
+  weaponState.recentSelections.unshift(entry);
+  weaponState.recentSelections = weaponState.recentSelections.slice(0, 10);
+}
+
+function renderRecentWeaponSelections() {
+  const resultsDiv = document.getElementById('w-search-results');
+  if (!resultsDiv) return;
+
+  if (!weaponState.recentSelections.length) {
+    resultsDiv.innerHTML = '';
+    return;
+  }
+
+  renderWeaponSearchResults(weaponState.recentSelections);
 }
 
 /**

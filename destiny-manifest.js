@@ -21,6 +21,7 @@ let _nameIndex = null;        // Array<{h:string, n:string}>
 let _armorSetLookup = null;   // Map<setHash, {name, icon, description}>
 let _damageTypeDefs = null;   // Map<damageTypeHash, defObject>
 let _statDefs = null;         // Map<statHash, defObject>
+let _plugSetDefs = null;      // Map<plugSetHash, defObject>
 let _manifestVersion = null;  // string
 
 function d2log(...args) { console.log("[D2MANIFEST]", ...args); }
@@ -34,6 +35,7 @@ function resetManifestMemory() {
   _armorSetLookup = null;
   _damageTypeDefs = null;
   _statDefs = null;
+  _plugSetDefs = null;
   _manifestVersion = null;
 }
 
@@ -406,6 +408,66 @@ async function ensureStatDefsReady({ force = false } = {}) {
   }
 }
 
+// Download DestinyPlugSetDefinition component JSON and cache it.
+async function ensurePlugSetDefsReady({ force = false } = {}) {
+  console.groupCollapsed("[D2MANIFEST] ensurePlugSetDefsReady");
+
+  try {
+    const meta = await fetchManifestMeta();
+    const liveVersion = meta.version;
+    d2log("Live manifest version:", liveVersion);
+
+    const cachedVersion = await idbGet("manifestVersion", STORE_META);
+    const haveCachedBlob = await idbGet("DestinyPlugSetDefinition", STORE_BLOBS);
+    const needsDownload = force || !haveCachedBlob || !cachedVersion || cachedVersion !== liveVersion;
+
+    if (!needsDownload) {
+      d2log("Plug set defs cache is up-to-date. Skipping download.");
+      return true;
+    }
+
+    const lang = "en";
+    const comp = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyPlugSetDefinition;
+    const world = meta.jsonWorldContentPaths?.[lang];
+
+    let path = comp || world;
+    if (!path) {
+      d2warn("Plug set defs not available in manifest meta; skipping.");
+      return false;
+    }
+    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
+    d2log("Downloading plug set definitions from:", path, "| component?", !!comp);
+
+    const r = await fetch(path, { headers: { "Accept": "application/json" } });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`Plug set defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
+    }
+    const buf = await r.arrayBuffer();
+    d2log("Downloaded bytes:", buf.byteLength);
+
+    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
+    const parsed = JSON.parse(text);
+
+    const plugSetDefs = comp ? parsed : parsed?.DestinyPlugSetDefinition;
+    if (!plugSetDefs) {
+      const keys = Object.keys(parsed || {});
+      d2warn("Parsed manifest keys (sample):", keys.slice(0, 30));
+      throw new Error("Downloaded JSON did not contain DestinyPlugSetDefinition data.");
+    }
+
+    await idbSet("DestinyPlugSetDefinition", plugSetDefs, STORE_BLOBS);
+    _plugSetDefs = null;
+    d2log("Plug set defs cache updated successfully.");
+    return true;
+  } catch (e) {
+    d2err("ensurePlugSetDefsReady FAILED:", e);
+    return false;
+  } finally {
+    console.groupEnd();
+  }
+}
+
 // --- MEMORY LOADING ---
 async function loadInventoryItemDefsToMemory() {
   if (_invItemDefs) return _invItemDefs;
@@ -514,6 +576,37 @@ async function loadStatDefsToMemory() {
   d2log("Loaded stat defs into memory:", count);
   console.groupEnd();
   return _statDefs;
+}
+
+async function loadPlugSetDefsToMemory() {
+  if (_plugSetDefs) return _plugSetDefs;
+
+  console.groupCollapsed("[D2MANIFEST] loadPlugSetDefsToMemory");
+  const blob = await idbGet("DestinyPlugSetDefinition", STORE_BLOBS);
+  if (!blob) {
+    d2warn("No cached plug set defs found. Attempting download...");
+    const ok = await ensurePlugSetDefsReady({ force: false });
+    if (!ok) {
+      console.groupEnd();
+      return null;
+    }
+  }
+  const defsObj = await idbGet("DestinyPlugSetDefinition", STORE_BLOBS);
+  if (!defsObj) {
+    console.groupEnd();
+    return null;
+  }
+
+  const map = new Map();
+  let count = 0;
+  for (const [hashStr, def] of Object.entries(defsObj)) {
+    map.set(String(hashStr), def);
+    count++;
+  }
+  _plugSetDefs = map;
+  d2log("Loaded plug set defs into memory:", count);
+  console.groupEnd();
+  return _plugSetDefs;
 }
 
 function normalizeStatName(name) {
@@ -1082,14 +1175,21 @@ async function getSocketPerks(weaponHash, socketIndex) {
   if (!def || !def.sockets || !def.sockets.socketEntries[socketIndex]) return [];
 
   const socket = def.sockets.socketEntries[socketIndex];
-  const plugSetHash = socket.reusablePlugSetHash;
+  const directPlugItems = Array.isArray(socket.reusablePlugItems) ? socket.reusablePlugItems : [];
+  let plugItems = directPlugItems;
 
-  // Load plug set definition
-  const plugSetDef = defs.get(String(plugSetHash));
-  if (!plugSetDef || !plugSetDef.reusablePlugItems) return [];
+  if (plugItems.length === 0) {
+    const plugSetHash = socket.reusablePlugSetHash || socket.randomizedPlugSetHash;
+    if (!plugSetHash) return [];
+
+    const plugSetDefs = await loadPlugSetDefsToMemory();
+    const plugSetDef = plugSetDefs?.get(String(plugSetHash));
+    if (!plugSetDef || !Array.isArray(plugSetDef.reusablePlugItems)) return [];
+    plugItems = plugSetDef.reusablePlugItems;
+  }
 
   const perks = [];
-  for (const plugItem of plugSetDef.reusablePlugItems) {
+  for (const plugItem of plugItems) {
     const perkHash = plugItem.plugItemHash;
     const perkDef = defs.get(String(perkHash));
     if (!perkDef) continue;
@@ -1142,6 +1242,7 @@ async function getDamageTypeDefs() {
 // - ensureCollectibleDefsReady()
 // - ensureDamageTypeDefsReady()
 // - resetManifestMemory()
+// - ensurePlugSetDefsReady()
 // - searchArmorLocally()
 // - searchWeaponsLocally()
 // - getArmorSetLookup()
@@ -1161,6 +1262,7 @@ window.__manifest__ = {
   ensureCollectibleDefsReady,
   ensureDamageTypeDefsReady,
   ensureStatDefsReady,
+  ensurePlugSetDefsReady,
   resetManifestMemory,
   
   // Armor functions
@@ -1177,6 +1279,7 @@ window.__manifest__ = {
   getSocketPerks,
   getPerkName,
   getDamageTypeDefs,
+  loadPlugSetDefsToMemory,
   loadStatDefsToMemory,
   WEAPON_BUCKET_HASHES,
   PERK_STAT_BONUSES,

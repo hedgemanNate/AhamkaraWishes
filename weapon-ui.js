@@ -8,6 +8,7 @@
 const weaponState = {
   currentWeapon: null, // { weaponHash, name, stats, sockets }
   selectedPerks: {}, // { socketIndex: perkHash }
+  socketPerksMap: {}, // { socketIndex: perkData[] }
   currentMode: 'pve', // "pve" or "pvp"
   // ... existing fields ...
   currentFilters: {}, // Search/filter state
@@ -315,8 +316,7 @@ async function selectWeapon(weaponHash) {
       null,
     stats,
     sockets: detailedSockets.sockets,
-    socketCategories: detailedSockets.socketCategories,
-    socketPerksMap: {}
+    socketCategories: detailedSockets.socketCategories
   };
 
   d2log(
@@ -328,6 +328,7 @@ async function selectWeapon(weaponHash) {
 
   // Reset perks for new weapon
   weaponState.selectedPerks = {};
+  weaponState.socketPerksMap = {};
   addRecentWeaponSelection(weaponDef, weaponHash);
 
   d2log(`✅ Selected weapon: ${weaponState.currentWeapon.name}`, 'weapon-ui');
@@ -811,8 +812,10 @@ function renderPerkOptions(socketIndex) {
       btn.classList.add('selected');
     }
 
-    const safeIcon = perk.icon && perk.icon.startsWith('http') ? perk.icon : `https://www.bungie.net${perk.icon}`;
-    btn.style.backgroundImage = `url('${safeIcon}')`;
+    if (perk.icon) {
+      const safeIcon = perk.icon.startsWith('http') ? perk.icon : `https://www.bungie.net${perk.icon}`;
+      btn.style.backgroundImage = `url('${safeIcon}')`;
+    }
     btn.title = perk.perkName;
 
     btn.addEventListener('click', () => {

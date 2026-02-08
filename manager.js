@@ -22,6 +22,7 @@ const STATS = ['Weapons', 'Health', 'Class', 'Grenade', 'Super', 'Melee'];
 document.addEventListener('DOMContentLoaded', () => {
     const loadingOverlay = document.getElementById('loading-overlay');
   const loadingText = loadingOverlay ? loadingOverlay.querySelector('.loading-text') : null;
+  const loadingStatus = loadingOverlay ? loadingOverlay.querySelector('.loading-status') : null;
     
     setupWeaponArmorTabs();
     
@@ -29,6 +30,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (loadingText) {
         loadingText.textContent = text;
       }
+    };
+
+    const setLoadingStatus = (text) => {
+      if (loadingStatus) {
+        loadingStatus.textContent = text || '';
+      }
+    };
+
+    const updateCacheStatus = () => {
+      const messages = [window.__weaponStatsStatus, window.__clarityStatus].filter(Boolean);
+      setLoadingStatus(messages.join(" "));
     };
 
     const runStartup = async () => {
@@ -47,11 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.weaponStatsService?.initializeWeaponStats) {
           await window.weaponStatsService.initializeWeaponStats();
         }
+        updateCacheStatus();
 
         setLoadingText('Loading Clarity data...');
         if (window.weaponStatsClarityService?.initializeWeaponStatsClarity) {
           await window.weaponStatsClarityService.initializeWeaponStatsClarity();
         }
+        updateCacheStatus();
 
         setLoadingText('Initializing weapons and armor...');
         await initializeWeaponSystem();
@@ -59,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loadingOverlay) {
           loadingOverlay.classList.add('hidden');
         }
+        setLoadingStatus('');
         loadLists();
       } catch (err) {
         console.warn("[D2MANIFEST] Preflight failed:", err);
@@ -76,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearCacheBtn.addEventListener('click', async () => {
             const originalLabel = clearCacheBtn.textContent;
             const originalLoadingText = loadingText ? loadingText.textContent : null;
+            const originalLoadingStatus = loadingStatus ? loadingStatus.textContent : null;
             clearCacheBtn.disabled = true;
             clearCacheBtn.textContent = 'Resetting...';
             if (loadingOverlay) {
@@ -84,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loadingText) {
                 loadingText.textContent = 'Resetting manifest cache...';
             }
+            setLoadingStatus('');
 
             try {
                 if (window.weaponUI?.shutdownWeaponSearchWorker) {
@@ -94,12 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.__manifest__?.resetManifestMemory) {
                     window.__manifest__.resetManifestMemory();
                 }
-              if (window.weaponStatsService?.clearWeaponStatsCache) {
-                window.weaponStatsService.clearWeaponStatsCache();
-              }
-              if (window.weaponStatsClarityService?.clearClarityCache) {
-                window.weaponStatsClarityService.clearClarityCache();
-              }
 
                 if (loadingText) {
                     loadingText.textContent = 'Downloading manifest...';
@@ -121,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (window.weaponStatsService?.initializeWeaponStats) {
                 await window.weaponStatsService.initializeWeaponStats({ force: true });
               }
+              updateCacheStatus();
 
               if (loadingText) {
                 loadingText.textContent = 'Refreshing Clarity data...';
@@ -128,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (window.weaponStatsClarityService?.initializeWeaponStatsClarity) {
                 await window.weaponStatsClarityService.initializeWeaponStatsClarity({ force: true });
               }
+              updateCacheStatus();
 
                 if (window.weaponUI?.resetWeaponSearchWorker) {
                     window.weaponUI.resetWeaponSearchWorker();
@@ -150,6 +163,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 if (loadingText && originalLoadingText) {
                     loadingText.textContent = originalLoadingText;
+                }
+                if (loadingStatus && originalLoadingStatus !== null) {
+                  loadingStatus.textContent = originalLoadingStatus;
                 }
                 if (loadingOverlay) {
                     loadingOverlay.classList.add('hidden');

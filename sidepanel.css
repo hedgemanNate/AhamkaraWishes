@@ -39,6 +39,14 @@ body {
   top: 0;
   left: 0;
   width: 100%;
+
+.loading-status {
+  margin-top: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  max-width: 220px;
+}
   height: 100%;
   background-color: rgba(0, 0, 0, 0.9);
   display: flex;

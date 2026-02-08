@@ -9,6 +9,10 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 let weaponStatsCache = null;
 let weaponStatsInitPromise = null;
 
+function setWeaponStatsStatus(message) {
+  window.__weaponStatsStatus = message || "";
+}
+
 function weaponStatsServiceLog(...args) {
   console.log("[WEAPON-STATS-SERVICE]", ...args);
 }
@@ -75,7 +79,7 @@ async function initializeWeaponStats({ force = false } = {}) {
   if (weaponStatsInitPromise && !force) return weaponStatsInitPromise;
 
   if (force) {
-    clearWeaponStatsCache();
+    weaponStatsInitPromise = null;
   }
 
   weaponStatsInitPromise = (async () => {
@@ -90,6 +94,7 @@ async function initializeWeaponStats({ force = false } = {}) {
     if (!force && cached?.perks && isCacheValid(cached)) {
       weaponStatsCache = cached.perks;
       weaponStatsServiceLog("Loaded weapon stats from cache.");
+      setWeaponStatsStatus("");
       return weaponStatsCache;
     }
 
@@ -144,11 +149,13 @@ async function initializeWeaponStats({ force = false } = {}) {
       localStorage.setItem(WEAPON_STATS_CACHE_KEY, JSON.stringify(payload));
       weaponStatsCache = perkMap;
       weaponStatsServiceLog("Weapon stats cache updated from API.");
+      setWeaponStatsStatus("");
       return weaponStatsCache;
     } catch (error) {
       weaponStatsServiceError("Weapon stats API fetch failed.", error);
       if (staleCache?.perks) {
         weaponStatsCache = staleCache.perks;
+        setWeaponStatsStatus("Using cached weapon stats (refresh failed).");
         weaponStatsServiceWarn("Using stale weapon stats cache.");
         return weaponStatsCache;
       }

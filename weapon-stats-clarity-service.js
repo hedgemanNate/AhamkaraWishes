@@ -9,6 +9,10 @@ const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 let clarityCache = null;
 let clarityInitPromise = null;
 
+function setClarityStatus(message) {
+  window.__clarityStatus = message || "";
+}
+
 function clarityLog(...args) {
   console.log("[WEAPON-STATS-CLARITY]", ...args);
 }
@@ -53,6 +57,10 @@ function clearClarityCache() {
 async function initializeWeaponStatsClarity({ force = false } = {}) {
   if (clarityInitPromise && !force) return clarityInitPromise;
 
+  if (force) {
+    clarityInitPromise = null;
+  }
+
   clarityInitPromise = (async () => {
     if (!window.weaponStatsClarityApi?.fetchClarityData) {
       clarityError("Clarity API module not available.");
@@ -64,6 +72,7 @@ async function initializeWeaponStatsClarity({ force = false } = {}) {
     const cached = loadClarityCache();
     if (!force && cached?.perks && isClarityCacheValid(cached)) {
       clarityCache = cached.perks;
+      setClarityStatus("");
       clarityLog("Loaded Clarity data from cache.");
       return clarityCache;
     }
@@ -86,12 +95,14 @@ async function initializeWeaponStatsClarity({ force = false } = {}) {
 
       localStorage.setItem(WEAPON_STATS_CLARITY_CACHE_KEY, JSON.stringify(payload));
       clarityCache = perkMap;
+      setClarityStatus("");
       clarityLog("Clarity cache updated.");
       return clarityCache;
     } catch (error) {
       clarityError("Clarity fetch failed.", error);
       if (staleCache?.perks) {
         clarityCache = staleCache.perks;
+        setClarityStatus("Using cached Clarity data (refresh failed).");
         clarityWarn("Using stale Clarity cache.");
         return clarityCache;
       }

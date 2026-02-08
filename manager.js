@@ -25,33 +25,51 @@ document.addEventListener('DOMContentLoaded', () => {
     
     setupWeaponArmorTabs();
     
-    // Load manifest data ONCE at startup
-    Promise.all([
-        ensureInventoryItemDefsReady({ force: false }),
-        ensureEquippableItemSetDefsReady({ force: false }),
-        ensureCollectibleDefsReady({ force: false }),
-      ensureDamageTypeDefsReady({ force: false }),
-      getArmorSetLookup(),
-      window.__manifest__?.getDamageTypeDefs?.()
-    ]).then(() => {
-        // Initialize weapon system after manifest is ready
-        return initializeWeaponSystem();
-    }).then(() => {
-        // Hide loading overlay once all systems are ready (fade animation is 1.3s)
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
+    const setLoadingText = (text) => {
+      if (loadingText) {
+        loadingText.textContent = text;
+      }
+    };
+
+    const runStartup = async () => {
+      try {
+        setLoadingText('Loading manifest...');
+        await Promise.all([
+          ensureInventoryItemDefsReady({ force: false }),
+          ensureEquippableItemSetDefsReady({ force: false }),
+          ensureCollectibleDefsReady({ force: false }),
+          ensureDamageTypeDefsReady({ force: false }),
+          getArmorSetLookup(),
+          window.__manifest__?.getDamageTypeDefs?.()
+        ]);
+
+        setLoadingText('Loading weapon stats...');
+        if (window.weaponStatsService?.initializeWeaponStats) {
+          await window.weaponStatsService.initializeWeaponStats();
         }
-        // Now load and display the wishlist UI
+
+        setLoadingText('Loading Clarity data...');
+        if (window.weaponStatsClarityService?.initializeWeaponStatsClarity) {
+          await window.weaponStatsClarityService.initializeWeaponStatsClarity();
+        }
+
+        setLoadingText('Initializing weapons and armor...');
+        await initializeWeaponSystem();
+
+        if (loadingOverlay) {
+          loadingOverlay.classList.add('hidden');
+        }
         loadLists();
-    }).catch(err => {
+      } catch (err) {
         console.warn("[D2MANIFEST] Preflight failed:", err);
-        // Hide overlay even on error
         if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
+          loadingOverlay.classList.add('hidden');
         }
-        // Try to load UI anyway
         loadLists();
-    });
+      }
+    };
+
+    runStartup();
 
     const clearCacheBtn = document.getElementById('clearCacheBtn');
     if (clearCacheBtn) {
@@ -76,6 +94,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.__manifest__?.resetManifestMemory) {
                     window.__manifest__.resetManifestMemory();
                 }
+              if (window.weaponStatsService?.clearWeaponStatsCache) {
+                window.weaponStatsService.clearWeaponStatsCache();
+              }
+              if (window.weaponStatsClarityService?.clearClarityCache) {
+                window.weaponStatsClarityService.clearClarityCache();
+              }
 
                 if (loadingText) {
                     loadingText.textContent = 'Downloading manifest...';
@@ -85,10 +109,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     ensureInventoryItemDefsReady({ force: true }),
                     ensureEquippableItemSetDefsReady({ force: true }),
                     ensureCollectibleDefsReady({ force: true }),
-                  ensureDamageTypeDefsReady({ force: true }),
-                  getArmorSetLookup(),
-                  window.__manifest__?.getDamageTypeDefs?.()
+                ensureDamageTypeDefsReady({ force: true }),
+                ensureStatDefsReady({ force: true }),
+                getArmorSetLookup(),
+                window.__manifest__?.getDamageTypeDefs?.()
                 ]);
+
+              if (loadingText) {
+                loadingText.textContent = 'Refreshing weapon stats...';
+              }
+              if (window.weaponStatsService?.initializeWeaponStats) {
+                await window.weaponStatsService.initializeWeaponStats({ force: true });
+              }
+
+              if (loadingText) {
+                loadingText.textContent = 'Refreshing Clarity data...';
+              }
+              if (window.weaponStatsClarityService?.initializeWeaponStatsClarity) {
+                await window.weaponStatsClarityService.initializeWeaponStatsClarity({ force: true });
+              }
 
                 if (window.weaponUI?.resetWeaponSearchWorker) {
                     window.weaponUI.resetWeaponSearchWorker();

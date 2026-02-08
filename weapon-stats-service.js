@@ -32,6 +32,16 @@ function loadCacheFromStorage() {
   }
 }
 
+function clearWeaponStatsCache() {
+  weaponStatsCache = null;
+  weaponStatsInitPromise = null;
+  try {
+    localStorage.removeItem(WEAPON_STATS_CACHE_KEY);
+  } catch (error) {
+    weaponStatsServiceWarn("Failed to clear weapon stats cache.", error);
+  }
+}
+
 function isCacheValid(cache) {
   if (!cache) return false;
   if (cache.version !== WEAPON_STATS_CACHE_VERSION) return false;
@@ -61,8 +71,12 @@ function buildFallbackFromManifest() {
   return fallback;
 }
 
-async function initializeWeaponStats() {
-  if (weaponStatsInitPromise) return weaponStatsInitPromise;
+async function initializeWeaponStats({ force = false } = {}) {
+  if (weaponStatsInitPromise && !force) return weaponStatsInitPromise;
+
+  if (force) {
+    clearWeaponStatsCache();
+  }
 
   weaponStatsInitPromise = (async () => {
     if (!window.weaponStatsApi?.fetchWeaponStatsData) {
@@ -73,7 +87,7 @@ async function initializeWeaponStats() {
     }
 
     const cached = loadCacheFromStorage();
-    if (cached?.perks && isCacheValid(cached)) {
+    if (!force && cached?.perks && isCacheValid(cached)) {
       weaponStatsCache = cached.perks;
       weaponStatsServiceLog("Loaded weapon stats from cache.");
       return weaponStatsCache;
@@ -86,8 +100,40 @@ async function initializeWeaponStats() {
         throw new Error("Weapon stats modules are not ready.");
       }
 
+      const clarityPromise = window.weaponStatsClarityService?.initializeWeaponStatsClarity
+        ? window.weaponStatsClarityService.initializeWeaponStatsClarity({ force })
+        : null;
+
       const perkDefs = await window.weaponStatsApi.fetchWeaponStatsData();
       const perkMap = window.weaponStatsProcessor.buildPerkStatMap(perkDefs);
+      const clarityMap = clarityPromise ? await clarityPromise : window.weaponStatsClarityService?.getClarityMap?.();
+
+      if (clarityMap && typeof clarityMap === "object") {
+        Object.entries(clarityMap).forEach(([hashStr, clarityEntry]) => {
+          if (!clarityEntry) return;
+          if (!perkMap[hashStr]) {
+            perkMap[hashStr] = {
+              hash: Number(hashStr) || clarityEntry.hash,
+              name: clarityEntry.name || "Unknown Perk",
+              description: clarityEntry.description || "",
+              icon: "",
+              static: {},
+              conditional: {},
+              isConditional: !!clarityEntry.isConditional,
+              clarity: clarityEntry,
+            };
+            return;
+          }
+
+          perkMap[hashStr].clarity = clarityEntry;
+          if (clarityEntry.description && !perkMap[hashStr].description) {
+            perkMap[hashStr].description = clarityEntry.description;
+          }
+          if (clarityEntry.isConditional) {
+            perkMap[hashStr].isConditional = true;
+          }
+        });
+      }
 
       const payload = {
         version: WEAPON_STATS_CACHE_VERSION,
@@ -143,6 +189,7 @@ function isConditionalPerk(perkHash) {
 
 window.weaponStatsService = {
   initializeWeaponStats,
+  clearWeaponStatsCache,
   ensureReady,
   getPerkData,
   getStaticBonuses,

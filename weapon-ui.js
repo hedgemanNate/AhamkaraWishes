@@ -51,6 +51,48 @@ const MASTERWORK_OPTIONS_BY_TYPE = {
   "Bow": ["Draw Time", "Stability", "Handling", "Reload Speed"],
 };
 
+// Cache stat icons for masterwork labels (keyed by normalized stat name)
+const MASTERWORK_ICON_CACHE = {};
+
+// Local SVG icons for masterwork stats
+const MASTERWORK_ICON_PATHS = {
+  "Range": "icons/masterwork/range.svg",
+  "Stability": "icons/masterwork/stability.svg",
+  "Handling": "icons/masterwork/handling.svg",
+  "Reload Speed": "icons/masterwork/reload-speed.svg",
+  "Aim Assistance": "icons/masterwork/aim-assistance.svg",
+  "Recoil Direction": "icons/masterwork/recoil-direction.svg",
+  "Blast Radius": "icons/masterwork/blast-radius.svg",
+  "Charge Time": "icons/masterwork/charge-time.svg",
+  "Impact": "icons/masterwork/impact.svg",
+  "Speed": "icons/masterwork/speed.svg",
+  "Draw Time": "icons/masterwork/draw-time.svg",
+};
+
+// Short labels reused for text and fallback icon rendering
+const MASTERWORK_SHORT_LABELS = {
+  "Range": "RNG",
+  "Stability": "STB",
+  "Handling": "HAN",
+  "Reload Speed": "RLD",
+  "Aim Assistance": "AA",
+  "Recoil Direction": "RCL",
+  "Blast Radius": "BLST",
+  "Charge Time": "CHG",
+  "Impact": "IMP",
+  "Speed": "SPD",
+  "Draw Time": "DRW",
+};
+
+function buildTextIconSvg(shortText) {
+  const safeText = (shortText || '').substring(0, 4);
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'>` +
+    `<rect x='4' y='4' rx='10' ry='10' width='56' height='56' fill='#1f2937' stroke='#a5f3fc' stroke-width='3'/>` +
+    `<text x='32' y='38' text-anchor='middle' font-family='Inter, Arial, sans-serif' font-size='18' fill='#e5e7eb' font-weight='700'>${safeText}</text>` +
+    `</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 let weaponCraftInitialized = false;
 
 let weaponSearchWorker = null;
@@ -746,6 +788,87 @@ function renderWeaponSockets() {
   d2log(`✅ Rendered 7 socket columns`, 'weapon-ui');
 }
 
+function getMasterworkIconUrl(label) {
+  const path = MASTERWORK_ICON_PATHS[label];
+  if (!path) return null;
+  if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
+    return chrome.runtime.getURL(path);
+  }
+  return path;
+}
+
+function resolveMasterworkIcon(label, statDefs) {
+  const normalized = normalizeStatName(label);
+  if (MASTERWORK_ICON_CACHE.hasOwnProperty(normalized) && MASTERWORK_ICON_CACHE[normalized]) {
+    return MASTERWORK_ICON_CACHE[normalized];
+  }
+
+  const localIcon = getMasterworkIconUrl(label);
+  if (localIcon) {
+    MASTERWORK_ICON_CACHE[normalized] = localIcon;
+    return localIcon;
+  }
+
+  const defs = statDefs || window.__manifest__?.DestinyStatDefinition;
+  if (!defs || typeof defs.values !== 'function' || (defs.size !== undefined && defs.size === 0)) {
+    return '';
+  }
+
+  for (const def of defs.values()) {
+    const name = def?.displayProperties?.name;
+    if (!name) continue;
+    if (normalizeStatName(name) === normalized) {
+      const rawIcon = def.displayProperties?.icon || '';
+      if (rawIcon) {
+        const iconUrl = resolveBungieUrl(rawIcon);
+        MASTERWORK_ICON_CACHE[normalized] = iconUrl;
+        return iconUrl;
+      }
+      break;
+    }
+  }
+
+  // Fallback: generate a tiny SVG icon using the short label
+  const fallback = buildTextIconSvg(MASTERWORK_SHORT_LABELS[label] || label.substring(0, 3).toUpperCase());
+  MASTERWORK_ICON_CACHE[normalized] = fallback;
+  return fallback;
+}
+
+function buildMasterworkOptionsFromCache(weaponType) {
+  const labels = MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Auto Rifle"];
+  return labels.map((label, idx) => ({
+    perkHash: `masterwork_${idx}`,
+    perkName: label,
+    icon: resolveMasterworkIcon(label),
+    isMasterwork: true
+  }));
+}
+
+async function loadMasterworkOptionsForCurrentWeapon() {
+  if (!weaponState.currentWeapon || weaponState.currentWeapon.isExotic) {
+    weaponState.socketPerksMap["masterwork"] = [];
+    weaponState.selectedMasterwork = null;
+    return;
+  }
+
+  const weaponType = weaponState.currentWeapon.type || "Auto Rifle";
+  const labels = MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Auto Rifle"];
+
+  // Hydrate icon cache from stat definitions if available
+  if (window.__manifest__?.loadStatDefsToMemory) {
+    try {
+      const statDefs = await window.__manifest__.loadStatDefsToMemory();
+      labels.forEach((label) => {
+        resolveMasterworkIcon(label, statDefs);
+      });
+    } catch (e) {
+      console.warn('Masterwork icon resolution skipped (stat defs unavailable)', e);
+    }
+  }
+
+  weaponState.socketPerksMap["masterwork"] = buildMasterworkOptionsFromCache(weaponType);
+}
+
 /**
  * Loads perk data without immediate rendering of buttons.
  */
@@ -778,21 +901,7 @@ async function renderWeaponPerks() {
   }
 
   // Load Masterwork options (virtual, based on weapon type)
-  if (weaponState.currentWeapon.isExotic) {
-    weaponState.socketPerksMap["masterwork"] = [];
-  } else {
-    const weaponType = weaponState.currentWeapon.type || "Auto Rifle";
-    const masterworkLabels =
-      MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Auto Rifle"];
-
-    // Create mock perk objects for masterwork options
-    weaponState.socketPerksMap["masterwork"] = masterworkLabels.map((label, idx) => ({
-      perkHash: `masterwork_${idx}`,
-      perkName: label,
-      icon: "",
-      isMasterwork: true
-    }));
-  }
+  await loadMasterworkOptionsForCurrentWeapon();
   updateMasterworkDisplayIcon();
 
   // Auto-select first active column (usually col 0) if available
@@ -811,31 +920,30 @@ function updateMasterworkDisplayIcon() {
   
   let activeOption = selectedLabel ? options.find(o => o.perkName === selectedLabel) : options[0];
   
-  const masterworkShortLabels = {
-    "Range": "RNG",
-    "Stability": "STB",
-    "Handling": "HAN",
-    "Reload Speed": "RLD",
-    "Aim Assistance": "AA",
-    "Recoil Direction": "RCL",
-    "Blast Radius": "BLST",
-    "Charge Time": "CHG",
-    "Impact": "IMP",
-    "Speed": "SPD",
-    "Draw Time": "DRW",
-  };
-
   if (activeOption) {
-    displayEl.style.backgroundImage = 'none';
+    const iconUrl = activeOption.icon ? resolveBungieUrl(activeOption.icon) : '';
     displayEl.title = activeOption.perkName;
-    displayEl.textContent = masterworkShortLabels[activeOption.perkName]
-      || activeOption.perkName.substring(0, 3).toUpperCase();
-    displayEl.style.display = 'flex';
-    displayEl.style.alignItems = 'center';
-    displayEl.style.justifyContent = 'center';
-    displayEl.style.fontSize = '9px';
-    displayEl.style.color = '#fff';
-    displayEl.style.fontWeight = '600';
+
+    if (iconUrl) {
+      displayEl.style.backgroundImage = `url('${iconUrl}')`;
+      displayEl.style.backgroundSize = 'contain';
+      displayEl.style.backgroundRepeat = 'no-repeat';
+      displayEl.style.backgroundPosition = 'center';
+      displayEl.textContent = '';
+      displayEl.style.display = 'flex';
+      displayEl.style.alignItems = 'center';
+      displayEl.style.justifyContent = 'center';
+    } else {
+      displayEl.style.backgroundImage = 'none';
+      displayEl.textContent = MASTERWORK_SHORT_LABELS[activeOption.perkName]
+        || activeOption.perkName.substring(0, 3).toUpperCase();
+      displayEl.style.display = 'flex';
+      displayEl.style.alignItems = 'center';
+      displayEl.style.justifyContent = 'center';
+      displayEl.style.fontSize = '9px';
+      displayEl.style.color = '#fff';
+      displayEl.style.fontWeight = '600';
+    }
   } else {
     displayEl.style.backgroundImage = 'none';
     displayEl.textContent = '';
@@ -849,21 +957,19 @@ function ensureMasterworkOptions() {
 
   const existing = weaponState.socketPerksMap["masterwork"] || [];
   if (existing.length > 0) {
+    // Ensure any missing icons are filled from cache
+    existing.forEach((option) => {
+      if (!option.icon) {
+        option.icon = resolveMasterworkIcon(option.perkName);
+      }
+    });
     return existing;
   }
 
   const weaponType = weaponState.currentWeapon.type || "Auto Rifle";
-  const masterworkLabels =
-    MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Auto Rifle"];
-
-  weaponState.socketPerksMap["masterwork"] = masterworkLabels.map((label, idx) => ({
-    perkHash: `masterwork_${idx}`,
-    perkName: label,
-    icon: "",
-    isMasterwork: true
-  }));
-
-  return weaponState.socketPerksMap["masterwork"];
+  const built = buildMasterworkOptionsFromCache(weaponType);
+  weaponState.socketPerksMap["masterwork"] = built;
+  return built;
 }
 
 function selectSocketColumn(colIndex, socketIndex) {
@@ -905,10 +1011,20 @@ function renderMasterworkOptions() {
       btn.classList.add('selected');
     }
 
+    if (option.icon) {
+      const iconUrl = resolveBungieUrl(option.icon);
+      btn.style.backgroundImage = `url('${iconUrl}')`;
+      btn.style.backgroundSize = 'contain';
+      btn.style.backgroundRepeat = 'no-repeat';
+      btn.style.backgroundPosition = 'center';
+      btn.textContent = '';
+    } else {
+      btn.textContent = option.perkName;
+    }
+
     btn.style.display = 'flex';
     btn.style.alignItems = 'center';
     btn.style.justifyContent = 'center';
-    btn.textContent = option.perkName;
     btn.style.fontSize = '10px';
     btn.style.color = '#fff';
     btn.title = option.perkName;

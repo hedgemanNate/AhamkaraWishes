@@ -31,10 +31,12 @@ const SOCKET_CATEGORY_HASHES = {
 
 // Masterwork stat options by weapon type (for stat preview purposes)
 const MASTERWORK_OPTIONS_BY_TYPE = {
+  "Auto Rifle": ["Range", "Stability", "Handling", "Reload Speed"],
   "Assault Rifle": ["Range", "Stability", "Handling", "Reload Speed"],
   "Hand Cannon": ["Range", "Stability", "Handling", "Reload Speed"],
   "Pulse Rifle": ["Range", "Stability", "Handling", "Reload Speed"],
   "Scout Rifle": ["Range", "Stability", "Handling", "Reload Speed"],
+  "Sidearm": ["Range", "Stability", "Handling", "Reload Speed"],
   "Sniper Rifle": ["Range", "Handling", "Reload Speed", "Aim Assistance"],
   "Shotgun": ["Range", "Stability", "Handling", "Reload Speed"],
   "Submachine Gun": ["Range", "Stability", "Handling", "Reload Speed"],
@@ -43,6 +45,7 @@ const MASTERWORK_OPTIONS_BY_TYPE = {
   "Grenade Launcher": ["Blast Radius", "Stability", "Handling", "Reload Speed"],
   "Rocket Launcher": ["Blast Radius", "Stability", "Handling", "Reload Speed"],
   "Trace Rifle": ["Range", "Stability", "Handling", "Reload Speed"],
+  "Machine Gun": ["Range", "Stability", "Handling", "Reload Speed"],
   "Sword": ["Impact", "Speed", "Handling", "Reload Speed"],
   "Glaive": ["Range", "Stability", "Handling", "Charge Time"],
   "Bow": ["Draw Time", "Stability", "Handling", "Reload Speed"],
@@ -324,12 +327,15 @@ async function selectWeapon(weaponHash) {
   // Load weapon data
   const stats = await window.__manifest__.getWeaponStats(weaponHash);
   const detailedSockets = await window.__manifest__.getDetailedWeaponSockets(weaponHash);
+  const isExoticWeapon =
+    weaponDef.inventory?.tierTypeName === 'Exotic' || weaponDef.inventory?.tierType === 6;
 
   weaponState.currentWeapon = {
     weaponHash,
     name: weaponDef.displayProperties?.name || 'Unknown',
     icon: weaponDef.displayProperties?.icon || '',
     type: weaponDef.itemTypeDisplayName || '',
+    isExotic: isExoticWeapon,
     damageType:
       (Array.isArray(weaponDef.damageTypeHashes) && weaponDef.damageTypeHashes[0]) ||
       weaponDef.defaultDamageTypeHash ||
@@ -349,6 +355,7 @@ async function selectWeapon(weaponHash) {
   // Reset perks for new weapon
   weaponState.selectedPerks = {};
   weaponState.socketPerksMap = {};
+  weaponState.selectedMasterwork = null;
   addRecentWeaponSelection(weaponDef, weaponHash);
 
   d2log(`✅ Selected weapon: ${weaponState.currentWeapon.name}`, 'weapon-ui');
@@ -719,7 +726,8 @@ function renderWeaponSockets() {
     const el = document.createElement('div');
     const label = getSocketLabel(weaponType, colIndex);
     const isMasterwork = colIndex === 5;
-    const isDisabled = !socket && !isMasterwork;
+    const isMasterworkAvailable = isMasterwork && !weaponState.currentWeapon.isExotic;
+    const isDisabled = !socket && !isMasterworkAvailable;
 
     el.className = `selector-col ${isDisabled ? 'disabled' : ''}`;
     el.innerHTML = `
@@ -727,7 +735,7 @@ function renderWeaponSockets() {
       <div class="selector-icon" id="w-socket-display-${colIndex}"></div>
     `;
 
-    if (socket || isMasterwork) {
+    if (socket || isMasterworkAvailable) {
       const socketIndex = socket ? socket.socketIndex : null;
       el.addEventListener('click', () => selectSocketColumn(colIndex, socketIndex));
     }
@@ -770,16 +778,21 @@ async function renderWeaponPerks() {
   }
 
   // Load Masterwork options (virtual, based on weapon type)
-  const weaponType = weaponState.currentWeapon.type || "Assault Rifle";
-  const masterworkLabels = MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Assault Rifle"];
-  
-  // Create mock perk objects for masterwork options
-  weaponState.socketPerksMap["masterwork"] = masterworkLabels.map((label, idx) => ({
-    perkHash: `masterwork_${idx}`,
-    perkName: label,
-    icon: "",
-    isMasterwork: true
-  }));
+  if (weaponState.currentWeapon.isExotic) {
+    weaponState.socketPerksMap["masterwork"] = [];
+  } else {
+    const weaponType = weaponState.currentWeapon.type || "Auto Rifle";
+    const masterworkLabels =
+      MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Auto Rifle"];
+
+    // Create mock perk objects for masterwork options
+    weaponState.socketPerksMap["masterwork"] = masterworkLabels.map((label, idx) => ({
+      perkHash: `masterwork_${idx}`,
+      perkName: label,
+      icon: "",
+      isMasterwork: true
+    }));
+  }
   updateMasterworkDisplayIcon();
 
   // Auto-select first active column (usually col 0) if available
@@ -793,7 +806,7 @@ function updateMasterworkDisplayIcon() {
   const displayEl = document.getElementById(`w-socket-display-5`);
   if (!displayEl) return;
 
-  const options = weaponState.socketPerksMap["masterwork"] || [];
+  const options = ensureMasterworkOptions();
   const selectedLabel = weaponState.selectedMasterwork;
   
   let activeOption = selectedLabel ? options.find(o => o.perkName === selectedLabel) : options[0];
@@ -829,6 +842,30 @@ function updateMasterworkDisplayIcon() {
   }
 }
 
+function ensureMasterworkOptions() {
+  if (!weaponState.currentWeapon || weaponState.currentWeapon.isExotic) {
+    return [];
+  }
+
+  const existing = weaponState.socketPerksMap["masterwork"] || [];
+  if (existing.length > 0) {
+    return existing;
+  }
+
+  const weaponType = weaponState.currentWeapon.type || "Auto Rifle";
+  const masterworkLabels =
+    MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Auto Rifle"];
+
+  weaponState.socketPerksMap["masterwork"] = masterworkLabels.map((label, idx) => ({
+    perkHash: `masterwork_${idx}`,
+    perkName: label,
+    icon: "",
+    isMasterwork: true
+  }));
+
+  return weaponState.socketPerksMap["masterwork"];
+}
+
 function selectSocketColumn(colIndex, socketIndex) {
   // Special handling for Masterwork column (index 5)
   if (colIndex === 5) {
@@ -854,7 +891,7 @@ function renderMasterworkOptions() {
   const optionsRow = document.getElementById('w-options-row');
   optionsRow.innerHTML = '';
 
-  const options = weaponState.socketPerksMap["masterwork"] || [];
+  const options = ensureMasterworkOptions();
   
   if (options.length === 0) {
     optionsRow.innerHTML = '<div style="color: #888; padding: 10px; font-size: 12px;">No masterwork options available</div>';
@@ -915,16 +952,6 @@ function updateSocketDisplayIcon(socketIndex) {
   } else {
     displayEl.style.backgroundImage = 'none';
   }
-}
-
-function selectSocketColumn(colIndex, socketIndex) {
-  document.querySelectorAll('.selector-col').forEach((el, idx) => {
-    el.classList.toggle('active', idx === colIndex);
-  });
-
-  const optionsRow = document.getElementById('w-options-row');
-  optionsRow.style.display = 'flex';
-  renderPerkOptions(socketIndex);
 }
 
 function renderPerkOptions(socketIndex) {

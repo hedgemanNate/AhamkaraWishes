@@ -495,7 +495,7 @@ function renderRecentWeaponSelections() {
 function clampStatValue(value) {
   const numeric = Number(value || 0);
   if (!Number.isFinite(numeric)) return 0;
-  return Math.min(100, Math.max(0, numeric));
+  return numeric;
 }
 
 function normalizeStatName(name) {
@@ -507,6 +507,10 @@ function normalizeStatName(name) {
 function buildStatDisplayList(stats) {
   const list = Array.isArray(stats?._list) ? stats._list.slice() : [];
   if (!list.length) return [];
+
+  const labelOverrides = {
+    airborneeffectiveness: "Air Effect",
+  };
 
   const preferredOrder = [
     "impact",
@@ -532,12 +536,16 @@ function buildStatDisplayList(stats) {
   const orderMap = new Map(preferredOrder.map((key, index) => [key, index]));
 
   return list
-    .filter((entry) => Number.isFinite(Number(entry?.value)))
-    .map((entry) => ({
-      key: entry?.key || null,
-      name: entry?.name || "Unknown",
-      value: Number(entry?.value || 0),
-    }))
+    .filter((entry) => Number.isFinite(Number(entry?.value)) && Number(entry?.value) !== 0)
+    .map((entry) => {
+      const rawName = entry?.name || "Unknown";
+      const normalized = normalizeStatName(rawName);
+      return {
+        key: entry?.key || null,
+        name: labelOverrides[normalized] || rawName,
+        value: Number(entry?.value || 0),
+      };
+    })
     .sort((a, b) => {
       const aIndex = a.key ? orderMap.get(a.key) : undefined;
       const bIndex = b.key ? orderMap.get(b.key) : undefined;

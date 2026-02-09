@@ -154,67 +154,6 @@
   filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.8));
 }
 
-/* OVERLAYS */
-
-/* Top Left Info Overlay */
-.w-hero-info-top-left {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  padding-left: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 10;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-  align-items: flex-start;
-}
-
-.w-hero-name {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--accent-gold, #d4af37);
-  line-height: 1.1;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.w-hero-type {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.w-hero-property-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 8px;
-}
-
-.w-hero-label {
-  font-size: 10px;
-  font-weight: bold;
-  color: rgba(212, 175, 55, 0.8);
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-}
-
-.w-hero-damage,
-.w-hero-ammo,
-.w-hero-activity {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.95);
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 /* Flavor Text Overlay - Bottom Right Corner */
 #w-selected-flavor {
   position: absolute; 
@@ -248,7 +187,29 @@
   gap: 20px;
 }
 
-/* Name & Type Section moved to hero */
+/* Name & Type Section */
+.w-name-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#w-selected-name {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--accent-gold);
+  line-height: 1.1;
+  letter-spacing: 0.5px;
+}
+
+#w-selected-type {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 500;
+}
+
 /* Properties Stack */
 .w-property-stack {
   display: flex;
@@ -262,54 +223,19 @@
   gap: 6px;
 }
 
-
+.w-property-label {
+  font-size: 10px;
+  font-weight: bold;
+  color: rgba(212, 175, 55, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
 
 .w-property-value {
   font-size: 13px;
   color: var(--text-main);
   font-weight: 500;
   letter-spacing: 0.3px;
-}
-
-.w-frame-value {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.w-frame-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  background-color: rgba(0, 0, 0, 0.3);
-  background-size: cover;
-  background-position: center;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  flex-shrink: 0;
-}
-
-.w-frame-icon.w-frame-icon-empty {
-  background: rgba(0, 0, 0, 0.2);
-  border-style: dashed;
-}
-
-.w-frame-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.w-frame-name {
-  font-size: 13px;
-  color: var(--text-main);
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-.w-frame-desc {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.3;
 }
 
 /* ============================================
@@ -764,7 +690,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 12px;
-  padding-bottom: 10px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -829,349 +754,3 @@
   color: #666;
   margin-top: 2px;
 }
-
-/* ============================================
-   STATS + PERKS SECTION
-   ============================================ */
-.stats-perks-section {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
-  padding: 0 16px 24px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.stats-column,
-.perks-column {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-
-.stats-section-title,
-.perks-section-title {
-  font-size: 11px;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  color: rgba(212, 175, 55, 0.85);
-  font-weight: 700;
-}
-
-.stat-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.stat-bar-row {
-  display: grid;
-  grid-template-columns: 90px minmax(0, 1fr) 86px;
-  align-items: center;
-  gap: 10px;
-}
-
-.stat-bar-name {
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-.stat-bar-track {
-  position: relative;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.stat-bar-base {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.stat-bar-delta {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-}
-
-.stat-bar-delta.positive {
-  background: rgba(34, 197, 94, 0.8);
-}
-
-.stat-bar-delta.negative {
-  background: rgba(239, 68, 68, 0.8);
-}
-
-.stat-bar-values {
-  font-size: 11px;
-  text-align: right;
-  color: rgba(255, 255, 255, 0.8);
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-bar-values .delta-positive {
-  color: rgba(34, 197, 94, 0.9);
-}
-
-.stat-bar-values .delta-negative {
-  color: rgba(239, 68, 68, 0.9);
-}
-
-.stat-bar-values .delta-zero {
-  color: rgba(255, 255, 255, 0.55);
-}
-
-.perk-slots {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.perk-btn.conditional {
-  border-color: rgba(212, 175, 55, 0.6);
-}
-
-.perk-btn.conditional::after {
-  content: "C";
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  background: rgba(212, 175, 55, 0.9);
-  color: #1b1b1b;
-  font-size: 10px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 768px) {
-  .stats-perks-section {
-    grid-template-columns: 1fr;
-  }
-
-  .stat-bar-row {
-    grid-template-columns: 80px minmax(0, 1fr) 70px;
-  }
-}
-
-/* --- PERK SELECTION UI (Phase 10) --- */
-.perk-selector-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 16px;
-  width: 100%;
-}
-
-.selector-row {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-  width: 100%;
-}
-
-.selector-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
-  transition: background-color 0.2s, box-shadow 0.2s;
-  border: 1px solid transparent;
-}
-
-.selector-col:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.selector-col.active {
-  background-color: rgba(212, 175, 55, 0.1);
-  border-color: rgba(212, 175, 55, 0.4);
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.1);
-}
-
-.selector-col.disabled {
-  opacity: 0.2;
-  pointer-events: none;
-  filter: grayscale(100%);
-}
-
-.selector-label {
-  font-size: 9px;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-.selector-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  background-color: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
-}
-
-/* Options Row - Horizontal Scroll */
-.options-row {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  overflow-x: auto;
-  min-height: 52px;
-  padding: 8px 4px 12px 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
-.options-row::-webkit-scrollbar {
-  height: 4px;
-}
-
-.options-row::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.options-row::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-}
-
-/* Perk Option Button */
-.option-btn {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-  background-color: rgba(30, 30, 30, 0.8);
-  background-size: cover;
-  background-position: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.option-btn:hover {
-  border-color: rgba(255, 255, 255, 0.8);
-  transform: scale(1.05);
-  z-index: 2;
-}
-
-.option-btn.selected {
-  border-color: #d4af37;
-  box-shadow: 0 0 0 1px #d4af37, 0 4px 8px rgba(0,0,0,0.5);
-}
-
-/* CLARITY TOOLTIP */
-#clarity-tooltip {
-  position: fixed;
-  z-index: 10000;
-  width: max-content;
-  max-width: 300px;
-  background-color: #1a1a1a;
-  border: 1px solid var(--accent-gold, #d4af37);
-  border-radius: 4px;
-  padding: 12px;
-  pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  font-family: 'Neue Haas Grotesk', 'Helvetica Neue', Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #e0e0e0;
-}
-
-#clarity-tooltip.visible {
-  opacity: 1;
-}
-
-.clarity-title {
-  font-weight: 700;
-  color: var(--accent-gold, #d4af37);
-  margin-bottom: 6px;
-  font-size: 14px;
-  text-transform: uppercase;
-}
-
-.clarity-desc {
-  margin-bottom: 8px;
-  white-space: pre-wrap;
-}
-
-.clarity-meta {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 12px;
-  color: #aaa;
-}
-
-.clarity-stats-header {
-  margin-top: 10px;
-  font-weight: 600;
-  color: #bbb;
-  text-transform: uppercase;
-  font-size: 11px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  padding-bottom: 2px;
-  margin-bottom: 4px;
-}
-
-.clarity-stat-grid {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 12px;
-}
-
-.clarity-stat-row {
-  display: contents;
-}
-
-.stat-val {
-  font-weight: 600;
-  text-align: right;
-}
-
-.stat-pos { color: #4caf50; }
-.stat-neg { color: #f44336; }
-
-.stat-cond-hint {
-  font-size: 10px;
-  color: #888;
-  margin-top: 4px;
-  font-style: italic;
-}
-
-.clarity-footer {
-  margin-top: 8px;
-  font-size: 10px;
-  color: #777;
-  font-style: italic;
-  text-align: right;
-}
-

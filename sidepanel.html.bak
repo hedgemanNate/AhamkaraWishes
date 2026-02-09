@@ -12,7 +12,6 @@
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-spinner"></div>
     <div class="loading-text">Oh User Mine...</div>
-    <div class="loading-status"></div>
   </div>
   <div class="app-container">
     <header>
@@ -34,73 +33,54 @@
           
           <!-- PANE 1: CRAFT/BUILD VIEW -->
           <div id="pane-w-craft" class="weapon-pane">
-            <!-- Step 1: SEARCH WEAPON -->
-            <div class="step-container">
-              <div class="step-label">1. SEARCH WEAPON</div>
-              <div class="weapon-search-row">
-                <input type="text" id="w-search-input" class="search-input" placeholder="Search weapon name...">
-                <div class="weapon-search-actions">
-                  <button id="w-history-toggle" class="weapon-search-btn" type="button">HISTORY</button>
-                  <button id="w-history-clear" class="weapon-search-btn weapon-search-btn-clear" type="button">CLEAR</button>
-                </div>
-              </div>
-              <div id="w-search-results"></div>
-            </div>
-
             <!-- Selected Weapon Header (Initially Hidden) -->
             <div id="w-selected-header" class="selected-weapon-header hidden">
-              <!-- Hero Banner Image with Overlaid Content -->
+              <!-- Hero Banner Image with Overlaid Flavor Text -->
               <div class="w-hero-banner">
                 <img id="w-selected-screenshot" src="" alt="Weapon Image" class="w-hero-image">
-                
-                <!-- New Overlay Container: Top Left -->
-                <div class="w-hero-info-top-left">
-                  <div id="w-selected-name" class="w-hero-name"></div>
-                  <div id="w-selected-type" class="w-hero-type"></div>
-                  
-                  <div class="w-hero-property-group">
-                    <div class="w-hero-label">DAMAGE TYPE</div>
-                    <div id="w-selected-damage" class="w-hero-damage"></div>
-                  </div>
-                  
-                  <div class="w-hero-property-group">
-                    <div class="w-hero-label">AMMO TYPE</div>
-                    <div id="w-selected-ammo" class="w-hero-ammo"></div>
-                  </div>
-                  
-                  <div class="w-hero-property-group">
-                    <div class="w-hero-label">DROPS FROM</div>
-                    <div id="w-selected-activity" class="w-hero-activity"></div>
-                  </div>
-                </div>
-
                 <!-- Flavor Text Overlay -->
                 <div id="w-selected-flavor" class="w-flavor-overlay"></div>
               </div>
               
-              <!-- Below Image: Properties + Drops From -->
+              <!-- Below Image: Left Column (Name, Type, Frame, Properties) + Right Column (Drops From) -->
               <div class="w-content-layout">
                 <!-- Left Column -->
                 <div class="w-left-column">
+                  <div class="w-name-section">
+                    <div id="w-selected-name" class="w-weapon-name"></div>
+                    <div id="w-selected-type" class="w-weapon-type"></div>
+                  </div>
                   
                   <div class="w-property-stack">
                     <div class="w-property-item">
+                      <div class="w-property-label">WEAPON FRAME</div>
                       <div id="w-selected-frame" class="w-property-value"></div>
+                    </div>
+                    
+                    <div class="w-property-item">
+                      <div class="w-property-label">DAMAGE TYPE</div>
+                      <div id="w-selected-damage" class="w-property-value"></div>
+                    </div>
+                    
+                    <div class="w-property-item">
+                      <div class="w-property-label">AMMO TYPE</div>
+                      <div id="w-selected-ammo" class="w-property-value"></div>
+                    </div>
+                    
+                    <div class="w-property-item">
+                      <div class="w-property-label">DROPS FROM</div>
+                      <div id="w-selected-activity" class="w-property-value"></div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <section class="stats-perks-section" id="w-stats-perks-section">
-                <div class="stats-column">
-                  <div class="stats-section-title">WEAPON STATS</div>
-                  <div id="w-stats-table" class="stat-bars"></div>
-                </div>
-                <div class="perks-column">
-                  <div class="perks-section-title">PERKS</div>
-                  <div id="w-perk-slots" class="perk-slots"></div>
-                </div>
-              </section>
+            <!-- Step 1: SEARCH WEAPON -->
+            <div class="step-container">
+              <div class="step-label">1. SEARCH WEAPON</div>
+              <input type="text" id="w-search-input" class="search-input" placeholder="Search weapon name...">
+              <div id="w-search-results"></div>
             </div>
           </div>
 
@@ -228,13 +208,6 @@
     </div>
   </div>
 
-  <script src="weapon-stats-clarity-api.js"></script>
-  <script src="weapon-stats-clarity-processor.js"></script>
-  <script src="weapon-stats-clarity-service.js"></script>
-  <script src="weapon-stats-api.js"></script>
-  <script src="weapon-stats-processor.js"></script>
-  <script src="weapon-stats-service.js"></script>
-  <script src="weapon-tooltip-clarity.js"></script>
   <script src="destiny-manifest.js"></script>
   <script src="manager.js"></script>
   <script src="weapon-manager.js"></script>

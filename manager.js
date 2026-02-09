@@ -1,6 +1,7 @@
 // --- IMPORTS ---
 // All manifest loading, caching, and searching handled by destiny-manifest.js
 // This file uses: ensureInventoryItemDefsReady, ensureEquippableItemSetDefsReady, searchArmorLocally, getArmorSetLookup, BUCKET_HASHES, BUNGIE_ROOT
+// Weapon system: weapon-manager.js (weaponManager global), weapon-ui.js (weaponUI global)
 
 // --- CONFIGURATION ---
 
@@ -20,31 +21,200 @@ const STATS = ['Weapons', 'Health', 'Class', 'Grenade', 'Super', 'Melee'];
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     const loadingOverlay = document.getElementById('loading-overlay');
+  const loadingText = loadingOverlay ? loadingOverlay.querySelector('.loading-text') : null;
+  const loadingStatus = loadingOverlay ? loadingOverlay.querySelector('.loading-status') : null;
     
-    setupTabs();
+    setupWeaponArmorTabs();
     
-    // Load manifest data ONCE at startup
-    Promise.all([
-        ensureInventoryItemDefsReady({ force: false }),
-        ensureEquippableItemSetDefsReady({ force: false }),
-        getArmorSetLookup()
-    ]).then(() => {
-        // Hide loading overlay once all manifest data is ready (fade animation is 1.3s)
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
+    const setLoadingText = (text) => {
+      if (loadingText) {
+        loadingText.textContent = text;
+      }
+    };
+
+    const setLoadingStatus = (text) => {
+      if (loadingStatus) {
+        loadingStatus.textContent = text || '';
+      }
+    };
+
+    const updateCacheStatus = () => {
+      const messages = [window.__weaponStatsStatus, window.__clarityStatus].filter(Boolean);
+      setLoadingStatus(messages.join(" "));
+    };
+
+    const runStartup = async () => {
+      try {
+        setLoadingText('Loading manifest...');
+        await Promise.all([
+          ensureInventoryItemDefsReady({ force: false }),
+          ensureEquippableItemSetDefsReady({ force: false }),
+          ensureCollectibleDefsReady({ force: false }),
+          ensureDamageTypeDefsReady({ force: false }),
+          getArmorSetLookup(),
+          window.__manifest__?.getDamageTypeDefs?.()
+        ]);
+
+        setLoadingText('Loading weapon stats...');
+        if (window.weaponStatsService?.initializeWeaponStats) {
+          await window.weaponStatsService.initializeWeaponStats();
         }
-        // Now load and display the wishlist UI
+        updateCacheStatus();
+
+        setLoadingText('Loading Clarity data...');
+        if (window.weaponStatsClarityService?.initializeWeaponStatsClarity) {
+          await window.weaponStatsClarityService.initializeWeaponStatsClarity();
+        }
+        
+        // Initialize Clarity tooltips
+        if (window.weaponTooltipClarity?.init) {
+            window.weaponTooltipClarity.init();
+        }
+        
+        updateCacheStatus();
+
+        setLoadingText('Initializing weapons and armor...');
+        await initializeWeaponSystem();
+
+        if (loadingOverlay) {
+          loadingOverlay.classList.add('hidden');
+        }
+        setLoadingStatus('');
         loadLists();
-    }).catch(err => {
+      } catch (err) {
         console.warn("[D2MANIFEST] Preflight failed:", err);
-        // Hide overlay even on error
         if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
+          loadingOverlay.classList.add('hidden');
         }
-        // Try to load UI anyway
         loadLists();
-    });
+      }
+    };
+
+    runStartup();
+
+    const clearCacheBtn = document.getElementById('clearCacheBtn');
+    if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', async () => {
+            const originalLabel = clearCacheBtn.textContent;
+            const originalLoadingText = loadingText ? loadingText.textContent : null;
+            const originalLoadingStatus = loadingStatus ? loadingStatus.textContent : null;
+            clearCacheBtn.disabled = true;
+            clearCacheBtn.textContent = 'Resetting...';
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('hidden');
+            }
+            if (loadingText) {
+                loadingText.textContent = 'Resetting manifest cache...';
+            }
+            setLoadingStatus('');
+
+            try {
+                if (window.weaponUI?.shutdownWeaponSearchWorker) {
+                    window.weaponUI.shutdownWeaponSearchWorker();
+                }
+
+                await deleteManifestCache({ retries: 3, delayMs: 700 });
+                if (window.__manifest__?.resetManifestMemory) {
+                    window.__manifest__.resetManifestMemory();
+                }
+
+                if (loadingText) {
+                    loadingText.textContent = 'Downloading manifest...';
+                }
+
+                await Promise.all([
+                    ensureInventoryItemDefsReady({ force: true }),
+                    ensureEquippableItemSetDefsReady({ force: true }),
+                    ensureCollectibleDefsReady({ force: true }),
+                ensureDamageTypeDefsReady({ force: true }),
+                ensureStatDefsReady({ force: true }),
+                getArmorSetLookup(),
+                window.__manifest__?.getDamageTypeDefs?.()
+                ]);
+
+              if (loadingText) {
+                loadingText.textContent = 'Refreshing weapon stats...';
+              }
+              if (window.weaponStatsService?.initializeWeaponStats) {
+                await window.weaponStatsService.initializeWeaponStats({ force: true });
+              }
+              updateCacheStatus();
+
+              if (loadingText) {
+                loadingText.textContent = 'Refreshing Clarity data...';
+              }
+              if (window.weaponStatsClarityService?.initializeWeaponStatsClarity) {
+                await window.weaponStatsClarityService.initializeWeaponStatsClarity({ force: true });
+              }
+              updateCacheStatus();
+
+                if (window.weaponUI?.resetWeaponSearchWorker) {
+                    window.weaponUI.resetWeaponSearchWorker();
+                }
+
+                clearCacheBtn.textContent = 'Reset Complete';
+                setTimeout(() => {
+                    clearCacheBtn.textContent = originalLabel;
+                }, 1500);
+            } catch (err) {
+                const message = err?.message || String(err);
+                console.warn('[D2MANIFEST] Reset cache failed:', err);
+                if (loadingText && message.includes('blocked')) {
+                    loadingText.textContent = 'Close other extension views and retry.';
+                }
+                clearCacheBtn.textContent = message.includes('blocked') ? 'Reset Blocked' : 'Reset Failed';
+                setTimeout(() => {
+                    clearCacheBtn.textContent = originalLabel;
+                }, 2000);
+            } finally {
+                if (loadingText && originalLoadingText) {
+                    loadingText.textContent = originalLoadingText;
+                }
+                if (loadingStatus && originalLoadingStatus !== null) {
+                  loadingStatus.textContent = originalLoadingStatus;
+                }
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                }
+                clearCacheBtn.disabled = false;
+            }
+        });
+    }
 });
+
+function deleteManifestCache({ retries = 3, delayMs = 700 } = {}) {
+    const attemptDelete = (remaining) =>
+        new Promise((resolve, reject) => {
+            let blocked = false;
+            let finished = false;
+            const req = indexedDB.deleteDatabase('d2_manifest_cache');
+
+            const retryTimer = setTimeout(() => {
+                if (finished) return;
+                if (blocked && remaining > 0) {
+                    attemptDelete(remaining - 1).then(resolve).catch(reject);
+                } else if (blocked) {
+                    reject(new Error('Manifest cache reset blocked by another tab.'));
+                }
+            }, delayMs);
+
+            req.onblocked = () => {
+                blocked = true;
+            };
+            req.onsuccess = () => {
+                finished = true;
+                clearTimeout(retryTimer);
+                resolve();
+            };
+            req.onerror = () => {
+                finished = true;
+                clearTimeout(retryTimer);
+                reject(req.error);
+            };
+        });
+
+    return attemptDelete(retries);
+}
 
 // --- LIVE UPDATE LISTENER ---
 // Triggers whenever data changes (e.g. from Content Script or internal save)
@@ -128,27 +298,112 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
   });
 }
 
-function setupTabs() {
+// --- WEAPON SYSTEM INITIALIZATION ---
+/**
+ * Verify weapon system modules are loaded and available.
+ * Tracks if window.weaponUI and window.weaponManager are defined.
+ *
+ * @returns {boolean} True if weapon system is ready
+ */
+function verifyWeaponScriptsLoaded() {
+    const weaponUIReady = window.weaponUI && typeof window.weaponUI.initWeaponCraft === 'function';
+    const weaponManagerReady = window.weaponManager && typeof window.weaponManager.loadWeaponWishes === 'function';
+    
+    if (weaponUIReady && weaponManagerReady) {
+        d2log('✅ Weapon system scripts verified', 'manager');
+        return true;
+    }
+    
+    if (!weaponUIReady) {
+        d2log('⚠️ weapon-ui module not found', 'manager');
+    }
+    if (!weaponManagerReady) {
+        d2log('⚠️ weapon-manager module not found', 'manager');
+    }
+    
+    return false;
+}
+
+/**
+ * Initialize weapon crafting system.
+ * Called after manifest data loads. Sets up UI listeners and loads saved weapons.
+ *
+ * @returns {Promise<void>}
+ */
+async function initializeWeaponSystem() {
+    try {
+        // Verify exports are available
+        if (!verifyWeaponScriptsLoaded()) {
+            d2log('⚠️ Weapon system unavailable, skipping initialization', 'manager');
+            return;
+        }
+        
+        // Initialize UI (attach event listeners)
+        await window.weaponUI.initWeaponCraft();
+        
+        // Load saved weapons into list view
+        await window.weaponUI.refreshWeaponList();
+        
+        // Set initial pane to craft view
+        window.weaponUI.togglePane('craft');
+        
+        d2log('✅ Weapon system initialized', 'manager');
+    } catch (error) {
+        d2log(`❌ Error initializing weapon system: ${error.message}`, 'manager', 'error');
+        // Continue gracefully - armor system should still work
+    }
+}
+
+/**
+ * Setup weapon/armor tab switching.
+ * Manages #tab-weapons and #tab-armor button states and pane visibility.
+ */
+function setupWeaponArmorTabs() {
     const btnWeapons = document.getElementById('tab-weapons');
     const btnArmor = document.getElementById('tab-armor');
     const viewWeapons = document.getElementById('view-weapons');
     const viewArmor = document.getElementById('view-armor');
 
+    if (!btnWeapons || !btnArmor || !viewWeapons || !viewArmor) {
+        d2log('⚠️ Tab elements not found in DOM', 'manager');
+        return;
+    }
+
+    // Click handler for weapons tab
     btnWeapons.addEventListener('click', () => {
+        // Update tab buttons
         btnWeapons.classList.add('active');
         btnArmor.classList.remove('active');
+        
+        // Update view visibility
         viewWeapons.classList.add('active-view');
         viewArmor.classList.remove('active-view');
-        loadLists();
+        
+        // Ensure weapon craft pane is visible and refresh list
+        if (verifyWeaponScriptsLoaded()) {
+            window.weaponUI.togglePane('craft');
+            window.weaponUI.refreshWeaponList().catch(err => {
+                d2log(`⚠️ Could not refresh weapon list: ${err.message}`, 'manager');
+            });
+        }
+        
+        d2log('✅ Switched to weapons tab', 'manager');
     });
 
+    // Click handler for armor tab
     btnArmor.addEventListener('click', () => {
+        // Update tab buttons
         btnArmor.classList.add('active');
         btnWeapons.classList.remove('active');
+        
+        // Update view visibility
         viewArmor.classList.add('active-view');
         viewWeapons.classList.remove('active-view');
+        
+        d2log('✅ Switched to armor tab', 'manager');
     });
 }
+
 
 // --- VIEWER LOGIC ---
 function loadLists() {

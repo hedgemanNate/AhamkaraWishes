@@ -19,11 +19,25 @@ let _invItemDefs = null;      // Map<stringHash, defObject>
 let _armorSetDefs = null;     // Map<setHash, setDefObject>
 let _nameIndex = null;        // Array<{h:string, n:string}>
 let _armorSetLookup = null;   // Map<setHash, {name, icon, description}>
+let _damageTypeDefs = null;   // Map<damageTypeHash, defObject>
+let _statDefs = null;         // Map<statHash, defObject>
+let _plugSetDefs = null;      // Map<plugSetHash, defObject>
 let _manifestVersion = null;  // string
 
 function d2log(...args) { console.log("[D2MANIFEST]", ...args); }
 function d2warn(...args) { console.warn("[D2MANIFEST]", ...args); }
 function d2err(...args) { console.error("[D2MANIFEST]", ...args); }
+
+function resetManifestMemory() {
+  _invItemDefs = null;
+  _armorSetDefs = null;
+  _nameIndex = null;
+  _armorSetLookup = null;
+  _damageTypeDefs = null;
+  _statDefs = null;
+  _plugSetDefs = null;
+  _manifestVersion = null;
+}
 
 // --- DATABASE OPERATIONS ---
 function openD2DB() {
@@ -215,6 +229,245 @@ async function ensureEquippableItemSetDefsReady({ force = false } = {}) {
   }
 }
 
+// Download DestinyCollectibleDefinition component JSON and cache it.
+async function ensureCollectibleDefsReady({ force = false } = {}) {
+  console.groupCollapsed("[D2MANIFEST] ensureCollectibleDefsReady");
+
+  try {
+    const meta = await fetchManifestMeta();
+    const liveVersion = meta.version;
+    d2log("Live manifest version:", liveVersion);
+
+    const cachedVersion = await idbGet("manifestVersion", STORE_META);
+    const haveCachedBlob = await idbGet("DestinyCollectibleDefinition", STORE_BLOBS);
+    const needsDownload = force || !haveCachedBlob || !cachedVersion || cachedVersion !== liveVersion;
+
+    if (!needsDownload) {
+      d2log("Collectible defs cache is up-to-date. Skipping download.");
+      return true;
+    }
+
+    const lang = "en";
+    const comp = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyCollectibleDefinition;
+    const world = meta.jsonWorldContentPaths?.[lang];
+
+    let path = comp || world;
+    if (!path) {
+      d2warn("Collectible defs not available in manifest meta; skipping.");
+      return false;
+    }
+    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
+    d2log("Downloading collectible definitions from:", path, "| component?", !!comp);
+
+    const r = await fetch(path, { headers: { "Accept": "application/json" } });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`Collectible defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
+    }
+    const buf = await r.arrayBuffer();
+    d2log("Downloaded bytes:", buf.byteLength);
+
+    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
+    const parsed = JSON.parse(text);
+
+    const collectibleDefs = comp ? parsed : parsed?.DestinyCollectibleDefinition;
+    if (!collectibleDefs) {
+      const keys = Object.keys(parsed || {});
+      d2warn("Parsed manifest keys (sample):", keys.slice(0, 30));
+      throw new Error("Downloaded JSON did not contain DestinyCollectibleDefinition data.");
+    }
+
+    await idbSet("DestinyCollectibleDefinition", collectibleDefs, STORE_BLOBS);
+    d2log("Collectible defs cache updated successfully.");
+    return true;
+  } catch (e) {
+    d2err("ensureCollectibleDefsReady FAILED:", e);
+    return false;
+  } finally {
+    console.groupEnd();
+  }
+}
+
+// Download DestinyDamageTypeDefinition component JSON and cache it.
+async function ensureDamageTypeDefsReady({ force = false } = {}) {
+  console.groupCollapsed("[D2MANIFEST] ensureDamageTypeDefsReady");
+
+  try {
+    const meta = await fetchManifestMeta();
+    const liveVersion = meta.version;
+    d2log("Live manifest version:", liveVersion);
+
+    const cachedVersion = await idbGet("manifestVersion", STORE_META);
+    const haveCachedBlob = await idbGet("DestinyDamageTypeDefinition", STORE_BLOBS);
+    const needsDownload = force || !haveCachedBlob || !cachedVersion || cachedVersion !== liveVersion;
+
+    if (!needsDownload) {
+      d2log("Damage type defs cache is up-to-date. Skipping download.");
+      return true;
+    }
+
+    const lang = "en";
+    const comp = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyDamageTypeDefinition;
+    const world = meta.jsonWorldContentPaths?.[lang];
+
+    let path = comp || world;
+    if (!path) {
+      d2warn("Damage type defs not available in manifest meta; skipping.");
+      return false;
+    }
+    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
+    d2log("Downloading damage type definitions from:", path, "| component?", !!comp);
+
+    const r = await fetch(path, { headers: { "Accept": "application/json" } });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`Damage type defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
+    }
+    const buf = await r.arrayBuffer();
+    d2log("Downloaded bytes:", buf.byteLength);
+
+    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
+    const parsed = JSON.parse(text);
+
+    const damageTypeDefs = comp ? parsed : parsed?.DestinyDamageTypeDefinition;
+    if (!damageTypeDefs) {
+      const keys = Object.keys(parsed || {});
+      d2warn("Parsed manifest keys (sample):", keys.slice(0, 30));
+      throw new Error("Downloaded JSON did not contain DestinyDamageTypeDefinition data.");
+    }
+
+    await idbSet("DestinyDamageTypeDefinition", damageTypeDefs, STORE_BLOBS);
+    _damageTypeDefs = null;
+    d2log("Damage type defs cache updated successfully.");
+    return true;
+  } catch (e) {
+    d2err("ensureDamageTypeDefsReady FAILED:", e);
+    return false;
+  } finally {
+    console.groupEnd();
+  }
+}
+
+// Download DestinyStatDefinition component JSON and cache it.
+async function ensureStatDefsReady({ force = false } = {}) {
+  console.groupCollapsed("[D2MANIFEST] ensureStatDefsReady");
+
+  try {
+    const meta = await fetchManifestMeta();
+    const liveVersion = meta.version;
+    d2log("Live manifest version:", liveVersion);
+
+    const cachedVersion = await idbGet("manifestVersion", STORE_META);
+    const haveCachedBlob = await idbGet("DestinyStatDefinition", STORE_BLOBS);
+    const needsDownload = force || !haveCachedBlob || !cachedVersion || cachedVersion !== liveVersion;
+
+    if (!needsDownload) {
+      d2log("Stat defs cache is up-to-date. Skipping download.");
+      return true;
+    }
+
+    const lang = "en";
+    const comp = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyStatDefinition;
+    const world = meta.jsonWorldContentPaths?.[lang];
+
+    let path = comp || world;
+    if (!path) {
+      d2warn("Stat defs not available in manifest meta; skipping.");
+      return false;
+    }
+    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
+    d2log("Downloading stat definitions from:", path, "| component?", !!comp);
+
+    const r = await fetch(path, { headers: { "Accept": "application/json" } });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`Stat defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
+    }
+    const buf = await r.arrayBuffer();
+    d2log("Downloaded bytes:", buf.byteLength);
+
+    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
+    const parsed = JSON.parse(text);
+
+    const statDefs = comp ? parsed : parsed?.DestinyStatDefinition;
+    if (!statDefs) {
+      const keys = Object.keys(parsed || {});
+      d2warn("Parsed manifest keys (sample):", keys.slice(0, 30));
+      throw new Error("Downloaded JSON did not contain DestinyStatDefinition data.");
+    }
+
+    await idbSet("DestinyStatDefinition", statDefs, STORE_BLOBS);
+    _statDefs = null;
+    d2log("Stat defs cache updated successfully.");
+    return true;
+  } catch (e) {
+    d2err("ensureStatDefsReady FAILED:", e);
+    return false;
+  } finally {
+    console.groupEnd();
+  }
+}
+
+// Download DestinyPlugSetDefinition component JSON and cache it.
+async function ensurePlugSetDefsReady({ force = false } = {}) {
+  console.groupCollapsed("[D2MANIFEST] ensurePlugSetDefsReady");
+
+  try {
+    const meta = await fetchManifestMeta();
+    const liveVersion = meta.version;
+    d2log("Live manifest version:", liveVersion);
+
+    const cachedVersion = await idbGet("manifestVersion", STORE_META);
+    const haveCachedBlob = await idbGet("DestinyPlugSetDefinition", STORE_BLOBS);
+    const needsDownload = force || !haveCachedBlob || !cachedVersion || cachedVersion !== liveVersion;
+
+    if (!needsDownload) {
+      d2log("Plug set defs cache is up-to-date. Skipping download.");
+      return true;
+    }
+
+    const lang = "en";
+    const comp = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyPlugSetDefinition;
+    const world = meta.jsonWorldContentPaths?.[lang];
+
+    let path = comp || world;
+    if (!path) {
+      d2warn("Plug set defs not available in manifest meta; skipping.");
+      return false;
+    }
+    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
+    d2log("Downloading plug set definitions from:", path, "| component?", !!comp);
+
+    const r = await fetch(path, { headers: { "Accept": "application/json" } });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`Plug set defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
+    }
+    const buf = await r.arrayBuffer();
+    d2log("Downloaded bytes:", buf.byteLength);
+
+    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
+    const parsed = JSON.parse(text);
+
+    const plugSetDefs = comp ? parsed : parsed?.DestinyPlugSetDefinition;
+    if (!plugSetDefs) {
+      const keys = Object.keys(parsed || {});
+      d2warn("Parsed manifest keys (sample):", keys.slice(0, 30));
+      throw new Error("Downloaded JSON did not contain DestinyPlugSetDefinition data.");
+    }
+
+    await idbSet("DestinyPlugSetDefinition", plugSetDefs, STORE_BLOBS);
+    _plugSetDefs = null;
+    d2log("Plug set defs cache updated successfully.");
+    return true;
+  } catch (e) {
+    d2err("ensurePlugSetDefsReady FAILED:", e);
+    return false;
+  } finally {
+    console.groupEnd();
+  }
+}
+
 // --- MEMORY LOADING ---
 async function loadInventoryItemDefsToMemory() {
   if (_invItemDefs) return _invItemDefs;
@@ -261,6 +514,105 @@ async function loadArmorSetDefsToMemory() {
   d2log("Loaded armor set defs into memory:", count);
   console.groupEnd();
   return _armorSetDefs;
+}
+
+async function loadDamageTypeDefsToMemory() {
+  if (_damageTypeDefs) return _damageTypeDefs;
+
+  console.groupCollapsed("[D2MANIFEST] loadDamageTypeDefsToMemory");
+  const blob = await idbGet("DestinyDamageTypeDefinition", STORE_BLOBS);
+  if (!blob) {
+    d2warn("No cached damage type defs found. Attempting download...");
+    const ok = await ensureDamageTypeDefsReady({ force: false });
+    if (!ok) {
+      console.groupEnd();
+      return null;
+    }
+  }
+  const defsObj = await idbGet("DestinyDamageTypeDefinition", STORE_BLOBS);
+  if (!defsObj) {
+    console.groupEnd();
+    return null;
+  }
+
+  const map = new Map();
+  let count = 0;
+  for (const [hashStr, def] of Object.entries(defsObj)) {
+    map.set(String(hashStr), def);
+    count++;
+  }
+  _damageTypeDefs = map;
+  d2log("Loaded damage type defs into memory:", count);
+  console.groupEnd();
+  return _damageTypeDefs;
+}
+
+async function loadStatDefsToMemory() {
+  if (_statDefs) return _statDefs;
+
+  console.groupCollapsed("[D2MANIFEST] loadStatDefsToMemory");
+  const blob = await idbGet("DestinyStatDefinition", STORE_BLOBS);
+  if (!blob) {
+    d2warn("No cached stat defs found. Attempting download...");
+    const ok = await ensureStatDefsReady({ force: false });
+    if (!ok) {
+      console.groupEnd();
+      return null;
+    }
+  }
+  const defsObj = await idbGet("DestinyStatDefinition", STORE_BLOBS);
+  if (!defsObj) {
+    console.groupEnd();
+    return null;
+  }
+
+  const map = new Map();
+  let count = 0;
+  for (const [hashStr, def] of Object.entries(defsObj)) {
+    map.set(String(hashStr), def);
+    count++;
+  }
+  _statDefs = map;
+  d2log("Loaded stat defs into memory:", count);
+  console.groupEnd();
+  return _statDefs;
+}
+
+async function loadPlugSetDefsToMemory() {
+  if (_plugSetDefs) return _plugSetDefs;
+
+  console.groupCollapsed("[D2MANIFEST] loadPlugSetDefsToMemory");
+  const blob = await idbGet("DestinyPlugSetDefinition", STORE_BLOBS);
+  if (!blob) {
+    d2warn("No cached plug set defs found. Attempting download...");
+    const ok = await ensurePlugSetDefsReady({ force: false });
+    if (!ok) {
+      console.groupEnd();
+      return null;
+    }
+  }
+  const defsObj = await idbGet("DestinyPlugSetDefinition", STORE_BLOBS);
+  if (!defsObj) {
+    console.groupEnd();
+    return null;
+  }
+
+  const map = new Map();
+  let count = 0;
+  for (const [hashStr, def] of Object.entries(defsObj)) {
+    map.set(String(hashStr), def);
+    count++;
+  }
+  _plugSetDefs = map;
+  d2log("Loaded plug set defs into memory:", count);
+  console.groupEnd();
+  return _plugSetDefs;
+}
+
+function normalizeStatName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z]/g, "");
 }
 
 // --- LOOKUP TABLES ---
@@ -375,14 +727,15 @@ async function buildNameIndexIfNeeded() {
   const defs = await loadInventoryItemDefsToMemory();
   const idx = [];
   let scanned = 0;
+  const YIELD_EVERY = 5000;
 
   for (const [h, def] of defs.entries()) {
     const name = def?.displayProperties?.name;
     if (!name) continue;
     idx.push({ h, n: name.toLowerCase() });
     scanned++;
-    if (scanned % 50000 === 0) {
-      await new Promise(r => setTimeout(r, 0));
+    if (scanned % YIELD_EVERY === 0) {
+      await new Promise((r) => setTimeout(r, 0));
     }
   }
 
@@ -576,10 +929,17 @@ async function searchWeaponsLocally(query, bucketHash = null) {
 
   // Filter by weapon criteria
   const candidates = [];
-  for (const h of hits) {
-    const def = defs.get(String(h));
+  const hitsSet = new Set(hits.map((h) => String(h)));
+  for (const [hash, def] of defs.entries()) {
     if (!isRealWeaponDef(def)) continue;
     if (bucketHash && def.inventory?.bucketTypeHash !== bucketHash) continue;
+
+    const name = def.displayProperties?.name || "";
+    const typeName = def.itemTypeDisplayName || "";
+    const matchesName = hitsSet.has(String(hash));
+    const matchesType = typeName.toLowerCase().includes(q);
+
+    if (!matchesName && !matchesType) continue;
     candidates.push(def);
     if (candidates.length >= 100) break;
   }
@@ -600,9 +960,15 @@ async function searchWeaponsLocally(query, bucketHash = null) {
  * Weapons have itemCategoryHash 1 (Weapon), are not exotic duplicates, etc.
  */
 function isRealWeaponDef(def) {
-  if (!def || !def.itemCategory) return false;
+  if (!def) return false;
+  const categories = Array.isArray(def.itemCategoryHashes)
+    ? def.itemCategoryHashes
+    : Array.isArray(def.itemCategory)
+      ? def.itemCategory
+      : null;
+  if (!categories) return false;
   // Item category 1 = Weapon
-  if (!def.itemCategory.some((h) => h === 1)) return false;
+  if (!categories.some((h) => h === 1)) return false;
   // Skip quest items, dummy items, etc.
   if (def.displayProperties?.name?.includes("DEPRECATED")) return false;
   if (!def.inventory || !def.inventory.bucketTypeHash) return false;
@@ -632,41 +998,114 @@ async function getWeaponStats(weaponHash) {
   // Extract stats from definition
   const stats = {};
   const invStats = def.stats?.stats || {};
+  const statDefs = await loadStatDefsToMemory();
+
+  const nameToKey = {
+    impact: "impact",
+    range: "range",
+    accuracy: "accuracy",
+    stability: "stability",
+    handling: "handling",
+    reloadspeed: "reload",
+    reload: "reload",
+    magazine: "magazine",
+    blastradius: "blastRadius",
+    velocity: "velocity",
+    chargetime: "chargeTime",
+    drawtime: "drawTime",
+    shieldduration: "shieldDuration",
+    guardresistance: "guardResistance",
+    guardefficiency: "guardEfficiency",
+    guardendurance: "guardEndurance",
+    zoom: "zoom",
+    aimassist: "aimAssistance",
+    aimassistance: "aimAssistance",
+    recoildirection: "recoilDirection",
+  };
+
+  const hashToLabel = {
+    4284049017: "Impact",
+    1240592695: "Range",
+    155624089: "Stability",
+    943549884: "Handling",
+    4188031246: "Reload Speed",
+    3871231066: "Magazine",
+    2996146976: "Zoom",
+    1345867579: "Aim Assist",
+    4043523819: "Recoil Direction",
+  };
+
+  const statsList = [];
+
   for (const [statHash, stat] of Object.entries(invStats)) {
     const statDef = def.stats?.stats[statHash];
     if (!statDef) continue;
+
+    if (statDefs) {
+      const defEntry = statDefs.get(String(statHash));
+      const displayName = defEntry?.displayProperties?.name || defEntry?.name || "";
+      const normalized = normalizeStatName(displayName);
+      const key = nameToKey[normalized];
+      if (key) {
+        stats[key] = statDef.value;
+        statsList.push({ key, name: displayName || key, value: statDef.value });
+        continue;
+      }
+      if (displayName) {
+        statsList.push({ key: null, name: displayName, value: statDef.value });
+        continue;
+      }
+    }
 
     // Map common stat hashes to friendly names
     switch (parseInt(statHash)) {
       case 4284049017:
         stats.impact = statDef.value;
+        statsList.push({ key: "impact", name: hashToLabel[4284049017], value: statDef.value });
         break; // Impact
       case 1240592695:
         stats.range = statDef.value;
+        statsList.push({ key: "range", name: hashToLabel[1240592695], value: statDef.value });
         break; // Range
       case 155624089:
         stats.stability = statDef.value;
+        statsList.push({ key: "stability", name: hashToLabel[155624089], value: statDef.value });
         break; // Stability
       case 943549884:
         stats.handling = statDef.value;
+        statsList.push({ key: "handling", name: hashToLabel[943549884], value: statDef.value });
         break; // Handling
       case 4188031246:
         stats.reload = statDef.value;
+        statsList.push({ key: "reload", name: hashToLabel[4188031246], value: statDef.value });
         break; // Reload Speed
       case 3871231066:
         stats.magazine = statDef.value;
+        statsList.push({ key: "magazine", name: hashToLabel[3871231066], value: statDef.value });
         break; // Magazine
       case 2996146976:
         stats.zoom = statDef.value;
+        statsList.push({ key: "zoom", name: hashToLabel[2996146976], value: statDef.value });
         break; // Zoom
       case 1345867579:
         stats.aimAssistance = statDef.value;
+        statsList.push({ key: "aimAssistance", name: hashToLabel[1345867579], value: statDef.value });
         break; // Aim Assistance
       case 4043523819:
         stats.recoilDirection = statDef.value;
+        statsList.push({ key: "recoilDirection", name: hashToLabel[4043523819], value: statDef.value });
         break; // Recoil Direction
+      default:
+        statsList.push({
+          key: null,
+          name: hashToLabel[Number(statHash)] || `Stat ${statHash}`,
+          value: statDef.value,
+        });
+        break;
     }
   }
+
+  stats._list = statsList;
 
   return stats;
 }
@@ -690,6 +1129,40 @@ async function getWeaponSockets(weaponHash) {
 }
 
 /**
+ * Get detailed weapon socket information including categories.
+ * Contains both socket entries and the category definitions needed for UI grouping.
+ *
+ * @param {number} weaponHash - Weapon inventory hash
+ * @returns {Object} { sockets: Array, socketCategories: Array }
+ */
+async function getDetailedWeaponSockets(weaponHash) {
+  const defs = await loadInventoryItemDefsToMemory();
+  const def = defs.get(String(weaponHash));
+  
+  // Return empty structure if not found or no sockets
+  if (!def || !def.sockets || !def.sockets.socketEntries) {
+    return { sockets: [], socketCategories: [] };
+  }
+
+  // Map sockets with all necessary internal fields
+  const sockets = def.sockets.socketEntries.map((socket, index) => ({
+    socketIndex: index,
+    socketTypeHash: socket.socketTypeHash,
+    singleInitialItemHash: socket.singleInitialItemHash,
+    reusablePlugSetHash: socket.reusablePlugSetHash,
+    randomizedPlugSetHash: socket.randomizedPlugSetHash,
+    plugSources: socket.plugSources,
+    preventInitializationOnVendorPurchase: socket.preventInitializationOnVendorPurchase,
+    hidePerksInItemTooltip: socket.hidePerksInItemTooltip
+  }));
+
+  // Pass categories through directly
+  const socketCategories = def.sockets.socketCategories || [];
+
+  return { sockets, socketCategories };
+}
+
+/**
  * Get available perks for a specific weapon socket.
  *
  * @param {number} weaponHash - Weapon inventory hash
@@ -702,25 +1175,34 @@ async function getSocketPerks(weaponHash, socketIndex) {
   if (!def || !def.sockets || !def.sockets.socketEntries[socketIndex]) return [];
 
   const socket = def.sockets.socketEntries[socketIndex];
-  const plugSetHash = socket.reusablePlugSetHash;
+  const directPlugItems = Array.isArray(socket.reusablePlugItems) ? socket.reusablePlugItems : [];
+  let plugItems = directPlugItems;
 
-  // Load plug set definition
-  const plugSetDef = defs.get(String(plugSetHash));
-  if (!plugSetDef || !plugSetDef.reusablePlugItems) return [];
+  if (plugItems.length === 0) {
+    const plugSetHash = socket.reusablePlugSetHash || socket.randomizedPlugSetHash;
+    if (!plugSetHash) return [];
+
+    const plugSetDefs = await loadPlugSetDefsToMemory();
+    const plugSetDef = plugSetDefs?.get(String(plugSetHash));
+    if (!plugSetDef || !Array.isArray(plugSetDef.reusablePlugItems)) return [];
+    plugItems = plugSetDef.reusablePlugItems;
+  }
 
   const perks = [];
-  for (const plugItem of plugSetDef.reusablePlugItems) {
+  for (const plugItem of plugItems) {
     const perkHash = plugItem.plugItemHash;
     const perkDef = defs.get(String(perkHash));
     if (!perkDef) continue;
 
     const perkName = perkDef.displayProperties?.name || "Unknown Perk";
-    const statBonus = PERK_STAT_BONUSES[perkHash] || {};
+    const statBonus = window.weaponStatsService?.getStaticBonuses
+      ? window.weaponStatsService.getStaticBonuses(perkHash)
+      : PERK_STAT_BONUSES[perkHash] || {};
 
     perks.push({
       perkHash,
       perkName,
-      icon: perkDef.displayProperties?.icon || "",
+      icon: perkDef.displayProperties?.icon ? `${BUNGIE_ROOT}${perkDef.displayProperties.icon}` : "",
       statBonus,
     });
   }
@@ -740,6 +1222,15 @@ async function getPerkName(perkHash) {
   return def?.displayProperties?.name || "Unknown Perk";
 }
 
+/**
+ * Get damage type definitions.
+ *
+ * @returns {Promise<Map>} Map of damageTypeHash -> def
+ */
+async function getDamageTypeDefs() {
+  return loadDamageTypeDefsToMemory();
+}
+
 // --- EXPORTS ---
 // For use in other modules
 // All functions and constants are globally available:
@@ -748,6 +1239,10 @@ async function getPerkName(perkHash) {
 // - PERK_STAT_BONUSES
 // - ensureInventoryItemDefsReady()
 // - ensureEquippableItemSetDefsReady()
+// - ensureCollectibleDefsReady()
+// - ensureDamageTypeDefsReady()
+// - resetManifestMemory()
+// - ensurePlugSetDefsReady()
 // - searchArmorLocally()
 // - searchWeaponsLocally()
 // - getArmorSetLookup()
@@ -756,6 +1251,7 @@ async function getPerkName(perkHash) {
 // - getWeaponSockets()
 // - getSocketPerks()
 // - getPerkName()
+// - getDamageTypeDefs()
 
 // --- GLOBAL NAMESPACE ---
 // Expose all manifest functions under window.__manifest__ for easy access
@@ -763,6 +1259,11 @@ window.__manifest__ = {
   // Initialization
   ensureInventoryItemDefsReady,
   ensureEquippableItemSetDefsReady,
+  ensureCollectibleDefsReady,
+  ensureDamageTypeDefsReady,
+  ensureStatDefsReady,
+  ensurePlugSetDefsReady,
+  resetManifestMemory,
   
   // Armor functions
   searchArmorLocally,
@@ -774,14 +1275,24 @@ window.__manifest__ = {
   searchWeaponsLocally,
   getWeaponStats,
   getWeaponSockets,
+  getDetailedWeaponSockets,
   getSocketPerks,
   getPerkName,
+  getDamageTypeDefs,
+  loadPlugSetDefsToMemory,
+  loadStatDefsToMemory,
   WEAPON_BUCKET_HASHES,
   PERK_STAT_BONUSES,
   
   // Manifest data (will be populated after loading)
   get DestinyInventoryItemDefinition() {
     return _invItemDefs || new Map();
+  },
+  get DestinyDamageTypeDefinition() {
+    return _damageTypeDefs || new Map();
+  },
+  get DestinyStatDefinition() {
+    return _statDefs || new Map();
   }
 };
 

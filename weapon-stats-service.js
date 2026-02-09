@@ -3,7 +3,7 @@
    ============================================================ */
 
 const WEAPON_STATS_CACHE_KEY = "weapon-stats-cache-v1";
-const WEAPON_STATS_CACHE_VERSION = 1;
+const WEAPON_STATS_CACHE_VERSION = 2;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 let weaponStatsCache = null;
@@ -69,6 +69,8 @@ function buildFallbackFromManifest() {
       static: { ...stats },
       conditional: {},
       isConditional: false,
+      isEnhancedBungie: false,
+      isEnhanced: false,
     };
   });
 
@@ -125,12 +127,17 @@ async function initializeWeaponStats({ force = false } = {}) {
               static: {},
               conditional: {},
               isConditional: !!clarityEntry.isConditional,
+              isEnhancedBungie: false,
+              isEnhanced: !!clarityEntry.isEnhanced,
               clarity: clarityEntry,
             };
             return;
           }
 
           perkMap[hashStr].clarity = clarityEntry;
+          if (clarityEntry.isEnhanced !== undefined) {
+            perkMap[hashStr].isEnhanced = !!clarityEntry.isEnhanced;
+          }
           if (clarityEntry.description && !perkMap[hashStr].description) {
             perkMap[hashStr].description = clarityEntry.description;
           }
@@ -214,7 +221,7 @@ function buildPerkVariants(perkList) {
   if (!hasDuplicates) {
     list.forEach((perk) => {
       const perkData = getPerkData(perk?.perkHash);
-      perk.isEnhanced = !!perkData?.clarity?.isEnhanced;
+      perk.isEnhanced = !!perkData?.isEnhanced;
     });
     return { regular: list, enhanced: list, hasEnhanced: false };
   }
@@ -227,7 +234,7 @@ function buildPerkVariants(perkList) {
     if (group.length < 2) return;
     group.forEach((perk) => {
       const perkData = getPerkData(perk?.perkHash);
-      const isEnhanced = !!perkData?.clarity?.isEnhanced;
+      const isEnhanced = !!perkData?.isEnhanced;
       perk.isEnhanced = isEnhanced;
       if (isEnhanced) {
         enhanced.push(perk);

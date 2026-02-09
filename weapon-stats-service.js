@@ -194,6 +194,57 @@ function isConditionalPerk(perkHash) {
   return !!perk?.isConditional;
 }
 
+function buildPerkVariants(perkList) {
+  const list = Array.isArray(perkList) ? perkList.slice() : [];
+  if (list.length === 0) {
+    return { regular: [], enhanced: [], hasEnhanced: false };
+  }
+
+  const groups = new Map();
+  list.forEach((perk) => {
+    const name = String(perk?.perkName || "").trim();
+    if (!groups.has(name)) {
+      groups.set(name, []);
+    }
+    groups.get(name).push(perk);
+  });
+
+  const hasDuplicates = Array.from(groups.values()).some((group) => group.length > 1);
+
+  if (!hasDuplicates) {
+    list.forEach((perk) => {
+      const perkData = getPerkData(perk?.perkHash);
+      perk.isEnhanced = !!perkData?.clarity?.isEnhanced;
+    });
+    return { regular: list, enhanced: list, hasEnhanced: false };
+  }
+
+  const regular = [];
+  let enhanced = [];
+  let hasEnhanced = false;
+
+  groups.forEach((group) => {
+    if (group.length < 2) return;
+    group.forEach((perk) => {
+      const perkData = getPerkData(perk?.perkHash);
+      const isEnhanced = !!perkData?.clarity?.isEnhanced;
+      perk.isEnhanced = isEnhanced;
+      if (isEnhanced) {
+        enhanced.push(perk);
+        hasEnhanced = true;
+      } else {
+        regular.push(perk);
+      }
+    });
+  });
+
+  if (!hasEnhanced) {
+    enhanced = regular.slice();
+  }
+
+  return { regular, enhanced, hasEnhanced };
+}
+
 window.weaponStatsService = {
   initializeWeaponStats,
   clearWeaponStatsCache,
@@ -202,4 +253,5 @@ window.weaponStatsService = {
   getStaticBonuses,
   getConditionalBonuses,
   isConditionalPerk,
+  buildPerkVariants,
 };

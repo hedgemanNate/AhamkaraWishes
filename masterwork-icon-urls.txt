@@ -1,0 +1,11 @@
+Range		
+Stability		
+Handling		
+Reload Speed		
+Aim Assistance		
+Recoil Direction		
+Blast Radius		
+Charge Time		
+Impact		
+Speed		
+Draw Time		

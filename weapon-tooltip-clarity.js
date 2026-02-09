@@ -211,6 +211,7 @@ window.weaponTooltipClarity = {
             }
         }
 
+        html += `<div class="clarity-footer">data by Clarity</div>`;
         html += `</div>`;
         return html;
     }

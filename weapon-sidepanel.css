@@ -1167,3 +1167,11 @@
   font-style: italic;
 }
 
+.clarity-footer {
+  margin-top: 8px;
+  font-size: 10px;
+  color: #777;
+  font-style: italic;
+  text-align: right;
+}
+

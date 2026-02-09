@@ -29,6 +29,12 @@ window.weaponTooltipClarity = {
      * @param {number|string} perkHash - The hash of the perk to display.
      */
     handleHover(targetEl, perkHash) {
+        if (!this.tooltipEl) {
+            this.init();
+        }
+        if (!this.tooltipEl || !perkHash) {
+            return;
+        }
         // Clear any pending hide timer to prevent flickering if moving quickly between items
         if (this.hideTimer) {
             clearTimeout(this.hideTimer);
@@ -75,7 +81,10 @@ window.weaponTooltipClarity = {
      * Fetch data, build content, and display the tooltip.
      */
     async showTooltip(targetEl, perkHash) {
-        if (!perkHash || !window.weaponStatsService) return;
+        if (!this.tooltipEl) {
+            this.init();
+        }
+        if (!this.tooltipEl || !perkHash || !window.weaponStatsService) return;
 
         const perkData = window.weaponStatsService.getPerkData(perkHash);
         
@@ -88,6 +97,7 @@ window.weaponTooltipClarity = {
         // Show
         this.tooltipEl.style.display = 'block';
         // Force reflow for transition
+        void this.tooltipEl.offsetHeight;
         requestAnimationFrame(() => {
             this.tooltipEl.classList.add('visible');
         });

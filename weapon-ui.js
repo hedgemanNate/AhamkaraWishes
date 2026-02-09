@@ -1034,17 +1034,13 @@ function updateSocketDisplayIcon(socketIndex) {
 
   const perks = weaponState.socketPerksMap[socketIndex] || [];
   const selectedHash = weaponState.selectedPerks[socketIndex];
-  
-  let activePerk = perks.find(p => p.perkHash === selectedHash);
-  
-  if (!activePerk) {
-     const socket = weaponState.currentWeapon.sockets.find(s => s.socketIndex === socketIndex);
-     if (socket && socket.singleInitialItemHash) {
-         activePerk = perks.find(p => p.perkHash === socket.singleInitialItemHash);
-     }
+
+  if (!selectedHash) {
+    displayEl.style.backgroundImage = 'none';
+    return;
   }
   
-  if (!activePerk && perks.length > 0) activePerk = perks[0];
+  let activePerk = perks.find(p => p.perkHash === selectedHash);
 
   if (activePerk && activePerk.icon) {
     const safeIcon = activePerk.icon.startsWith('http') ? activePerk.icon : `https://www.bungie.net${activePerk.icon}`;

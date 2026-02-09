@@ -54,44 +54,19 @@ const MASTERWORK_OPTIONS_BY_TYPE = {
 // Cache stat icons for masterwork labels (keyed by normalized stat name)
 const MASTERWORK_ICON_CACHE = {};
 
-// Local SVG icons for masterwork stats
-const MASTERWORK_ICON_PATHS = {
-  "Range": "icons/masterwork/range.svg",
-  "Stability": "icons/masterwork/stability.svg",
-  "Handling": "icons/masterwork/handling.svg",
-  "Reload Speed": "icons/masterwork/reload-speed.svg",
-  "Aim Assistance": "icons/masterwork/aim-assistance.svg",
-  "Recoil Direction": "icons/masterwork/recoil-direction.svg",
-  "Blast Radius": "icons/masterwork/blast-radius.svg",
-  "Charge Time": "icons/masterwork/charge-time.svg",
-  "Impact": "icons/masterwork/impact.svg",
-  "Speed": "icons/masterwork/speed.svg",
-  "Draw Time": "icons/masterwork/draw-time.svg",
+const MASTERWORK_STAT_HASH_BY_LABEL = {
+  "Range": [1240592695],
+  "Stability": [155624089],
+  "Handling": [943549884],
+  "Reload Speed": [4188031367, 4188031246],
+  "Aim Assistance": [1345867579],
+  "Recoil Direction": [2715839340, 4043523819],
+  "Blast Radius": [3614673599],
+  "Charge Time": [2961396640],
+  "Impact": [4043523819, 4284049017],
+  "Speed": [2837207746],
+  "Draw Time": [447667954],
 };
-
-// Short labels reused for text and fallback icon rendering
-const MASTERWORK_SHORT_LABELS = {
-  "Range": "RNG",
-  "Stability": "STB",
-  "Handling": "HAN",
-  "Reload Speed": "RLD",
-  "Aim Assistance": "AA",
-  "Recoil Direction": "RCL",
-  "Blast Radius": "BLST",
-  "Charge Time": "CHG",
-  "Impact": "IMP",
-  "Speed": "SPD",
-  "Draw Time": "DRW",
-};
-
-function buildTextIconSvg(shortText) {
-  const safeText = (shortText || '').substring(0, 4);
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'>` +
-    `<rect x='4' y='4' rx='10' ry='10' width='56' height='56' fill='#1f2937' stroke='#a5f3fc' stroke-width='3'/>` +
-    `<text x='32' y='38' text-anchor='middle' font-family='Inter, Arial, sans-serif' font-size='18' fill='#e5e7eb' font-weight='700'>${safeText}</text>` +
-    `</svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
 
 let weaponCraftInitialized = false;
 
@@ -788,58 +763,51 @@ function renderWeaponSockets() {
   d2log(`✅ Rendered 7 socket columns`, 'weapon-ui');
 }
 
-function getMasterworkIconUrl(label) {
-  const path = MASTERWORK_ICON_PATHS[label];
-  if (!path) return null;
-  if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
-    return chrome.runtime.getURL(path);
-  }
-  return path;
-}
-
 function resolveMasterworkIcon(label, statDefs) {
   const normalized = normalizeStatName(label);
-  if (MASTERWORK_ICON_CACHE.hasOwnProperty(normalized) && MASTERWORK_ICON_CACHE[normalized]) {
-    return MASTERWORK_ICON_CACHE[normalized];
-  }
-
-  const localIcon = getMasterworkIconUrl(label);
-  if (localIcon) {
-    MASTERWORK_ICON_CACHE[normalized] = localIcon;
-    return localIcon;
-  }
-
+  const cached = MASTERWORK_ICON_CACHE[normalized];
   const defs = statDefs || window.__manifest__?.DestinyStatDefinition;
-  if (!defs || typeof defs.values !== 'function' || (defs.size !== undefined && defs.size === 0)) {
-    return '';
+  const statHashes = MASTERWORK_STAT_HASH_BY_LABEL[label] || [];
+
+  if (cached && !defs) {
+    return cached;
   }
 
-  for (const def of defs.values()) {
-    const name = def?.displayProperties?.name;
-    if (!name) continue;
-    if (normalizeStatName(name) === normalized) {
-      const rawIcon = def.displayProperties?.icon || '';
+  if (defs && typeof defs.get === 'function') {
+    for (const hash of statHashes) {
+      const def = defs.get(String(hash));
+      const rawIcon = def?.displayProperties?.icon;
       if (rawIcon) {
-        const iconUrl = resolveBungieUrl(rawIcon);
-        MASTERWORK_ICON_CACHE[normalized] = iconUrl;
-        return iconUrl;
+        MASTERWORK_ICON_CACHE[normalized] = rawIcon;
+        return rawIcon;
       }
-      break;
     }
   }
 
-  // Fallback: generate a tiny SVG icon using the short label
-  const fallback = buildTextIconSvg(MASTERWORK_SHORT_LABELS[label] || label.substring(0, 3).toUpperCase());
-  MASTERWORK_ICON_CACHE[normalized] = fallback;
-  return fallback;
+  if (defs && typeof defs.values === 'function' && !(defs.size !== undefined && defs.size === 0)) {
+    for (const def of defs.values()) {
+      const name = def?.displayProperties?.name;
+      if (!name) continue;
+      if (normalizeStatName(name) === normalized) {
+        const rawIcon = def.displayProperties?.icon || '';
+        if (rawIcon) {
+          MASTERWORK_ICON_CACHE[normalized] = rawIcon;
+          return rawIcon;
+        }
+        break;
+      }
+    }
+  }
+
+  return cached || '';
 }
 
-function buildMasterworkOptionsFromCache(weaponType) {
+function buildMasterworkOptionsFromCache(weaponType, statDefs) {
   const labels = MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Auto Rifle"];
   return labels.map((label, idx) => ({
     perkHash: `masterwork_${idx}`,
     perkName: label,
-    icon: resolveMasterworkIcon(label),
+    icon: resolveMasterworkIcon(label, statDefs),
     isMasterwork: true
   }));
 }
@@ -853,11 +821,21 @@ async function loadMasterworkOptionsForCurrentWeapon() {
 
   const weaponType = weaponState.currentWeapon.type || "Auto Rifle";
   const labels = MASTERWORK_OPTIONS_BY_TYPE[weaponType] || MASTERWORK_OPTIONS_BY_TYPE["Auto Rifle"];
+  let statDefs = null;
 
   // Hydrate icon cache from stat definitions if available
   if (window.__manifest__?.loadStatDefsToMemory) {
     try {
-      const statDefs = await window.__manifest__.loadStatDefsToMemory();
+      statDefs = await window.__manifest__.loadStatDefsToMemory();
+      const isEmpty = !statDefs || (statDefs.size !== undefined && statDefs.size === 0);
+
+      if (isEmpty && window.__manifest__?.ensureStatDefsReady) {
+        const ok = await window.__manifest__.ensureStatDefsReady({ force: true });
+        if (ok) {
+          statDefs = await window.__manifest__.loadStatDefsToMemory();
+        }
+      }
+
       labels.forEach((label) => {
         resolveMasterworkIcon(label, statDefs);
       });
@@ -866,7 +844,7 @@ async function loadMasterworkOptionsForCurrentWeapon() {
     }
   }
 
-  weaponState.socketPerksMap["masterwork"] = buildMasterworkOptionsFromCache(weaponType);
+  weaponState.socketPerksMap["masterwork"] = buildMasterworkOptionsFromCache(weaponType, statDefs);
 }
 
 /**
@@ -921,7 +899,7 @@ function updateMasterworkDisplayIcon() {
   let activeOption = selectedLabel ? options.find(o => o.perkName === selectedLabel) : options[0];
   
   if (activeOption) {
-    const iconUrl = activeOption.icon ? resolveBungieUrl(activeOption.icon) : '';
+    const iconUrl = activeOption.icon || '';
     displayEl.title = activeOption.perkName;
 
     if (iconUrl) {
@@ -935,14 +913,7 @@ function updateMasterworkDisplayIcon() {
       displayEl.style.justifyContent = 'center';
     } else {
       displayEl.style.backgroundImage = 'none';
-      displayEl.textContent = MASTERWORK_SHORT_LABELS[activeOption.perkName]
-        || activeOption.perkName.substring(0, 3).toUpperCase();
-      displayEl.style.display = 'flex';
-      displayEl.style.alignItems = 'center';
-      displayEl.style.justifyContent = 'center';
-      displayEl.style.fontSize = '9px';
-      displayEl.style.color = '#fff';
-      displayEl.style.fontWeight = '600';
+      displayEl.textContent = '';
     }
   } else {
     displayEl.style.backgroundImage = 'none';
@@ -1012,8 +983,7 @@ function renderMasterworkOptions() {
     }
 
     if (option.icon) {
-      const iconUrl = resolveBungieUrl(option.icon);
-      btn.style.backgroundImage = `url('${iconUrl}')`;
+      btn.style.backgroundImage = `url('${option.icon}')`;
       btn.style.backgroundSize = 'contain';
       btn.style.backgroundRepeat = 'no-repeat';
       btn.style.backgroundPosition = 'center';

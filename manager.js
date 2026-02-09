@@ -65,6 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.weaponStatsClarityService?.initializeWeaponStatsClarity) {
           await window.weaponStatsClarityService.initializeWeaponStatsClarity();
         }
+        
+        // Initialize Clarity tooltips
+        if (window.weaponTooltipClarity?.init) {
+            window.weaponTooltipClarity.init();
+        }
+        
         updateCacheStatus();
 
         setLoadingText('Initializing weapons and armor...');

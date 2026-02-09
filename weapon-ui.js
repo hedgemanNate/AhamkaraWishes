@@ -755,6 +755,20 @@ function renderWeaponSockets() {
     if (socket || isMasterworkAvailable) {
       const socketIndex = socket ? socket.socketIndex : null;
       el.addEventListener('click', () => selectSocketColumn(colIndex, socketIndex));
+
+      // Tooltip listener for socket display (Only for regular sockets for now)
+      const iconDisplay = el.querySelector('.selector-icon');
+      if (iconDisplay && window.weaponTooltipClarity && socket) {
+          iconDisplay.addEventListener('mouseenter', () => {
+              const selectedHash = weaponState.selectedPerks[socket.socketIndex];
+              if (selectedHash) {
+                   window.weaponTooltipClarity.handleHover(iconDisplay, selectedHash);
+              }
+          });
+          iconDisplay.addEventListener('mouseleave', () => {
+              window.weaponTooltipClarity.handleLeave();
+          });
+      }
     }
 
     selectorRow.appendChild(el);
@@ -1063,6 +1077,16 @@ function renderPerkOptions(socketIndex) {
       btn.style.backgroundImage = `url('${safeIcon}')`;
     }
     btn.title = perk.perkName;
+
+    // Add tooltip listeners
+        if (window.weaponTooltipClarity) {
+         btn.addEventListener('mouseenter', () => {
+           window.weaponTooltipClarity.handleHover(btn, perk.perkHash);
+         });
+         btn.addEventListener('mouseleave', () => {
+           window.weaponTooltipClarity.handleLeave();
+         });
+        }
 
     btn.addEventListener('click', () => {
        weaponState.selectedPerks[socketIndex] = perk.perkHash;

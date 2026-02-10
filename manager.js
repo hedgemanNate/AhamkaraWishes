@@ -1,3 +1,46 @@
+// ========== MAINTENANCE COVER LOGIC ========== //
+
+// Expose globally for use in manifest and other modules
+window.showMaintenanceCover = showMaintenanceCover;
+/**
+ * Shows the maintenance cover overlay and disables main UI when Destiny API is down for maintenance.
+ * Also wires up the cache reset and reload button.
+ */
+function showMaintenanceCover() {
+  const cover = document.getElementById('maintenance-cover');
+  if (!cover) return;
+  cover.style.display = 'flex';
+  // Optionally hide main panel for clarity
+  const mainPanel = document.getElementById('w-main-panel');
+  if (mainPanel) mainPanel.style.display = 'none';
+  // Wire up reset button
+  const resetBtn = document.getElementById('reset-cache-btn');
+  if (resetBtn) {
+    resetBtn.onclick = async function() {
+      localStorage.clear();
+      // Delete all IndexedDBs (including manifest cache)
+      if (window.indexedDB && indexedDB.databases) {
+        const dbs = await indexedDB.databases();
+        for (const db of dbs) {
+          indexedDB.deleteDatabase(db.name);
+        }
+      }
+      setTimeout(() => location.reload(), 500);
+    };
+  }
+  // Add logic for dismiss button to use old cache
+  const dismissBtn = document.getElementById('dismiss-maintenance-btn');
+  if (dismissBtn) {
+    dismissBtn.onclick = function() {
+      cover.style.display = 'none';
+      // Optionally restore main panel
+      const mainPanel = document.getElementById('w-main-panel');
+      if (mainPanel) mainPanel.style.display = '';
+    };
+  }
+}
+
+// ========== END MAINTENANCE COVER LOGIC ========== //
 // --- IMPORTS ---
 // All manifest loading, caching, and searching handled by destiny-manifest.js
 // This file uses: ensureInventoryItemDefsReady, ensureEquippableItemSetDefsReady, searchArmorLocally, getArmorSetLookup, BUCKET_HASHES, BUNGIE_ROOT

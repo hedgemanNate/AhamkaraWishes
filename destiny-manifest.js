@@ -86,9 +86,19 @@ async function fetchManifestMeta() {
   const r = await fetch(url, { headers: { "X-API-Key": API_KEY, "Accept": "application/json" } });
   if (!r.ok) {
     const t = await r.text().catch(() => "");
+    // If Destiny API is down for maintenance, show maintenance cover
+    if (r.status === 503 && typeof window.showMaintenanceCover === 'function') {
+      window.showMaintenanceCover();
+    } else if (t.includes('SystemDisabled') && typeof window.showMaintenanceCover === 'function') {
+      window.showMaintenanceCover();
+    }
     throw new Error(`GetDestinyManifest failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
   }
   const j = await r.json();
+  // If Destiny API returns SystemDisabled in JSON, show maintenance cover
+  if (j?.ErrorStatus === 'SystemDisabled' && typeof window.showMaintenanceCover === 'function') {
+    window.showMaintenanceCover();
+  }
   if (!j?.Response) throw new Error("GetDestinyManifest returned no Response");
   return j.Response;
 }

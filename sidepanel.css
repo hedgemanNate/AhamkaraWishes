@@ -1,3 +1,21 @@
+/* Maintenance cover overlay for Destiny API downtime */
+#maintenance-cover {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.95);
+  color: #fff;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.cover-content {
+  text-align: center;
+}
 @import url('https://fonts.googleapis.com/css2?family=Bellota:wght@400;700&display=swap');
 
 :root {

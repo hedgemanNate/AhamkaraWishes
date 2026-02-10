@@ -271,23 +271,7 @@ function attachListeners() {
         };
     }
 
-    // 2. Tab Switching (Global: Weapons vs Armor)
-    const btnWeapons = document.getElementById('tab-weapons');
-    const btnArmor = document.getElementById('tab-armor');
-    if (btnWeapons && btnArmor) {
-        btnWeapons.onclick = () => {
-            btnWeapons.classList.add('active');
-            btnArmor.classList.remove('active');
-            document.getElementById('view-weapons').classList.add('active-view');
-            document.getElementById('view-armor').classList.remove('active-view');
-        };
-        btnArmor.onclick = () => {
-            btnArmor.classList.add('active');
-            btnWeapons.classList.remove('active');
-            document.getElementById('view-armor').classList.add('active-view');
-            document.getElementById('view-weapons').classList.remove('active-view');
-        };
-    }
+    // 2. Tab Switching (Global: Weapons, Armor, Menu) is now handled in manager.js for consistency.
 
     // 3. Bottom Nav Slider (Internal Armor Toggle: Craft vs List)
     const navCraft = document.getElementById('nav-craft');

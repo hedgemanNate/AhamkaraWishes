@@ -404,46 +404,53 @@ async function initializeWeaponSystem() {
 function setupWeaponArmorTabs() {
     const btnWeapons = document.getElementById('tab-weapons');
     const btnArmor = document.getElementById('tab-armor');
+    const btnMenu = document.getElementById('tab-menu');
     const viewWeapons = document.getElementById('view-weapons');
     const viewArmor = document.getElementById('view-armor');
+    const viewMenu = document.getElementById('view-menu');
 
-    if (!btnWeapons || !btnArmor || !viewWeapons || !viewArmor) {
-        d2log('⚠️ Tab elements not found in DOM', 'manager');
-        return;
+    if (!btnWeapons || !btnArmor || !btnMenu || !viewWeapons || !viewArmor || !viewMenu) {
+      d2log('⚠️ Tab elements not found in DOM', 'manager');
+      return;
     }
 
     // Click handler for weapons tab
     btnWeapons.addEventListener('click', () => {
-        // Update tab buttons
-        btnWeapons.classList.add('active');
-        btnArmor.classList.remove('active');
-        
-        // Update view visibility
-        viewWeapons.classList.add('active-view');
-        viewArmor.classList.remove('active-view');
-        
-        // Ensure weapon craft pane is visible and refresh list
-        if (verifyWeaponScriptsLoaded()) {
-            window.weaponUI.togglePane('craft');
-            window.weaponUI.refreshWeaponList().catch(err => {
-                d2log(`⚠️ Could not refresh weapon list: ${err.message}`, 'manager');
-            });
-        }
-        
-        d2log('✅ Switched to weapons tab', 'manager');
+      btnWeapons.classList.add('active');
+      btnArmor.classList.remove('active');
+      btnMenu.classList.remove('active');
+      viewWeapons.classList.add('active-view');
+      viewArmor.classList.remove('active-view');
+      viewMenu.classList.remove('active-view');
+      if (verifyWeaponScriptsLoaded()) {
+        window.weaponUI.togglePane('craft');
+        window.weaponUI.refreshWeaponList().catch(err => {
+          d2log(`⚠️ Could not refresh weapon list: ${err.message}`, 'manager');
+        });
+      }
+      d2log('✅ Switched to weapons tab', 'manager');
     });
 
     // Click handler for armor tab
     btnArmor.addEventListener('click', () => {
-        // Update tab buttons
-        btnArmor.classList.add('active');
-        btnWeapons.classList.remove('active');
-        
-        // Update view visibility
-        viewArmor.classList.add('active-view');
-        viewWeapons.classList.remove('active-view');
-        
-        d2log('✅ Switched to armor tab', 'manager');
+      btnArmor.classList.add('active');
+      btnWeapons.classList.remove('active');
+      btnMenu.classList.remove('active');
+      viewArmor.classList.add('active-view');
+      viewWeapons.classList.remove('active-view');
+      viewMenu.classList.remove('active-view');
+      d2log('✅ Switched to armor tab', 'manager');
+    });
+
+    // Click handler for menu tab
+    btnMenu.addEventListener('click', () => {
+      btnMenu.classList.add('active');
+      btnWeapons.classList.remove('active');
+      btnArmor.classList.remove('active');
+      viewMenu.classList.add('active-view');
+      viewWeapons.classList.remove('active-view');
+      viewArmor.classList.remove('active-view');
+      d2log('✅ Switched to menu tab', 'manager');
     });
 }
 

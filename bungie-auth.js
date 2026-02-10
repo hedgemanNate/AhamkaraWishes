@@ -90,15 +90,61 @@ function startLoginFlow() {
 
   const redirectUri = chrome.runtime.getURL('oauth-callback.html');
   const state = Math.random().toString(36).substring(2, 12);
-  const authorizeUrl = new URL('https://www.bungie.net/en/OAuth/Authorize');
-  authorizeUrl.searchParams.set('client_id', BUNGIE_CLIENT_ID);
-  authorizeUrl.searchParams.set('response_type', 'code');
-  authorizeUrl.searchParams.set('state', state);
-  authorizeUrl.searchParams.set('redirect_uri', redirectUri);
 
-  // NOTE: For improved security, implement PKCE: add code_challenge & code_challenge_method
+  // PKCE: generate code_verifier & code_challenge (S256)
+  const generateCodeVerifier = () => {
+    // 128 chars from URL-safe base64
+    const array = new Uint8Array(64);
+    crypto.getRandomValues(array);
+    return btoa(String.fromCharCode.apply(null, Array.from(array))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  };
 
-  window.open(authorizeUrl.toString(), '_blank', 'noopener');
+  const sha256 = async (plain) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(plain);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return new Uint8Array(hash);
+  };
+
+  const base64UrlEncode = (buffer) => {
+    let str = '';
+    const len = buffer.byteLength;
+    for (let i = 0; i < len; i++) str += String.fromCharCode(buffer[i]);
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  };
+
+  const buildAuthorizeUrl = async () => {
+    const code_verifier = generateCodeVerifier();
+    const hashed = await sha256(code_verifier);
+    const code_challenge = base64UrlEncode(hashed);
+
+    // Persist the code_verifier indexed by state so background can retrieve it
+    try {
+      chrome.storage.local.get('bungie_pkce', (res) => {
+        const map = res.bungie_pkce || {};
+        map[state] = code_verifier;
+        chrome.storage.local.set({ bungie_pkce: map });
+      });
+    } catch (e) {
+      console.warn('Could not persist PKCE verifier:', e);
+    }
+
+    const authorizeUrl = new URL('https://www.bungie.net/en/OAuth/Authorize');
+    authorizeUrl.searchParams.set('client_id', BUNGIE_CLIENT_ID);
+    authorizeUrl.searchParams.set('response_type', 'code');
+    authorizeUrl.searchParams.set('state', state);
+    authorizeUrl.searchParams.set('redirect_uri', redirectUri);
+    authorizeUrl.searchParams.set('code_challenge', code_challenge);
+    authorizeUrl.searchParams.set('code_challenge_method', 'S256');
+
+    window.open(authorizeUrl.toString(), '_blank', 'noopener');
+  };
+
+  // start flow
+  buildAuthorizeUrl().catch((err) => {
+    console.error('PKCE setup failed', err);
+    alert('Unable to start login flow. See console for details.');
+  });
 }
 
 /** Logout locally by removing stored token and updating UI */

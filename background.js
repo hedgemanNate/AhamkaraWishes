@@ -24,57 +24,78 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const redirectUri = chrome.runtime.getURL('oauth-callback.html');
     const tokenUrl = 'https://www.bungie.net/platform/app/oauth/token/';
 
-    const data = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      client_id: clientId,
-      redirect_uri: redirectUri
-    });
-    if (CLIENT_SECRET) data.set('client_secret', CLIENT_SECRET);
-
-    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-    if (BUNGIE_API_KEY) headers['X-API-Key'] = BUNGIE_API_KEY;
-
-    // Perform the token exchange and provide detailed logging on failure.
-    fetch(tokenUrl, {
-      method: 'POST',
-      headers,
-      body: data.toString()
-    })
-      .then(async (res) => {
-        const text = await res.text();
-        let parsed;
-        try { parsed = JSON.parse(text); } catch (e) { parsed = { raw: text }; }
-        if (!res.ok) {
-          console.error('[BUNGIE OAUTH] Token exchange failed', res.status, parsed);
-          sendResponse({ success: false, status: res.status, error: parsed });
-          // Notify UI
-          chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_STATUS', success: false, error: parsed });
-          return;
-        }
-        // Successful response expected to be JSON with access_token
-        return parsed;
-      })
-      .then((tokenData) => {
-        if (!tokenData) return; // previous branch already handled response
-        if (tokenData.access_token) {
-          // Store token
-          chrome.storage.local.set({ bungie_oauth: tokenData }, () => {
-            sendResponse({ success: true });
-            // Notify UI of login
-            chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_STATUS', success: true });
-          });
-        } else {
-          console.error('[BUNGIE OAUTH] Token response missing access_token', tokenData);
-          sendResponse({ success: false, error: tokenData });
-          chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_STATUS', success: false, error: tokenData });
-        }
-      })
-      .catch((err) => {
-        console.error('[BUNGIE OAUTH] Token exchange exception', err);
-        sendResponse({ success: false, error: String(err) });
-        chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_STATUS', success: false, error: String(err) });
+    // Build base params for token exchange
+    const buildAndSendTokenRequest = (code_verifier) => {
+      const data = new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        client_id: clientId,
+        redirect_uri: redirectUri
       });
+      if (CLIENT_SECRET) data.set('client_secret', CLIENT_SECRET);
+      if (code_verifier) data.set('code_verifier', code_verifier);
+
+      const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+      if (BUNGIE_API_KEY) headers['X-API-Key'] = BUNGIE_API_KEY;
+
+      // Perform the token exchange and provide detailed logging on failure.
+      fetch(tokenUrl, {
+        method: 'POST',
+        headers,
+        body: data.toString()
+      })
+        .then(async (res) => {
+          const text = await res.text();
+          let parsed;
+          try { parsed = JSON.parse(text); } catch (e) { parsed = { raw: text }; }
+          if (!res.ok) {
+            console.error('[BUNGIE OAUTH] Token exchange failed', res.status, parsed);
+            sendResponse({ success: false, status: res.status, error: parsed });
+            // Notify UI
+            chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_STATUS', success: false, error: parsed });
+            return;
+          }
+          // Successful response expected to be JSON with access_token
+          return parsed;
+        })
+        .then((tokenData) => {
+          if (!tokenData) return; // previous branch already handled response
+          if (tokenData.access_token) {
+            // Store token
+            chrome.storage.local.set({ bungie_oauth: tokenData }, () => {
+              sendResponse({ success: true });
+              // Notify UI of login
+              chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_STATUS', success: true });
+            });
+          } else {
+            console.error('[BUNGIE OAUTH] Token response missing access_token', tokenData);
+            sendResponse({ success: false, error: tokenData });
+            chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_STATUS', success: false, error: tokenData });
+          }
+        })
+        .catch((err) => {
+          console.error('[BUNGIE OAUTH] Token exchange exception', err);
+          sendResponse({ success: false, error: String(err) });
+          chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_STATUS', success: false, error: String(err) });
+        });
+    };
+
+    // Retrieve PKCE verifier stored at start of flow (if any) and include it in exchange
+    chrome.storage.local.get('bungie_pkce', (res) => {
+      try {
+        const pkceMap = res.bungie_pkce || {};
+        const verifier = (message && message.state) ? pkceMap[message.state] : null;
+        // If we used the verifier, remove it from storage to avoid reuse
+        if (verifier && message && message.state) {
+          delete pkceMap[message.state];
+          chrome.storage.local.set({ bungie_pkce: pkceMap });
+        }
+        buildAndSendTokenRequest(verifier);
+      } catch (e) {
+        console.warn('Error retrieving PKCE verifier:', e);
+        buildAndSendTokenRequest(null);
+      }
+    });
     // Indicate async response
     return true;
   }

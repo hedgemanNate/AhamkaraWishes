@@ -24,19 +24,18 @@
 .bungie-user-photo {
   width:64px;
   height:64px;
-  border-radius:8px; /* square with slightly rounded corners */
   object-fit:cover;
-  border:1px solid rgba(0,0,0,0.08);
+  border:2px solid var(--accent-gold);
   background: #f3f3f3; /* neutral placeholder when no image */
   display:block;
 }
 .menu-auth-info { text-align:left; flex:1; }
-.bungie-user-name { font-weight:700; color:#222; font-size:14px; }
-.menu-auth-header .auth-status.small { font-weight:400; color:#444; font-size:12px; }
+.bungie-user-name { font-weight:700; color:var(--accent-gold); font-size:14px; }
+.menu-auth-header .auth-status.small { font-weight:400; color:#a3a3a3; font-size:12px; }
 .menu-auth-actions { display:flex; gap:8px; }
 
 /* Signed-out: matte pale gold */
-.menu-auth-header.signed-out { background: linear-gradient(180deg,#f6f0e5,#efe5c9); color:#3a2f1f; }
+.menu-auth-header.signed-out { background: #414141; }
 
 /* Signed-in: pale matte green */
 .menu-auth-header.signed-in { background: linear-gradient(180deg,#e6f3e6,#d9ead5); color:#164a17; }

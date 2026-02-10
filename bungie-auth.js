@@ -11,6 +11,20 @@
 // CONFIG: replace with your registered Bungie client id
 const BUNGIE_CLIENT_ID = '51511';
 
+// Generic avatar (SVG). We'll generate a data URL at runtime so no external asset required.
+const GENERIC_AVATAR_SVG = `
+<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'>
+  <rect width='100%' height='100%' fill='%23f3f3f3' />
+  <g fill='%23999'>
+    <circle cx='32' cy='20' r='12'/>
+    <path d='M12 52c0-8.8 7.2-16 16-16h8c8.8 0 16 7.2 16 16v2H12v-2z' />
+  </g>
+</svg>`;
+
+function genericAvatarDataUrl() {
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(GENERIC_AVATAR_SVG);
+}
+
 // DOM ids used in sidepanel.html
 const AUTH_STATUS_ID = 'bungie-auth-status';
 const AUTH_CONTAINER_ID = 'bungie-auth-container';
@@ -210,6 +224,11 @@ function logout() {
     chrome.storage.local.remove('bungie_oauth', () => {
       setAuthStatus('Not logged in');
       toggleAuthButtons(false);
+      // Reset UI name and photo to defaults
+      const nameEl = document.getElementById('bungie-user-name');
+      if (nameEl) nameEl.textContent = '-User00-';
+      const photoEl = document.getElementById('bungie-user-photo');
+      if (photoEl) photoEl.src = genericAvatarDataUrl();
       const userEl = document.getElementById(USER_INFO_ID);
       if (userEl) userEl.textContent = '';
       // Notify background or other parts if necessary

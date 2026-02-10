@@ -22,14 +22,28 @@ function fetchAndStoreProfile(accessToken) {
   return fetch(membershipsUrl, { headers })
     .then(res => res.json())
     .then((json) => {
+      // Debug: log membership response to help locate picture field
+      console.debug('[BUNGIE OAUTH] memberships response', json);
       if (json && json.Response) {
         const resp = json.Response;
         const profile = {};
+        // display name may live under bungieNetUser
         if (resp.bungieNetUser && resp.bungieNetUser.displayName) {
           profile.displayName = resp.bungieNetUser.displayName;
         }
+        // picture may be in a few places; try known fields
         if (resp.profilePicturePath) profile.profilePicturePath = resp.profilePicturePath;
-        if (profile.displayName) {
+        if (!profile.profilePicturePath && resp.bungieNetUser && resp.bungieNetUser.profilePicturePath) {
+          profile.profilePicturePath = resp.bungieNetUser.profilePicturePath;
+        }
+        if (!profile.profilePicturePath && resp.bungieNetUser && resp.bungieNetUser.profilePicture) {
+          profile.profilePicturePath = resp.bungieNetUser.profilePicture;
+        }
+        if (profile.displayName || profile.profilePicturePath) {
+          // normalize picture path if relative
+          if (profile.profilePicturePath && profile.profilePicturePath.startsWith('/')) {
+            profile.profilePicturePath = 'https://www.bungie.net' + profile.profilePicturePath;
+          }
           return new Promise((resolve) => {
             chrome.storage.local.set({ bungie_profile: profile }, () => {
               chrome.runtime.sendMessage({ type: 'BUNGIE_PROFILE', profile });
@@ -40,11 +54,15 @@ function fetchAndStoreProfile(accessToken) {
       }
       const currentUserUrl = 'https://www.bungie.net/Platform/User/GetBungieNetUser/';
       return fetch(currentUserUrl, { headers }).then(r => r.json()).then((j) => {
+        console.debug('[BUNGIE OAUTH] GetBungieNetUser response', j);
         if (j && j.Response) {
           const profile = {
-            displayName: j.Response.displayName || j.Response.display_name,
-            profilePicturePath: j.Response.profilePicturePath || j.Response.profile_picture
+            displayName: j.Response.displayName || j.Response.display_name || j.Response.displayNameCode,
+            profilePicturePath: j.Response.profilePicturePath || j.Response.profile_picture || j.Response.profilePicture
           };
+          if (profile.profilePicturePath && profile.profilePicturePath.startsWith('/')) {
+            profile.profilePicturePath = 'https://www.bungie.net' + profile.profilePicturePath;
+          }
           return new Promise((resolve) => {
             chrome.storage.local.set({ bungie_profile: profile }, () => {
               chrome.runtime.sendMessage({ type: 'BUNGIE_PROFILE', profile });
@@ -195,8 +213,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   // Logout handling: remove stored token and notify UI
   if (message.type === 'BUNGIE_OAUTH_LOGOUT') {
-    chrome.storage.local.remove('bungie_oauth', () => {
+    chrome.storage.local.remove(['bungie_oauth','bungie_profile'], () => {
       chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_STATUS', success: false });
+      chrome.runtime.sendMessage({ type: 'BUNGIE_PROFILE', profile: null });
       sendResponse({ success: true });
     });
     return true;

@@ -1,0 +1,2357 @@
+[
+  {
+    "hash": 2387244414,
+    "name": "Zen Moment",
+    "enhanced": false
+  },
+  {
+    "hash": 1645158859,
+    "name": "Under Pressure",
+    "enhanced": false
+  },
+  {
+    "hash": 2610012052,
+    "name": "Golden Tricorn",
+    "enhanced": false
+  },
+  {
+    "hash": 2727957645,
+    "name": "High Octane",
+    "enhanced": false
+  },
+  {
+    "hash": 1067908860,
+    "name": "Short-Action Stock",
+    "enhanced": false
+  },
+  {
+    "hash": 1966281507,
+    "name": "Replenishing Aegis",
+    "enhanced": false
+  },
+  {
+    "hash": 31345821,
+    "name": "Sword Logic",
+    "enhanced": false
+  },
+  {
+    "hash": 1866048759,
+    "name": "Hip-Fire Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 2416023159,
+    "name": "Offhand Strike",
+    "enhanced": false
+  },
+  {
+    "hash": 2590710093,
+    "name": "Tireless Blade",
+    "enhanced": false
+  },
+  {
+    "hash": 3708227201,
+    "name": "Surrounded",
+    "enhanced": false
+  },
+  {
+    "hash": 2010801679,
+    "name": "Ambitious Assassin",
+    "enhanced": false
+  },
+  {
+    "hash": 2458213969,
+    "name": "Multikill Clip",
+    "enhanced": false
+  },
+  {
+    "hash": 3523296417,
+    "name": "Demolitionist",
+    "enhanced": false
+  },
+  {
+    "hash": 2859149211,
+    "name": "Beacon Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 3418782618,
+    "name": "Rewind Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 3713215006,
+    "name": "Recycled Energy",
+    "enhanced": false
+  },
+  {
+    "hash": 831391274,
+    "name": "Hatchling",
+    "enhanced": false
+  },
+  {
+    "hash": 1583705720,
+    "name": "Stats for All",
+    "enhanced": false
+  },
+  {
+    "hash": 3987942396,
+    "name": "Envious Arsenal",
+    "enhanced": false
+  },
+  {
+    "hash": 1135494563,
+    "name": "Beacon Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 1563455254,
+    "name": "Rewind Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 3555252274,
+    "name": "Recycled Energy",
+    "enhanced": true
+  },
+  {
+    "hash": 102912326,
+    "name": "Hatchling",
+    "enhanced": true
+  },
+  {
+    "hash": 1409206216,
+    "name": "Stats for All",
+    "enhanced": true
+  },
+  {
+    "hash": 2817499044,
+    "name": "Envious Arsenal",
+    "enhanced": true
+  },
+  {
+    "hash": 3078487919,
+    "name": "Bait and Switch",
+    "enhanced": false
+  },
+  {
+    "hash": 2396489472,
+    "name": "Chain Reaction",
+    "enhanced": false
+  },
+  {
+    "hash": 923806249,
+    "name": "Slice",
+    "enhanced": false
+  },
+  {
+    "hash": 1089671869,
+    "name": "Elemental Honing",
+    "enhanced": false
+  },
+  {
+    "hash": 3081867624,
+    "name": "Master of Arms",
+    "enhanced": false
+  },
+  {
+    "hash": 4049631843,
+    "name": "One for All",
+    "enhanced": false
+  },
+  {
+    "hash": 3744057135,
+    "name": "Bait and Switch",
+    "enhanced": true
+  },
+  {
+    "hash": 598607952,
+    "name": "Chain Reaction",
+    "enhanced": true
+  },
+  {
+    "hash": 3422796781,
+    "name": "Slice",
+    "enhanced": true
+  },
+  {
+    "hash": 496047945,
+    "name": "Elemental Honing",
+    "enhanced": true
+  },
+  {
+    "hash": 2963273944,
+    "name": "Master of Arms",
+    "enhanced": true
+  },
+  {
+    "hash": 859780267,
+    "name": "One for All",
+    "enhanced": true
+  },
+  {
+    "hash": 3700496672,
+    "name": "Shoot to Loot",
+    "enhanced": false
+  },
+  {
+    "hash": 699525795,
+    "name": "Eye of the Storm",
+    "enhanced": false
+  },
+  {
+    "hash": 4015745376,
+    "name": "Toxic Overload",
+    "enhanced": false
+  },
+  {
+    "hash": 990298390,
+    "name": "Hand-Laid Stock",
+    "enhanced": false
+  },
+  {
+    "hash": 3465198467,
+    "name": "Composite Stock",
+    "enhanced": false
+  },
+  {
+    "hash": 4259401308,
+    "name": "Fitted Stock",
+    "enhanced": false
+  },
+  {
+    "hash": 4252909580,
+    "name": "Bottomless Grief",
+    "enhanced": false
+  },
+  {
+    "hash": 3425386926,
+    "name": "Rampage",
+    "enhanced": false
+  },
+  {
+    "hash": 2289534249,
+    "name": "Bewildering Burst",
+    "enhanced": false
+  },
+  {
+    "hash": 2579169598,
+    "name": "Lone Wolf",
+    "enhanced": false
+  },
+  {
+    "hash": 4071163871,
+    "name": "Threat Detector",
+    "enhanced": false
+  },
+  {
+    "hash": 691659142,
+    "name": "Pugilist",
+    "enhanced": false
+  },
+  {
+    "hash": 1570399071,
+    "name": "Lead From Light",
+    "enhanced": false
+  },
+  {
+    "hash": 3914874605,
+    "name": "Bewildering Burst",
+    "enhanced": true
+  },
+  {
+    "hash": 2073244114,
+    "name": "Lone Wolf",
+    "enhanced": true
+  },
+  {
+    "hash": 494941759,
+    "name": "Threat Detector",
+    "enhanced": true
+  },
+  {
+    "hash": 536173722,
+    "name": "Pugilist",
+    "enhanced": true
+  },
+  {
+    "hash": 1661646271,
+    "name": "Lead From Light",
+    "enhanced": true
+  },
+  {
+    "hash": 243981275,
+    "name": "Attrition Orbs",
+    "enhanced": false
+  },
+  {
+    "hash": 3891536761,
+    "name": "Kinetic Tremors",
+    "enhanced": false
+  },
+  {
+    "hash": 1202584452,
+    "name": "Ancillary Ordinance",
+    "enhanced": false
+  },
+  {
+    "hash": 365154968,
+    "name": "Target Lock",
+    "enhanced": false
+  },
+  {
+    "hash": 3592538738,
+    "name": "Wellspring",
+    "enhanced": false
+  },
+  {
+    "hash": 1546142478,
+    "name": "Binary Orbit",
+    "enhanced": false
+  },
+  {
+    "hash": 984655331,
+    "name": "Attrition Orbs",
+    "enhanced": true
+  },
+  {
+    "hash": 1549370717,
+    "name": "Kinetic Tremors",
+    "enhanced": true
+  },
+  {
+    "hash": 2138673996,
+    "name": "Ancillary Ordinance",
+    "enhanced": true
+  },
+  {
+    "hash": 2939589096,
+    "name": "Target Lock",
+    "enhanced": true
+  },
+  {
+    "hash": 2675361166,
+    "name": "Wellspring",
+    "enhanced": true
+  },
+  {
+    "hash": 983853954,
+    "name": "Binary Orbit",
+    "enhanced": true
+  },
+  {
+    "hash": 2284787283,
+    "name": "Clown Cartridge",
+    "enhanced": false
+  },
+  {
+    "hash": 4190679284,
+    "name": "Proximity Power",
+    "enhanced": false
+  },
+  {
+    "hash": 2586829431,
+    "name": "Shot Swap",
+    "enhanced": false
+  },
+  {
+    "hash": 3563868667,
+    "name": "Clown Cartridge",
+    "enhanced": true
+  },
+  {
+    "hash": 3797647183,
+    "name": "Ambitious Assassin",
+    "enhanced": true
+  },
+  {
+    "hash": 820036316,
+    "name": "Proximity Power",
+    "enhanced": true
+  },
+  {
+    "hash": 2217963031,
+    "name": "Shot Swap",
+    "enhanced": true
+  },
+  {
+    "hash": 1906147653,
+    "name": "Demolitionist",
+    "enhanced": true
+  },
+  {
+    "hash": 4104185692,
+    "name": "Frenzy",
+    "enhanced": false
+  },
+  {
+    "hash": 2922950962,
+    "name": "Crystalline Corpsebloom",
+    "enhanced": false
+  },
+  {
+    "hash": 3978468247,
+    "name": "Discord",
+    "enhanced": false
+  },
+  {
+    "hash": 1427256713,
+    "name": "Reservoir Burst",
+    "enhanced": false
+  },
+  {
+    "hash": 11612903,
+    "name": "Adrenaline Junkie",
+    "enhanced": false
+  },
+  {
+    "hash": 3007133316,
+    "name": "Frenzy",
+    "enhanced": true
+  },
+  {
+    "hash": 2078520142,
+    "name": "Crystalline Corpsebloom",
+    "enhanced": true
+  },
+  {
+    "hash": 906981559,
+    "name": "Discord",
+    "enhanced": true
+  },
+  {
+    "hash": 254337357,
+    "name": "Reservoir Burst",
+    "enhanced": true
+  },
+  {
+    "hash": 2422968039,
+    "name": "Adrenaline Junkie",
+    "enhanced": true
+  },
+  {
+    "hash": 3828510309,
+    "name": "Enlightened Action",
+    "enhanced": false
+  },
+  {
+    "hash": 1354429876,
+    "name": "Fourth Time's the Charm",
+    "enhanced": false
+  },
+  {
+    "hash": 1517798362,
+    "name": "Stopping Power",
+    "enhanced": false
+  },
+  {
+    "hash": 1771736209,
+    "name": "Enlightened Action",
+    "enhanced": true
+  },
+  {
+    "hash": 1748774930,
+    "name": "Zen Moment",
+    "enhanced": true
+  },
+  {
+    "hash": 848860060,
+    "name": "Fourth Time's the Charm",
+    "enhanced": true
+  },
+  {
+    "hash": 1011551830,
+    "name": "Stopping Power",
+    "enhanced": true
+  },
+  {
+    "hash": 1226351311,
+    "name": "All-Star",
+    "enhanced": false
+  },
+  {
+    "hash": 3400784728,
+    "name": "Triple Tap",
+    "enhanced": false
+  },
+  {
+    "hash": 95528736,
+    "name": "Onslaught",
+    "enhanced": false
+  },
+  {
+    "hash": 1359896290,
+    "name": "Dynamic Sway Reduction",
+    "enhanced": false
+  },
+  {
+    "hash": 3252937884,
+    "name": "Adhesive Ordnance",
+    "enhanced": false
+  },
+  {
+    "hash": 3251326479,
+    "name": "All-Star",
+    "enhanced": true
+  },
+  {
+    "hash": 573122728,
+    "name": "Triple Tap",
+    "enhanced": true
+  },
+  {
+    "hash": 288411554,
+    "name": "Rampage",
+    "enhanced": true
+  },
+  {
+    "hash": 956288240,
+    "name": "Onslaught",
+    "enhanced": true
+  },
+  {
+    "hash": 3060983774,
+    "name": "Dynamic Sway Reduction",
+    "enhanced": true
+  },
+  {
+    "hash": 122204356,
+    "name": "Adhesive Ordnance",
+    "enhanced": true
+  },
+  {
+    "hash": 1556840489,
+    "name": "Lead from Gold",
+    "enhanced": false
+  },
+  {
+    "hash": 1749209109,
+    "name": "Relentless Strikes",
+    "enhanced": false
+  },
+  {
+    "hash": 3913600130,
+    "name": "Whirlwind Blade",
+    "enhanced": false
+  },
+  {
+    "hash": 1570042021,
+    "name": "Heating Up",
+    "enhanced": false
+  },
+  {
+    "hash": 972757866,
+    "name": "Pulse Monitor",
+    "enhanced": false
+  },
+  {
+    "hash": 2039302152,
+    "name": "Slideways",
+    "enhanced": false
+  },
+  {
+    "hash": 591790007,
+    "name": "Iron Reach",
+    "enhanced": false
+  },
+  {
+    "hash": 2319119708,
+    "name": "High Ground",
+    "enhanced": false
+  },
+  {
+    "hash": 957782887,
+    "name": "Snapshot Sights",
+    "enhanced": false
+  },
+  {
+    "hash": 706527188,
+    "name": "Quickdraw",
+    "enhanced": false
+  },
+  {
+    "hash": 1275731761,
+    "name": "Cluster Bomb",
+    "enhanced": false
+  },
+  {
+    "hash": 588594999,
+    "name": "Moving Target",
+    "enhanced": false
+  },
+  {
+    "hash": 1954620775,
+    "name": "Timed Payload",
+    "enhanced": false
+  },
+  {
+    "hash": 1015611457,
+    "name": "Kill Clip",
+    "enhanced": false
+  },
+  {
+    "hash": 2869569095,
+    "name": "Field Prep",
+    "enhanced": false
+  },
+  {
+    "hash": 47981717,
+    "name": "Opening Shot",
+    "enhanced": false
+  },
+  {
+    "hash": 3038247973,
+    "name": "Explosive Payload",
+    "enhanced": false
+  },
+  {
+    "hash": 247725512,
+    "name": "Rapid Hit",
+    "enhanced": false
+  },
+  {
+    "hash": 201365942,
+    "name": "Archer's Tempo",
+    "enhanced": false
+  },
+  {
+    "hash": 124408337,
+    "name": "Headstone",
+    "enhanced": false
+  },
+  {
+    "hash": 3751912585,
+    "name": "Cascade Point",
+    "enhanced": false
+  },
+  {
+    "hash": 354401740,
+    "name": "Assassin's Blade",
+    "enhanced": false
+  },
+  {
+    "hash": 4132187021,
+    "name": "Sharp Harvest",
+    "enhanced": false
+  },
+  {
+    "hash": 4085959009,
+    "name": "Relentless Strikes",
+    "enhanced": true
+  },
+  {
+    "hash": 3678483220,
+    "name": "Assassin's Blade",
+    "enhanced": true
+  },
+  {
+    "hash": 2581144697,
+    "name": "Sharp Harvest",
+    "enhanced": true
+  },
+  {
+    "hash": 2890807135,
+    "name": "Burning Ambition",
+    "enhanced": false
+  },
+  {
+    "hash": 2077819806,
+    "name": "Eager Edge",
+    "enhanced": false
+  },
+  {
+    "hash": 781192741,
+    "name": "Surrounded",
+    "enhanced": true
+  },
+  {
+    "hash": 3581929919,
+    "name": "Burning Ambition",
+    "enhanced": true
+  },
+  {
+    "hash": 1618208178,
+    "name": "Eager Edge",
+    "enhanced": true
+  },
+  {
+    "hash": 1195158366,
+    "name": "Encore",
+    "enhanced": false
+  },
+  {
+    "hash": 3731491409,
+    "name": "Transcendent Moment",
+    "enhanced": false
+  },
+  {
+    "hash": 3050799639,
+    "name": "Offhand Strike",
+    "enhanced": true
+  },
+  {
+    "hash": 838873202,
+    "name": "Encore",
+    "enhanced": true
+  },
+  {
+    "hash": 680897173,
+    "name": "Transcendent Moment",
+    "enhanced": true
+  },
+  {
+    "hash": 2848615171,
+    "name": "Dragonfly",
+    "enhanced": false
+  },
+  {
+    "hash": 4082225868,
+    "name": "Swashbuckler",
+    "enhanced": false
+  },
+  {
+    "hash": 438098033,
+    "name": "Harmony",
+    "enhanced": false
+  },
+  {
+    "hash": 169755979,
+    "name": "Dragonfly",
+    "enhanced": true
+  },
+  {
+    "hash": 1161469972,
+    "name": "Swashbuckler",
+    "enhanced": true
+  },
+  {
+    "hash": 2748801589,
+    "name": "Harmony",
+    "enhanced": true
+  },
+  {
+    "hash": 3047969693,
+    "name": "Desperado",
+    "enhanced": false
+  },
+  {
+    "hash": 3096702027,
+    "name": "Genesis",
+    "enhanced": false
+  },
+  {
+    "hash": 2130042297,
+    "name": "Taken Predator",
+    "enhanced": false
+  },
+  {
+    "hash": 1012699414,
+    "name": "Heavy Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 2551157718,
+    "name": "Box Breathing",
+    "enhanced": false
+  },
+  {
+    "hash": 2213355989,
+    "name": "High-Impact Reserves",
+    "enhanced": false
+  },
+  {
+    "hash": 557221067,
+    "name": "Killing Tally",
+    "enhanced": false
+  },
+  {
+    "hash": 2450788523,
+    "name": "Killing Wind",
+    "enhanced": false
+  },
+  {
+    "hash": 2846385770,
+    "name": "Rangefinder",
+    "enhanced": false
+  },
+  {
+    "hash": 3300816228,
+    "name": "Auto-Loading Holster",
+    "enhanced": false
+  },
+  {
+    "hash": 2272927194,
+    "name": "Perfect Float",
+    "enhanced": false
+  },
+  {
+    "hash": 3215448563,
+    "name": "Paracausal Affinity",
+    "enhanced": false
+  },
+  {
+    "hash": 2030760728,
+    "name": "Energy Transfer",
+    "enhanced": false
+  },
+  {
+    "hash": 2048641572,
+    "name": "Destabilizing Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 1918398421,
+    "name": "Built to Blast",
+    "enhanced": false
+  },
+  {
+    "hash": 3824105627,
+    "name": "Firefly",
+    "enhanced": false
+  },
+  {
+    "hash": 1523832109,
+    "name": "Reconstruction",
+    "enhanced": false
+  },
+  {
+    "hash": 2866798147,
+    "name": "No Distractions",
+    "enhanced": false
+  },
+  {
+    "hash": 1134488199,
+    "name": "Withering Gaze",
+    "enhanced": false
+  },
+  {
+    "hash": 3643424744,
+    "name": "Overflow",
+    "enhanced": false
+  },
+  {
+    "hash": 3422375969,
+    "name": "Built to Blast",
+    "enhanced": true
+  },
+  {
+    "hash": 1183436451,
+    "name": "Firefly",
+    "enhanced": true
+  },
+  {
+    "hash": 461595545,
+    "name": "Reconstruction",
+    "enhanced": true
+  },
+  {
+    "hash": 3974407819,
+    "name": "No Distractions",
+    "enhanced": true
+  },
+  {
+    "hash": 2904194311,
+    "name": "Withering Gaze",
+    "enhanced": true
+  },
+  {
+    "hash": 2682205016,
+    "name": "Overflow",
+    "enhanced": true
+  },
+  {
+    "hash": 198336270,
+    "name": "Butterfly",
+    "enhanced": false
+  },
+  {
+    "hash": 555281244,
+    "name": "Precision Instrument",
+    "enhanced": false
+  },
+  {
+    "hash": 2216535938,
+    "name": "Butterfly",
+    "enhanced": true
+  },
+  {
+    "hash": 332733060,
+    "name": "Precision Instrument",
+    "enhanced": true
+  },
+  {
+    "hash": 1926441324,
+    "name": "Destabilizing Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 1820235745,
+    "name": "Subsistence",
+    "enhanced": false
+  },
+  {
+    "hash": 1955165503,
+    "name": "Rimestealer",
+    "enhanced": false
+  },
+  {
+    "hash": 2978966579,
+    "name": "Chill Clip",
+    "enhanced": false
+  },
+  {
+    "hash": 3436462433,
+    "name": "Surplus",
+    "enhanced": false
+  },
+  {
+    "hash": 960810156,
+    "name": "Danger Zone",
+    "enhanced": false
+  },
+  {
+    "hash": 280464955,
+    "name": "Firmly Planted",
+    "enhanced": false
+  },
+  {
+    "hash": 2223032959,
+    "name": "Ruinscribe's Beacon",
+    "enhanced": false
+  },
+  {
+    "hash": 880644845,
+    "name": "Strategist",
+    "enhanced": false
+  },
+  {
+    "hash": 960997401,
+    "name": "Tear",
+    "enhanced": false
+  },
+  {
+    "hash": 657025441,
+    "name": "Meganeura",
+    "enhanced": false
+  },
+  {
+    "hash": 2896748467,
+    "name": "Killing Tally",
+    "enhanced": true
+  },
+  {
+    "hash": 3120212825,
+    "name": "Strategist",
+    "enhanced": true
+  },
+  {
+    "hash": 3244229373,
+    "name": "Tear",
+    "enhanced": true
+  },
+  {
+    "hash": 4196156997,
+    "name": "Meganeura",
+    "enhanced": true
+  },
+  {
+    "hash": 1890422124,
+    "name": "Tap the Trigger",
+    "enhanced": false
+  },
+  {
+    "hash": 1561789734,
+    "name": "Firefly",
+    "enhanced": false
+  },
+  {
+    "hash": 3326204863,
+    "name": "Smooth Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 3511092054,
+    "name": "Elemental Capacitor",
+    "enhanced": false
+  },
+  {
+    "hash": 1549056416,
+    "name": "Shatter Shot",
+    "enhanced": false
+  },
+  {
+    "hash": 862848869,
+    "name": "Polymer Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 3650930298,
+    "name": "Cold Steel",
+    "enhanced": false
+  },
+  {
+    "hash": 1168162263,
+    "name": "Outlaw",
+    "enhanced": false
+  },
+  {
+    "hash": 3242533954,
+    "name": "Parasitism",
+    "enhanced": false
+  },
+  {
+    "hash": 4245865861,
+    "name": "Subsistence",
+    "enhanced": true
+  },
+  {
+    "hash": 4198902903,
+    "name": "Detonator Beam",
+    "enhanced": false
+  },
+  {
+    "hash": 3201496230,
+    "name": "Redirection",
+    "enhanced": false
+  },
+  {
+    "hash": 222783511,
+    "name": "Detonator Beam",
+    "enhanced": true
+  },
+  {
+    "hash": 1545231802,
+    "name": "Redirection",
+    "enhanced": true
+  },
+  {
+    "hash": 3108830275,
+    "name": "Unrelenting",
+    "enhanced": false
+  },
+  {
+    "hash": 3993379141,
+    "name": "Deconstruct",
+    "enhanced": false
+  },
+  {
+    "hash": 3365897133,
+    "name": "Explosive Head",
+    "enhanced": false
+  },
+  {
+    "hash": 3722653512,
+    "name": "Air Assault",
+    "enhanced": false
+  },
+  {
+    "hash": 1774574192,
+    "name": "Osmosis",
+    "enhanced": false
+  },
+  {
+    "hash": 951095735,
+    "name": "Impulse Amplifier",
+    "enhanced": false
+  },
+  {
+    "hash": 671806388,
+    "name": "Compulsive Reloader",
+    "enhanced": false
+  },
+  {
+    "hash": 968510818,
+    "name": "Envious Assassin",
+    "enhanced": false
+  },
+  {
+    "hash": 2617553311,
+    "name": "Rimestealer",
+    "enhanced": true
+  },
+  {
+    "hash": 1164602481,
+    "name": "Deconstruct",
+    "enhanced": false
+  },
+  {
+    "hash": 424370782,
+    "name": "Envious Assassin",
+    "enhanced": true
+  },
+  {
+    "hash": 2002547233,
+    "name": "High-Impact Reserves",
+    "enhanced": true
+  },
+  {
+    "hash": 1171887445,
+    "name": "Headstone",
+    "enhanced": true
+  },
+  {
+    "hash": 1964414318,
+    "name": "Heavy Metal",
+    "enhanced": false
+  },
+  {
+    "hash": 2091001077,
+    "name": "Cluster Bomb",
+    "enhanced": true
+  },
+  {
+    "hash": 2308090567,
+    "name": "Field Prep",
+    "enhanced": true
+  },
+  {
+    "hash": 3878366039,
+    "name": "Impulse Amplifier",
+    "enhanced": true
+  },
+  {
+    "hash": 2173046394,
+    "name": "Voltshot",
+    "enhanced": false
+  },
+  {
+    "hash": 3218042543,
+    "name": "Rolling Storm",
+    "enhanced": false
+  },
+  {
+    "hash": 1439600632,
+    "name": "Bipod",
+    "enhanced": false
+  },
+  {
+    "hash": 1720528630,
+    "name": "Voltshot",
+    "enhanced": true
+  },
+  {
+    "hash": 2633604463,
+    "name": "Rolling Storm",
+    "enhanced": true
+  },
+  {
+    "hash": 3299896859,
+    "name": "Paracausal Affinity",
+    "enhanced": true
+  },
+  {
+    "hash": 2282937672,
+    "name": "Bipod",
+    "enhanced": true
+  },
+  {
+    "hash": 2726471870,
+    "name": "Thresh",
+    "enhanced": false
+  },
+  {
+    "hash": 3161816588,
+    "name": "Slideshot",
+    "enhanced": false
+  },
+  {
+    "hash": 2946784966,
+    "name": "Tunnel Vision",
+    "enhanced": false
+  },
+  {
+    "hash": 3619207468,
+    "name": "Keep Away",
+    "enhanced": false
+  },
+  {
+    "hash": 2896038713,
+    "name": "Focused Fury",
+    "enhanced": false
+  },
+  {
+    "hash": 3194351027,
+    "name": "Explosive Light",
+    "enhanced": false
+  },
+  {
+    "hash": 4267945040,
+    "name": "Full Auto Trigger System",
+    "enhanced": false
+  },
+  {
+    "hash": 818211479,
+    "name": "Shattering Blade",
+    "enhanced": false
+  },
+  {
+    "hash": 3016987351,
+    "name": "Counterattack",
+    "enhanced": false
+  },
+  {
+    "hash": 1685431615,
+    "name": "En Garde",
+    "enhanced": false
+  },
+  {
+    "hash": 1428297954,
+    "name": "Perpetual Motion",
+    "enhanced": false
+  },
+  {
+    "hash": 1365187766,
+    "name": "Gutshot Straight",
+    "enhanced": false
+  },
+  {
+    "hash": 4200236906,
+    "name": "Gutshot Straight",
+    "enhanced": true
+  },
+  {
+    "hash": 1347741687,
+    "name": "Outlaw",
+    "enhanced": true
+  },
+  {
+    "hash": 4116820839,
+    "name": "Snapshot Sights",
+    "enhanced": true
+  },
+  {
+    "hash": 2717805783,
+    "name": "Moving Target",
+    "enhanced": true
+  },
+  {
+    "hash": 3513791699,
+    "name": "Mulligan",
+    "enhanced": false
+  },
+  {
+    "hash": 3764420437,
+    "name": "Aggregate Charge",
+    "enhanced": false
+  },
+  {
+    "hash": 162561147,
+    "name": "Mulligan",
+    "enhanced": true
+  },
+  {
+    "hash": 23371658,
+    "name": "Box Breathing",
+    "enhanced": true
+  },
+  {
+    "hash": 3192447905,
+    "name": "Aggregate Charge",
+    "enhanced": true
+  },
+  {
+    "hash": 3528046508,
+    "name": "Auto-Loading Holster",
+    "enhanced": true
+  },
+  {
+    "hash": 2779035018,
+    "name": "Feeding Frenzy",
+    "enhanced": false
+  },
+  {
+    "hash": 1385518514,
+    "name": "Liquid Cooling",
+    "enhanced": false
+  },
+  {
+    "hash": 4293542123,
+    "name": "Incandescent",
+    "enhanced": false
+  },
+  {
+    "hash": 1546637391,
+    "name": "Vorpal Weapon",
+    "enhanced": false
+  },
+  {
+    "hash": 1631667848,
+    "name": "Grave Robber",
+    "enhanced": false
+  },
+  {
+    "hash": 4042220767,
+    "name": "Bolt Scavenger",
+    "enhanced": false
+  },
+  {
+    "hash": 776531651,
+    "name": "Repulsor Brace",
+    "enhanced": false
+  },
+  {
+    "hash": 883665727,
+    "name": "Bolt Scavenger",
+    "enhanced": true
+  },
+  {
+    "hash": 2541826827,
+    "name": "Repulsor Brace",
+    "enhanced": true
+  },
+  {
+    "hash": 1464081238,
+    "name": "Demoralize",
+    "enhanced": false
+  },
+  {
+    "hash": 2140591236,
+    "name": "High Ground",
+    "enhanced": true
+  },
+  {
+    "hash": 2813913866,
+    "name": "Demoralize",
+    "enhanced": true
+  },
+  {
+    "hash": 136456835,
+    "name": "Reversal of Fortune",
+    "enhanced": false
+  },
+  {
+    "hash": 3442762221,
+    "name": "Lead from Gold",
+    "enhanced": true
+  },
+  {
+    "hash": 1194056669,
+    "name": "Closing Time",
+    "enhanced": false
+  },
+  {
+    "hash": 3955464425,
+    "name": "Closing Time",
+    "enhanced": true
+  },
+  {
+    "hash": 2109543898,
+    "name": "Desperate Measures",
+    "enhanced": false
+  },
+  {
+    "hash": 2799030358,
+    "name": "Desperate Measures",
+    "enhanced": true
+  },
+  {
+    "hash": 2923251173,
+    "name": "Kill Clip",
+    "enhanced": true
+  },
+  {
+    "hash": 639190697,
+    "name": "Sword Logic",
+    "enhanced": true
+  },
+  {
+    "hash": 1523649716,
+    "name": "Tap the Trigger",
+    "enhanced": true
+  },
+  {
+    "hash": 1017229899,
+    "name": "Blast Distributor",
+    "enhanced": false
+  },
+  {
+    "hash": 3696140595,
+    "name": "Blast Distributor",
+    "enhanced": true
+  },
+  {
+    "hash": 3418165135,
+    "name": "Vorpal Weapon",
+    "enhanced": true
+  },
+  {
+    "hash": 2117683199,
+    "name": "Full Auto Trigger System",
+    "enhanced": false
+  },
+  {
+    "hash": 2888557110,
+    "name": "Full Court",
+    "enhanced": false
+  },
+  {
+    "hash": 3673922083,
+    "name": "Adagio",
+    "enhanced": false
+  },
+  {
+    "hash": 1821614984,
+    "name": "Slickdraw",
+    "enhanced": false
+  },
+  {
+    "hash": 2287699930,
+    "name": "Broadhead",
+    "enhanced": false
+  },
+  {
+    "hash": 2302094943,
+    "name": "Kill Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 38912240,
+    "name": "Crucible Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 3782773412,
+    "name": "Tithing Harvest",
+    "enhanced": false
+  },
+  {
+    "hash": 3932949589,
+    "name": "Cooling Baubles",
+    "enhanced": false
+  },
+  {
+    "hash": 684456054,
+    "name": "Eddy Current",
+    "enhanced": false
+  },
+  {
+    "hash": 1115162408,
+    "name": "Trickle Charge",
+    "enhanced": false
+  },
+  {
+    "hash": 307683764,
+    "name": "Delicate Tuning",
+    "enhanced": false
+  },
+  {
+    "hash": 2039482529,
+    "name": "Cooling Baubles",
+    "enhanced": true
+  },
+  {
+    "hash": 2785334058,
+    "name": "Eddy Current",
+    "enhanced": true
+  },
+  {
+    "hash": 3118144663,
+    "name": "Hip-Fire Grip",
+    "enhanced": true
+  },
+  {
+    "hash": 511499160,
+    "name": "Trickle Charge",
+    "enhanced": true
+  },
+  {
+    "hash": 1341464476,
+    "name": "Delicate Tuning",
+    "enhanced": true
+  },
+  {
+    "hash": 3966416502,
+    "name": "Jolting Feedback",
+    "enhanced": false
+  },
+  {
+    "hash": 1909124648,
+    "name": "Thermal Atomization",
+    "enhanced": false
+  },
+  {
+    "hash": 717070634,
+    "name": "Jolting Feedback",
+    "enhanced": true
+  },
+  {
+    "hash": 3590359704,
+    "name": "Thermal Atomization",
+    "enhanced": true
+  },
+  {
+    "hash": 205890336,
+    "name": "Pulse Monitor",
+    "enhanced": false
+  },
+  {
+    "hash": 1683379515,
+    "name": "Disruption Break",
+    "enhanced": false
+  },
+  {
+    "hash": 2360347339,
+    "name": "Impromptu Ammunition",
+    "enhanced": false
+  },
+  {
+    "hash": 4096144819,
+    "name": "Impromptu Ammunition",
+    "enhanced": true
+  },
+  {
+    "hash": 2840833776,
+    "name": "Shoot to Loot",
+    "enhanced": true
+  },
+  {
+    "hash": 1171147302,
+    "name": "Feeding Frenzy",
+    "enhanced": true
+  },
+  {
+    "hash": 2889515627,
+    "name": "Adagio",
+    "enhanced": true
+  },
+  {
+    "hash": 2570477205,
+    "name": "Multikill Clip",
+    "enhanced": true
+  },
+  {
+    "hash": 2014892510,
+    "name": "Perpetual Motion",
+    "enhanced": true
+  },
+  {
+    "hash": 3755250867,
+    "name": "Under Pressure",
+    "enhanced": true
+  },
+  {
+    "hash": 3719974635,
+    "name": "Eye of the Storm",
+    "enhanced": true
+  },
+  {
+    "hash": 1754714824,
+    "name": "Kickstart",
+    "enhanced": false
+  },
+  {
+    "hash": 2594592626,
+    "name": "Controlled Burst",
+    "enhanced": false
+  },
+  {
+    "hash": 834262328,
+    "name": "Kickstart",
+    "enhanced": true
+  },
+  {
+    "hash": 344235611,
+    "name": "Chill Clip",
+    "enhanced": true
+  },
+  {
+    "hash": 2037312142,
+    "name": "Controlled Burst",
+    "enhanced": true
+  },
+  {
+    "hash": 3977735242,
+    "name": "Tracking Module",
+    "enhanced": false
+  },
+  {
+    "hash": 2451262963,
+    "name": "Fragile Focus",
+    "enhanced": false
+  },
+  {
+    "hash": 2679249093,
+    "name": "One-Two Punch",
+    "enhanced": false
+  },
+  {
+    "hash": 525593296,
+    "name": "Desperation",
+    "enhanced": false
+  },
+  {
+    "hash": 460017080,
+    "name": "Headseeker",
+    "enhanced": false
+  },
+  {
+    "hash": 744594675,
+    "name": "Well-Rounded",
+    "enhanced": false
+  },
+  {
+    "hash": 2244851822,
+    "name": "Flash Counter",
+    "enhanced": false
+  },
+  {
+    "hash": 2860991074,
+    "name": "Flash Counter",
+    "enhanced": true
+  },
+  {
+    "hash": 147913470,
+    "name": "Whirlwind Blade",
+    "enhanced": true
+  },
+  {
+    "hash": 1145640183,
+    "name": "Counterattack",
+    "enhanced": true
+  },
+  {
+    "hash": 113508675,
+    "name": "Reaper's Tithe",
+    "enhanced": false
+  },
+  {
+    "hash": 2275087323,
+    "name": "Explosive Light",
+    "enhanced": true
+  },
+  {
+    "hash": 177189259,
+    "name": "Reaper's Tithe",
+    "enhanced": true
+  },
+  {
+    "hash": 4274614370,
+    "name": "Valiant Charge",
+    "enhanced": false
+  },
+  {
+    "hash": 1264398905,
+    "name": "Celerity",
+    "enhanced": false
+  },
+  {
+    "hash": 2652708987,
+    "name": "Successful Warm-Up",
+    "enhanced": false
+  },
+  {
+    "hash": 617966211,
+    "name": "Successful Warm-Up",
+    "enhanced": true
+  },
+  {
+    "hash": 3414324643,
+    "name": "Archer's Gambit",
+    "enhanced": false
+  },
+  {
+    "hash": 1888882410,
+    "name": "Collective Pugilism",
+    "enhanced": false
+  },
+  {
+    "hash": 3324494224,
+    "name": "Collective Action",
+    "enhanced": false
+  },
+  {
+    "hash": 2662236651,
+    "name": "Archer's Gambit",
+    "enhanced": true
+  },
+  {
+    "hash": 1551736345,
+    "name": "Explosive Head",
+    "enhanced": true
+  },
+  {
+    "hash": 3684445958,
+    "name": "Collective Pugilism",
+    "enhanced": true
+  },
+  {
+    "hash": 2562668800,
+    "name": "Collective Action",
+    "enhanced": true
+  },
+  {
+    "hash": 64866129,
+    "name": "Explosive Payload",
+    "enhanced": true
+  },
+  {
+    "hash": 2938480696,
+    "name": "Rapid Hit",
+    "enhanced": true
+  },
+  {
+    "hash": 3938834702,
+    "name": "To the Pain",
+    "enhanced": false
+  },
+  {
+    "hash": 3416609154,
+    "name": "To the Pain",
+    "enhanced": true
+  },
+  {
+    "hash": 2911329003,
+    "name": "Grenades and Horseshoes",
+    "enhanced": false
+  },
+  {
+    "hash": 3496051160,
+    "name": "Anticipation",
+    "enhanced": false
+  },
+  {
+    "hash": 1451849462,
+    "name": "Barrel Constrictor",
+    "enhanced": false
+  },
+  {
+    "hash": 1126264488,
+    "name": "Threat Remover",
+    "enhanced": false
+  },
+  {
+    "hash": 1799762209,
+    "name": "Cornered",
+    "enhanced": false
+  },
+  {
+    "hash": 1008128453,
+    "name": "Cornered",
+    "enhanced": true
+  },
+  {
+    "hash": 3100590152,
+    "name": "MIDA Software Package",
+    "enhanced": false
+  },
+  {
+    "hash": 1853177948,
+    "name": "Business Time",
+    "enhanced": false
+  },
+  {
+    "hash": 2428997981,
+    "name": "Permeability",
+    "enhanced": false
+  },
+  {
+    "hash": 3874977694,
+    "name": "Pack Hunter",
+    "enhanced": false
+  },
+  {
+    "hash": 3917450714,
+    "name": "Textured Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 2172504645,
+    "name": "Sleight of Hand",
+    "enhanced": false
+  },
+  {
+    "hash": 1172098417,
+    "name": "Sleight of Hand",
+    "enhanced": true
+  },
+  {
+    "hash": 191144788,
+    "name": "Slideshot",
+    "enhanced": true
+  },
+  {
+    "hash": 402033656,
+    "name": "Grave Robber",
+    "enhanced": true
+  },
+  {
+    "hash": 1370847713,
+    "name": "Opening Shot",
+    "enhanced": true
+  },
+  {
+    "hash": 4152709778,
+    "name": "Iron Gaze",
+    "enhanced": false
+  },
+  {
+    "hash": 4207509907,
+    "name": "Killing Wind",
+    "enhanced": true
+  },
+  {
+    "hash": 4620383,
+    "name": "Weft Cutter",
+    "enhanced": false
+  },
+  {
+    "hash": 3471414563,
+    "name": "Taken Divergence",
+    "enhanced": false
+  },
+  {
+    "hash": 1178686995,
+    "name": "Mechanized Autoloader",
+    "enhanced": false
+  },
+  {
+    "hash": 1870851715,
+    "name": "Under-Over",
+    "enhanced": false
+  },
+  {
+    "hash": 202670084,
+    "name": "Full Bore",
+    "enhanced": false
+  },
+  {
+    "hash": 1289604610,
+    "name": "Spread Shot Package",
+    "enhanced": false
+  },
+  {
+    "hash": 3350417888,
+    "name": "Sympathetic Arsenal",
+    "enhanced": false
+  },
+  {
+    "hash": 1537607344,
+    "name": "Sympathetic Arsenal",
+    "enhanced": true
+  },
+  {
+    "hash": 1771339417,
+    "name": "Firing Line",
+    "enhanced": false
+  },
+  {
+    "hash": 395388285,
+    "name": "Firing Line",
+    "enhanced": true
+  },
+  {
+    "hash": 1421772400,
+    "name": "Air Trigger",
+    "enhanced": false
+  },
+  {
+    "hash": 563069569,
+    "name": "Reverberation",
+    "enhanced": false
+  },
+  {
+    "hash": 3291427296,
+    "name": "Air Trigger",
+    "enhanced": true
+  },
+  {
+    "hash": 2167611941,
+    "name": "Reverberation",
+    "enhanced": true
+  },
+  {
+    "hash": 3556949035,
+    "name": "Time-Slip",
+    "enhanced": false
+  },
+  {
+    "hash": 2782457288,
+    "name": "Killing Tally",
+    "enhanced": false
+  },
+  {
+    "hash": 509594246,
+    "name": "Rangefinder",
+    "enhanced": true
+  },
+  {
+    "hash": 3640170453,
+    "name": "Chaos Reshaped",
+    "enhanced": false
+  },
+  {
+    "hash": 2360754333,
+    "name": "Trench Barrel",
+    "enhanced": false
+  },
+  {
+    "hash": 788178929,
+    "name": "One-Two Punch",
+    "enhanced": true
+  },
+  {
+    "hash": 1817983009,
+    "name": "Chaos Reshaped",
+    "enhanced": true
+  },
+  {
+    "hash": 2459015849,
+    "name": "Trench Barrel",
+    "enhanced": true
+  },
+  {
+    "hash": 2621346526,
+    "name": "Ensemble",
+    "enhanced": false
+  },
+  {
+    "hash": 2495011826,
+    "name": "Ensemble",
+    "enhanced": true
+  },
+  {
+    "hash": 1899803992,
+    "name": "Suspending Blast",
+    "enhanced": false
+  },
+  {
+    "hash": 1166233619,
+    "name": "Nano-Assault",
+    "enhanced": false
+  },
+  {
+    "hash": 3377448506,
+    "name": "Tenacious Handle",
+    "enhanced": false
+  },
+  {
+    "hash": 1408800487,
+    "name": "Omega Strike",
+    "enhanced": false
+  },
+  {
+    "hash": 2094939076,
+    "name": "Charged with Blight",
+    "enhanced": false
+  },
+  {
+    "hash": 1218765758,
+    "name": "Rega's Refrain",
+    "enhanced": false
+  },
+  {
+    "hash": 24925370,
+    "name": "Gift of the Traveler",
+    "enhanced": false
+  },
+  {
+    "hash": 3198323828,
+    "name": "Keep Away",
+    "enhanced": true
+  },
+  {
+    "hash": 3018146897,
+    "name": "Invisible Hand",
+    "enhanced": false
+  },
+  {
+    "hash": 3337692349,
+    "name": "Mulligan",
+    "enhanced": false
+  },
+  {
+    "hash": 2209918983,
+    "name": "Turnabout",
+    "enhanced": false
+  },
+  {
+    "hash": 509074078,
+    "name": "Steady Hands",
+    "enhanced": false
+  },
+  {
+    "hash": 624891305,
+    "name": "Desperado",
+    "enhanced": true
+  },
+  {
+    "hash": 4045335048,
+    "name": "Headseeker",
+    "enhanced": true
+  },
+  {
+    "hash": 3504197951,
+    "name": "Unforeseen Repercussions",
+    "enhanced": false
+  },
+  {
+    "hash": 1185273366,
+    "name": "Armor of the Colossus",
+    "enhanced": false
+  },
+  {
+    "hash": 3438534621,
+    "name": "Combat Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 855168139,
+    "name": "Unrelenting",
+    "enhanced": true
+  },
+  {
+    "hash": 4183521337,
+    "name": "Tireless Blade",
+    "enhanced": true
+  },
+  {
+    "hash": 405677814,
+    "name": "Cold Steel",
+    "enhanced": true
+  },
+  {
+    "hash": 2420895100,
+    "name": "Extended Mag",
+    "enhanced": false
+  },
+  {
+    "hash": 1961144892,
+    "name": "Quickdraw",
+    "enhanced": true
+  },
+  {
+    "hash": 2795311559,
+    "name": "Pace Yourself",
+    "enhanced": false
+  },
+  {
+    "hash": 3333994164,
+    "name": "Dark Descent",
+    "enhanced": false
+  },
+  {
+    "hash": 1609056795,
+    "name": "Fragile Focus",
+    "enhanced": true
+  },
+  {
+    "hash": 4175584682,
+    "name": "Barrel Constrictor",
+    "enhanced": true
+  },
+  {
+    "hash": 3551326236,
+    "name": "Rampage",
+    "enhanced": false
+  },
+  {
+    "hash": 3705817207,
+    "name": "Duelist's Trance",
+    "enhanced": false
+  },
+  {
+    "hash": 1646437399,
+    "name": "Duelist's Trance",
+    "enhanced": true
+  },
+  {
+    "hash": 3406782879,
+    "name": "En Garde",
+    "enhanced": true
+  },
+  {
+    "hash": 2405598968,
+    "name": "Vestigial Alchemy",
+    "enhanced": false
+  },
+  {
+    "hash": 745965939,
+    "name": "Break the Bank",
+    "enhanced": false
+  },
+  {
+    "hash": 861489047,
+    "name": "Vermin",
+    "enhanced": false
+  },
+  {
+    "hash": 1281243303,
+    "name": "Adaptive Ordnance",
+    "enhanced": false
+  },
+  {
+    "hash": 4190643473,
+    "name": "Breakthrough",
+    "enhanced": false
+  },
+  {
+    "hash": 1528281896,
+    "name": "Outlaw",
+    "enhanced": false
+  },
+  {
+    "hash": 2078097559,
+    "name": "Polymer Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 3927722942,
+    "name": "Lasting Impression",
+    "enhanced": false
+  },
+  {
+    "hash": 1579100415,
+    "name": "Bullseye Bolster",
+    "enhanced": false
+  },
+  {
+    "hash": 2399646028,
+    "name": "Leviathan's Sigh",
+    "enhanced": false
+  },
+  {
+    "hash": 2240097604,
+    "name": "Kill Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 2285636663,
+    "name": "Crucible Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 777637181,
+    "name": "Play with Your Prey",
+    "enhanced": false
+  },
+  {
+    "hash": 1077019636,
+    "name": "Danger Zone",
+    "enhanced": true
+  },
+  {
+    "hash": 1167468626,
+    "name": "Lasting Impression",
+    "enhanced": true
+  },
+  {
+    "hash": 1679262379,
+    "name": "Worm Byproduct",
+    "enhanced": false
+  },
+  {
+    "hash": 987673306,
+    "name": "Tunnel Vision",
+    "enhanced": true
+  },
+  {
+    "hash": 1378047685,
+    "name": "Spinning Up",
+    "enhanced": false
+  },
+  {
+    "hash": 4012962526,
+    "name": "Dual Speed Receiver",
+    "enhanced": false
+  },
+  {
+    "hash": 2238035098,
+    "name": "Storm and Stress",
+    "enhanced": false
+  },
+  {
+    "hash": 2799667909,
+    "name": "Silkbound Slayer",
+    "enhanced": false
+  },
+  {
+    "hash": 1600092898,
+    "name": "Backup Plan",
+    "enhanced": false
+  },
+  {
+    "hash": 458552176,
+    "name": "Cormorant Reversal",
+    "enhanced": false
+  },
+  {
+    "hash": 2997472817,
+    "name": "Osmosis",
+    "enhanced": false
+  },
+  {
+    "hash": 1048183818,
+    "name": "Adaptive Munitions",
+    "enhanced": false
+  },
+  {
+    "hash": 75282108,
+    "name": "Weighted Edge",
+    "enhanced": false
+  },
+  {
+    "hash": 3526486541,
+    "name": "Tilting at Windmills",
+    "enhanced": false
+  },
+  {
+    "hash": 1302052952,
+    "name": "Pick Your Poison",
+    "enhanced": false
+  },
+  {
+    "hash": 939227542,
+    "name": "Target Acquired",
+    "enhanced": false
+  },
+  {
+    "hash": 331667533,
+    "name": "Cascade Point",
+    "enhanced": true
+  },
+  {
+    "hash": 4290541820,
+    "name": "Golden Tricorn Enhanced",
+    "enhanced": true
+  },
+  {
+    "hash": 25606670,
+    "name": "Dual Loader",
+    "enhanced": false
+  },
+  {
+    "hash": 469285294,
+    "name": "Recombination",
+    "enhanced": false
+  },
+  {
+    "hash": 1180907940,
+    "name": "Spindle",
+    "enhanced": false
+  },
+  {
+    "hash": 1419069769,
+    "name": "Lightning Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 1105347996,
+    "name": "Paracausal Pellets",
+    "enhanced": false
+  },
+  {
+    "hash": 1658733671,
+    "name": "The Roadborn",
+    "enhanced": false
+  },
+  {
+    "hash": 2383960413,
+    "name": "Cruel Remedy",
+    "enhanced": false
+  },
+  {
+    "hash": 290014589,
+    "name": "Revved Consumption",
+    "enhanced": false
+  },
+  {
+    "hash": 2675184851,
+    "name": "Incandescent",
+    "enhanced": true
+  },
+  {
+    "hash": 743139589,
+    "name": "Blessing of the Sky",
+    "enhanced": false
+  },
+  {
+    "hash": 1650852150,
+    "name": "Long March",
+    "enhanced": false
+  },
+  {
+    "hash": 25692695,
+    "name": "The Scientific Method",
+    "enhanced": false
+  },
+  {
+    "hash": 4146729347,
+    "name": "Last Stand",
+    "enhanced": false
+  },
+  {
+    "hash": 2000464223,
+    "name": "Hail Storm",
+    "enhanced": false
+  },
+  {
+    "hash": 873883409,
+    "name": "Shot in the Dark",
+    "enhanced": false
+  },
+  {
+    "hash": 1905598698,
+    "name": "Full Court",
+    "enhanced": true
+  },
+  {
+    "hash": 2019952880,
+    "name": "Serve the Colony",
+    "enhanced": false
+  },
+  {
+    "hash": 2748258257,
+    "name": "Heating Up",
+    "enhanced": true
+  },
+  {
+    "hash": 2921090754,
+    "name": "Soul Devourer",
+    "enhanced": false
+  },
+  {
+    "hash": 2476672792,
+    "name": "Threat Remover",
+    "enhanced": true
+  },
+  {
+    "hash": 2814973067,
+    "name": "Markov Chain",
+    "enhanced": false
+  },
+  {
+    "hash": 2402480669,
+    "name": "Focused Fury",
+    "enhanced": true
+  },
+  {
+    "hash": 2720533289,
+    "name": "Magnificent Howl",
+    "enhanced": false
+  },
+  {
+    "hash": 3042219245,
+    "name": "Magnificent Howl",
+    "enhanced": true
+  },
+  {
+    "hash": 2135276011,
+    "name": "Eyes Up, Guardian",
+    "enhanced": false
+  },
+  {
+    "hash": 877533329,
+    "name": "Paracausal Imbuement",
+    "enhanced": false
+  },
+  {
+    "hash": 2057080438,
+    "name": "Meaning-Making",
+    "enhanced": false
+  },
+  {
+    "hash": 3131590896,
+    "name": "Grenade Chaser",
+    "enhanced": false
+  }
+]

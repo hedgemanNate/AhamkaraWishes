@@ -1,0 +1,1527 @@
+[
+  {
+    "hash": 905869860,
+    "name": "Kill Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 3244015567,
+    "name": "Crucible Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 13792278,
+    "name": "Hitmark IS",
+    "enhanced": false
+  },
+  {
+    "hash": 2405638014,
+    "name": "Red Dot Micro",
+    "enhanced": false
+  },
+  {
+    "hash": 679077872,
+    "name": "Rifle Scope SSF",
+    "enhanced": false
+  },
+  {
+    "hash": 106909392,
+    "name": "Tactical Mag",
+    "enhanced": false
+  },
+  {
+    "hash": 3142289711,
+    "name": "Accurized Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 1392496348,
+    "name": "Polygonal Rifling",
+    "enhanced": false
+  },
+  {
+    "hash": 1431678320,
+    "name": "Alloy Magazine",
+    "enhanced": false
+  },
+  {
+    "hash": 1478423395,
+    "name": "Volatile Launch",
+    "enhanced": false
+  },
+  {
+    "hash": 1996142143,
+    "name": "Black Powder",
+    "enhanced": false
+  },
+  {
+    "hash": 3915764595,
+    "name": "Trials Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 3915764594,
+    "name": "Nightfall Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 3915764593,
+    "name": "Gambit Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 1187045864,
+    "name": "Games Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 1690059054,
+    "name": "Lost Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 16638393,
+    "name": "Monolithic Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 1124054883,
+    "name": "Dawning Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 3624435060,
+    "name": "Champion Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 16638392,
+    "name": "Solstice Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 2617715132,
+    "name": "Garden of Salvation Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 2617715133,
+    "name": "Iron Banner Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 3349747415,
+    "name": "Vault of Glass Memento Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 38912240,
+    "name": "Crucible Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 1263609309,
+    "name": "Ballistic Tuning",
+    "enhanced": false
+  },
+  {
+    "hash": 2420895100,
+    "name": "Extended Mag",
+    "enhanced": false
+  },
+  {
+    "hash": 3250034553,
+    "name": "Hammer-Forged Rifling",
+    "enhanced": false
+  },
+  {
+    "hash": 2827049491,
+    "name": "Honed Edge",
+    "enhanced": false
+  },
+  {
+    "hash": 52780822,
+    "name": "Balanced Guard",
+    "enhanced": false
+  },
+  {
+    "hash": 3809316345,
+    "name": "Countermass",
+    "enhanced": false
+  },
+  {
+    "hash": 3032599245,
+    "name": "Disorienting Grenades",
+    "enhanced": false
+  },
+  {
+    "hash": 981914802,
+    "name": "Hard Launch",
+    "enhanced": false
+  },
+  {
+    "hash": 3796465595,
+    "name": "Impact Casing",
+    "enhanced": false
+  },
+  {
+    "hash": 1844523823,
+    "name": "Confined Launch",
+    "enhanced": false
+  },
+  {
+    "hash": 1441682018,
+    "name": "Linear Compensator",
+    "enhanced": false
+  },
+  {
+    "hash": 3525010810,
+    "name": "Quick Launch",
+    "enhanced": false
+  },
+  {
+    "hash": 3798852852,
+    "name": "Smart Drift Control",
+    "enhanced": false
+  },
+  {
+    "hash": 373417387,
+    "name": "Volatile Launch",
+    "enhanced": true
+  },
+  {
+    "hash": 3471392239,
+    "name": "Confined Launch",
+    "enhanced": true
+  },
+  {
+    "hash": 2052299741,
+    "name": "Countermass",
+    "enhanced": true
+  },
+  {
+    "hash": 564443854,
+    "name": "Hard Launch",
+    "enhanced": true
+  },
+  {
+    "hash": 1639399262,
+    "name": "Linear Compensator",
+    "enhanced": true
+  },
+  {
+    "hash": 3250572790,
+    "name": "Quick Launch",
+    "enhanced": true
+  },
+  {
+    "hash": 582768348,
+    "name": "Smart Drift Control",
+    "enhanced": true
+  },
+  {
+    "hash": 1087426260,
+    "name": "Appended Mag",
+    "enhanced": false
+  },
+  {
+    "hash": 3230963543,
+    "name": "Flared Magwell",
+    "enhanced": false
+  },
+  {
+    "hash": 2822142346,
+    "name": "High-Velocity Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 3492396210,
+    "name": "Implosion Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 1380253176,
+    "name": "High-Explosive Ordnance",
+    "enhanced": false
+  },
+  {
+    "hash": 1065371964,
+    "name": "Appended Mag",
+    "enhanced": true
+  },
+  {
+    "hash": 1783397184,
+    "name": "Tactical Mag",
+    "enhanced": true
+  },
+  {
+    "hash": 1890997540,
+    "name": "Extended Mag",
+    "enhanced": true
+  },
+  {
+    "hash": 550838496,
+    "name": "Alloy Magazine",
+    "enhanced": false
+  },
+  {
+    "hash": 1709045111,
+    "name": "Flared Magwell",
+    "enhanced": true
+  },
+  {
+    "hash": 2108812838,
+    "name": "High-Velocity Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 3807404750,
+    "name": "Implosion Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 3781548872,
+    "name": "High-Explosive Ordnance",
+    "enhanced": true
+  },
+  {
+    "hash": 1784898267,
+    "name": "Natural String",
+    "enhanced": false
+  },
+  {
+    "hash": 3311977193,
+    "name": "Helical Fletching",
+    "enhanced": false
+  },
+  {
+    "hash": 3661387068,
+    "name": "Chambered Compensator",
+    "enhanced": false
+  },
+  {
+    "hash": 202670084,
+    "name": "Full Bore",
+    "enhanced": false
+  },
+  {
+    "hash": 4090651448,
+    "name": "Corkscrew Rifling",
+    "enhanced": false
+  },
+  {
+    "hash": 1840239774,
+    "name": "Fluted Barrel",
+    "enhanced": false
+  },
+  {
+    "hash": 1467527085,
+    "name": "Extended Barrel",
+    "enhanced": false
+  },
+  {
+    "hash": 839105230,
+    "name": "Arrowhead Brake",
+    "enhanced": false
+  },
+  {
+    "hash": 1482024992,
+    "name": "Smallbore",
+    "enhanced": false
+  },
+  {
+    "hash": 3177308360,
+    "name": "Steady Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 2302094943,
+    "name": "Kill Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 445755705,
+    "name": "Shortspec SAS",
+    "enhanced": false
+  },
+  {
+    "hash": 445755706,
+    "name": "Control SAS",
+    "enhanced": false
+  },
+  {
+    "hash": 445755704,
+    "name": "Tactic SAS",
+    "enhanced": false
+  },
+  {
+    "hash": 1885400500,
+    "name": "Ricochet Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 445755707,
+    "name": "QuickDot SAS",
+    "enhanced": false
+  },
+  {
+    "hash": 965619221,
+    "name": "SLO-12 Post",
+    "enhanced": false
+  },
+  {
+    "hash": 965619220,
+    "name": "SLO-21 Post",
+    "enhanced": false
+  },
+  {
+    "hash": 3151536501,
+    "name": "SPO-57 Front",
+    "enhanced": false
+  },
+  {
+    "hash": 3151536500,
+    "name": "SPO-28 Front",
+    "enhanced": false
+  },
+  {
+    "hash": 3151536503,
+    "name": "SPO-26 Front",
+    "enhanced": false
+  },
+  {
+    "hash": 360593483,
+    "name": "SRO-37 Ocular",
+    "enhanced": false
+  },
+  {
+    "hash": 360593482,
+    "name": "SRO-41 Ocular",
+    "enhanced": false
+  },
+  {
+    "hash": 360593481,
+    "name": "SRO-52 Ocular",
+    "enhanced": false
+  },
+  {
+    "hash": 3048246338,
+    "name": "Arrowhead Brake",
+    "enhanced": true
+  },
+  {
+    "hash": 3399528164,
+    "name": "Chambered Compensator",
+    "enhanced": true
+  },
+  {
+    "hash": 111235976,
+    "name": "Corkscrew Rifling",
+    "enhanced": true
+  },
+  {
+    "hash": 1932356121,
+    "name": "Extended Barrel",
+    "enhanced": true
+  },
+  {
+    "hash": 1124871858,
+    "name": "Fluted Barrel",
+    "enhanced": true
+  },
+  {
+    "hash": 1871180748,
+    "name": "Full Bore",
+    "enhanced": true
+  },
+  {
+    "hash": 1147230557,
+    "name": "Hammer-Forged Rifling",
+    "enhanced": true
+  },
+  {
+    "hash": 3966296580,
+    "name": "Polygonal Rifling",
+    "enhanced": true
+  },
+  {
+    "hash": 2860123632,
+    "name": "Smallbore",
+    "enhanced": true
+  },
+  {
+    "hash": 1047830412,
+    "name": "Full Choke",
+    "enhanced": false
+  },
+  {
+    "hash": 1332244541,
+    "name": "Rifled Barrel",
+    "enhanced": false
+  },
+  {
+    "hash": 3267421167,
+    "name": "Accurized Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 1002206008,
+    "name": "Steady Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 679225683,
+    "name": "Light Mag",
+    "enhanced": false
+  },
+  {
+    "hash": 1968497646,
+    "name": "Armor-Piercing Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 4134353779,
+    "name": "Drop Mag",
+    "enhanced": false
+  },
+  {
+    "hash": 791862061,
+    "name": "Assault Mag",
+    "enhanced": false
+  },
+  {
+    "hash": 1561002382,
+    "name": "High-Caliber Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 689005463,
+    "name": "Accelerated Coils",
+    "enhanced": false
+  },
+  {
+    "hash": 2680121939,
+    "name": "Enhanced Battery",
+    "enhanced": true
+  },
+  {
+    "hash": 1483536627,
+    "name": "Ionized Battery",
+    "enhanced": false
+  },
+  {
+    "hash": 1687452232,
+    "name": "Liquid Coils",
+    "enhanced": false
+  },
+  {
+    "hash": 3868766766,
+    "name": "Particle Repeater",
+    "enhanced": false
+  },
+  {
+    "hash": 2969185026,
+    "name": "Projection Fuse",
+    "enhanced": false
+  },
+  {
+    "hash": 1279785143,
+    "name": "Accelerated Coils",
+    "enhanced": true
+  },
+  {
+    "hash": 3839493627,
+    "name": "Enhanced Battery",
+    "enhanced": true
+  },
+  {
+    "hash": 3629421851,
+    "name": "Ionized Battery",
+    "enhanced": true
+  },
+  {
+    "hash": 2777563320,
+    "name": "Liquid Coils",
+    "enhanced": true
+  },
+  {
+    "hash": 3081681954,
+    "name": "Particle Repeater",
+    "enhanced": true
+  },
+  {
+    "hash": 2800182654,
+    "name": "Projection Fuse",
+    "enhanced": true
+  },
+  {
+    "hash": 436053704,
+    "name": "Hungry Edge",
+    "enhanced": false
+  },
+  {
+    "hash": 599007201,
+    "name": "Enduring Guard",
+    "enhanced": false
+  },
+  {
+    "hash": 2209280307,
+    "name": "IS 2 Classic",
+    "enhanced": false
+  },
+  {
+    "hash": 1926090094,
+    "name": "Fastdraw HCS",
+    "enhanced": false
+  },
+  {
+    "hash": 1926090095,
+    "name": "SteadyHand HCS",
+    "enhanced": false
+  },
+  {
+    "hash": 1926090091,
+    "name": "Sureshot HCS",
+    "enhanced": false
+  },
+  {
+    "hash": 3429800428,
+    "name": "Fiberglass Arrow Shaft",
+    "enhanced": false
+  },
+  {
+    "hash": 2240097604,
+    "name": "Kill Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 2285636663,
+    "name": "Crucible Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 1261178282,
+    "name": "Enduring Blade",
+    "enhanced": false
+  },
+  {
+    "hash": 3666208348,
+    "name": "Jagged Edge",
+    "enhanced": false
+  },
+  {
+    "hash": 938542991,
+    "name": "Tempered Edge",
+    "enhanced": false
+  },
+  {
+    "hash": 1498024248,
+    "name": "Hungry Edge",
+    "enhanced": true
+  },
+  {
+    "hash": 3885243590,
+    "name": "Enduring Blade",
+    "enhanced": true
+  },
+  {
+    "hash": 4270598587,
+    "name": "Honed Edge",
+    "enhanced": true
+  },
+  {
+    "hash": 3959569796,
+    "name": "Jagged Edge",
+    "enhanced": true
+  },
+  {
+    "hash": 766579919,
+    "name": "Tempered Edge",
+    "enhanced": true
+  },
+  {
+    "hash": 3625355092,
+    "name": "Burst Guard",
+    "enhanced": false
+  },
+  {
+    "hash": 2349202967,
+    "name": "Heavy Guard",
+    "enhanced": false
+  },
+  {
+    "hash": 269888150,
+    "name": "Swordmaster's Guard",
+    "enhanced": false
+  },
+  {
+    "hash": 2338887882,
+    "name": "Balanced Guard",
+    "enhanced": true
+  },
+  {
+    "hash": 3923000764,
+    "name": "Burst Guard",
+    "enhanced": true
+  },
+  {
+    "hash": 4267445637,
+    "name": "Enduring Guard",
+    "enhanced": true
+  },
+  {
+    "hash": 3653484343,
+    "name": "Heavy Guard",
+    "enhanced": true
+  },
+  {
+    "hash": 125241418,
+    "name": "Swordmaster's Guard",
+    "enhanced": true
+  },
+  {
+    "hash": 3124871000,
+    "name": "Outlaw",
+    "enhanced": false
+  },
+  {
+    "hash": 409831596,
+    "name": "Proximity Grenades",
+    "enhanced": false
+  },
+  {
+    "hash": 3999527219,
+    "name": "Remote Detonation",
+    "enhanced": false
+  },
+  {
+    "hash": 3363267119,
+    "name": "Souldrinker",
+    "enhanced": false
+  },
+  {
+    "hash": 2405638015,
+    "name": "Red Dot 2 MOA",
+    "enhanced": false
+  },
+  {
+    "hash": 3373736292,
+    "name": "Sticky Grenades",
+    "enhanced": false
+  },
+  {
+    "hash": 1926090093,
+    "name": "HitMark HCS",
+    "enhanced": false
+  },
+  {
+    "hash": 1926090092,
+    "name": "TrueSight HCS",
+    "enhanced": false
+  },
+  {
+    "hash": 87986589,
+    "name": "GA Post",
+    "enhanced": false
+  },
+  {
+    "hash": 2054312700,
+    "name": "SC Holo",
+    "enhanced": false
+  },
+  {
+    "hash": 1771897777,
+    "name": "Augmented Drum",
+    "enhanced": false
+  },
+  {
+    "hash": 2985827016,
+    "name": "Alloy Casing",
+    "enhanced": false
+  },
+  {
+    "hash": 1300023272,
+    "name": "Barrel Shroud",
+    "enhanced": false
+  },
+  {
+    "hash": 679077873,
+    "name": "Rifle Scope ST",
+    "enhanced": false
+  },
+  {
+    "hash": 2749775325,
+    "name": "Light Battery",
+    "enhanced": false
+  },
+  {
+    "hash": 732557052,
+    "name": "Tactical Battery",
+    "enhanced": false
+  },
+  {
+    "hash": 2073750249,
+    "name": "Light Battery",
+    "enhanced": true
+  },
+  {
+    "hash": 3256371876,
+    "name": "Tactical Battery",
+    "enhanced": true
+  },
+  {
+    "hash": 1926090090,
+    "name": "Crossfire HCS",
+    "enhanced": false
+  },
+  {
+    "hash": 663495154,
+    "name": "Model 8 Red",
+    "enhanced": false
+  },
+  {
+    "hash": 1439751480,
+    "name": "Alloy Casing",
+    "enhanced": true
+  },
+  {
+    "hash": 3605260959,
+    "name": "Black Powder",
+    "enhanced": true
+  },
+  {
+    "hash": 274905539,
+    "name": "Impact Casing",
+    "enhanced": true
+  },
+  {
+    "hash": 2054312701,
+    "name": "SD Thermal",
+    "enhanced": false
+  },
+  {
+    "hash": 1313805251,
+    "name": "LD Watchdog",
+    "enhanced": false
+  },
+  {
+    "hash": 87986588,
+    "name": "GB Iron",
+    "enhanced": false
+  },
+  {
+    "hash": 3301904089,
+    "name": "Spike Grenades",
+    "enhanced": false
+  },
+  {
+    "hash": 2363751990,
+    "name": "Infinite Guard",
+    "enhanced": false
+  },
+  {
+    "hash": 1807273211,
+    "name": "Light Mag",
+    "enhanced": true
+  },
+  {
+    "hash": 332133599,
+    "name": "Mini Frags",
+    "enhanced": false
+  },
+  {
+    "hash": 466087222,
+    "name": "Smoothbore",
+    "enhanced": false
+  },
+  {
+    "hash": 1776069409,
+    "name": "Mag-lev Rail",
+    "enhanced": false
+  },
+  {
+    "hash": 4196967425,
+    "name": "Empowered Rail",
+    "enhanced": false
+  },
+  {
+    "hash": 1220787353,
+    "name": "Ultralight Rail",
+    "enhanced": false
+  },
+  {
+    "hash": 4088731040,
+    "name": "Quickload Rail",
+    "enhanced": false
+  },
+  {
+    "hash": 1890040155,
+    "name": "Low-Profile Rail",
+    "enhanced": false
+  },
+  {
+    "hash": 3786062476,
+    "name": "Frictionless Rail",
+    "enhanced": false
+  },
+  {
+    "hash": 2385083333,
+    "name": "Mag-lev Rail",
+    "enhanced": true
+  },
+  {
+    "hash": 2398680997,
+    "name": "Empowered Rail",
+    "enhanced": true
+  },
+  {
+    "hash": 1465283453,
+    "name": "Ultralight Rail",
+    "enhanced": true
+  },
+  {
+    "hash": 3128149872,
+    "name": "Quickload Rail",
+    "enhanced": true
+  },
+  {
+    "hash": 234526563,
+    "name": "Low-Profile Rail",
+    "enhanced": true
+  },
+  {
+    "hash": 2953575380,
+    "name": "Frictionless Rail",
+    "enhanced": true
+  },
+  {
+    "hash": 3603807747,
+    "name": "Explosive Bolts",
+    "enhanced": false
+  },
+  {
+    "hash": 2136073194,
+    "name": "Spring-Auger Bolts",
+    "enhanced": false
+  },
+  {
+    "hash": 2955427634,
+    "name": "Charged Bolts",
+    "enhanced": false
+  },
+  {
+    "hash": 1069117426,
+    "name": "Serrated Bolts",
+    "enhanced": false
+  },
+  {
+    "hash": 1202133695,
+    "name": "Heavy Bolts",
+    "enhanced": false
+  },
+  {
+    "hash": 2523856971,
+    "name": "Explosive Bolts",
+    "enhanced": true
+  },
+  {
+    "hash": 600923142,
+    "name": "Spring-Auger Bolts",
+    "enhanced": true
+  },
+  {
+    "hash": 2783367502,
+    "name": "Charged Bolts",
+    "enhanced": true
+  },
+  {
+    "hash": 2552577806,
+    "name": "Serrated Bolts",
+    "enhanced": true
+  },
+  {
+    "hash": 2181638943,
+    "name": "Heavy Bolts",
+    "enhanced": true
+  },
+  {
+    "hash": 2172195298,
+    "name": "Armor-Piercing Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 494745090,
+    "name": "High-Caliber Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 1968098204,
+    "name": "Ricochet Rounds",
+    "enhanced": true
+  },
+  {
+    "hash": 445755710,
+    "name": "FarPoint SAS",
+    "enhanced": false
+  },
+  {
+    "hash": 3371775011,
+    "name": "High Tension String",
+    "enhanced": false
+  },
+  {
+    "hash": 1992361643,
+    "name": "Anti-Taken Fletching",
+    "enhanced": false
+  },
+  {
+    "hash": 2801223209,
+    "name": "Elastic String",
+    "enhanced": false
+  },
+  {
+    "hash": 16392701,
+    "name": "Compact Arrow Shaft",
+    "enhanced": false
+  },
+  {
+    "hash": 2870095399,
+    "name": "Thermoplastic Grenades",
+    "enhanced": false
+  },
+  {
+    "hash": 1806718225,
+    "name": "Accelerated Heatsink",
+    "enhanced": false
+  },
+  {
+    "hash": 1092016998,
+    "name": "Overclocked Heatsink",
+    "enhanced": false
+  },
+  {
+    "hash": 1080094173,
+    "name": "Enhanced Heatsink",
+    "enhanced": true
+  },
+  {
+    "hash": 807993149,
+    "name": "Ionized Heatsink",
+    "enhanced": false
+  },
+  {
+    "hash": 1946186791,
+    "name": "Light Heatsink",
+    "enhanced": false
+  },
+  {
+    "hash": 769709866,
+    "name": "Tactical Heatsink",
+    "enhanced": false
+  },
+  {
+    "hash": 1507295317,
+    "name": "Accelerated Heatsink",
+    "enhanced": true
+  },
+  {
+    "hash": 226831738,
+    "name": "Overclocked Heatsink",
+    "enhanced": true
+  },
+  {
+    "hash": 2126519017,
+    "name": "Enhanced Heatsink",
+    "enhanced": true
+  },
+  {
+    "hash": 1454612425,
+    "name": "Ionized Heatsink",
+    "enhanced": true
+  },
+  {
+    "hash": 4273542183,
+    "name": "Light Heatsink",
+    "enhanced": true
+  },
+  {
+    "hash": 3210123846,
+    "name": "Tactical Heatsink",
+    "enhanced": true
+  },
+  {
+    "hash": 445755711,
+    "name": "Target SAS",
+    "enhanced": false
+  },
+  {
+    "hash": 1180618054,
+    "name": "Enduring Guard",
+    "enhanced": false
+  },
+  {
+    "hash": 3732622839,
+    "name": "Burst Guard",
+    "enhanced": false
+  },
+  {
+    "hash": 3425386926,
+    "name": "Rampage",
+    "enhanced": false
+  },
+  {
+    "hash": 2010801679,
+    "name": "Ambitious Assassin",
+    "enhanced": false
+  },
+  {
+    "hash": 13792279,
+    "name": "Cleanshot IS",
+    "enhanced": false
+  },
+  {
+    "hash": 3768438372,
+    "name": "Agile Bowstring",
+    "enhanced": false
+  },
+  {
+    "hash": 1196733167,
+    "name": "Tactile String",
+    "enhanced": false
+  },
+  {
+    "hash": 4067834857,
+    "name": "Flexible String",
+    "enhanced": false
+  },
+  {
+    "hash": 852209214,
+    "name": "Polymer String",
+    "enhanced": false
+  },
+  {
+    "hash": 4201007276,
+    "name": "Agile Bowstring",
+    "enhanced": true
+  },
+  {
+    "hash": 2276384431,
+    "name": "Tactile String",
+    "enhanced": true
+  },
+  {
+    "hash": 3956406253,
+    "name": "Elastic String",
+    "enhanced": true
+  },
+  {
+    "hash": 1777340333,
+    "name": "Flexible String",
+    "enhanced": true
+  },
+  {
+    "hash": 4185607275,
+    "name": "High Tension String",
+    "enhanced": true
+  },
+  {
+    "hash": 1301083363,
+    "name": "Natural String",
+    "enhanced": true
+  },
+  {
+    "hash": 3837163218,
+    "name": "Polymer String",
+    "enhanced": true
+  },
+  {
+    "hash": 2154191829,
+    "name": "Carbon Arrow Shaft",
+    "enhanced": false
+  },
+  {
+    "hash": 1500996326,
+    "name": "Natural Fletching",
+    "enhanced": false
+  },
+  {
+    "hash": 3827198035,
+    "name": "Straight Fletching",
+    "enhanced": false
+  },
+  {
+    "hash": 1111219233,
+    "name": "Carbon Arrow Shaft",
+    "enhanced": true
+  },
+  {
+    "hash": 2732340361,
+    "name": "Compact Arrow Shaft",
+    "enhanced": true
+  },
+  {
+    "hash": 52802868,
+    "name": "Fiberglass Arrow Shaft",
+    "enhanced": true
+  },
+  {
+    "hash": 1796628141,
+    "name": "Helical Fletching",
+    "enhanced": true
+  },
+  {
+    "hash": 3819272442,
+    "name": "Natural Fletching",
+    "enhanced": true
+  },
+  {
+    "hash": 1649480699,
+    "name": "Straight Fletching",
+    "enhanced": true
+  },
+  {
+    "hash": 4260919525,
+    "name": "Mark 10 Glass",
+    "enhanced": false
+  },
+  {
+    "hash": 2039302152,
+    "name": "Slideways",
+    "enhanced": false
+  },
+  {
+    "hash": 460017080,
+    "name": "Headseeker",
+    "enhanced": false
+  },
+  {
+    "hash": 663495155,
+    "name": "Model 6 Loop",
+    "enhanced": false
+  },
+  {
+    "hash": 4260919524,
+    "name": "Mark 15 Lens",
+    "enhanced": false
+  },
+  {
+    "hash": 1987021001,
+    "name": "Rifled Barrel",
+    "enhanced": true
+  },
+  {
+    "hash": 905499626,
+    "name": "Smoothbore",
+    "enhanced": true
+  },
+  {
+    "hash": 2371713880,
+    "name": "Barrel Shroud",
+    "enhanced": true
+  },
+  {
+    "hash": 3311319252,
+    "name": "Full Choke",
+    "enhanced": true
+  },
+  {
+    "hash": 1488599449,
+    "name": "Assault Mag",
+    "enhanced": true
+  },
+  {
+    "hash": 2410284310,
+    "name": "Fastdraw IS",
+    "enhanced": false
+  },
+  {
+    "hash": 2732913579,
+    "name": "Red Dot-ORS1",
+    "enhanced": false
+  },
+  {
+    "hash": 2209280306,
+    "name": "IS 5 Circle",
+    "enhanced": false
+  },
+  {
+    "hash": 3161816588,
+    "name": "Slideshot",
+    "enhanced": false
+  },
+  {
+    "hash": 1359896290,
+    "name": "Dynamic Sway Reduction",
+    "enhanced": false
+  },
+  {
+    "hash": 1313805250,
+    "name": "LB Assault",
+    "enhanced": false
+  },
+  {
+    "hash": 3061646252,
+    "name": "Sticky Grenades",
+    "enhanced": true
+  },
+  {
+    "hash": 409713597,
+    "name": "Spike Grenades",
+    "enhanced": true
+  },
+  {
+    "hash": 1313805249,
+    "name": "LC Ranged",
+    "enhanced": false
+  },
+  {
+    "hash": 2732913576,
+    "name": "Red Dot-OAS",
+    "enhanced": false
+  },
+  {
+    "hash": 1491926337,
+    "name": "Focus Lens FLS2",
+    "enhanced": false
+  },
+  {
+    "hash": 2410284311,
+    "name": "Quickdraw IS",
+    "enhanced": false
+  },
+  {
+    "hash": 2410284308,
+    "name": "TrueSight IS",
+    "enhanced": false
+  },
+  {
+    "hash": 2732913578,
+    "name": "Red Dot-ORS",
+    "enhanced": false
+  },
+  {
+    "hash": 809345546,
+    "name": "Devil Scope D2",
+    "enhanced": false
+  },
+  {
+    "hash": 809345547,
+    "name": "Dusk Scope D2",
+    "enhanced": false
+  },
+  {
+    "hash": 1288081796,
+    "name": "Wolf Sight W1",
+    "enhanced": false
+  },
+  {
+    "hash": 1288081797,
+    "name": "King Sight K1",
+    "enhanced": false
+  },
+  {
+    "hash": 1288081798,
+    "name": "Dusk Sight D1",
+    "enhanced": false
+  },
+  {
+    "hash": 1452368632,
+    "name": "Wolf Dot W2",
+    "enhanced": false
+  },
+  {
+    "hash": 1452368633,
+    "name": "King Dot K2",
+    "enhanced": false
+  },
+  {
+    "hash": 1452368634,
+    "name": "Dusk Dot D1",
+    "enhanced": false
+  },
+  {
+    "hash": 1408087975,
+    "name": "Marksman Sights",
+    "enhanced": false
+  },
+  {
+    "hash": 1408087974,
+    "name": "Combat Sights",
+    "enhanced": false
+  },
+  {
+    "hash": 2387244414,
+    "name": "Zen Moment",
+    "enhanced": false
+  },
+  {
+    "hash": 1866048759,
+    "name": "Hip-Fire Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 1168162263,
+    "name": "Outlaw",
+    "enhanced": false
+  },
+  {
+    "hash": 2467967826,
+    "name": "Chambered Compensator",
+    "enhanced": false
+  },
+  {
+    "hash": 2635532173,
+    "name": "Accurized Rounds",
+    "enhanced": false
+  },
+  {
+    "hash": 2213355989,
+    "name": "High-Impact Reserves",
+    "enhanced": false
+  },
+  {
+    "hash": 29505215,
+    "name": "Randomized Perks",
+    "enhanced": false
+  },
+  {
+    "hash": 935202422,
+    "name": "Horizon Ironsights",
+    "enhanced": false
+  },
+  {
+    "hash": 265542500,
+    "name": "Chain Bowstring",
+    "enhanced": false
+  },
+  {
+    "hash": 47981717,
+    "name": "Opening Shot",
+    "enhanced": false
+  },
+  {
+    "hash": 4026309323,
+    "name": "Deflection Tang",
+    "enhanced": false
+  },
+  {
+    "hash": 3514694513,
+    "name": "Balanced Tang",
+    "enhanced": false
+  },
+  {
+    "hash": 3794918801,
+    "name": "Fencing Tang",
+    "enhanced": false
+  },
+  {
+    "hash": 3295115440,
+    "name": "Defensive Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 1958555234,
+    "name": "Balanced Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 697983358,
+    "name": "Offensive Grip",
+    "enhanced": false
+  },
+  {
+    "hash": 1934171651,
+    "name": "Supercooled Accelerator",
+    "enhanced": false
+  },
+  {
+    "hash": 137682932,
+    "name": "Proximity Grenades",
+    "enhanced": true
+  },
+  {
+    "hash": 3648644469,
+    "name": "Augmented Drum",
+    "enhanced": true
+  },
+  {
+    "hash": 3156458303,
+    "name": "Mini Frags",
+    "enhanced": true
+  },
+  {
+    "hash": 554078784,
+    "name": "Zoom 30 Focus",
+    "enhanced": false
+  },
+  {
+    "hash": 554078785,
+    "name": "Zoom 10 Point",
+    "enhanced": false
+  },
+  {
+    "hash": 1491926336,
+    "name": "Ranged Lens RLR5",
+    "enhanced": false
+  },
+  {
+    "hash": 3492498209,
+    "name": "Shortened Barrel",
+    "enhanced": false
+  },
+  {
+    "hash": 3400784728,
+    "name": "Triple Tap",
+    "enhanced": false
+  },
+  {
+    "hash": 1275731761,
+    "name": "Cluster Bomb",
+    "enhanced": false
+  },
+  {
+    "hash": 893526894,
+    "name": "ATB Long Range",
+    "enhanced": false
+  },
+  {
+    "hash": 3433396027,
+    "name": "Meyrin RDL",
+    "enhanced": false
+  },
+  {
+    "hash": 2414725840,
+    "name": "Satou Focus Lens",
+    "enhanced": false
+  },
+  {
+    "hash": 588594999,
+    "name": "Moving Target",
+    "enhanced": false
+  },
+  {
+    "hash": 3721627275,
+    "name": "Swap Mag",
+    "enhanced": false
+  },
+  {
+    "hash": 580685494,
+    "name": "Auxiliary Reserves",
+    "enhanced": false
+  },
+  {
+    "hash": 893526892,
+    "name": "ATA Scout",
+    "enhanced": false
+  },
+  {
+    "hash": 2193118397,
+    "name": "EagleEye SLR20",
+    "enhanced": false
+  },
+  {
+    "hash": 2193118396,
+    "name": "Ambush SLH25",
+    "enhanced": false
+  }
+]

@@ -1,0 +1,5732 @@
+[
+  {
+    "hash": 1080125,
+    "name": "Mykel's Reverence",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 4425887,
+    "name": "The Time-Worn Spire",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 5159537,
+    "name": "Senuna SI6",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 17096506,
+    "name": "Dragon's Breath",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 24639057,
+    "name": "Accrued Redemption",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 25228802,
+    "name": "Refusal of the Call (Adept)",
+    "type": "Glaive"
+  },
+  {
+    "hash": 32287609,
+    "name": "Boondoggle Mk. 55",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 35794111,
+    "name": "Temptation's Hook",
+    "type": "Sword"
+  },
+  {
+    "hash": 40394833,
+    "name": "The Militia's Birthright",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 42351395,
+    "name": "Subzero Salvo",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 42435996,
+    "name": "Mint Retrograde",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 45643573,
+    "name": "Raconteur",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 46524085,
+    "name": "Osteo Striga",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 46590909,
+    "name": "Fang of Ir Yût (Adept)",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 47772649,
+    "name": "THE SWARM",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 48361212,
+    "name": "Controlling Vision",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 53159280,
+    "name": "Traveler's Chosen",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 53159281,
+    "name": "Traveler's Chosen (Damaged)",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 66875353,
+    "name": "Avalanche",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 72732994,
+    "name": "Rufus's Fury",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 72775246,
+    "name": "Gunburn",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 74733286,
+    "name": "Nox Sidereal IV",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 89693562,
+    "name": "Duty Bound",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 92459755,
+    "name": "Supercluster",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 105164264,
+    "name": "Double-Edged Answer",
+    "type": "Sword"
+  },
+  {
+    "hash": 105306149,
+    "name": "Eleatic Principle",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 105567493,
+    "name": "Hard Truths",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 108221785,
+    "name": "Riiswalker",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 126468112,
+    "name": "Defiance of Yasmin",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 128782990,
+    "name": "Fang of Ir Yût (Adept)",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 136525518,
+    "name": "Shining Sphere",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 137879537,
+    "name": "Curtain Call",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 145684864,
+    "name": "Succession",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 153979397,
+    "name": "Better Devils",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 161537636,
+    "name": "Machina Dei 4",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 161675590,
+    "name": "Whistler's Whim (Adept)",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 167561626,
+    "name": "Bequest",
+    "type": "Sword"
+  },
+  {
+    "hash": 172461430,
+    "name": "Critical Anomaly (Adept)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 177568179,
+    "name": "Horror Story",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 179640226,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 179640227,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 190747610,
+    "name": "Qua Nilus II",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 191996029,
+    "name": "Redrix's Claymore",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 195440257,
+    "name": "Play of the Game",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 198854575,
+    "name": "Crimil's Dagger",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 200474807,
+    "name": "Deliverance",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 204878059,
+    "name": "Malfeasance",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 205225492,
+    "name": "Hung Jury SR4",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 210065223,
+    "name": "Magnum Shepherd",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 211732170,
+    "name": "Hammerhead",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 211938782,
+    "name": "Whispering Slab",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 213264394,
+    "name": "Buzzard",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 218335759,
+    "name": "Edge Transit",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 222606050,
+    "name": "Glissando-47",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 231031173,
+    "name": "Mykel's Reverence",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 233402416,
+    "name": "New Pacific Epitaph (Adept)",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 233423981,
+    "name": "Warden's Law",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 235827225,
+    "name": "Eyasluna",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 243425374,
+    "name": "Falling Guillotine",
+    "type": "Sword"
+  },
+  {
+    "hash": 250721843,
+    "name": "Abide the Return",
+    "type": "Sword"
+  },
+  {
+    "hash": 260532765,
+    "name": "Duty Bound",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 267089201,
+    "name": "Warden's Law (Adept)",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 268260372,
+    "name": "Regnant",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 270610849,
+    "name": "Mistral Lift",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 273396910,
+    "name": "Frontier Justice",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 276918162,
+    "name": "Hagakure",
+    "type": "Sword"
+  },
+  {
+    "hash": 282549639,
+    "name": "Eyes Unveiled (Adept)",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 287042892,
+    "name": "Negative Space",
+    "type": "Sword"
+  },
+  {
+    "hash": 287042893,
+    "name": "Complex Solution",
+    "type": "Sword"
+  },
+  {
+    "hash": 287042894,
+    "name": "Unspoken Promise",
+    "type": "Sword"
+  },
+  {
+    "hash": 291447487,
+    "name": "Cold Comfort",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 301362380,
+    "name": "Terran Wind",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 301362381,
+    "name": "Through Fire and Flood",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 302039451,
+    "name": "Mirror Imago (Adept)",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 303107619,
+    "name": "Tomorrow's Answer (Adept)",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 304659313,
+    "name": "Ignition Code",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 308332265,
+    "name": "Roar of the Bear",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 310708513,
+    "name": "Survivor's Epitaph",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 311852248,
+    "name": "Bushwhacker",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 318443586,
+    "name": "Imperial Decree",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 324382200,
+    "name": "Breakneck",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 331231237,
+    "name": "Finality's Auger",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 337893613,
+    "name": "Qua Vinctus IV",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 339163900,
+    "name": "Nightshade",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 342514437,
+    "name": "Rufus's Fury (Adept)",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 344128710,
+    "name": "Sacred Provenance",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 347366834,
+    "name": "Ace of Spades",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 351138256,
+    "name": "Koraxis's Distress",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 357496642,
+    "name": "The When and Where",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 357902853,
+    "name": "Rufus's Fury",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 358788212,
+    "name": "Psi Hermetic V",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 364665267,
+    "name": "The Messenger (Adept)",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 370712896,
+    "name": "Salvation's Grip",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 372212741,
+    "name": "Weaver-C",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 373307731,
+    "name": "Horror Story",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 386896293,
+    "name": "Sacred Provenance",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 392008588,
+    "name": "Perpetualis",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 396910433,
+    "name": "Zephyr",
+    "type": "Sword"
+  },
+  {
+    "hash": 400096939,
+    "name": "Outbreak Perfected",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 407150808,
+    "name": "Ribbontail",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 407150809,
+    "name": "Ribbontail",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 407150810,
+    "name": "Ribbontail",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 407150811,
+    "name": "Ribbontail",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 407511664,
+    "name": "Song of Ir Yût (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 407621213,
+    "name": "Berenger's Memory",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 408440598,
+    "name": "True Prophecy",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 412251536,
+    "name": "Speleologist",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 413901114,
+    "name": "Acosmic",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 417100299,
+    "name": "The Guiding Sight",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 417474224,
+    "name": "Hoosegow",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 417474225,
+    "name": "Mos Epoch III",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 417474226,
+    "name": "Blue Shift",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 421573768,
+    "name": "The Spiteful Fang",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 423343404,
+    "name": "Controlling Vision",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 425681240,
+    "name": "Acosmic",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 432716552,
+    "name": "Shining Sphere",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 433905699,
+    "name": "Swarm of the Raven",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 435216110,
+    "name": "Duty Bound",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 435821041,
+    "name": "Relentless",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 437854388,
+    "name": "Action Item",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 437854389,
+    "name": "Action Item",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 437854390,
+    "name": "Action Item",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 437854391,
+    "name": "Action Item",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 445197843,
+    "name": "Critical Anomaly",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 445523360,
+    "name": "Fatebringer (Timelost)",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 449318888,
+    "name": "Deterministic Chaos",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 460724140,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 471518543,
+    "name": "Corrective Measure",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 472169727,
+    "name": "Garden Progeny 1",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 472847207,
+    "name": "Guiding Star",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 474671201,
+    "name": "Micromort",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 480368036,
+    "name": "Tinasha's Mastery",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 484515708,
+    "name": "Rufus's Fury",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 487205709,
+    "name": "Terminus Horizon",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 492673102,
+    "name": "New Pacific Epitaph",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 495442100,
+    "name": "Koraxis's Distress (Adept)",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 495940989,
+    "name": "Avalanche",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 496728945,
+    "name": "Bold Endings",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 497806049,
+    "name": "Praedyth's Revenge (Timelost)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 499643412,
+    "name": "Summum Bonum",
+    "type": "Sword"
+  },
+  {
+    "hash": 501329015,
+    "name": "Chattering Bone",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 505671629,
+    "name": "Chattering Bone",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 506042498,
+    "name": "Mistral Lift",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 506351160,
+    "name": "Thermal Erosion",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 507038823,
+    "name": "The Last Breath",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 516243773,
+    "name": "Beidenhander",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 527989828,
+    "name": "Action Item",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 528834068,
+    "name": "BrayTech Werewolf",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 532746994,
+    "name": "Astral Horizon (Adept)",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 541053086,
+    "name": "Telemachus-C",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 541188001,
+    "name": "Farewell",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 542573208,
+    "name": "Last Rite",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 546372301,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 547165496,
+    "name": "Abyssal Edge",
+    "type": "Sword"
+  },
+  {
+    "hash": 555148853,
+    "name": "Wendigo GL3 (Adept)",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 557165046,
+    "name": "Riiswalker",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 558794124,
+    "name": "Cold Denial",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 566740455,
+    "name": "THE SWARM (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 566976653,
+    "name": "Antiope-D",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 568515759,
+    "name": "Chattering Bone",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 568611922,
+    "name": "The Mountaintop",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 568611923,
+    "name": "Edge Transit",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 569799273,
+    "name": "Throne-Cleaver",
+    "type": "Sword"
+  },
+  {
+    "hash": 569799274,
+    "name": "Death's Razor",
+    "type": "Sword"
+  },
+  {
+    "hash": 569799275,
+    "name": "Goldtusk",
+    "type": "Sword"
+  },
+  {
+    "hash": 570866107,
+    "name": "Succession",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 575830664,
+    "name": "D.F.A.",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 578459533,
+    "name": "Wendigo GL3",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 582335600,
+    "name": "Dire Promise",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 583870834,
+    "name": "Ribbontail",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 586671776,
+    "name": "Something New",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 593808239,
+    "name": "Refurbished A499",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 594789807,
+    "name": "Biting Winds",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 597679579,
+    "name": "One Small Step",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 601574723,
+    "name": "Adamantite (Adept)",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 601948197,
+    "name": "Zephyr",
+    "type": "Sword"
+  },
+  {
+    "hash": 602331464,
+    "name": "Micromort",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 602331465,
+    "name": "Micromort",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 602331466,
+    "name": "Micromort",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 602331467,
+    "name": "Micromort",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 602618796,
+    "name": "Scathelocke",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 603242241,
+    "name": "Hammerhead",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 603721696,
+    "name": "Cryosthesia 77K",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 614426548,
+    "name": "Falling Guillotine",
+    "type": "Sword"
+  },
+  {
+    "hash": 615373993,
+    "name": "Eyes Unveiled",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 616582330,
+    "name": "Cry Mutiny",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 627188188,
+    "name": "Eye of Sol",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 636912560,
+    "name": "Dust Rock Blues",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 640114618,
+    "name": "Tigerspite",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 649691506,
+    "name": "A Good Shout",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 653875712,
+    "name": "Ballyhoo Mk.27",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 653875714,
+    "name": "Azimuth DSu",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 654608616,
+    "name": "Revoker",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 657927352,
+    "name": "Hullabaloo",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 670738046,
+    "name": "Nessa's Oblation (Adept)",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 681067419,
+    "name": "Hung Jury SR4 (Adept)",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 686951703,
+    "name": "The Supremacy",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 688593230,
+    "name": "Lance Ephemeral",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 689453941,
+    "name": "The Frigid Jackal",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 690341468,
+    "name": "Whispering Slab",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 690412397,
+    "name": "Something Something",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 694218974,
+    "name": "Smite of Merain",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 694275488,
+    "name": "Cynosure",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 702001725,
+    "name": "Auric Disabler",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 703202729,
+    "name": "Festival Flight",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 711889599,
+    "name": "Whistler's Whim (Adept)",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 711899773,
+    "name": "Roderic-C",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 715338174,
+    "name": "Just in Case",
+    "type": "Sword"
+  },
+  {
+    "hash": 720351794,
+    "name": "No Turning Back",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 725408022,
+    "name": "Ascendancy",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 727781522,
+    "name": "Eyes Unveiled",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 731147177,
+    "name": "Hawthorne's Field-Forged Shotgun",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 731147179,
+    "name": "Baligant",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 736064515,
+    "name": "Corrective Measure",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 736901634,
+    "name": "Doomsday",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 737409399,
+    "name": "Watchful Eye (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 751880654,
+    "name": "Qua Furor V",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 766122634,
+    "name": "Mistral Lift",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 768610585,
+    "name": "Watchful Eye",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 768621510,
+    "name": "Deliverance",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 772231794,
+    "name": "Hung Jury SR4",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 772598123,
+    "name": "Commemoration",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 792755504,
+    "name": "Nightshade",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 795875974,
+    "name": "Corrective Measure (Timelost)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 801230488,
+    "name": "Lance Ephemeral",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 805677041,
+    "name": "Buzzard",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 806021398,
+    "name": "Peace by Consensus",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 807192446,
+    "name": "The Day's Fury",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 811403305,
+    "name": "Synchronic Roulette",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 814876684,
+    "name": "Wish-Ender",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 816113441,
+    "name": "Fatebringer",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 819358961,
+    "name": "Spoiler Alert",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 820890091,
+    "name": "Planck's Stride",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 820994400,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 824826593,
+    "name": "Transfiguration",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 829330711,
+    "name": "Peacebond",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 833285241,
+    "name": "Defiance of Yasmin (Harrowed)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 834081972,
+    "name": "Service Revolver",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 839344841,
+    "name": "Vengeful Whisper",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 839786290,
+    "name": "Cold Comfort",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 847329160,
+    "name": "Edgewise",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 854379020,
+    "name": "Astral Horizon (Adept)",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 867154247,
+    "name": "Marsilion-C",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 874623537,
+    "name": "Cataphract GL3 (Adept)",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 882778888,
+    "name": "Rose",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 893582322,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 896923850,
+    "name": "Acantha-D",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 906840740,
+    "name": "Unwavering Duty",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 927835311,
+    "name": "Buzzard (Adept)",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 933455006,
+    "name": "Burden of Guilt",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 940371471,
+    "name": "Wicked Implement",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 946443267,
+    "name": "Line in the Sand",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 954563454,
+    "name": "Bitter End",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 958384347,
+    "name": "Tomorrow's Answer",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 963710795,
+    "name": "Aurvandil FR6",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 970034755,
+    "name": "Giver's Blessing",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 976459525,
+    "name": "Burden of Guilt",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 982229638,
+    "name": "Allied Demand",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 990416096,
+    "name": "Silicon Neuroma",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 991314988,
+    "name": "Bad Omens",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 996109059,
+    "name": "Nameless Midnight",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 999767358,
+    "name": "Cataclysmic",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 1004858308,
+    "name": "Fang of Ir Yût",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1013434963,
+    "name": "Adjudicator",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1016668089,
+    "name": "One Small Step",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1018072983,
+    "name": "It Stared Back",
+    "type": "Sword"
+  },
+  {
+    "hash": 1019000888,
+    "name": "Perses-D",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1034055198,
+    "name": "Necrochasm",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1048266744,
+    "name": "Better Devils",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1058857259,
+    "name": "Qullim's Terminus",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1064132738,
+    "name": "BrayTech Osprey (Adept)",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1066598837,
+    "name": "Relentless (Adept)",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1079872540,
+    "name": "Ulterior Observation",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1081724548,
+    "name": "Rapacious Appetite",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1084098030,
+    "name": "The When and Where",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1084190509,
+    "name": "Pressurized Precision",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 1085743380,
+    "name": "Sullen Claw",
+    "type": "Sword"
+  },
+  {
+    "hash": 1090936013,
+    "name": "The When and Where",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1097616550,
+    "name": "Extraordinary Rendition",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1099433612,
+    "name": "The Doubt",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1107446438,
+    "name": "Servant Leader",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1119734784,
+    "name": "Chroma Rush",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1120843238,
+    "name": "Plemusa-B",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1120843239,
+    "name": "Stampede Mk.32",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1123433952,
+    "name": "Stay Frosty",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1125217994,
+    "name": "New Pacific Epitaph",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1128225405,
+    "name": "Midnight Coup",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1135050595,
+    "name": "Duty Bound (Adept)",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1137768695,
+    "name": "Foregone Conclusion",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1139727256,
+    "name": "Just in Case",
+    "type": "Sword"
+  },
+  {
+    "hash": 1161276682,
+    "name": "Redrix's Broadsword",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1161561386,
+    "name": "The Guiding Sight",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1170891373,
+    "name": "Tranquility",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1173780905,
+    "name": "The Messenger (Adept)",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1175295126,
+    "name": "Hushed Whisper",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 1178397319,
+    "name": "Battle Scar",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1180270692,
+    "name": "Quickfang",
+    "type": "Sword"
+  },
+  {
+    "hash": 1180270693,
+    "name": "Eternity's Edge",
+    "type": "Sword"
+  },
+  {
+    "hash": 1180270694,
+    "name": "Crown-Splitter",
+    "type": "Sword"
+  },
+  {
+    "hash": 1184309824,
+    "name": "Sailspy Pitchglass",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 1187594590,
+    "name": "Relentless",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1189790632,
+    "name": "The Steady Hand",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1195725817,
+    "name": "Sondok-C",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1197073834,
+    "name": "Forced Memorializer",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1197486957,
+    "name": "High Albedo",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1197771438,
+    "name": "Lost Signal",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1200414607,
+    "name": "The Showrunner",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1201830623,
+    "name": "Truth",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1202007252,
+    "name": "Whirling Ovation",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1216130969,
+    "name": "Cold Denial",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1216319404,
+    "name": "Fatebringer (Timelost)",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1218113510,
+    "name": "Tusk of the Boar",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1220931350,
+    "name": "A Fine Memorial",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1230392361,
+    "name": "Heritage",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1239700299,
+    "name": "Swordbreaker (Adept)",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1251729046,
+    "name": "Steelfeather Repeater",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1258168956,
+    "name": "Imminence",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1270948323,
+    "name": "Nasreddin",
+    "type": "Sword"
+  },
+  {
+    "hash": 1281822856,
+    "name": "Protostar CSu",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1281822857,
+    "name": "Philippis-B",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1286686760,
+    "name": "Gahlran's Right Hand",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1289324202,
+    "name": "Pyroclastic Flow",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1289997971,
+    "name": "Breachlight",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1291586825,
+    "name": "Eystein-D",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1298672084,
+    "name": "Perfect Paradox",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1303313141,
+    "name": "Unsworn",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 1311684613,
+    "name": "Dimensional Hypotrochoid",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1313528549,
+    "name": "Sola's Scar",
+    "type": "Sword"
+  },
+  {
+    "hash": 1321506184,
+    "name": "Qullim's Terminus",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1321626661,
+    "name": "Eye of Sol (Adept)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1323862250,
+    "name": "Riptide",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 1331482397,
+    "name": "MIDA Multi-Tool",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1341880512,
+    "name": "Love and Death",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1345867570,
+    "name": "Sweet Business",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1350102270,
+    "name": "Niflheim Frost",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1354727549,
+    "name": "The Slammer (Adept)",
+    "type": "Sword"
+  },
+  {
+    "hash": 1363886209,
+    "name": "Gjallarhorn",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1364093401,
+    "name": "The Last Word",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1366394399,
+    "name": "Tears of Contrition",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1366917989,
+    "name": "Tomorrow's Answer (Adept)",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1369487074,
+    "name": "Orimund's Anvil",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1386238359,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1387987271,
+    "name": "Silicon Neuroma (Adept)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1389546626,
+    "name": "Taraxippos",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1390080550,
+    "name": "False Promises",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1392429335,
+    "name": "Broadsword Launcher",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1395261499,
+    "name": "Xenophage",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1399109800,
+    "name": "Fel Taradiddle",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 1399243961,
+    "name": "Reed's Regret",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 1401300690,
+    "name": "Eye of Sol",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1402874079,
+    "name": "Hawthorne's Field-Forged Shotgun",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1403800851,
+    "name": "Bite of the Fox",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1406475890,
+    "name": "Agamid",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1411084669,
+    "name": "Zenobia-D",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1419158093,
+    "name": "M-17 \"Fast Talker\"",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1432682459,
+    "name": "Fang of Ir Yût",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1439376720,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1439376721,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1441805468,
+    "name": "The Navigator",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 1443049976,
+    "name": "Interference VI",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1447973650,
+    "name": "Rest for the Wicked",
+    "type": "Sword"
+  },
+  {
+    "hash": 1447973651,
+    "name": "Future Imperfect",
+    "type": "Sword"
+  },
+  {
+    "hash": 1453235079,
+    "name": "Hung Jury SR4",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1456017061,
+    "name": "Nasreddin",
+    "type": "Sword"
+  },
+  {
+    "hash": 1457394910,
+    "name": "Botheration Mk.28",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1457394911,
+    "name": "Badlands Mk.24",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1457979868,
+    "name": "Duty Bound",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1459443448,
+    "name": "Escape Velocity",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1460079227,
+    "name": "Liminal Vigil",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1473821207,
+    "name": "Revision Zero",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1476654960,
+    "name": "Judgment",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1481594633,
+    "name": "Barrow-Dyad",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1489452902,
+    "name": "Courageous Surrender",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1490571337,
+    "name": "Future Safe 10",
+    "type": "Sword"
+  },
+  {
+    "hash": 1491665733,
+    "name": "Briar's Contempt",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 1492522228,
+    "name": "Scintillation (Adept)",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 1496419775,
+    "name": "Bane of Sorrow",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1501688142,
+    "name": "Doomed Petitioner",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 1502662697,
+    "name": "King Cobra-4fr",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 1503609584,
+    "name": "The Last Breath",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1506719573,
+    "name": "Cold Front",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1508896098,
+    "name": "The Wardcliff Coil",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1509167284,
+    "name": "Blood Feud",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1513927137,
+    "name": "Disrespectful Stare",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1513927138,
+    "name": "Lincoln Green",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1513993763,
+    "name": "Friction Fire",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1517505803,
+    "name": "Apex Predator",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1518042134,
+    "name": "Halfdan-D",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1523647826,
+    "name": "Eternal Slumber",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1524387902,
+    "name": "Seraphine Haze",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1526296434,
+    "name": "Forensic Nightmare",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1529450902,
+    "name": "Mos Epoch III",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1532276803,
+    "name": "Allied Demand",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1533499360,
+    "name": "Athelflad-D",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1538967359,
+    "name": "Ticuu's Divination",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 1541131350,
+    "name": "Cerberus+1",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1553681400,
+    "name": "Opaque Hourglass",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 1555959830,
+    "name": "Seventh Seraph Officer Revolver",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1561006927,
+    "name": "Seventh Seraph Carbine",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1572604081,
+    "name": "Gizmo Weft",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1572896086,
+    "name": "Recurrent Impact",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1574601402,
+    "name": "Whistler's Whim",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 1587439031,
+    "name": "Three Graves",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1587953057,
+    "name": "Temptation's Hook",
+    "type": "Sword"
+  },
+  {
+    "hash": 1594120904,
+    "name": "No Time to Explain",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1595336070,
+    "name": "Guseva-C",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1600633250,
+    "name": "21% Delirium",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1601177201,
+    "name": "Enyo-D",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1605599021,
+    "name": "Triple Laureate",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1608003561,
+    "name": "Acosmic",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1619016919,
+    "name": "Khvostov 7G-02",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1619665626,
+    "name": "Deliverance (Adept)",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 1621657423,
+    "name": "Biting Winds",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 1622998472,
+    "name": "Vulpecula",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1625995655,
+    "name": "Succession",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1641430382,
+    "name": "The Guiding Sight",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1642384931,
+    "name": "Fixed Odds",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1644160541,
+    "name": "Abide the Return",
+    "type": "Sword"
+  },
+  {
+    "hash": 1644162710,
+    "name": "Origin Story",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1645386487,
+    "name": "Tranquility",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1648410940,
+    "name": "Corrective Measure",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1650442173,
+    "name": "Loquitor IV",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1650626964,
+    "name": "Armillary PSu",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1650626966,
+    "name": "Trax Lysis II",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1651386202,
+    "name": "Ribbontail",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 1663482635,
+    "name": "Faustus Decline",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1664372054,
+    "name": "Threat Level",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1669771782,
+    "name": "Psi Cirrus II",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1669771783,
+    "name": "Bayesian MSu",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1674742470,
+    "name": "Autumn Wind",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1678957656,
+    "name": "Bayesian MSu",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1678957657,
+    "name": "Psi Cirrus II",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1679868061,
+    "name": "Wastelander M5",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1690783811,
+    "name": "The Forward Path",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1695503983,
+    "name": "Fang of Ir Yût",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1697682876,
+    "name": "Astral Horizon",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1706536806,
+    "name": "The Old Fashioned",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1711056134,
+    "name": "Incisor",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 1714871740,
+    "name": "Opaque Hourglass",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 1718158916,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1719687748,
+    "name": "Crux Termination IV",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1720373217,
+    "name": "The Permanent Truth",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1721059169,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1723380073,
+    "name": "Enigma's Draw",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1724104236,
+    "name": "Submersion",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 1736135946,
+    "name": "New Malpais",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1738026524,
+    "name": "Hailing Confusion",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1741319917,
+    "name": "Smite of Merain",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1744115122,
+    "name": "Legend of Acrius",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1751893422,
+    "name": "Disparity",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1752585070,
+    "name": "BrayTech Winter Wolf",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1753923263,
+    "name": "Wolfsbane",
+    "type": "Sword"
+  },
+  {
+    "hash": 1757129747,
+    "name": "Acantha-D XK8434",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1757177186,
+    "name": "Watchful Eye",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1760543913,
+    "name": "Legal Action II",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1762785662,
+    "name": "VS Chill Inhibitor",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1763558430,
+    "name": "Submission",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1763584999,
+    "name": "Grand Overture",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1764868900,
+    "name": "Riiswalker",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1766088024,
+    "name": "Thermal Erosion",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1769847435,
+    "name": "A Distant Pull",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1773934241,
+    "name": "Judgment",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1780464822,
+    "name": "New Purpose",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1786797708,
+    "name": "Escape Velocity",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1788603939,
+    "name": "Herod-C",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1789347249,
+    "name": "Hazard of the Cast",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1795853698,
+    "name": "Accrued Redemption",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 1796949035,
+    "name": "Razor's Edge",
+    "type": "Sword"
+  },
+  {
+    "hash": 1802135586,
+    "name": "Touch of Malice",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1807343361,
+    "name": "Hawthorne's Field-Forged Shotgun",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 1813667283,
+    "name": "Dead-Ender",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 1815105249,
+    "name": "Falling Guillotine",
+    "type": "Sword"
+  },
+  {
+    "hash": 1817605554,
+    "name": "Cold Comfort (Adept)",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1821529912,
+    "name": "Warden's Law",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1823308496,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 1824586582,
+    "name": "Resounding",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 1827058652,
+    "name": "Relentless (Adept)",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1833195496,
+    "name": "Ager's Scepter",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 1839565992,
+    "name": "Ether Doctor",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1843044399,
+    "name": "Smuggler's Word",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1845978721,
+    "name": "Avalanche",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1851521408,
+    "name": "Jararaca-3sr",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1851777734,
+    "name": "Apex Predator",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1853180924,
+    "name": "Traveler's Chosen",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1854753404,
+    "name": "Wendigo GL3",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1854753405,
+    "name": "The Militia's Birthright",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1856262127,
+    "name": "Something New",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1864563948,
+    "name": "Worldline Zero",
+    "type": "Sword"
+  },
+  {
+    "hash": 1866778462,
+    "name": "The Hothead (Adept)",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1872906663,
+    "name": "Modified B-7 Pistol",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1875512595,
+    "name": "Kept Confidence",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1877183764,
+    "name": "Reginar-B",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1877183765,
+    "name": "Cup-Bearer SA/2",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1885753222,
+    "name": "Call to Serve",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1891321753,
+    "name": "Stay Frosty",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1891561814,
+    "name": "Whisper of the Worm",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1896309757,
+    "name": "Hammerhead",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1903182562,
+    "name": "Blowout",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1905934655,
+    "name": "Liminal Vigil (Adept)",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1911060537,
+    "name": "Taipan-4fr",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 1911078836,
+    "name": "Zephyr",
+    "type": "Sword"
+  },
+  {
+    "hash": 1911843789,
+    "name": "Minimum Distance",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1916287826,
+    "name": "Boudica-C",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1921159786,
+    "name": "Hezen Vengeance (Timelost)",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1924663602,
+    "name": "Critical Anomaly",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1929278169,
+    "name": "BrayTech Osprey",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1933192444,
+    "name": "Hezen Vengeance",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1937185139,
+    "name": "High Albedo",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1941816543,
+    "name": "Submission (Adept)",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 1952163498,
+    "name": "Pluperfect",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 1959650777,
+    "name": "Bump in the Night",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 1960218487,
+    "name": "Nameless Midnight",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1967303408,
+    "name": "Archon's Thunder",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1968410628,
+    "name": "The Prophet",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1972985595,
+    "name": "Swarm of the Raven",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1974641289,
+    "name": "Nightshade",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 1975125963,
+    "name": "Qua Xaphan V",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 1982711279,
+    "name": "Talons of the Eagle",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 1983149589,
+    "name": "Whisper of the Worm",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1983332561,
+    "name": "Orthrus",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1983332562,
+    "name": "Berenger's Memory",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 1986287028,
+    "name": "Mykel's Reverence (Adept)",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 1987644603,
+    "name": "Judgment (Adept)",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 1987769101,
+    "name": "Praedyth's Revenge (Timelost)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 1999754402,
+    "name": "The Showrunner",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2001697739,
+    "name": "Summum Bonum (Adept)",
+    "type": "Sword"
+  },
+  {
+    "hash": 2002522739,
+    "name": "Burden of Guilt (Adept)",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2006308129,
+    "name": "D.F.A. (Adept)",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2014642399,
+    "name": "The Forward Path",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2023002233,
+    "name": "All or Nothing",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2026087437,
+    "name": "Lingering Dread",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2026755633,
+    "name": "Breakneck",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2031579744,
+    "name": "Submission (Adept)",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2031794619,
+    "name": "Koraxis's Distress",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2034215657,
+    "name": "Round Robin",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2035738085,
+    "name": "Deadlock",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2035963088,
+    "name": "Deliverance",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2037589099,
+    "name": "Butler RS/2",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2039776723,
+    "name": "Wicked Sister",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2044500762,
+    "name": "The Queenbreaker",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2045811635,
+    "name": "Imperative",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2046367841,
+    "name": "The When and Where",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2051653169,
+    "name": "Swordbreaker",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2056591688,
+    "name": "Praedyth's Revenge",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2059255495,
+    "name": "Eye of Sol (Adept)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2059741649,
+    "name": "New Pacific Epitaph",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2063744629,
+    "name": "BrayTech Werewolf",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2066434718,
+    "name": "Canis Major",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2069224589,
+    "name": "One Thousand Voices",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2069412054,
+    "name": "Subzero Salvo",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2084611899,
+    "name": "Last of the Legion",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2084878005,
+    "name": "Heir Apparent",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2094938673,
+    "name": "Adjudicator",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2097055732,
+    "name": "Piece of Mind",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2099894368,
+    "name": "Battle Scar",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2111625436,
+    "name": "Aurora Dawn",
+    "type": "Sword"
+  },
+  {
+    "hash": 2112909414,
+    "name": "Duke Mk. 44",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2112909415,
+    "name": "Ten Paces",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2124942403,
+    "name": "Praedyth's Revenge",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2126543269,
+    "name": "Cold Comfort (Adept)",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2130065553,
+    "name": "Arbalest",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2139640995,
+    "name": "Hero of Ages",
+    "type": "Sword"
+  },
+  {
+    "hash": 2140635451,
+    "name": "Sleepless",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2145476620,
+    "name": "Bad News",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2149166938,
+    "name": "Classical-42",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2149166939,
+    "name": "Countess SA/2",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2152484073,
+    "name": "Warden's Law",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2155534128,
+    "name": "Haliaetus",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2168451646,
+    "name": "Chattering Bone",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2168486467,
+    "name": "Wicked Sister",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2171006181,
+    "name": "Service Revolver",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2171478765,
+    "name": "Fatebringer",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2179048386,
+    "name": "Forerunner",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2186258845,
+    "name": "Bellowing Giant",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2187717691,
+    "name": "Circular Logic",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2188764214,
+    "name": "Dead Man's Tale",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2189073092,
+    "name": "Lethal Abundance",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2192598950,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2194955522,
+    "name": "Fixed Odds",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2199171672,
+    "name": "Lonesome",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2199554524,
+    "name": "Bygones",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2209451511,
+    "name": "Pariah",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2210806903,
+    "name": "Terminus Horizon (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2213848860,
+    "name": "Psi Termina II",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2213848862,
+    "name": "Standing Tall",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2213848863,
+    "name": "Psi Ferox II",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2217366863,
+    "name": "Parcel of Stardust",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2220884262,
+    "name": "The Steady Hand",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2221264583,
+    "name": "Smite of Merain",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2226572694,
+    "name": "Judgment",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2228325504,
+    "name": "Edge Transit",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2231910050,
+    "name": "Roar of the Bear",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2232171099,
+    "name": "Deathbringer",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2241507890,
+    "name": "Sacred Provenance",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2248667690,
+    "name": "Perfect Paradox",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2249996761,
+    "name": "Patron of Lost Causes",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2251716886,
+    "name": "Qingming Offering",
+    "type": "Weapon Ornament"
+  },
+  {
+    "hash": 2253321583,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2257180473,
+    "name": "Interference VI",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2257699986,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2263462407,
+    "name": "Corundum Hammer",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2265407516,
+    "name": "Hezen Vengeance",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2267730828,
+    "name": "Cataclysmic (Adept)",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2269779982,
+    "name": "Astral Horizon",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2272041093,
+    "name": "Fire and Forget",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2276266837,
+    "name": "Honor's Edge",
+    "type": "Sword"
+  },
+  {
+    "hash": 2278995296,
+    "name": "Does Not Compute",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2286143274,
+    "name": "The Huckleberry",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2286674829,
+    "name": "Cataclysmic",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2288545809,
+    "name": "Subzero Salvo",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2297554989,
+    "name": "Riptide",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2298039571,
+    "name": "Rake Angle",
+    "type": "Glaive"
+  },
+  {
+    "hash": 2313726158,
+    "name": "Belisarius-D",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2314999489,
+    "name": "Imperative",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2316331767,
+    "name": "Permafrost",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2327463711,
+    "name": "Summum Bonum",
+    "type": "Sword"
+  },
+  {
+    "hash": 2328531378,
+    "name": "Lodbrok-C",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2328923181,
+    "name": "Breachlight",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2334480463,
+    "name": "Corrective Measure (Timelost)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2337126756,
+    "name": "Critical Anomaly (Adept)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2344383760,
+    "name": "Eighty-Six",
+    "type": "Sword"
+  },
+  {
+    "hash": 2349907931,
+    "name": "Prolonged Engagement",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2350354266,
+    "name": "Alethonym",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2351747816,
+    "name": "Cuboid ARu",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2351747819,
+    "name": "Ros Lysis II",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2354435045,
+    "name": "Lance Ephemeral",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2357297366,
+    "name": "Witherhoard",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2359504847,
+    "name": "Long Shadow",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2362471601,
+    "name": "Rat King",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2362652544,
+    "name": "Praedyth's Revenge (Timelost)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2372514508,
+    "name": "Blast Furnace",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2376481550,
+    "name": "Anarchy",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2378101424,
+    "name": "The Militia's Birthright (Adept)",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2386979999,
+    "name": "The Scholar (Adept)",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2392817991,
+    "name": "Imminence (Adept)",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2399110176,
+    "name": "Eyes of Tomorrow",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2408405461,
+    "name": "Sacred Provenance",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2414612776,
+    "name": "New City",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2414612777,
+    "name": "Atalanta-D",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2415517654,
+    "name": "Bastion",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2421180981,
+    "name": "Incisor (Adept)",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 2422664927,
+    "name": "Atalanta-D XG1992",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2423071981,
+    "name": "Lionfish-4fr",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2429822976,
+    "name": "Rose",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2429822977,
+    "name": "Austringer",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2434225986,
+    "name": "Shattered Cipher",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2435292498,
+    "name": "Imminence",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2448387086,
+    "name": "Swordbreaker",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2448907086,
+    "name": "Royal Entry",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2450049485,
+    "name": "Line in the Sand",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2453357042,
+    "name": "Blast Battue",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2465372924,
+    "name": "Tigerspite",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2475355656,
+    "name": "Reed's Regret (Adept)",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2478792241,
+    "name": "The Scholar",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2481356995,
+    "name": "Eriana's Vow",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2483248283,
+    "name": "The When and Where",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2485881870,
+    "name": "Unloved",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2496242052,
+    "name": "Code Duello",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2499720827,
+    "name": "Midnight Coup",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2502422775,
+    "name": "Tarantula",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2505533224,
+    "name": "Ghost Primus",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2508948099,
+    "name": "Caretaker",
+    "type": "Sword"
+  },
+  {
+    "hash": 2510526114,
+    "name": "Unending Tempest",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2513965917,
+    "name": "Lunulata-4b",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 2516360525,
+    "name": "Purpose",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2522817335,
+    "name": "Witherhoard",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2524996169,
+    "name": "Permafrost",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2531963421,
+    "name": "No Reprieve",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2533990645,
+    "name": "Blast Furnace",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2544285846,
+    "name": "Scipio-D",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2545083870,
+    "name": "Apex Predator",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2553946496,
+    "name": "Headstrong",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2558925366,
+    "name": "Scatter Signal",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2561659919,
+    "name": "Antiope-D",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2570713743,
+    "name": "Ribbontail",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 2575844666,
+    "name": "Liminal Vigil",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2581162758,
+    "name": "Enigma's Draw",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2581676735,
+    "name": "New Land Beyond",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2582755344,
+    "name": "Seventh Seraph SAW",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2588048270,
+    "name": "Spoiler Alert",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2591257541,
+    "name": "Scintillation",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2591586261,
+    "name": "Azimuth DSu",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2591586263,
+    "name": "Ballyhoo Mk.27",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2591746970,
+    "name": "Leviathan's Breath",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 2595813005,
+    "name": "Taraxippos",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2598420927,
+    "name": "Chroma Rush",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2599338624,
+    "name": "Liturgy",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2599338625,
+    "name": "Bitter/Sweet",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2602176822,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2607304614,
+    "name": "Empirical Evidence",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2611861926,
+    "name": "Imminent Storm",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2614062688,
+    "name": "Eriana's Vow",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2617963291,
+    "name": "Symmetry",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2621637518,
+    "name": "Play of the Game",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2625782212,
+    "name": "Haunted Earth",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2636190042,
+    "name": "Cataclysmic",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2639743396,
+    "name": "Duality",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2653171213,
+    "name": "Astral Horizon",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2653316158,
+    "name": "Pillager",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2666273249,
+    "name": "Hullabaloo",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2671639706,
+    "name": "Pure Poetry",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2671849376,
+    "name": "Refusal of the Call",
+    "type": "Glaive"
+  },
+  {
+    "hash": 2673925403,
+    "name": "Irukandji",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2675354897,
+    "name": "Lance Ephemeral",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2681395357,
+    "name": "Trackless Waste",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2683682446,
+    "name": "Traitor's Fate",
+    "type": "Sword"
+  },
+  {
+    "hash": 2683682447,
+    "name": "Traitor's Fate",
+    "type": "Sword"
+  },
+  {
+    "hash": 2694044460,
+    "name": "Home Again",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2694044461,
+    "name": "Cydonia-AR1",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2694044462,
+    "name": "SUROS Throwback",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2694576561,
+    "name": "Two-Tailed Fox",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2697058914,
+    "name": "Komodo-4FR",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2712244741,
+    "name": "Bygones",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2712683313,
+    "name": "Abyssal Edge (Adept)",
+    "type": "Sword"
+  },
+  {
+    "hash": 2714022207,
+    "name": "Corsair's Wrath",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2715240478,
+    "name": "Riptide",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2721157927,
+    "name": "Tarnation",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2723241847,
+    "name": "Patron of Lost Causes",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2725426834,
+    "name": "Intercalary",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2725894221,
+    "name": "Folded Root",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2730671571,
+    "name": "Terminus Horizon",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2738601016,
+    "name": "Cataphract GL3",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2742838700,
+    "name": "True Prophecy",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2742838701,
+    "name": "Dire Promise",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2750388336,
+    "name": "The Supremacy",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2755584425,
+    "name": "Refusal of the Call (Adept)",
+    "type": "Glaive"
+  },
+  {
+    "hash": 2759251821,
+    "name": "Unwavering Duty (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2759590322,
+    "name": "THE SWARM",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2760833884,
+    "name": "Cold Comfort",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2761869150,
+    "name": "Ignition Code",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2763843898,
+    "name": "Midnight Coup",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2765451288,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 2765451289,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 2765451290,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 2765451291,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 2767393525,
+    "name": "Nox Perennial V",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2770035786,
+    "name": "M-17 \"Fast Talker\"",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2778013407,
+    "name": "Firefright",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2782325300,
+    "name": "Quickfang",
+    "type": "Sword"
+  },
+  {
+    "hash": 2782325301,
+    "name": "Eternity's Edge",
+    "type": "Sword"
+  },
+  {
+    "hash": 2782325302,
+    "name": "Crown-Splitter",
+    "type": "Sword"
+  },
+  {
+    "hash": 2782847179,
+    "name": "Blasphemer",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2792181427,
+    "name": "Tiebreaker",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2806569825,
+    "name": "Naeem's Lance",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2806900547,
+    "name": "Hezen Vengeance",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2811165950,
+    "name": "Qullim's Terminus (Harrowed)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2812100428,
+    "name": "Stay Frosty",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2812324400,
+    "name": "Parasite",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2812672356,
+    "name": "Vertical Orbit QSm",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 2814093983,
+    "name": "Cold Front",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2814756793,
+    "name": "Bequest",
+    "type": "Sword"
+  },
+  {
+    "hash": 2816212794,
+    "name": "Bad Juju",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2817798849,
+    "name": "Hoosegow XE5837",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2821430069,
+    "name": "Fortissimo-11",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2823644677,
+    "name": "Exuviae",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2824241403,
+    "name": "Bad News XF4354",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2826850739,
+    "name": "Origin Story",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2828278545,
+    "name": "Song of Ir Yût",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2831249843,
+    "name": "Song of Ir Yût",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2838279629,
+    "name": "Mercury-A",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 2839600459,
+    "name": "Incisor (Adept)",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 2842493171,
+    "name": "Trax Dynia",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2848549302,
+    "name": "Neoptolemus II",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 2850415209,
+    "name": "Judgment",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2852052802,
+    "name": "Krait",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2856225832,
+    "name": "Watchful Eye (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2856514843,
+    "name": "Syncopation-53",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2856683562,
+    "name": "SUROS Regime",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2857348871,
+    "name": "Honor's Edge",
+    "type": "Sword"
+  },
+  {
+    "hash": 2857870254,
+    "name": "Everburning Glitz",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2860172149,
+    "name": "Cuboid ARu",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2860172150,
+    "name": "Ros Lysis II",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2868432352,
+    "name": "Commemoration",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2869466318,
+    "name": "BrayTech Werewolf",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2870169846,
+    "name": "Hailing Confusion",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2872063099,
+    "name": "The Immortal",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 2875763009,
+    "name": "Nox Sidereal IV",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2883484461,
+    "name": "Until Its Return",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2883684343,
+    "name": "Hung Jury SR4 (Adept)",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2884596447,
+    "name": "The Supremacy",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2886339027,
+    "name": "Cataclysmic (Adept)",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2888021252,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2888021253,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2888021254,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2888021255,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2889501828,
+    "name": "The Slammer",
+    "type": "Sword"
+  },
+  {
+    "hash": 2890082420,
+    "name": "Briar's Contempt (Adept)",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 2891976012,
+    "name": "Future Imperfect",
+    "type": "Sword"
+  },
+  {
+    "hash": 2891976013,
+    "name": "Rest for the Wicked",
+    "type": "Sword"
+  },
+  {
+    "hash": 2896109856,
+    "name": "Archon's Thunder",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 2896466320,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2903592984,
+    "name": "Lionheart",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2903592986,
+    "name": "Rebuke AX-GL",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2907129556,
+    "name": "Sturm",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2908653246,
+    "name": "Triple Laureate",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2910326942,
+    "name": "Wish-Keeper",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 2919334548,
+    "name": "Imperial Decree",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2922749929,
+    "name": "Semiotician",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 2922964484,
+    "name": "Permafrost",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2933160903,
+    "name": "Hailing Confusion",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 2936850734,
+    "name": "Gareth-C",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2936850735,
+    "name": "Penumbra GSm",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2943293195,
+    "name": "Deliverance (Adept)",
+    "type": "Fusion Rifle"
+  },
+  {
+    "hash": 2957367743,
+    "name": "Toil and Trouble",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 2957542878,
+    "name": "Living Memory",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2969415423,
+    "name": "Judgment",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 2972949637,
+    "name": "Koraxis's Distress",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 2978016230,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 2987244302,
+    "name": "Adamantite",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 2990047042,
+    "name": "Succession",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 2996325132,
+    "name": "Folded Root",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3004542196,
+    "name": "Qullim's Terminus",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3005879473,
+    "name": "Crooked Fang-4fr",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3007479950,
+    "name": "Taraxippos",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3009199534,
+    "name": "Tomorrow's Answer",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3016891299,
+    "name": "Different Times",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3019024381,
+    "name": "The Prophet (Adept)",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3036117446,
+    "name": "Hezen Vengeance (Timelost)",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3037520408,
+    "name": "Seventh Seraph Officer Revolver",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3040742682,
+    "name": "Nameless Midnight",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3049715579,
+    "name": "Praxic Blade",
+    "type": "Sword"
+  },
+  {
+    "hash": 3054597646,
+    "name": "Abyssal Edge (Adept)",
+    "type": "Sword"
+  },
+  {
+    "hash": 3055790362,
+    "name": "Austringer",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3067821200,
+    "name": "Heretic",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3069701338,
+    "name": "Lance Ephemeral",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3075224551,
+    "name": "Threaded Needle",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3100452337,
+    "name": "Dreaded Venture",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3103325054,
+    "name": "Retrofit Escapade",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3104673146,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3105930175,
+    "name": "Chain of Command",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3110377595,
+    "name": "Autumn Wind",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3116356268,
+    "name": "Spare Rations",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3117873459,
+    "name": "Exitus Mk.I",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3118061004,
+    "name": "Winterbite",
+    "type": "Glaive"
+  },
+  {
+    "hash": 3121540812,
+    "name": "Final Warning",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 3138208275,
+    "name": "Liminal Vigil",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 3141979346,
+    "name": "D.A.R.C.I.",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3143732432,
+    "name": "False Promises",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3146657388,
+    "name": "Modified B-7 Pistol",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3163900678,
+    "name": "Swordbreaker",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3164743584,
+    "name": "Eye of Sol",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3165143747,
+    "name": "Whistler's Whim",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 3165547384,
+    "name": "Memory Interdict",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3166250992,
+    "name": "Allied Demand",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 3169616514,
+    "name": "Bite of the Fox",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3175386398,
+    "name": "Transfiguration",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3175851496,
+    "name": "Red Herring",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3177074192,
+    "name": "The Ever-Present",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3183283212,
+    "name": "Wendigo GL3",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3184457500,
+    "name": "Folded Root",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3184457501,
+    "name": "Folded Root",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3184457502,
+    "name": "Folded Root",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3184457503,
+    "name": "Folded Root",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3184681056,
+    "name": "Fractethyst",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3185151619,
+    "name": "New Pacific Epitaph (Adept)",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3185293912,
+    "name": "Mos Ultima II",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3185293913,
+    "name": "One Earth",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3185293915,
+    "name": "Picayune Mk. 33",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3193598749,
+    "name": "The Immortal (Adept)",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3199662972,
+    "name": "Eystein-D",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3206190066,
+    "name": "Cold Front",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3211624072,
+    "name": "Multimach CCX",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3211806999,
+    "name": "Izanagi's Burden",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3216383791,
+    "name": "Home for the Lost",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3216652511,
+    "name": "Reckless Endangerment",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3218364298,
+    "name": "Redrix's Estoc",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3221722018,
+    "name": "Laser Painter",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3228096719,
+    "name": "Defiance of Yasmin",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3229272315,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3229982889,
+    "name": "Adamantite",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3232203524,
+    "name": "Someday",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3234363830,
+    "name": "Mirror Imago",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3236112986,
+    "name": "Spare Rations",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3240434620,
+    "name": "Something New",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3242052935,
+    "name": "Tommy's Matchbook",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3246523828,
+    "name": "Hadrian-A",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3246523831,
+    "name": "Para Torus I",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3248429089,
+    "name": "Qullim's Terminus (Harrowed)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3250744600,
+    "name": "Warden's Law (Adept)",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3256453690,
+    "name": "Crowning Duologue",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3257091166,
+    "name": "Half-Truths",
+    "type": "Sword"
+  },
+  {
+    "hash": 3257091167,
+    "name": "The Other Half",
+    "type": "Sword"
+  },
+  {
+    "hash": 3266866780,
+    "name": "Permafrost",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3269398063,
+    "name": "Refusal of the Call",
+    "type": "Glaive"
+  },
+  {
+    "hash": 3273345532,
+    "name": "Night Terror",
+    "type": "Sword"
+  },
+  {
+    "hash": 3275437891,
+    "name": "Briar's Contempt (Adept)",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3284251089,
+    "name": "Song of Ir Yût (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3284383335,
+    "name": "Euphony",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3285365667,
+    "name": "West of Sunfall 7",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3291371395,
+    "name": "Hushed Whisper",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 3292795429,
+    "name": "Randy's Throwing Knife",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3307211867,
+    "name": "The Supremacy",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3312073053,
+    "name": "Shepherd's Watch",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3312324260,
+    "name": "Gunburn",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3319810952,
+    "name": "Husk of the Pit",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3319810953,
+    "name": "Eidolon Ally",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3325463374,
+    "name": "Thunderlord",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3325778512,
+    "name": "A Fine Memorial",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3329218848,
+    "name": "Judgment (Adept)",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3329842376,
+    "name": "Memory Interdict",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3332125295,
+    "name": "Aisha's Care (Adept)",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3335343363,
+    "name": "Tarantula",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3337727085,
+    "name": "Malediction",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3355385170,
+    "name": "Silicon Neuroma",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3361694400,
+    "name": "Trax Arda II",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3361694401,
+    "name": "Fare-Thee-Well",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3361694403,
+    "name": "Inverness-SR2",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3366545721,
+    "name": "Bequest",
+    "type": "Sword"
+  },
+  {
+    "hash": 3369545945,
+    "name": "Temporal Clause",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3371017761,
+    "name": "Conditional Finality",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3371413056,
+    "name": "Death's Razor",
+    "type": "Sword"
+  },
+  {
+    "hash": 3371413057,
+    "name": "Goldtusk",
+    "type": "Sword"
+  },
+  {
+    "hash": 3371413059,
+    "name": "Throne-Cleaver",
+    "type": "Sword"
+  },
+  {
+    "hash": 3380742308,
+    "name": "Alone as a god",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3382736601,
+    "name": "Submersion",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 3383958218,
+    "name": "Philippis-B",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3383958219,
+    "name": "Protostar CSu",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3393320912,
+    "name": "Swordbreaker (Adept)",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3393519051,
+    "name": "Perfect Paradox",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3396589080,
+    "name": "Song of Ir Yût",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3400256755,
+    "name": "Zephyr",
+    "type": "Sword"
+  },
+  {
+    "hash": 3404150478,
+    "name": "Mykel's Reverence",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 3407395594,
+    "name": "Smite of Merain (Harrowed)",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3409645497,
+    "name": "Legal Action II",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3413860062,
+    "name": "The Chaperone",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3419149443,
+    "name": "Crooked Fang-4fr",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3421075982,
+    "name": "Something Something",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3421639790,
+    "name": "Liminal Vigil (Adept)",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 3423493037,
+    "name": "Red Tape",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3428407746,
+    "name": "Lethal Abundance",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3429966421,
+    "name": "Critical Anomaly",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3431536253,
+    "name": "Gunburn",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3435238842,
+    "name": "Song of Justice VI",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3435238843,
+    "name": "Good Counsel IX",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3437370193,
+    "name": "Peacebond",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 3437746471,
+    "name": "Crimson",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3438139008,
+    "name": "Chivalric Fire",
+    "type": "Sword"
+  },
+  {
+    "hash": 3444632029,
+    "name": "Unwavering Duty (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3461377698,
+    "name": "Baligant XU7743",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3483485727,
+    "name": "Mistral Lift",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3485029080,
+    "name": "Adamantite (Adept)",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3487253372,
+    "name": "The Lament",
+    "type": "Sword"
+  },
+  {
+    "hash": 3489054606,
+    "name": "Unwavering Duty",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3489657138,
+    "name": "Palmyra-B",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3493948734,
+    "name": "Stampede Mk.32",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3493948735,
+    "name": "Plemusa-B",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3503019618,
+    "name": "Defiance of Yasmin (Harrowed)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3504336176,
+    "name": "Night Watch",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3506823213,
+    "name": "Summum Bonum (Adept)",
+    "type": "Sword"
+  },
+  {
+    "hash": 3512014804,
+    "name": "Lumina",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3524386983,
+    "name": "Submersion",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 3529780349,
+    "name": "The Marine",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3535742959,
+    "name": "Randy's Throwing Knife",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3549153979,
+    "name": "The Prospector",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3550697748,
+    "name": "Thistle and Yew",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3551104348,
+    "name": "Double-Edged Answer",
+    "type": "Sword"
+  },
+  {
+    "hash": 3558681245,
+    "name": "BrayTech Werewolf",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3559617806,
+    "name": "Briar's Contempt",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3565520715,
+    "name": "Crowd Pleaser",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3568377122,
+    "name": "Typhon GL5",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3569407878,
+    "name": "Summum Bonum",
+    "type": "Sword"
+  },
+  {
+    "hash": 3569802112,
+    "name": "The Old Fashioned",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3569842567,
+    "name": "Lost and Found",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3574168117,
+    "name": "Hushed Whisper",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 3576134513,
+    "name": "Ribbontail",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 3580904580,
+    "name": "Legend of Acrius",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3580904581,
+    "name": "Tractor Cannon",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3593598010,
+    "name": "The Time-Worn Spire",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3605603507,
+    "name": "Pro Memoria",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3612142623,
+    "name": "Live Fire",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3612338554,
+    "name": "Succession",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3615421669,
+    "name": "Suspectum-4fr",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3615748501,
+    "name": "A Good Shout",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 3620277039,
+    "name": "Peculiar Charm",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3621336854,
+    "name": "Accrued Redemption",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 3623686757,
+    "name": "Hezen Vengeance (Timelost)",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3624844116,
+    "name": "Unwavering Duty",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3627718344,
+    "name": "Triumph DX-PR",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3627718345,
+    "name": "Nanty Narker",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3628991659,
+    "name": "Vigilance Wing",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3629968765,
+    "name": "Negative Space",
+    "type": "Sword"
+  },
+  {
+    "hash": 3635232671,
+    "name": "Trachinus",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3637570176,
+    "name": "Eye of Sol (Adept)",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3637669759,
+    "name": "Geodetic HSm",
+    "type": "Sword"
+  },
+  {
+    "hash": 3649055823,
+    "name": "Crimil's Dagger",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3651075426,
+    "name": "Holless-IV",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 3652506829,
+    "name": "Stormchaser",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3653573172,
+    "name": "Praedyth's Revenge",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3654674561,
+    "name": "Dead Man's Tale",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3654744298,
+    "name": "Corrective Measure",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3658188704,
+    "name": "The Messenger",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3659414143,
+    "name": "Verglas Curve",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 3661051060,
+    "name": "Refurbished A499",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3664831848,
+    "name": "Heartshadow",
+    "type": "Sword"
+  },
+  {
+    "hash": 3667553455,
+    "name": "BrayTech Osprey",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3668817296,
+    "name": "Dragoncult Sickle",
+    "type": "Sword"
+  },
+  {
+    "hash": 3669616453,
+    "name": "Hoosegow",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3673321076,
+    "name": "Nessa's Oblation",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3678653083,
+    "name": "Old Sterling",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3681280908,
+    "name": "Relentless",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3685470415,
+    "name": "Veiled Threat",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3690523502,
+    "name": "Love and Death",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3691881271,
+    "name": "Sins of the Past",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3692272097,
+    "name": "Submission",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3702209459,
+    "name": "Smite of Merain (Harrowed)",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3704653637,
+    "name": "Stryker's Sure-Hand",
+    "type": "Sword"
+  },
+  {
+    "hash": 3710974516,
+    "name": "Rufus's Fury (Adept)",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3717177717,
+    "name": "Multimach CCX",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3727100353,
+    "name": "Imminence",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3728258171,
+    "name": "Defiance of Yasmin",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3733988413,
+    "name": "Relentless",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3740842661,
+    "name": "Sleepless",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3743729616,
+    "name": "Shepherd's Watch",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3745974521,
+    "name": "The Militia's Birthright",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3745990145,
+    "name": "Long Shadow",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3748713778,
+    "name": "Pentatonic-48",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3748713779,
+    "name": "Morrigan-D",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3760321472,
+    "name": "Folded Root",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3762467078,
+    "name": "Scathelocke",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3766045777,
+    "name": "Black Talon",
+    "type": "Sword"
+  },
+  {
+    "hash": 3776129137,
+    "name": "Zenobia-D",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 3778520450,
+    "name": "Halfdan-D",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3790866486,
+    "name": "Heritage",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 3794274730,
+    "name": "Ill Omen",
+    "type": "Sword"
+  },
+  {
+    "hash": 3796510434,
+    "name": "Corrective Measure (Timelost)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3796795102,
+    "name": "The Messenger",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3799980700,
+    "name": "Transfiguration",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3805679279,
+    "name": "Cataphract GL3",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3809805230,
+    "name": "Roderic-C",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 3813721211,
+    "name": "Last Thursday",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3824673936,
+    "name": "Outbreak Perfected",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3826803617,
+    "name": "The Dream",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3829285960,
+    "name": "Horror Story",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 3832743906,
+    "name": "Hung Jury SR4",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3836861464,
+    "name": "THE SWARM (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3843477312,
+    "name": "Blast Furnace",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3844610113,
+    "name": "Praedyth's Revenge",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3844694310,
+    "name": "The Jade Rabbit",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3847137620,
+    "name": "Sola's Scar (Adept)",
+    "type": "Sword"
+  },
+  {
+    "hash": 3849810018,
+    "name": "Pardon Our Dust",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3856705927,
+    "name": "Hawkmoon",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3860697509,
+    "name": "Pribina-D",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3870811754,
+    "name": "Night Terror",
+    "type": "Sword"
+  },
+  {
+    "hash": 3877448149,
+    "name": "Mirror Imago",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3885259140,
+    "name": "Transfiguration",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3886263130,
+    "name": "I Am Alive",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3886416794,
+    "name": "Submission",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3890960908,
+    "name": "The Guiding Sight",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3898373019,
+    "name": "Mistral Lift",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3899270607,
+    "name": "The Colony",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3906357377,
+    "name": "Trax Lysis II",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3906357379,
+    "name": "Armillary PSu",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3909683950,
+    "name": "Man o' War",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3915197957,
+    "name": "Wendigo GL3 (Adept)",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3920310144,
+    "name": "Volta Bracket",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 3923325150,
+    "name": "Fatebringer",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3924212056,
+    "name": "Loud Lullaby",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3926153598,
+    "name": "Boomslang-4fr",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 3947966653,
+    "name": "The Call",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 3950088638,
+    "name": "Motion to Suppress",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3951511045,
+    "name": "Imminence (Adept)",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3957603605,
+    "name": "Wrong Side of Right",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 3959549446,
+    "name": "Yarovit MG4",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3969379530,
+    "name": "Aisha's Care",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3973202132,
+    "name": "Thorn",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3977654524,
+    "name": "Festival Flight",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3981920134,
+    "name": "Aureus Neutralizer",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 3984556130,
+    "name": "Terminus Horizon",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 3984776322,
+    "name": "All or Nothing",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 3991544423,
+    "name": "The Conqueror 2",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 3993415705,
+    "name": "The Mountaintop",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 3997086838,
+    "name": "Rake Angle (Adept)",
+    "type": "Glaive"
+  },
+  {
+    "hash": 4009352833,
+    "name": "Roar of the Bear",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4018727386,
+    "name": "Prideglass",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 4019651319,
+    "name": "Festival Flight",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 4024037919,
+    "name": "Origin Story",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 4036115577,
+    "name": "Sleeper Simulant",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 4039572196,
+    "name": "The Immortal",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 4041111172,
+    "name": "The Button",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4041628413,
+    "name": "Briar's Contempt",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 4043921923,
+    "name": "The Mountaintop",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 4045551875,
+    "name": "Mykel's Reverence (Adept)",
+    "type": "Sidearm"
+  },
+  {
+    "hash": 4046966073,
+    "name": "Koraxis's Distress (Adept)",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 4050645223,
+    "name": "Hezen Vengeance",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4062069077,
+    "name": "Conspiracy Honed",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 4066778670,
+    "name": "Thin Precipice",
+    "type": "Sword"
+  },
+  {
+    "hash": 4067556514,
+    "name": "Thoughtless",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 4068264807,
+    "name": "Monte Carlo",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 4069880346,
+    "name": "Gizmo Weft",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 4070357005,
+    "name": "Seventh Seraph Carbine",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 4074251943,
+    "name": "Hung Jury SR4 (Adept)",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 4090134063,
+    "name": "Jurisprudent",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 4095462486,
+    "name": "Pit Launcher",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4095896073,
+    "name": "Accrued Redemption",
+    "type": "Combat Bow"
+  },
+  {
+    "hash": 4098683289,
+    "name": "Synanceia",
+    "type": "Sword"
+  },
+  {
+    "hash": 4100775158,
+    "name": "Pizzicato-22",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 4106757302,
+    "name": "Crowning Duologue",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4116518582,
+    "name": "Solemn Remembrance",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 4116546788,
+    "name": "Mirror Imago (Adept)",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 4129629253,
+    "name": "Khvostov 7G-0X",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 4132072834,
+    "name": "Locus Locutus",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 4138174248,
+    "name": "Go Figure",
+    "type": "Pulse Rifle"
+  },
+  {
+    "hash": 4146673634,
+    "name": "Outrageous Fortune",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 4146702548,
+    "name": "Outrageous Fortune",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 4148143418,
+    "name": "Show of Force XF4865",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 4152016199,
+    "name": "Better Devils",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 4153087276,
+    "name": "Appetence",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 4157959958,
+    "name": "Aachen-LR2",
+    "type": "Sniper Rifle"
+  },
+  {
+    "hash": 4162642204,
+    "name": "The Militia's Birthright (Adept)",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 4169533630,
+    "name": "Loud Lullaby",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 4173311704,
+    "name": "Eyes Unveiled (Adept)",
+    "type": "Linear Fusion Rifle"
+  },
+  {
+    "hash": 4174481098,
+    "name": "Steel Sybil Z-14",
+    "type": "Sword"
+  },
+  {
+    "hash": 4176551594,
+    "name": "Qua Vinctus IV",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 4176873718,
+    "name": "Fair Judgment",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 4184168210,
+    "name": "Fatebringer",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 4193877020,
+    "name": "Does Not Compute",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 4195186942,
+    "name": "Faith-Keeper",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4203034886,
+    "name": "Zephyr",
+    "type": "Sword"
+  },
+  {
+    "hash": 4207066264,
+    "name": "Microcosm",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 4207120603,
+    "name": "False Idols",
+    "type": "Sword"
+  },
+  {
+    "hash": 4209476803,
+    "name": "Khvostov 7G-02",
+    "type": "Auto Rifle"
+  },
+  {
+    "hash": 4211534763,
+    "name": "Pribina-D",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 4213221671,
+    "name": "Sunrise GL4",
+    "type": "Grenade Launcher"
+  },
+  {
+    "hash": 4217170772,
+    "name": "Apex Predator",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4219826183,
+    "name": "Fatebringer (Timelost)",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 4220529694,
+    "name": "Avalanche",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 4221591387,
+    "name": "Abyssal Edge",
+    "type": "Sword"
+  },
+  {
+    "hash": 4221925398,
+    "name": "Cup-Bearer SA/2",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4221925399,
+    "name": "Reginar-B",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4224667951,
+    "name": "Heretic's Fervor",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4225322581,
+    "name": "Ragnhild-D",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 4227181568,
+    "name": "Exit Strategy",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 4230965989,
+    "name": "Commemoration",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 4230993599,
+    "name": "Steel Sybil Z-14",
+    "type": "Sword"
+  },
+  {
+    "hash": 4233375372,
+    "name": "Marcato-45",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 4238497225,
+    "name": "D.F.A.",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 4242153505,
+    "name": "Ribbontail",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 4248569242,
+    "name": "Heritage",
+    "type": "Shotgun"
+  },
+  {
+    "hash": 4248997900,
+    "name": "Incisor",
+    "type": "Trace Rifle"
+  },
+  {
+    "hash": 4255171531,
+    "name": "The Hothead",
+    "type": "Rocket Launcher"
+  },
+  {
+    "hash": 4265183314,
+    "name": "Multimach CCX",
+    "type": "Submachine Gun"
+  },
+  {
+    "hash": 4267192886,
+    "name": "Terminus Horizon (Adept)",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 4281371574,
+    "name": "Hung Jury SR4",
+    "type": "Scout Rifle"
+  },
+  {
+    "hash": 4284533075,
+    "name": "Service of Luzaku",
+    "type": "Machine Gun"
+  },
+  {
+    "hash": 4292849692,
+    "name": "Crimil's Dagger",
+    "type": "Hand Cannon"
+  },
+  {
+    "hash": 4293613902,
+    "name": "Quicksilver Storm",
+    "type": "Auto Rifle"
+  }
+]

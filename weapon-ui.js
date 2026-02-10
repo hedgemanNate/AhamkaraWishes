@@ -82,6 +82,24 @@ let weaponCraftInitialized = false;
 let weaponSearchWorker = null;
 let weaponSearchRequestId = 0;
 
+/**
+ * Loads the tracker plug hashes from data/weapon-slot-perks origin.json and populates trackerPerkHashSet.
+ * Only perks with "Tracker" in their name are included.
+ * This ensures only tracker plugs are hidden from the origin slot, not valid origin traits.
+ */
+async function loadTrackerBlacklist() {
+  try {
+    const response = await fetch('data/weapon-slot-perks%20origin.json');
+    const data = await response.json();
+    trackerPerkHashSet = new Set(
+      data.filter(entry => entry.name && entry.name.includes('Tracker')).map(entry => entry.hash)
+    );
+  } catch (e) {
+    d2log('Failed to load tracker blacklist: ' + (e.message || e), 'weapon-ui', 'error');
+    trackerPerkHashSet = new Set();
+  }
+}
+
 function initWeaponSearchWorker() {
   if (weaponSearchWorker) return;
 
@@ -96,46 +114,74 @@ function initWeaponSearchWorker() {
       const payload = event.data || {};
       if (payload.type === 'results') {
         if (payload.id !== weaponSearchRequestId) return;
+        renderWeaponSearchResults(payload.results);
+      }
+    };
+  } catch (e) {
+    d2log('Worker init failed: ' + e, 'weapon-ui', 'error');
+  }
+}
 
-        /**
-         * Loads the tracker plug hashes from data/weapon-slot-perks origin.json and populates trackerPerkHashSet.
-         * Only perks with "Tracker" in their name are included.
-         * This ensures only tracker plugs are hidden from the origin slot, not valid origin traits.
-         */
-        async function loadTrackerBlacklist() {
-          try {
-            const response = await fetch('data/weapon-slot-perks%20origin.json');
-            const data = await response.json();
-            trackerPerkHashSet = new Set(
-              data.filter(entry => entry.name && entry.name.includes('Tracker')).map(entry => entry.hash)
-            );
-          } catch (e) {
-            d2log('Failed to load tracker blacklist: ' + (e.message || e), 'weapon-ui', 'error');
-            trackerPerkHashSet = new Set();
-          }
-        }
+/**
+ * Terminate the weapon search worker.
+ */
+function shutdownWeaponSearchWorker() {
+  if (weaponSearchWorker) {
+    weaponSearchWorker.terminate();
+    weaponSearchWorker = null;
+    d2log('Weapon search worker terminated', 'weapon-ui');
+  }
+}
 
-        async function initWeaponCraft() {
-          if (weaponCraftInitialized) return;
-          weaponCraftInitialized = true;
+/**
+ * Restart the weapon search worker.
+ */
+function resetWeaponSearchWorker() {
+  shutdownWeaponSearchWorker();
+  initWeaponSearchWorker();
+}
 
-          // Load tracker blacklist before any perk rendering
-          await loadTrackerBlacklist();
+async function initWeaponCraft() {
+  if (weaponCraftInitialized) return;
+  weaponCraftInitialized = true;
 
-          if (window.weaponStatsService?.initializeWeaponStats) {
-            window.weaponStatsService
-              .initializeWeaponStats()
-              .catch((error) => {
-                d2log(`Weapon stats init failed: ${error.message || error}`, 'weapon-ui', 'error');
-              });
-          } else {
-            d2log('Weapon stats service unavailable at init', 'weapon-ui', 'error');
-          }
+  // Load tracker blacklist before any perk rendering
+  await loadTrackerBlacklist();
 
-          initWeaponSearchWorker();
+  if (window.weaponStatsService?.initializeWeaponStats) {
+    window.weaponStatsService
+      .initializeWeaponStats()
+      .catch((error) => {
+        d2log(`Weapon stats init failed: ${error.message || error}`, 'weapon-ui', 'error');
+      });
+  } else {
+    d2log('Weapon stats service unavailable at init', 'weapon-ui', 'error');
+  }
 
-          // ...existing code...
-        }
+  initWeaponSearchWorker();
+
+  // Initialize UI components
+  const searchInput = document.getElementById('w-search-input');
+  const pvePveBtn = document.getElementById('w-pve-btn');
+  const pvpPvpBtn = document.getElementById('w-pvp-btn');
+  const emptyState = document.getElementById('w-empty-state');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      triggerWeaponSearch(e.target.value);
+    });
+    searchInput.addEventListener('focus', () => {
+      if (!searchInput.value) {
+        renderRecentWeaponSelections();
+      }
+    });
+  }
+
+  if (pvePveBtn) {
+    pvePveBtn.addEventListener('click', () => {
+      weaponState.currentMode = 'pve';
+      toggleModeButton('pve');
+    });
   }
 
   if (pvpPvpBtn) {

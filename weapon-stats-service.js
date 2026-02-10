@@ -207,49 +207,66 @@ function buildPerkVariants(perkList) {
     return { regular: [], enhanced: [], hasEnhanced: false };
   }
 
+  // Use the "isEnhanced" flag directly from the source (JSON/Manifest)
+  const regular = [];
+  const enhanced = [];
+  let hasEnhanced = false;
+
+  // Group by base name to pair regular/enhanced versions if needed
+  // But PRIMARILY rely on isEnhanced flag
   const groups = new Map();
+  
   list.forEach((perk) => {
-    const name = String(perk?.perkName || "").trim();
-    if (!groups.has(name)) {
-      groups.set(name, []);
+    // Ensure isEnhanced is set from data source if not already on object
+    if (perk.isEnhanced === undefined) {
+      const perkData = getPerkData(perk.perkHash);
+      perk.isEnhanced = !!perkData?.isEnhanced;
     }
+
+    // Always add to appropriate list
+    if (perk.isEnhanced) {
+      enhanced.push(perk);
+      hasEnhanced = true;
+    } else {
+      regular.push(perk);
+    }
+
+    // Also group by name to find pairs
+    const name = String(perk.perkName || "").trim();
+    if (!groups.has(name)) groups.set(name, []);
     groups.get(name).push(perk);
   });
 
-  const hasDuplicates = Array.from(groups.values()).some((group) => group.length > 1);
+  // If a perk has NO enhanced variant, it should appear in the enhanced view too
+  // (unless it's strictly a toggle between "base only" vs "enhanced only")
+  // The UI typically wants: 
+  // - regular view: shows base perks
+  // - enhanced view: shows enhanced perks (replacing base) + base perks (if no enhanced exists)
+  
+  // Post-process to ensure enhanced view is complete
+  const finalEnhanced = [];
+  
+  // Add all enhanced perks first
+  enhanced.forEach(p => finalEnhanced.push(p));
 
-  if (!hasDuplicates) {
-    list.forEach((perk) => {
-      const perkData = getPerkData(perk?.perkHash);
-      perk.isEnhanced = !!perkData?.isEnhanced;
-    });
-    return { regular: list, enhanced: list, hasEnhanced: false };
-  }
-
-  const regular = [];
-  let enhanced = [];
-  let hasEnhanced = false;
-
-  groups.forEach((group) => {
-    if (group.length < 2) return;
-    group.forEach((perk) => {
-      const perkData = getPerkData(perk?.perkHash);
-      const isEnhanced = !!perkData?.isEnhanced;
-      perk.isEnhanced = isEnhanced;
-      if (isEnhanced) {
-        enhanced.push(perk);
-        hasEnhanced = true;
-      } else {
-        regular.push(perk);
-      }
-    });
+  // Add regular perks that DON'T have an enhanced counterpart in this list
+  regular.forEach(p => {
+    const name = String(p.perkName || "").trim();
+    const group = groups.get(name) || [];
+    const hasEnhancedVariant = group.some(gp => gp.isEnhanced);
+    
+    if (!hasEnhancedVariant) {
+      finalEnhanced.push(p);
+    }
   });
 
-  if (!hasEnhanced) {
-    enhanced = regular.slice();
-  }
-
-  return { regular, enhanced, hasEnhanced };
+  // Sort by hash or name to keep order stable if needed, but usually list order is fine
+  
+  return { 
+    regular: regular, 
+    enhanced: finalEnhanced, 
+    hasEnhanced: hasEnhanced 
+  };
 }
 
 window.weaponStatsService = {

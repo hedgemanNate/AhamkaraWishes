@@ -1,15 +1,5 @@
 [
   {
-    "hash": 905869860,
-    "name": "Kill Tracker",
-    "enhanced": false
-  },
-  {
-    "hash": 3244015567,
-    "name": "Crucible Tracker",
-    "enhanced": false
-  },
-  {
     "hash": 13792278,
     "name": "Hitmark IS",
     "enhanced": false
@@ -335,11 +325,6 @@
     "enhanced": false
   },
   {
-    "hash": 2302094943,
-    "name": "Kill Tracker",
-    "enhanced": false
-  },
-  {
     "hash": 445755705,
     "name": "Shortspec SAS",
     "enhanced": false
@@ -587,16 +572,6 @@
   {
     "hash": 3429800428,
     "name": "Fiberglass Arrow Shaft",
-    "enhanced": false
-  },
-  {
-    "hash": 2240097604,
-    "name": "Kill Tracker",
-    "enhanced": false
-  },
-  {
-    "hash": 2285636663,
-    "name": "Crucible Tracker",
     "enhanced": false
   },
   {

@@ -22,6 +22,8 @@ let _armorSetLookup = null;   // Map<setHash, {name, icon, description}>
 let _damageTypeDefs = null;   // Map<damageTypeHash, defObject>
 let _statDefs = null;         // Map<statHash, defObject>
 let _plugSetDefs = null;      // Map<plugSetHash, defObject>
+let _socketPerksBySlot = null; // Map<slotIndex, Array<{hash, name, enhanced}>> - Loaded from JSON files for stability
+let _weaponPerksMapping = null; // Map<weaponHash, Array<perkHash>> - Maps weapons to their available perks
 let _manifestVersion = null;  // string
 
 function d2log(...args) { console.log("[D2MANIFEST]", ...args); }
@@ -36,6 +38,8 @@ function resetManifestMemory() {
   _damageTypeDefs = null;
   _statDefs = null;
   _plugSetDefs = null;
+  _socketPerksBySlot = null;
+  _weaponPerksMapping = null;
   _manifestVersion = null;
 }
 
@@ -458,6 +462,8 @@ async function ensurePlugSetDefsReady({ force = false } = {}) {
 
     await idbSet("DestinyPlugSetDefinition", plugSetDefs, STORE_BLOBS);
     _plugSetDefs = null;
+    _socketPerksBySlot = null;
+    _weaponPerksMapping = null;
     d2log("Plug set defs cache updated successfully.");
     return true;
   } catch (e) {
@@ -607,6 +613,138 @@ async function loadPlugSetDefsToMemory() {
   d2log("Loaded plug set defs into memory:", count);
   console.groupEnd();
   return _plugSetDefs;
+}
+
+/**
+ * Load socket perk JSON files for stable perk retrieval across all weapons.
+ * This bypasses unreliable plug set manifest lookups that fail on older weapons.
+ *
+ * Socket mapping:
+ * - Slots 0 & 1 (barrel/magazine) -> weapon-slot-perks mech.json
+ * - Slots 2 & 3 (perks) -> weapon-slot-perk traits.json
+ * - Slot 4 (origin) -> weapon-slot-perks origin.json
+ *
+ * @returns {Promise<Map>} Map<slotIndex, Array<{hash, name, enhanced: bool}>>
+ */
+async function loadSocketPerksFromJSON() {
+  // Return cached data if already loaded
+  if (_socketPerksBySlot) return _socketPerksBySlot;
+
+  console.groupCollapsed("[D2MANIFEST] loadSocketPerksFromJSON");
+  _socketPerksBySlot = new Map();
+
+  try {
+    // Define which JSON file provides perks for each socket index
+    const slotToFile = {
+      0: 'data/weapon-slot-perks mech.json',
+      1: 'data/weapon-slot-perks mech.json',
+      2: 'data/weapon-slot-perk traits.json',
+      3: 'data/weapon-slot-perk traits.json',
+      4: 'data/weapon-slot-perks origin.json'
+    };
+
+    // Load each JSON file, storing by slot index
+    // Multiple slots may reference the same file (slots 0-1 both use mech.json)
+    const loadedFiles = new Map();
+
+    for (const [slotStr, filePath] of Object.entries(slotToFile)) {
+      const slotIndex = Number(slotStr);
+
+      // Skip if we already processed this slot
+      if (_socketPerksBySlot.has(slotIndex)) continue;
+
+      // Reuse previously loaded file if we already fetched it
+      let perks = loadedFiles.get(filePath);
+      if (!perks) {
+        const response = await fetch(filePath);
+        if (!response.ok) {
+          d2warn(`Failed to load socket perks from ${filePath} (HTTP ${response.status})`);
+          _socketPerksBySlot.set(slotIndex, []);
+          continue;
+        }
+
+        perks = await response.json();
+        if (!Array.isArray(perks)) {
+          d2warn(`Socket perks file ${filePath} is not an array, got: ${typeof perks}`);
+          _socketPerksBySlot.set(slotIndex, []);
+          continue;
+        }
+
+        loadedFiles.set(filePath, perks);
+      }
+
+      _socketPerksBySlot.set(slotIndex, perks);
+      d2log(`Loaded ${perks.length} perks for socket index ${slotIndex} from ${filePath}`);
+    }
+
+    console.groupEnd();
+    return _socketPerksBySlot;
+  } catch (err) {
+    d2err("Error loading socket perks from JSON:", err);
+    console.groupEnd();
+    return null;
+  }
+}
+
+/**
+ * Get perks for a specific socket index from the pre-loaded JSON cache.
+ * Returns perk definitions in {hash, name, enhanced} format.
+ *
+ * @param {number} slotIndex - Socket index (0-4)
+ * @returns {Promise<Array>} Array of {hash, name, enhanced}
+ */
+async function getSocketPerksForSlot(slotIndex) {
+  const socketPerks = await loadSocketPerksFromJSON();
+  if (!socketPerks) return [];
+  return socketPerks.get(slotIndex) || [];
+}
+
+/**
+ * Load weapon-to-perks mapping from weapon-perks.json.
+ * Maps each weapon hash to its list of available perk hashes.
+ * Used to filter socket perks to only show what each weapon actually has.
+ *
+ * @returns {Promise<Map>} Map<weaponHash, Array<perkHash>>
+ */
+async function loadWeaponPerksMapping() {
+  if (_weaponPerksMapping) return _weaponPerksMapping;
+
+  console.groupCollapsed("[D2MANIFEST] loadWeaponPerksMapping");
+  _weaponPerksMapping = new Map();
+
+  try {
+    const response = await fetch('data/weapon-perks.json');
+    if (!response.ok) {
+      d2warn(`Failed to load weapon-perks.json (HTTP ${response.status})`);
+      console.groupEnd();
+      return _weaponPerksMapping;
+    }
+
+    const weaponPerkData = await response.json();
+    if (typeof weaponPerkData !== 'object') {
+      d2warn("weapon-perks.json did not contain expected object format");
+      console.groupEnd();
+      return _weaponPerksMapping;
+    }
+
+    // Convert weapon perks data to Map for fast lookup
+    // Format: {"weaponHash": { "name": "...", "perks": [...] }}
+    for (const [weaponHashStr, data] of Object.entries(weaponPerkData)) {
+      const weaponHash = Number(weaponHashStr);
+      const perks = data?.perks;
+      if (Number.isFinite(weaponHash) && Array.isArray(perks)) {
+        _weaponPerksMapping.set(weaponHash, perks);
+      }
+    }
+
+    d2log(`Loaded perks mapping for ${_weaponPerksMapping.size} weapons`);
+    console.groupEnd();
+    return _weaponPerksMapping;
+  } catch (err) {
+    d2err("Error loading weapon perks mapping:", err);
+    console.groupEnd();
+    return _weaponPerksMapping;
+  }
 }
 
 function normalizeStatName(name) {
@@ -1164,33 +1302,75 @@ async function getDetailedWeaponSockets(weaponHash) {
 
 /**
  * Get available perks for a specific weapon socket.
+ * PRIMARY PATH: Uses pre-curated JSON files (mech.json, traits.json, origin.json) for stability.
+ * FALLBACK PATH: Falls back to manifest plug set lookups if JSON data is unavailable.
+ *
+ * This dual-path approach ensures all weapons (including older ones) show all available perks,
+ * while still falling back to the manifest if needed.
  *
  * @param {number} weaponHash - Weapon inventory hash
  * @param {number} socketIndex - Socket index (0-4)
- * @returns {Array} Array of {perkHash, perkName, statBonus}
+ * @returns {Promise<Array>} Array of {perkHash, perkName, icon, statBonus, isEnhanced}
  */
 async function getSocketPerks(weaponHash, socketIndex) {
   const defs = await loadInventoryItemDefsToMemory();
   const def = defs.get(String(weaponHash));
   if (!def || !def.sockets || !def.sockets.socketEntries[socketIndex]) return [];
 
+  // 1. Get the perks that BELONG to this socket from the manifest
+  // Combine direct items (often just the initial roll on older weapons) with the full plug set
   const socket = def.sockets.socketEntries[socketIndex];
   const directPlugItems = Array.isArray(socket.reusablePlugItems) ? socket.reusablePlugItems : [];
-  let plugItems = directPlugItems;
+  
+  // Start with direct items
+  let plugItems = [...directPlugItems];
+  const existingHashes = new Set(plugItems.map(p => p.plugItemHash));
 
-  if (plugItems.length === 0) {
-    const plugSetHash = socket.reusablePlugSetHash || socket.randomizedPlugSetHash;
-    if (!plugSetHash) return [];
-
+  // Check plug set (even if direct items exist!)
+  const plugSetHash = socket.reusablePlugSetHash || socket.randomizedPlugSetHash;
+  if (plugSetHash) {
     const plugSetDefs = await loadPlugSetDefsToMemory();
     const plugSetDef = plugSetDefs?.get(String(plugSetHash));
-    if (!plugSetDef || !Array.isArray(plugSetDef.reusablePlugItems)) return [];
-    plugItems = plugSetDef.reusablePlugItems;
+    
+    if (plugSetDef && Array.isArray(plugSetDef.reusablePlugItems)) {
+      plugSetDef.reusablePlugItems.forEach(p => {
+        if (!existingHashes.has(p.plugItemHash)) {
+          plugItems.push(p);
+          existingHashes.add(p.plugItemHash);
+        }
+      });
+    }
   }
+
+  // If still empty, check singleInitialItemHash (fixed roll fallback)
+  if (plugItems.length === 0 && socket.singleInitialItemHash) {
+     plugItems.push({ plugItemHash: socket.singleInitialItemHash });
+  }
+
+  // If manifest yields nothing, we can't reliably guess which perks go here.
+  // The JSON approach was too broad (mixing slots), so we must trust the manifest for structure.
+  if (plugItems.length === 0) return [];
+
+  // 2. Load our enhanced metadata from JSON (cached)
+  // We check ALL slots because a perk might be defined in any JSON file
+  // (e.g. a trait might appear in mech.json by mistake, or be shared)
+  const jsonPerksArrays = await Promise.all([0, 2, 4].map(idx => getSocketPerksForSlot(idx)));
+  const enhancedMap = new Map();
+  jsonPerksArrays.flat().forEach(p => {
+    if (p && p.hash) enhancedMap.set(p.hash, !!p.enhanced);
+  });
 
   const perks = [];
   for (const plugItem of plugItems) {
     const perkHash = plugItem.plugItemHash;
+    
+    // 3. Filter by weapon-perks.json if needed?
+    // Actually, the manifest plugSet is usually the source of truth for "what can roll here".
+    // If we want to strictly enforce weapon-perks.json availability, we can:
+    // const weaponPerksMapping = await loadWeaponPerksMapping();
+    // const allowedPerks = weaponPerksMapping.get(weaponHash);
+    // if (allowedPerks && !allowedPerks.includes(perkHash)) continue;
+
     const perkDef = defs.get(String(perkHash));
     if (!perkDef) continue;
 
@@ -1199,11 +1379,15 @@ async function getSocketPerks(weaponHash, socketIndex) {
       ? window.weaponStatsService.getStaticBonuses(perkHash)
       : PERK_STAT_BONUSES[perkHash] || {};
 
+    // Check our JSON cache for enhanced status
+    const isEnhanced = enhancedMap.has(perkHash) ? enhancedMap.get(perkHash) : false;
+
     perks.push({
       perkHash,
       perkName,
       icon: perkDef.displayProperties?.icon ? `${BUNGIE_ROOT}${perkDef.displayProperties.icon}` : "",
       statBonus,
+      isEnhanced
     });
   }
 

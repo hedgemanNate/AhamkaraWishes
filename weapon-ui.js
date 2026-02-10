@@ -489,6 +489,10 @@ async function selectWeapon(weaponHash) {
       screenshotEl.style.display = screenshotUrl ? 'block' : 'none';
     }
     
+    // Set weapon hash label
+    const hashEl = document.getElementById('w-selected-hash');
+    if (hashEl) hashEl.textContent = weaponHash || weaponDef.hash || '';
+    
     headerEl.classList.remove('hidden');
   }
 

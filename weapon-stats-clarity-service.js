@@ -3,7 +3,7 @@
    ============================================================ */
 
 const WEAPON_STATS_CLARITY_CACHE_KEY = "weapon-stats-clarity-cache-v1";
-const WEAPON_STATS_CLARITY_CACHE_VERSION = 1;
+const WEAPON_STATS_CLARITY_CACHE_VERSION = 2;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 let clarityCache = null;

@@ -3,6 +3,7 @@
    ============================================================ */
 
 const CLARITY_CONDITIONAL_HINTS = /(while|after|on\s|kills?|precision|rapid|reload|final blow|aiming|sprint|slide|airborne|crouch|nearby|surrounded)/i;
+const CLARITY_ENHANCED_CLASS = "enhancedArrow";
 
 function normalizeClarityName(value) {
   return String(value || "").trim();
@@ -25,6 +26,21 @@ function extractNumericStats(entry) {
   return null;
 }
 
+function hasEnhancedArrow(descriptions) {
+  if (!descriptions) return false;
+
+  const blocks = Array.isArray(descriptions)
+    ? descriptions
+    : Object.values(descriptions).flatMap((value) => (Array.isArray(value) ? value : []));
+
+  return blocks.some((block) => {
+    const lines = Array.isArray(block?.linesContent) ? block.linesContent : [];
+    return lines.some((line) =>
+      Array.isArray(line?.classNames) && line.classNames.includes(CLARITY_ENHANCED_CLASS)
+    );
+  });
+}
+
 function extractClarityEntry(hash, entry) {
   const name = normalizeClarityName(entry?.name || entry?.displayName || entry?.title || "");
   const description = normalizeClarityName(entry?.description || entry?.desc || entry?.text || "");
@@ -32,6 +48,7 @@ function extractClarityEntry(hash, entry) {
   const source = entry?.source || entry?.sources || entry?.origin || entry?.obtained || null;
   const season = entry?.season || entry?.seasons || entry?.seasonNumber || entry?.release || null;
   const stats = extractNumericStats(entry);
+  const isEnhanced = hasEnhancedArrow(entry?.descriptions);
 
   const combined = `${description} ${notes}`.trim();
   const isConditional = CLARITY_CONDITIONAL_HINTS.test(combined);
@@ -45,6 +62,7 @@ function extractClarityEntry(hash, entry) {
     season,
     stats,
     isConditional,
+    isEnhanced,
   };
 }
 

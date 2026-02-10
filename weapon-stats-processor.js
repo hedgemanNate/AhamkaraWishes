@@ -56,6 +56,18 @@ function isPerkLike(def) {
   return true;
 }
 
+function isEnhancedBungiePerk(def) {
+  const plugCategory = String(def?.plug?.plugCategoryIdentifier || "").toLowerCase();
+  const itemTypeName = String(def?.itemTypeDisplayName || "").toLowerCase();
+  const name = String(def?.displayProperties?.name || "").toLowerCase();
+
+  return (
+    plugCategory.includes("enhanced") ||
+    itemTypeName.includes("enhanced") ||
+    name.startsWith("enhanced ")
+  );
+}
+
 function buildPerkStatMap(perkDefs) {
   const perkMap = {};
 
@@ -68,6 +80,7 @@ function buildPerkStatMap(perkDefs) {
     const display = def.displayProperties || {};
     const bonuses = parseStatBonuses(def);
     const iconPath = display.icon || "";
+    const isEnhancedBungie = isEnhancedBungiePerk(def);
 
     perkMap[String(hash)] = {
       hash,
@@ -77,6 +90,8 @@ function buildPerkStatMap(perkDefs) {
       static: bonuses.static,
       conditional: bonuses.conditional,
       isConditional: bonuses.isConditional,
+      isEnhancedBungie,
+      isEnhanced: isEnhancedBungie,
     };
   }
 

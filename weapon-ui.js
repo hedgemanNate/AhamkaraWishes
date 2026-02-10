@@ -9,7 +9,10 @@ const weaponState = {
   currentWeapon: null, // { weaponHash, name, stats, sockets }
   selectedPerks: {}, // { socketIndex: perkHash }
   socketPerksMap: {}, // { socketIndex: perkData[] }
+  socketPerkVariants: {}, // { socketIndex: { regular, enhanced, hasEnhanced } }
   selectedMasterwork: null, // Currently selected masterwork stat type
+  perkDisplayMode: 'regular', // "regular" or "enhanced"
+  activeSocketIndex: null,
   currentMode: 'pve', // "pve" or "pvp"
   // ... existing fields ...
   currentFilters: {}, // Search/filter state
@@ -234,6 +237,19 @@ async function initWeaponCraft() {
     savBtn.addEventListener('click', handleSaveWeaponWish);
   }
 
+  const perkToggleBtn = document.getElementById('w-perk-enhanced-toggle');
+  if (perkToggleBtn) {
+    perkToggleBtn.addEventListener('click', () => {
+      if (perkToggleBtn.disabled) return;
+      weaponState.perkDisplayMode =
+        weaponState.perkDisplayMode === 'enhanced' ? 'regular' : 'enhanced';
+      updatePerkToggleState(weaponState.activeSocketIndex);
+      if (weaponState.activeSocketIndex !== null) {
+        renderPerkOptions(weaponState.activeSocketIndex);
+      }
+    });
+  }
+
   d2log('✅ Weapon craft UI initialized', 'weapon-ui');
 }
 
@@ -372,7 +388,11 @@ async function selectWeapon(weaponHash) {
   // Reset perks for new weapon
   weaponState.selectedPerks = {};
   weaponState.socketPerksMap = {};
+  weaponState.socketPerkVariants = {};
   weaponState.selectedMasterwork = null;
+  weaponState.perkDisplayMode = 'regular';
+  weaponState.activeSocketIndex = null;
+  resetPerkToggleState();
   addRecentWeaponSelection(weaponDef, weaponHash);
 
   d2log(`✅ Selected weapon: ${weaponState.currentWeapon.name}`, 'weapon-ui');
@@ -468,6 +488,10 @@ async function selectWeapon(weaponHash) {
       screenshotEl.src = screenshotUrl;
       screenshotEl.style.display = screenshotUrl ? 'block' : 'none';
     }
+    
+    // Set weapon hash label
+    const hashEl = document.getElementById('w-selected-hash');
+    if (hashEl) hashEl.textContent = weaponHash || weaponDef.hash || '';
     
     headerEl.classList.remove('hidden');
   }
@@ -884,6 +908,10 @@ async function renderWeaponPerks() {
     try {
       const perks = await window.__manifest__.getSocketPerks(weaponHash, socket.socketIndex);
       weaponState.socketPerksMap[socket.socketIndex] = perks || [];
+      weaponState.socketPerkVariants[socket.socketIndex] =
+        window.weaponStatsService?.buildPerkVariants
+          ? window.weaponStatsService.buildPerkVariants(perks || [])
+          : { regular: perks || [], enhanced: perks || [], hasEnhanced: false };
       
       // Update the display to show current selection or default
       updateSocketDisplayIcon(socket.socketIndex);
@@ -957,12 +985,54 @@ function ensureMasterworkOptions() {
   return built;
 }
 
+function getPerkToggleButton() {
+  return document.getElementById('w-perk-enhanced-toggle');
+}
+
+function resetPerkToggleState() {
+  const btn = getPerkToggleButton();
+  if (!btn) return;
+  btn.disabled = true;
+  btn.classList.remove('active');
+}
+
+function updatePerkToggleState(socketIndex) {
+  const btn = getPerkToggleButton();
+  if (!btn) return;
+  const variants = socketIndex !== null ? weaponState.socketPerkVariants?.[socketIndex] : null;
+  const hasEnhanced = !!variants?.hasEnhanced;
+  btn.disabled = !hasEnhanced;
+  btn.classList.toggle('active', weaponState.perkDisplayMode === 'enhanced' && hasEnhanced);
+}
+
+function getPerkOptionsForSocket(socketIndex) {
+  const variants = weaponState.socketPerkVariants?.[socketIndex];
+  if (!variants) {
+    return weaponState.socketPerksMap[socketIndex] || [];
+  }
+  const mode = weaponState.perkDisplayMode === 'enhanced' ? 'enhanced' : 'regular';
+  const list = variants[mode] || [];
+  if (list.length > 0) return list;
+  return variants.regular || [];
+}
+
+function ensureSelectedPerkInOptions(socketIndex, options) {
+  if (!Array.isArray(options) || options.length === 0) return;
+  const selected = weaponState.selectedPerks[socketIndex];
+  if (selected && options.some((perk) => perk.perkHash === selected)) return;
+  weaponState.selectedPerks[socketIndex] = options[0].perkHash;
+  updateSocketDisplayIcon(socketIndex);
+  updateWeaponStatDeltas();
+}
+
 function selectSocketColumn(colIndex, socketIndex) {
   // Special handling for Masterwork column (index 5)
   if (colIndex === 5) {
     document.querySelectorAll('.selector-col').forEach((el, idx) => {
       el.classList.toggle('active', idx === colIndex);
     });
+    weaponState.activeSocketIndex = null;
+    updatePerkToggleState(null);
     const optionsRow = document.getElementById('w-options-row');
     optionsRow.style.display = 'flex';
     renderMasterworkOptions();
@@ -973,6 +1043,8 @@ function selectSocketColumn(colIndex, socketIndex) {
     el.classList.toggle('active', idx === colIndex);
   });
 
+  weaponState.activeSocketIndex = socketIndex;
+  updatePerkToggleState(socketIndex);
   const optionsRow = document.getElementById('w-options-row');
   optionsRow.style.display = 'flex';
   renderPerkOptions(socketIndex);
@@ -1034,17 +1106,13 @@ function updateSocketDisplayIcon(socketIndex) {
 
   const perks = weaponState.socketPerksMap[socketIndex] || [];
   const selectedHash = weaponState.selectedPerks[socketIndex];
-  
-  let activePerk = perks.find(p => p.perkHash === selectedHash);
-  
-  if (!activePerk) {
-     const socket = weaponState.currentWeapon.sockets.find(s => s.socketIndex === socketIndex);
-     if (socket && socket.singleInitialItemHash) {
-         activePerk = perks.find(p => p.perkHash === socket.singleInitialItemHash);
-     }
+
+  if (!selectedHash) {
+    displayEl.style.backgroundImage = 'none';
+    return;
   }
   
-  if (!activePerk && perks.length > 0) activePerk = perks[0];
+  let activePerk = perks.find(p => p.perkHash === selectedHash);
 
   if (activePerk && activePerk.icon) {
     const safeIcon = activePerk.icon.startsWith('http') ? activePerk.icon : `https://www.bungie.net${activePerk.icon}`;
@@ -1058,7 +1126,8 @@ function renderPerkOptions(socketIndex) {
   const optionsRow = document.getElementById('w-options-row');
   optionsRow.innerHTML = '';
 
-  const perks = weaponState.socketPerksMap[socketIndex] || [];
+  const perks = getPerkOptionsForSocket(socketIndex);
+  ensureSelectedPerkInOptions(socketIndex, perks);
   
   if (perks.length === 0) {
     optionsRow.innerHTML = '<div style="color: #888; padding: 10px; font-size: 12px;">No options available</div>';
@@ -1068,6 +1137,9 @@ function renderPerkOptions(socketIndex) {
   perks.forEach(perk => {
     const btn = document.createElement('div');
     btn.className = 'option-btn';
+    if (perk.isEnhanced) {
+      btn.classList.add('enhanced');
+    }
     if (weaponState.selectedPerks[socketIndex] === perk.perkHash) {
       btn.classList.add('selected');
     }

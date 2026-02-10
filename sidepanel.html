@@ -55,7 +55,10 @@
                 
                 <!-- New Overlay Container: Top Left -->
                 <div class="w-hero-info-top-left">
-                  <div id="w-selected-name" class="w-hero-name"></div>
+                  <div style="display:flex;align-items:baseline;gap:6px;">
+                    <div id="w-selected-name" class="w-hero-name"></div>
+                    <div id="w-selected-hash" class="w-hero-hash" style="font-size:11px;color:#888;"></div>
+                  </div>
                   <div id="w-selected-type" class="w-hero-type"></div>
                   
                   <div class="w-hero-property-group">
@@ -97,7 +100,12 @@
                   <div id="w-stats-table" class="stat-bars"></div>
                 </div>
                 <div class="perks-column">
-                  <div class="perks-section-title">PERKS</div>
+                  <div class="perks-title-row">
+                    <div class="perks-section-title">PERKS</div>
+                    <button id="w-perk-enhanced-toggle" class="perk-enhanced-toggle" type="button" disabled>
+                      ENHANCED
+                    </button>
+                  </div>
                   <div id="w-perk-slots" class="perk-slots"></div>
                 </div>
               </section>

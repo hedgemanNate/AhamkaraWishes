@@ -302,6 +302,9 @@ header {
 }
 
 .menu-btn:hover, .menu-btn.active {
+}
+
+.tab-btn:hover {
   background: #383842;
   border-color: #555;
   color: var(--accent-gold, #d4af37);

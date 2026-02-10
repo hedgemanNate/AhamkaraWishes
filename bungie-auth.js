@@ -54,15 +54,23 @@ function initAuthUI() {
   // Listen for status messages from background
   if (chrome && chrome.runtime && chrome.runtime.onMessage) {
     chrome.runtime.onMessage.addListener((message) => {
-      if (message && message.type === 'BUNGIE_OAUTH_STATUS') {
+      if (!message) return;
+      if (message.type === 'BUNGIE_OAUTH_STATUS') {
         if (message.success) {
           setAuthStatus('Logged in');
           toggleAuthButtons(true);
-          // Optionally request more user info here
+          setSignedInState(true);
+          // Request profile from storage (background will populate after token exchange)
+          loadProfileFromStorage();
         } else {
           setAuthStatus('Not logged in');
           toggleAuthButtons(false);
+          setSignedInState(false);
         }
+      }
+      if (message.type === 'BUNGIE_PROFILE') {
+        // Background has fetched/stored profile
+        if (message.profile) updateProfileUI(message.profile);
       }
     });
   }
@@ -73,12 +81,61 @@ function initAuthUI() {
       if (resp && resp.loggedIn) {
         setAuthStatus('Logged in');
         toggleAuthButtons(true);
+        setSignedInState(true);
+        // Request profile from background (ensures fresh data)
+        if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage({ type: 'BUNGIE_PROFILE_REQUEST' }, (pr) => {
+            if (pr && pr.profile) updateProfileUI(pr.profile);
+            else loadProfileFromStorage();
+          });
+        } else {
+          loadProfileFromStorage();
+        }
       } else {
         setAuthStatus('Not logged in');
         toggleAuthButtons(false);
+        setSignedInState(false);
       }
     });
   }
+}
+
+/** Update header visuals when signed in/out */
+function setSignedInState(signedIn) {
+  const header = document.getElementById('menu-auth-header');
+  if (!header) return;
+  header.classList.toggle('signed-in', !!signedIn);
+  header.classList.toggle('signed-out', !signedIn);
+}
+
+/** Update profile UI from profile object */
+function updateProfileUI(profile) {
+  const nameEl = document.getElementById('bungie-user-name');
+  const photoEl = document.getElementById('bungie-user-photo');
+  const statusEl = document.getElementById(AUTH_STATUS_ID);
+  if (nameEl) nameEl.textContent = profile.displayName || profile.display_name || 'Unknown';
+  if (photoEl) {
+    // If Bungie returns a profile picture path, set it. Normalize relative paths.
+    if (profile.profilePicturePath) {
+      let src = profile.profilePicturePath;
+      if (src.startsWith('/')) src = 'https://www.bungie.net' + src;
+      photoEl.src = src;
+    } else {
+      photoEl.removeAttribute('src');
+    }
+  }
+  if (statusEl) statusEl.textContent = 'Logged in';
+  setSignedInState(true);
+  toggleAuthButtons(true);
+}
+
+/** Load profile from chrome.storage.local and update UI */
+function loadProfileFromStorage() {
+  if (!chrome || !chrome.storage || !chrome.storage.local) return;
+  chrome.storage.local.get(['bungie_profile'], (result) => {
+    const p = result && result.bungie_profile;
+    if (p) updateProfileUI(p);
+  });
 }
 
 /** Start the Bungie OAuth flow by opening the authorization URL in a new tab */

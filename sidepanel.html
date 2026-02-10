@@ -164,19 +164,23 @@
 
     <!-- MENU VIEW (sibling to weapons & armor) -->
     <div id="view-menu" class="content-view active-view">
-      <div class="menu-panel" style="margin:auto;text-align:center;padding:24px 12px;max-width:420px;">
-        <h2 class="menu-title">Menu</h2>
-
-        <!-- Authentication container: login button + status -->
-        <div id="bungie-auth-container" class="auth-container">
-          <div id="bungie-auth-status" class="auth-status">Not logged in</div>
-          <div class="auth-actions">
-            <button id="bungie-login-btn" class="auth-btn">Login with Bungie</button>
+      <!-- Top header: profile + login/logout -->
+      <div id="menu-auth-header" class="menu-auth-header signed-out">
+        <div class="menu-auth-inner">
+          <img id="bungie-user-photo" class="bungie-user-photo" src="" alt=""/>
+          <div class="menu-auth-info">
+            <div id="bungie-user-name" class="bungie-user-name">Not signed in</div>
+            <div id="bungie-auth-status" class="auth-status small">Not logged in</div>
+          </div>
+          <div class="menu-auth-actions">
+            <button id="bungie-login-btn" class="auth-btn">Login</button>
             <button id="bungie-logout-btn" class="auth-btn secondary" style="display:none;">Logout</button>
           </div>
-          <div id="bungie-user-info" class="auth-user-info" aria-live="polite"></div>
         </div>
+      </div>
 
+      <div class="menu-panel" style="margin:auto;text-align:center;padding:24px 12px;max-width:420px;">
+        <h2 class="menu-title">Menu</h2>
         <div class="menu-help">
           <p style="color:#aaa;margin-top:12px;">Use the button above to connect your Bungie account for Destiny 2 features. Tokens are stored in extension storage only.</p>
         </div>

@@ -27,15 +27,28 @@ function main() {
   // Send the code to background.js which performs the token exchange.
   if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
     chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_CODE', code, state }, (resp) => {
+      // Provide detailed error information to aid debugging
       if (resp && resp.success) {
         finish('Login successful — you may close this tab.');
       } else {
-        finish('Login failed during token exchange.');
+        // Prefer structured error info when available
+        let details = 'Unknown error';
+        try {
+          if (resp && resp.error) {
+            details = typeof resp.error === 'string' ? resp.error : JSON.stringify(resp.error);
+          } else if (resp && resp.status) {
+            details = `HTTP ${resp.status}` + (resp.error ? `: ${JSON.stringify(resp.error)}` : '');
+          }
+        } catch (e) {
+          details = String(resp?.error || resp) || 'Unknown error';
+        }
+        console.error('[OAUTH CALLBACK] Token exchange failed:', resp);
+        finish('Login failed during token exchange — ' + details);
       }
       // Optionally auto-close the window after a short delay
       setTimeout(() => {
         try { window.close(); } catch (e) {}
-      }, 1200);
+      }, 2200);
     });
   } else {
     finish('Unable to contact extension runtime.');

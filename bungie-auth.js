@@ -9,7 +9,7 @@
  */
 
 // CONFIG: replace with your registered Bungie client id
-const BUNGIE_CLIENT_ID = 'YOUR_BUNGIE_CLIENT_ID';
+const BUNGIE_CLIENT_ID = '51511';
 
 // DOM ids used in sidepanel.html
 const AUTH_STATUS_ID = 'bungie-auth-status';

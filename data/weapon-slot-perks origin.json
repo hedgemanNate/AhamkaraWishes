@@ -633,5 +633,32 @@
     "hash": 155346308,
     "name": "Fitted Stock",
     "enhanced": true
+  },
+  {
+    "hash": 905869860,
+    "name": "Kill Tracker",
+    "enhanced": false
+  },
+  {
+    "hash": 3244015567,
+    "name": "Crucible Tracker",
+    "enhanced": false
+  },
+
+{
+    "hash": 2302094943,
+    "name": "Kill Tracker",
+    "enhanced": false
+  },
+{
+    "hash": 2240097604,
+    "name": "Kill Tracker",
+    "enhanced": false
+  },
+
+{
+    "hash": 2285636663,
+    "name": "Crucible Tracker",
+    "enhanced": false
   }
 ]

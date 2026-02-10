@@ -71,6 +71,12 @@ const MASTERWORK_STAT_HASH_BY_LABEL = {
   "Draw Time": [447667954],
 };
 
+
+/**
+ * Set of perk hashes for all tracker plugs (Kill Tracker, Crucible Tracker, Memento Trackers, etc.)
+ * Used to hide tracker plugs from the origin (5th) socket in the UI.
+ */
+let trackerPerkHashSet = new Set();
 let weaponCraftInitialized = false;
 
 let weaponSearchWorker = null;
@@ -90,117 +96,46 @@ function initWeaponSearchWorker() {
       const payload = event.data || {};
       if (payload.type === 'results') {
         if (payload.id !== weaponSearchRequestId) return;
-        renderWeaponSearchResults(payload.results);
-      } else if (payload.type === 'error') {
-        if (payload.id !== weaponSearchRequestId) return;
-        d2log(`Search worker error: ${payload.message}`, 'weapon-ui', 'error');
-        const resultsDiv = document.getElementById('w-search-results');
-        if (resultsDiv) {
-          resultsDiv.innerHTML =
-            '<div style="text-align: center; color: #c66; padding: 20px;">Manifest unavailable. Please check your internet connection.</div>';
+
+        /**
+         * Loads the tracker plug hashes from data/weapon-slot-perks origin.json and populates trackerPerkHashSet.
+         * Only perks with "Tracker" in their name are included.
+         * This ensures only tracker plugs are hidden from the origin slot, not valid origin traits.
+         */
+        async function loadTrackerBlacklist() {
+          try {
+            const response = await fetch('data/weapon-slot-perks%20origin.json');
+            const data = await response.json();
+            trackerPerkHashSet = new Set(
+              data.filter(entry => entry.name && entry.name.includes('Tracker')).map(entry => entry.hash)
+            );
+          } catch (e) {
+            d2log('Failed to load tracker blacklist: ' + (e.message || e), 'weapon-ui', 'error');
+            trackerPerkHashSet = new Set();
+          }
         }
-      }
-    };
 
-    weaponSearchWorker.onerror = (error) => {
-      d2log(`Search worker failed: ${error.message || error}`, 'weapon-ui', 'error');
-      weaponSearchWorker = null;
-    };
+        async function initWeaponCraft() {
+          if (weaponCraftInitialized) return;
+          weaponCraftInitialized = true;
 
-    weaponSearchWorker.postMessage({ type: 'warmup' });
-  } catch (error) {
-    d2log(`Search worker init failed: ${error.message || error}`, 'weapon-ui', 'error');
-    weaponSearchWorker = null;
-  }
-}
+          // Load tracker blacklist before any perk rendering
+          await loadTrackerBlacklist();
 
-function shutdownWeaponSearchWorker() {
-  if (weaponSearchWorker) {
-    weaponSearchWorker.terminate();
-    weaponSearchWorker = null;
-  }
-}
+          if (window.weaponStatsService?.initializeWeaponStats) {
+            window.weaponStatsService
+              .initializeWeaponStats()
+              .catch((error) => {
+                d2log(`Weapon stats init failed: ${error.message || error}`, 'weapon-ui', 'error');
+              });
+          } else {
+            d2log('Weapon stats service unavailable at init', 'weapon-ui', 'error');
+          }
 
-function resetWeaponSearchWorker() {
-  shutdownWeaponSearchWorker();
-  initWeaponSearchWorker();
-}
+          initWeaponSearchWorker();
 
-/**
- * Initialize weapon crafting UI: attach event listeners, setup state.
- */
-async function initWeaponCraft() {
-  if (weaponCraftInitialized) return;
-  weaponCraftInitialized = true;
-
-  if (window.weaponStatsService?.initializeWeaponStats) {
-    window.weaponStatsService
-      .initializeWeaponStats()
-      .catch((error) => {
-        d2log(`Weapon stats init failed: ${error.message || error}`, 'weapon-ui', 'error');
-      });
-  } else {
-    d2log('Weapon stats service unavailable at init', 'weapon-ui', 'error');
-  }
-
-  initWeaponSearchWorker();
-
-  let searchTimeout;
-
-  // Search input (debounced)
-  const searchInput = document.getElementById('w-search-input');
-  if (searchInput) {
-    searchInput.addEventListener('input', (event) => {
-      clearTimeout(searchTimeout);
-      const query = event.target.value.trim();
-      searchTimeout = setTimeout(() => {
-        triggerWeaponSearch(query);
-      }, 300);
-    });
-  }
-
-  const historyToggleBtn = document.getElementById('w-history-toggle');
-  if (historyToggleBtn) {
-    historyToggleBtn.addEventListener('click', () => {
-      weaponState.showHistory = !weaponState.showHistory;
-      historyToggleBtn.classList.toggle('active', weaponState.showHistory);
-
-      if (weaponState.showHistory) {
-        clearTimeout(searchTimeout);
-        weaponSearchRequestId += 1;
-        if (searchInput) {
-          searchInput.value = '';
+          // ...existing code...
         }
-        renderRecentWeaponSelections();
-      } else {
-        const resultsDiv = document.getElementById('w-search-results');
-        if (resultsDiv) {
-          resultsDiv.innerHTML = '';
-        }
-      }
-    });
-  }
-
-  const historyClearBtn = document.getElementById('w-history-clear');
-  if (historyClearBtn) {
-    historyClearBtn.addEventListener('click', () => {
-      weaponState.recentSelections = [];
-      const currentQuery = searchInput?.value?.trim() || '';
-      if (!currentQuery) {
-        renderRecentWeaponSelections();
-      }
-    });
-  }
-
-  // Mode toggle buttons
-  const pvePveBtn = document.getElementById('w-pve-btn');
-  const pvpPvpBtn = document.getElementById('w-pvp-btn');
-
-  if (pvePveBtn) {
-    pvePveBtn.addEventListener('click', () => {
-      weaponState.currentMode = 'pve';
-      toggleModeButton('pve');
-    });
   }
 
   if (pvpPvpBtn) {
@@ -906,13 +841,20 @@ async function renderWeaponPerks() {
     if (!isMapped) continue;
 
     try {
-      const perks = await window.__manifest__.getSocketPerks(weaponHash, socket.socketIndex);
+      let perks = await window.__manifest__.getSocketPerks(weaponHash, socket.socketIndex);
+
+      // For the origin slot (socket index 4), filter out tracker plugs using trackerPerkHashSet
+      // This ensures only valid origin traits are shown in the UI
+      if (socket.socketIndex === 4 && Array.isArray(perks)) {
+        perks = perks.filter(perk => !trackerPerkHashSet.has(perk.perkHash || perk.hash));
+      }
+
       weaponState.socketPerksMap[socket.socketIndex] = perks || [];
       weaponState.socketPerkVariants[socket.socketIndex] =
         window.weaponStatsService?.buildPerkVariants
           ? window.weaponStatsService.buildPerkVariants(perks || [])
           : { regular: perks || [], enhanced: perks || [], hasEnhanced: false };
-      
+
       // Update the display to show current selection or default
       updateSocketDisplayIcon(socket.socketIndex);
     } catch (e) {

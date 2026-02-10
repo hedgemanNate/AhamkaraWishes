@@ -6,6 +6,8 @@
   <title>Ahamkara Wishes</title>
   <link rel="stylesheet" href="sidepanel.css" />
   <link rel="stylesheet" href="weapon-sidepanel.css" />
+  <!-- Menu-specific styles for Bungie auth UI -->
+  <link rel="stylesheet" href="menu-sidepanel.css" />
 </head>
 
 <body>
@@ -160,15 +162,28 @@
       </div>
     </div>
 
-    <div id="view-armor" class="content-view">
-          <!-- MENU VIEW (initially hidden) -->
-          <div id="view-menu" class="content-view active-view">
-            <div style="margin:auto;text-align:center;padding:40px 0;">
-              <h2 style="color:var(--accent-gold,#d4af37);margin-bottom:16px;">Menu</h2>
-              <div style="color:#aaa;">(Menu content coming soon)</div>
-            </div>
+    <!-- MENU VIEW (sibling to weapons & armor) -->
+    <div id="view-menu" class="content-view active-view">
+      <div class="menu-panel" style="margin:auto;text-align:center;padding:24px 12px;max-width:420px;">
+        <h2 class="menu-title">Menu</h2>
+
+        <!-- Authentication container: login button + status -->
+        <div id="bungie-auth-container" class="auth-container">
+          <div id="bungie-auth-status" class="auth-status">Not logged in</div>
+          <div class="auth-actions">
+            <button id="bungie-login-btn" class="auth-btn">Login with Bungie</button>
+            <button id="bungie-logout-btn" class="auth-btn secondary" style="display:none;">Logout</button>
           </div>
-      
+          <div id="bungie-user-info" class="auth-user-info" aria-live="polite"></div>
+        </div>
+
+        <div class="menu-help">
+          <p style="color:#aaa;margin-top:12px;">Use the button above to connect your Bungie account for Destiny 2 features. Tokens are stored in extension storage only.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-armor" class="content-view">
       <div class="armor-view-stage">
         <div class="armor-view-slider show-craft" id="armor-slider">
           
@@ -274,5 +289,6 @@
   <script src="weapon-manager.js"></script>
   <script src="weapon-ui.js"></script>
   <script src="ui-creator.js"></script>
+  <script src="bungie-auth.js"></script>
 </body>
 </html>

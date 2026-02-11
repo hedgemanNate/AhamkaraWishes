@@ -839,7 +839,10 @@ function renderWeaponSockets() {
           </div>
         </div>
       </div>
-      <div id="w-dim-wishlist" class="dim-wishlist">${buildDimWishlistString()}</div>
+      <div class="dim-wishlist-container">
+        <button id="w-dim-copy-btn" class="dim-copy-btn" type="button">Copy</button>
+        <div id="w-dim-wishlist" class="dim-wishlist">${buildDimWishlistString()}</div>
+      </div>
     </div>
   `;
 
@@ -853,6 +856,57 @@ function renderWeaponSockets() {
       if (!tooltipEl) return;
       const hidden = tooltipEl.classList.toggle('hide-desc');
       detailsBtn.setAttribute('aria-pressed', String(!hidden));
+    });
+  })();
+
+  (function attachDimCopyButton() {
+    const copyBtn = document.getElementById('w-dim-copy-btn');
+    const dimEl = document.getElementById('w-dim-wishlist');
+    if (!copyBtn || !dimEl) return;
+    copyBtn.addEventListener('click', async () => {
+      const text = (dimEl.textContent || '').trim();
+      const prevLabel = copyBtn.textContent;
+      try {
+        // Try native async clipboard first
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // Robust textarea fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          // Prevent mobile zoom and keep off-screen
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.top = '0';
+          ta.style.opacity = '0';
+          ta.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          try {
+            const ok = document.execCommand('copy');
+            if (!ok) throw new Error('execCommand returned false');
+          } finally {
+            ta.remove();
+          }
+        }
+
+        copyBtn.textContent = 'Copied';
+        copyBtn.style.color = '#4ade80'; // Green feedback
+        setTimeout(() => { 
+          copyBtn.textContent = prevLabel;
+          copyBtn.style.color = '';
+        }, 1200);
+      } catch (err) {
+        console.error('Copy to clipboard failed:', err);
+        copyBtn.textContent = 'Failed';
+        copyBtn.style.color = '#f87171'; // Red feedback
+        setTimeout(() => { 
+          copyBtn.textContent = prevLabel;
+          copyBtn.style.color = '';
+        }, 1200);
+      }
     });
   })();
 

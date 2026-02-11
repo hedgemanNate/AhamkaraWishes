@@ -758,6 +758,12 @@ function renderWeaponSockets() {
     <div class="perk-selector-container">
       <div class="selector-row" id="w-selector-row"></div>
       <div class="options-row" id="w-options-row" style="display:none;"></div>
+      <div class="perk-tooltip" id="w-perk-tooltip">
+        <div class="clarity-content">
+          <div class="clarity-title">Perk Details</div>
+          <div class="clarity-desc">Hover a perk to see details here.</div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -1117,6 +1123,28 @@ function renderMasterworkOptions() {
        renderMasterworkOptions(); 
     });
 
+    // Tooltip listeners for masterwork options (update permanent panel)
+    btn.addEventListener('mouseenter', () => {
+      const tooltipPanel = document.getElementById('w-perk-tooltip');
+      if (!tooltipPanel) return;
+      try {
+        if (window.weaponStatsService && window.weaponTooltipClarity) {
+          const perkData = window.weaponStatsService.getPerkData(option.perkHash || option.perkName);
+          if (window.weaponTooltipClarity.buildContent) {
+            tooltipPanel.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
+          }
+          window.weaponTooltipClarity.handleHover(btn, option.perkHash || option.perkName);
+        } else {
+          tooltipPanel.innerHTML = `<div class="clarity-content"><div class="clarity-title">${option.perkName}</div></div>`;
+        }
+      } catch (e) {
+        tooltipPanel.innerHTML = `<div class="clarity-content"><div class="clarity-title">${option.perkName}</div></div>`;
+      }
+    });
+    btn.addEventListener('mouseleave', () => {
+      if (window.weaponTooltipClarity) window.weaponTooltipClarity.handleLeave();
+    });
+
     optionsRow.appendChild(btn);
   });
 }
@@ -1175,15 +1203,29 @@ function renderPerkOptions(socketIndex) {
     }
     btn.title = perk.perkName;
 
-    // Add tooltip listeners
-        if (window.weaponTooltipClarity) {
-         btn.addEventListener('mouseenter', () => {
-           window.weaponTooltipClarity.handleHover(btn, perk.perkHash);
-         });
-         btn.addEventListener('mouseleave', () => {
-           window.weaponTooltipClarity.handleLeave();
-         });
+    // Add tooltip listeners: update permanent panel and floating tooltip
+    btn.addEventListener('mouseenter', () => {
+      const tooltipPanel = document.getElementById('w-perk-tooltip');
+      try {
+        if (window.weaponStatsService && window.weaponTooltipClarity) {
+          const perkData = window.weaponStatsService.getPerkData(perk.perkHash);
+          if (tooltipPanel && window.weaponTooltipClarity.buildContent) {
+            tooltipPanel.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
+          }
+          // Also show floating tooltip for precise hover
+          window.weaponTooltipClarity.handleHover(btn, perk.perkHash);
+        } else if (tooltipPanel) {
+          tooltipPanel.innerHTML = `<div class="clarity-content"><div class="clarity-title">${perk.perkName}</div><div class="clarity-desc">${perk.perkDescription || 'No description available.'}</div></div>`;
         }
+      } catch (e) {
+        // Fallback content
+        if (tooltipPanel) tooltipPanel.innerHTML = `<div class="clarity-content"><div class="clarity-title">${perk.perkName}</div></div>`;
+      }
+    });
+    btn.addEventListener('mouseleave', () => {
+      if (window.weaponTooltipClarity) window.weaponTooltipClarity.handleLeave();
+      // Permanent panel remains; do not clear on leave per requirement
+    });
 
     btn.addEventListener('click', () => {
        // Toggle selection: deselect if already selected

@@ -759,9 +759,12 @@ function renderWeaponSockets() {
       <div class="selector-row" id="w-selector-row"></div>
       <div class="options-row" id="w-options-row" style="display:none;"></div>
       <div class="perk-tooltip" id="w-perk-tooltip">
-        <div class="clarity-content">
-          <div class="clarity-title">Perk Details</div>
-          <div class="clarity-desc">Hover a perk to see details here.</div>
+        <button id="w-perk-tooltip-details" class="tooltip-details-btn" type="button">Details</button>
+        <div class="perk-tooltip-content">
+          <div class="clarity-content">
+            <div class="clarity-title">Perk Details</div>
+            <div class="clarity-desc">Hover a perk to see details here.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -908,7 +911,7 @@ async function renderWeaponPerks() {
   const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories);
 
   // Load perks for mapped sockets
-  for (const socket of sockets) {
+    for (const socket of columns) {
     // Only process if it's in our grid to save API calls
     const isMapped = columns.some(s => s && s.socketIndex === socket.socketIndex);
     if (!isMapped) continue;
@@ -1130,12 +1133,17 @@ function renderMasterworkOptions() {
       try {
         if (window.weaponStatsService && window.weaponTooltipClarity) {
           const perkData = window.weaponStatsService.getPerkData(option.perkHash || option.perkName);
-          if (window.weaponTooltipClarity.buildContent) {
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          if (contentWrap && window.weaponTooltipClarity.buildContent) {
+            contentWrap.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
+          } else if (window.weaponTooltipClarity.buildContent) {
             tooltipPanel.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
           }
           window.weaponTooltipClarity.handleHover(btn, option.perkHash || option.perkName);
         } else {
-          tooltipPanel.innerHTML = `<div class="clarity-content"><div class="clarity-title">${option.perkName}</div></div>`;
+          const html = `<div class="clarity-content"><div class="clarity-title">${option.perkName}</div></div>`;
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          if (contentWrap) contentWrap.innerHTML = html; else tooltipPanel.innerHTML = html;
         }
       } catch (e) {
         tooltipPanel.innerHTML = `<div class="clarity-content"><div class="clarity-title">${option.perkName}</div></div>`;
@@ -1209,17 +1217,26 @@ function renderPerkOptions(socketIndex) {
       try {
         if (window.weaponStatsService && window.weaponTooltipClarity) {
           const perkData = window.weaponStatsService.getPerkData(perk.perkHash);
-          if (tooltipPanel && window.weaponTooltipClarity.buildContent) {
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          if (contentWrap && window.weaponTooltipClarity.buildContent) {
+            contentWrap.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
+          } else if (window.weaponTooltipClarity.buildContent) {
             tooltipPanel.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
           }
           // Also show floating tooltip for precise hover
           window.weaponTooltipClarity.handleHover(btn, perk.perkHash);
         } else if (tooltipPanel) {
-          tooltipPanel.innerHTML = `<div class="clarity-content"><div class="clarity-title">${perk.perkName}</div><div class="clarity-desc">${perk.perkDescription || 'No description available.'}</div></div>`;
+          const html = `<div class="clarity-content"><div class="clarity-title">${perk.perkName}</div><div class="clarity-desc">${perk.perkDescription || 'No description available.'}</div></div>`;
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          if (contentWrap) contentWrap.innerHTML = html; else tooltipPanel.innerHTML = html;
         }
       } catch (e) {
         // Fallback content
-        if (tooltipPanel) tooltipPanel.innerHTML = `<div class="clarity-content"><div class="clarity-title">${perk.perkName}</div></div>`;
+        if (tooltipPanel) {
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          const html = `<div class="clarity-content"><div class="clarity-title">${perk.perkName}</div></div>`;
+          if (contentWrap) contentWrap.innerHTML = html; else tooltipPanel.innerHTML = html;
+        }
       }
     });
     btn.addEventListener('mouseleave', () => {

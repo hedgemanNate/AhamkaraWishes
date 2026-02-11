@@ -770,6 +770,19 @@ function renderWeaponSockets() {
     </div>
   `;
 
+  // Wire up the Details button to toggle visibility of the description (.clarity-desc)
+  (function attachTooltipDetailsToggle() {
+    const detailsBtn = document.getElementById('w-perk-tooltip-details');
+    if (!detailsBtn) return;
+    detailsBtn.setAttribute('aria-pressed', 'true');
+    detailsBtn.addEventListener('click', () => {
+      const tooltipEl = document.getElementById('w-perk-tooltip');
+      if (!tooltipEl) return;
+      const hidden = tooltipEl.classList.toggle('hide-desc');
+      detailsBtn.setAttribute('aria-pressed', String(!hidden));
+    });
+  })();
+
   const selectorRow = document.getElementById('w-selector-row');
   const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories);
   const weaponType = weaponState.currentWeapon.type || "";

@@ -1191,6 +1191,11 @@
 }
 .tooltip-details-btn:hover { background: #2f2f36; }
 
+/* When present, hide description text inside the permanent tooltip */
+.perk-tooltip.hide-desc .clarity-desc {
+  display: none !important;
+}
+
 .clarity-meta {
   margin-top: 8px;
   padding-top: 8px;

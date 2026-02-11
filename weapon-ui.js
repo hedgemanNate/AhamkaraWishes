@@ -184,6 +184,12 @@ async function initWeaponCraft() {
     });
   }
 
+  // New Create Wish button
+  const createWishBtn = document.getElementById('btn-create-weapon-wish');
+  if (createWishBtn) {
+    createWishBtn.addEventListener('click', handleSaveWeaponWish);
+  }
+
   if (pvpPvpBtn) {
     pvpPvpBtn.addEventListener('click', () => {
       weaponState.currentMode = 'pvp';
@@ -1803,19 +1809,98 @@ function attachWeaponCardListeners() {
 }
 
 /**
- * Handle save button click - Phase 6 will fully implement this.
- * Stub for now.
+ * Handle save button click.
+ * Collects selected perks and calls weaponManager to save the wish.
  */
 async function handleSaveWeaponWish() {
+  const saveBtn = document.getElementById('btn-create-weapon-wish');
+  const originalText = saveBtn ? saveBtn.textContent : 'MAKE WISH';
+
   if (!weaponState.currentWeapon) {
     d2log('No weapon selected', 'weapon-ui', 'error');
+    if (saveBtn) {
+      saveBtn.textContent = "SELECT WEAPON FIRST";
+      saveBtn.disabled = true;
+      setTimeout(() => { 
+        saveBtn.textContent = originalText; 
+        saveBtn.disabled = false; 
+      }, 2000);
+    }
     return;
   }
 
-  // Phase 6: Generate displayString from selectedPerks
-  // Phase 6: Call weaponManager.saveWeaponWish()
-  
-  d2log('💾 Save weapon - Phase 6 implementation pending', 'weapon-ui');
+  try {
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "GRANTING...";
+    }
+
+    const { hash, name, sockets, socketCategories } = weaponState.currentWeapon;
+    
+    // Get column mapping to align with slots 1-6
+    // 0: Barrel, 1: Mag, 2: Trait1, 3: Trait2, 4: Origin
+    const columns = mapSocketsToColumns(sockets, socketCategories);
+    
+    const wishData = {
+      name: name || 'Unknown Weapon',
+      slot1: [],
+      slot2: [],
+      slot3: [],
+      slot4: [],
+      slot5: [],
+      slot6: [],
+      detail: ''
+    };
+
+    // Map columns 0-4 to slots 1-5
+    for (let i = 0; i < 5; i++) {
+      const socket = columns[i];
+      if (socket) {
+        const selectedHash = weaponState.selectedPerks[socket.socketIndex];
+        if (selectedHash) {
+          const slotKey = `slot${i + 1}`;
+          wishData[slotKey].push(String(selectedHash));
+        }
+      }
+    }
+
+    // Masterwork (Slot 6)
+    if (weaponState.selectedMasterwork) {
+      wishData.slot6.push(String(weaponState.selectedMasterwork));
+    }
+
+    // Call Manager
+    const result = await weaponManager.saveWeaponWish(
+      hash,
+      wishData,
+      ['pve'], // Default tag
+      { mode: weaponState.currentMode || 'pve' }
+    );
+
+    if (result.success) {
+      if (saveBtn) {
+        saveBtn.style.backgroundColor = '#15803d'; // Green
+        saveBtn.textContent = "WISH GRANTED!";
+      }
+      d2log(`✅ Wish saved: ${wishData.name}`, 'weapon-ui');
+    } else {
+      throw new Error(result.message);
+    }
+  } catch (err) {
+    if (saveBtn) {
+      saveBtn.style.backgroundColor = '#b91c1c'; // Red
+      saveBtn.textContent = "FAILED";
+    }
+    d2log(`❌ Save failed: ${err.message}`, 'weapon-ui', 'error');
+  } finally {
+    setTimeout(() => {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.style.backgroundColor = ''; // Reset
+        saveBtn.textContent = originalText;
+      }
+    }, 2000);
+  }
 }
 
 /**

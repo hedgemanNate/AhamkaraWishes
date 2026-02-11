@@ -525,7 +525,7 @@ function createItemCard(hash, item) {
     const tag = (wish?.tags && wish.tags[0]) ? wish.tags[0] : 'pve';
     const badgeClass = tag === 'pvp' ? 'badge-pvp' : 'badge-pve';
 
-    let detailText = `Roll #${index + 1}`;
+    let detailText = wish.displayString || `Roll #${index + 1}`;
     if (safeType === 'armor' && wish?.config) {
       const arch = wish.config.archetype || '';
       const spark = wish.config.spark || '';

@@ -14,6 +14,7 @@ const weaponState = {
   perkDisplayMode: 'regular', // "regular" or "enhanced"
   activeSocketIndex: null,
   currentMode: 'pve', // "pve" or "pvp"
+  autoSelectPerks: false, // globally disable auto-selection of perks
   // ... existing fields ...
   currentFilters: {}, // Search/filter state
   currentPane: 'craft', // "craft" or "list"
@@ -232,7 +233,11 @@ async function initWeaponCraft() {
         weaponState.perkDisplayMode === 'enhanced' ? 'regular' : 'enhanced';
       updatePerkToggleState(weaponState.activeSocketIndex);
       if (weaponState.activeSocketIndex !== null) {
+        // Prevent auto-selection when toggling display mode
+        const prevAuto = weaponState.autoSelectPerks;
+        weaponState.autoSelectPerks = false;
         renderPerkOptions(weaponState.activeSocketIndex);
+        weaponState.autoSelectPerks = prevAuto;
       }
     });
   }
@@ -488,6 +493,8 @@ async function selectWeapon(weaponHash) {
 
   // Render perk slots and perks
   renderWeaponSockets();
+  // Render perks without auto-selection so slots start empty
+  weaponState.autoSelectPerks = false;
   await renderWeaponPerks();
   // attachPerkClickListeners() handled within render loop now
 
@@ -1020,6 +1027,9 @@ function getPerkOptionsForSocket(socketIndex) {
 
 function ensureSelectedPerkInOptions(socketIndex, options) {
   if (!Array.isArray(options) || options.length === 0) return;
+  // If auto-select is disabled (e.g., initial weapon load), don't pick a default
+  if (!weaponState.autoSelectPerks) return;
+
   const selected = weaponState.selectedPerks[socketIndex];
   if (selected && options.some((perk) => perk.perkHash === selected)) return;
   weaponState.selectedPerks[socketIndex] = options[0].perkHash;
@@ -1037,7 +1047,11 @@ function selectSocketColumn(colIndex, socketIndex) {
     updatePerkToggleState(null);
     const optionsRow = document.getElementById('w-options-row');
     optionsRow.style.display = 'flex';
+    // When user activates a selector column, do not auto-select an option.
+    const prevAuto = weaponState.autoSelectPerks;
+    weaponState.autoSelectPerks = false;
     renderMasterworkOptions();
+    weaponState.autoSelectPerks = prevAuto;
     return;
   }
 
@@ -1049,7 +1063,11 @@ function selectSocketColumn(colIndex, socketIndex) {
   updatePerkToggleState(socketIndex);
   const optionsRow = document.getElementById('w-options-row');
   optionsRow.style.display = 'flex';
+  // When user activates a selector column, render options without auto-selecting any.
+  const prevAuto = weaponState.autoSelectPerks;
+  weaponState.autoSelectPerks = false;
   renderPerkOptions(socketIndex);
+  weaponState.autoSelectPerks = prevAuto;
 }
 
 function renderMasterworkOptions() {

@@ -5,10 +5,10 @@
 
 .menu-title { color: var(--accent-gold, #d4af37); margin-bottom: 8px; }
 .auth-container { border: 1px solid rgba(255,255,255,0.04); padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.02); }
-.auth-status { font-weight: 600; color: #e6e6e6; margin-bottom: 8px; }
-.auth-actions { display:flex; gap:8px; justify-content:center; margin-bottom:8px; }
-.auth-btn { background: linear-gradient(180deg,#1f7bd6,#165aa8); color:white; border: none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:600; }
-.auth-btn.secondary { background: transparent; color:#ddd; border:1px solid rgba(255,255,255,0.06); }
+.auth-status { font-weight: 500; color: #e6e6e6; margin-bottom: 8px; }
+.auth-actions { display:flex; gap:8px; }
+.auth-btn { background: linear-gradient(180deg,#d6ae1f,#9f7d15); color:white; border: none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:600; }
+.auth-btn.secondary { background: linear-gradient(180deg,#d6ae1f,#9f7d15); color:white; border: none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:600; }
 .auth-user-info { font-size:13px; color:#cfcfcf; min-height:18px; }
 .menu-help p { font-size:13px; }
 
@@ -20,7 +20,7 @@
 
 /* New header section at top of Menu view */
 .menu-auth-header { padding: 0; border-radius: 0; margin: 0; width: 100%; box-sizing: border-box; }
-.menu-auth-inner { display:flex; align-items:center; gap:12px; max-width:420px; margin:0px auto; padding:12px; box-sizing:border-box; }
+.menu-auth-inner { display:flex; align-items:center; gap:12px; max-width:420px; padding:12px; box-sizing:border-box; }
 .bungie-user-photo {
   width:64px;
   height:64px;
@@ -30,15 +30,16 @@
   display:block;
 }
 .menu-auth-info { text-align:left; flex:1; }
+.menu-auth-info .auth-actions { display:flex; gap:8px; margin-top:8px; align-items:center; justify-content:flex-start; }
 .bungie-user-name { font-weight:700; color:var(--accent-gold); font-size:14px; }
 .menu-auth-header .auth-status.small { font-weight:400; color:#a3a3a3; font-size:12px; }
-.menu-auth-actions { display:flex; gap:8px; }
+.menu-auth-actions { display:none; }
 
 /* Signed-out: matte pale gold */
-.menu-auth-header.signed-out { background: #414141; }
+.menu-auth-header.signed-out { background: #2b2b2b; border: 2px solid var(--accent-gold);}
 
 /* Signed-in: pale matte green */
-.menu-auth-header.signed-in { background: linear-gradient(180deg,#e6f3e6,#d9ead5); color:#164a17; }
+.menu-auth-header.signed-in { background: linear-gradient(180deg,#343434,#181818); border: 2px solid var(--accent-gold); }
 
 @media (max-width:420px) {
   .menu-auth-inner { flex-direction:column; align-items:flex-start; }

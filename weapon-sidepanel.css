@@ -1080,7 +1080,7 @@
 }
 
 .options-row::-webkit-scrollbar {
-  height: 4px;
+  height: 7px; /* increased by 3px */
 }
 
 .options-row::-webkit-scrollbar-track {

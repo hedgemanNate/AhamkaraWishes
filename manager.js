@@ -109,10 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
           await window.weaponStatsClarityService.initializeWeaponStatsClarity();
         }
         
-        // Initialize Clarity tooltips
-        if (window.weaponTooltipClarity?.init) {
-            window.weaponTooltipClarity.init();
-        }
+        // Clarity tooltips are unused when permanent tooltip is enabled.
         
         updateCacheStatus();
 

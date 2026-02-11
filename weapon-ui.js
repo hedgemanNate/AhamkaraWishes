@@ -806,17 +806,7 @@ function renderWeaponSockets() {
 
       // Tooltip listener for socket display (Only for regular sockets for now)
       const iconDisplay = el.querySelector('.selector-icon');
-      if (iconDisplay && window.weaponTooltipClarity && socket) {
-          iconDisplay.addEventListener('mouseenter', () => {
-              const selectedHash = weaponState.selectedPerks[socket.socketIndex];
-              if (selectedHash) {
-                   window.weaponTooltipClarity.handleHover(iconDisplay, selectedHash);
-              }
-          });
-          iconDisplay.addEventListener('mouseleave', () => {
-              window.weaponTooltipClarity.handleLeave();
-          });
-      }
+        // Floating tooltip removed — permanent tooltip used instead; no hover handlers here.
     }
 
     selectorRow.appendChild(el);
@@ -1147,12 +1137,11 @@ function renderMasterworkOptions() {
         if (window.weaponStatsService && window.weaponTooltipClarity) {
           const perkData = window.weaponStatsService.getPerkData(option.perkHash || option.perkName);
           const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
-          if (contentWrap && window.weaponTooltipClarity.buildContent) {
+          if (contentWrap && window.weaponTooltipClarity && window.weaponTooltipClarity.buildContent) {
             contentWrap.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
-          } else if (window.weaponTooltipClarity.buildContent) {
+          } else if (window.weaponTooltipClarity && window.weaponTooltipClarity.buildContent) {
             tooltipPanel.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
           }
-          window.weaponTooltipClarity.handleHover(btn, option.perkHash || option.perkName);
         } else {
           const html = `<div class="clarity-content"><div class="clarity-title">${option.perkName}</div></div>`;
           const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
@@ -1163,7 +1152,7 @@ function renderMasterworkOptions() {
       }
     });
     btn.addEventListener('mouseleave', () => {
-      if (window.weaponTooltipClarity) window.weaponTooltipClarity.handleLeave();
+      // Floating tooltip removed — do nothing on leave for permanent tooltip.
     });
 
     optionsRow.appendChild(btn);
@@ -1236,8 +1225,7 @@ function renderPerkOptions(socketIndex) {
           } else if (window.weaponTooltipClarity.buildContent) {
             tooltipPanel.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
           }
-          // Also show floating tooltip for precise hover
-          window.weaponTooltipClarity.handleHover(btn, perk.perkHash);
+          // Floating tooltip removed — only update the permanent tooltip content.
         } else if (tooltipPanel) {
           const html = `<div class="clarity-content"><div class="clarity-title">${perk.perkName}</div><div class="clarity-desc">${perk.perkDescription || 'No description available.'}</div></div>`;
           const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
@@ -1253,7 +1241,6 @@ function renderPerkOptions(socketIndex) {
       }
     });
     btn.addEventListener('mouseleave', () => {
-      if (window.weaponTooltipClarity) window.weaponTooltipClarity.handleLeave();
       // Permanent panel remains; do not clear on leave per requirement
     });
 

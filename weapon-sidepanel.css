@@ -1180,6 +1180,41 @@
   white-space: nowrap;
 }
 
+/* Larger, scrollable variant for the weapon DIM wishlist element */
+#w-dim-wishlist {
+  min-width: 420px;
+  max-width: calc(100% - 16px);
+  padding: 6px 10px;
+  font-size: 8px; /* user requested */
+  white-space: nowrap; /* keep single line but allow scrolling */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  text-overflow: clip;
+}
+
+/* Match the discrete scrollbar styling used across panes/lists */
+#w-dim-wishlist::-webkit-scrollbar {
+  height: 6px; /* horizontal scrollbar height */
+}
+
+#w-dim-wishlist::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#w-dim-wishlist::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+#w-dim-wishlist:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#w-dim-wishlist::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
 .options-row::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;

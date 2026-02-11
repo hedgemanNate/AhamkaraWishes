@@ -947,7 +947,7 @@ function updateMasterworkDisplayIcon() {
   const options = ensureMasterworkOptions();
   const selectedLabel = weaponState.selectedMasterwork;
   
-  let activeOption = selectedLabel ? options.find(o => o.perkName === selectedLabel) : options[0];
+  let activeOption = selectedLabel ? options.find(o => o.perkName === selectedLabel) : null;
   
   if (activeOption) {
     const iconUrl = activeOption.icon || '';
@@ -1106,7 +1106,12 @@ function renderMasterworkOptions() {
     btn.title = option.perkName;
 
     btn.addEventListener('click', () => {
-       weaponState.selectedMasterwork = option.perkName;
+       // Toggle selection: deselect if already selected
+       if (weaponState.selectedMasterwork === option.perkName) {
+         weaponState.selectedMasterwork = null;
+       } else {
+         weaponState.selectedMasterwork = option.perkName;
+       }
        updateMasterworkDisplayIcon();
        updateWeaponStatDeltas();
        renderMasterworkOptions(); 
@@ -1181,10 +1186,15 @@ function renderPerkOptions(socketIndex) {
         }
 
     btn.addEventListener('click', () => {
-       weaponState.selectedPerks[socketIndex] = perk.perkHash;
+       // Toggle selection: deselect if already selected
+       if (weaponState.selectedPerks[socketIndex] === perk.perkHash) {
+         delete weaponState.selectedPerks[socketIndex];
+       } else {
+         weaponState.selectedPerks[socketIndex] = perk.perkHash;
+       }
        updateSocketDisplayIcon(socketIndex);
        updateWeaponStatDeltas();
-       renderPerkOptions(socketIndex); 
+       renderPerkOptions(socketIndex);
     });
 
     optionsRow.appendChild(btn);

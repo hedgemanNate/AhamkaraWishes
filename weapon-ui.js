@@ -508,6 +508,14 @@ async function selectWeapon(weaponHash) {
     saveBtn.disabled = false;
   }
 
+  // Enable "Make Wish" button immediately when a weapon is selected
+  const createBtn = document.getElementById('btn-create-weapon-wish');
+  if (createBtn) {
+    createBtn.disabled = false;
+    // Use friendly verb so users can add the weapon immediately
+    createBtn.textContent = 'Make Wish';
+  }
+
   await updateWeaponStatDeltas();
 
   const searchInput = document.getElementById('w-search-input');

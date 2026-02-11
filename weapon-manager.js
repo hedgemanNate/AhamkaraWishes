@@ -24,7 +24,7 @@ async function saveWeaponWish(weaponHash, config, tags, displayString, options =
     if (!weaponHash || typeof weaponHash !== 'number') {
       throw new Error('Invalid weaponHash');
     }
-    if (!config || !config.perks) {
+    if (!config) {
       throw new Error('Invalid config structure');
     }
     if (!displayString) {

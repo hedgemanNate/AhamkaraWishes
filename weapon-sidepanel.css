@@ -1064,16 +1064,17 @@
   align-items: center;
   justify-content: center;
   box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+  position: relative;
 }
 
 /* Options Row - Horizontal Scroll */
 .options-row {
   display: flex;
-  flex-direction: row;
+  flex-direction: column; /* tabs above body */
   gap: 8px;
-  overflow-x: auto;
+  overflow: visible;
   min-height: 52px;
-  padding: 8px 4px 12px 4px;
+  padding: 4px 4px 8px 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
@@ -1085,6 +1086,98 @@
 
 .options-row::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.2);
+}
+
+/* Tabs above options */
+.options-tabs {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 6px 4px 4px 4px;
+}
+.options-tab {
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 6px 8px;
+  font-size: 12px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  cursor: pointer;
+}
+.options-tab.active {
+  background: linear-gradient(180deg, rgba(212,175,55,0.12), rgba(212,175,55,0.06));
+  border-color: rgba(212,175,55,0.18);
+}
+
+/* Scrollable area for option buttons */
+.options-body {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 4px 12px 4px;
+}
+
+.options-body::-webkit-scrollbar {
+  height: 7px;
+}
+.options-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.options-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+/* Slot dots under selector columns */
+.slot-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 6px;
+}
+.slot-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #000;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+}
+.slot-dots .dot.selected {
+  background: #d4af37; /* gold */
+  box-shadow: 0 0 6px rgba(212,175,55,0.35);
+}
+
+/* Small badge to show number of selected perks on selector icon */
+.selector-icon[data-selected-count]:after {
+  content: attr(data-selected-count);
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #d4af37;
+  color: #111;
+  font-weight: 700;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* DIM wishlist display */
+.dim-wishlist {
+  margin-top: 8px;
+  padding: 6px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;
+  font-size: 12px;
+  color: #e6e6e6;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .options-row::-webkit-scrollbar-thumb {

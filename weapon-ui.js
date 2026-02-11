@@ -7,7 +7,8 @@
  */
 const weaponState = {
   currentWeapon: null, // { weaponHash, name, stats, sockets }
-  selectedPerks: {}, // { socketIndex: perkHash }
+  selectedPerks: {}, // { socketIndex: [perkHash, ...] }
+  selectedPerkPage: {}, // { socketIndex: pageIndex }
   socketPerksMap: {}, // { socketIndex: perkData[] }
   socketPerkVariants: {}, // { socketIndex: { regular, enhanced, hasEnhanced } }
   selectedMasterwork: null, // Currently selected masterwork stat type
@@ -32,6 +33,74 @@ const SOCKET_CATEGORY_HASHES = {
   WEAPON_PERKS: 4241085061, // Corrected from subagent to the one I researched: 4241085061
   WEAPON_MODS: 2685412949
 };
+
+// Slot capacities per column (cols 0..5). Columns 0-4 map to slots 1-5, col5 is masterwork.
+const SLOT_CAPACITIES = [2, 2, 3, 3, 3, 3];
+
+// --- Helpers for multi-perk selection state ---
+function getSlotCapacityForSocket(socketIndex) {
+  if (!weaponState.currentWeapon) return 1;
+  const cols = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories || []);
+  const colIndex = cols.findIndex(c => c && c.socketIndex === socketIndex);
+  if (colIndex === -1) return 1;
+  return SLOT_CAPACITIES[colIndex] || 1;
+}
+
+function ensureSelectedPerkArray(socketIndex) {
+  const cap = getSlotCapacityForSocket(socketIndex);
+  let arr = weaponState.selectedPerks[socketIndex];
+  if (!Array.isArray(arr)) {
+    arr = new Array(cap).fill(null);
+  } else if (arr.length !== cap) {
+    arr = arr.slice(0, cap).concat(new Array(Math.max(0, cap - arr.length)).fill(null));
+  }
+  weaponState.selectedPerks[socketIndex] = arr;
+  if (weaponState.selectedPerkPage[socketIndex] == null) weaponState.selectedPerkPage[socketIndex] = 0;
+  return arr;
+}
+
+function getSelectedPerks(socketIndex) {
+  const arr = weaponState.selectedPerks[socketIndex];
+  return Array.isArray(arr) ? arr : [];
+}
+
+function getPageIndex(socketIndex) {
+  const idx = weaponState.selectedPerkPage[socketIndex];
+  return Number.isFinite(idx) ? idx : 0;
+}
+
+function setPageIndex(socketIndex, pageIndex) {
+  const cap = getSlotCapacityForSocket(socketIndex);
+  const p = Math.max(0, Math.min(pageIndex || 0, cap - 1));
+  weaponState.selectedPerkPage[socketIndex] = p;
+}
+
+function getSelectedPerkAt(socketIndex, pageIndex) {
+  const arr = ensureSelectedPerkArray(socketIndex);
+  const p = Number.isFinite(pageIndex) ? pageIndex : getPageIndex(socketIndex);
+  return arr[p] || null;
+}
+
+function setSelectedPerkAt(socketIndex, pageIndex, perkHash) {
+  const arr = ensureSelectedPerkArray(socketIndex);
+  const p = Number.isFinite(pageIndex) ? pageIndex : getPageIndex(socketIndex);
+  arr[p] = perkHash || null;
+  weaponState.selectedPerks[socketIndex] = arr;
+}
+
+function togglePerkSelection(socketIndex, perkHash, pageIndex) {
+  const arr = ensureSelectedPerkArray(socketIndex);
+  const p = Number.isFinite(pageIndex) ? pageIndex : getPageIndex(socketIndex);
+  if (arr[p] === perkHash) {
+    arr[p] = null;
+  } else {
+    arr[p] = perkHash;
+  }
+  weaponState.selectedPerks[socketIndex] = arr;
+  // update DIM wishlist display whenever selections change
+  try { updateDimWishlist(); } catch (e) { /* ignore */ }
+}
+
 
 // Masterwork stat options by weapon type (for stat preview purposes)
 const MASTERWORK_OPTIONS_BY_TYPE = {
@@ -523,6 +592,9 @@ async function selectWeapon(weaponHash) {
     createBtn.textContent = 'Make Wish';
   }
 
+  // Initialize DIM wishlist display
+  try { updateDimWishlist(); } catch (e) {}
+
   await updateWeaponStatDeltas();
 
   const searchInput = document.getElementById('w-search-input');
@@ -767,6 +839,7 @@ function renderWeaponSockets() {
           </div>
         </div>
       </div>
+      <div id="w-dim-wishlist" class="dim-wishlist">${buildDimWishlistString()}</div>
     </div>
   `;
 
@@ -795,14 +868,43 @@ function renderWeaponSockets() {
     const isDisabled = !socket && !isMasterworkAvailable;
 
     el.className = `selector-col ${isDisabled ? 'disabled' : ''}`;
+    const socketKey = socket ? socket.socketIndex : 'masterwork';
     el.innerHTML = `
       <div class="selector-label">${label}</div>
       <div class="selector-icon" id="w-socket-display-${colIndex}"></div>
+      <div class="slot-dots" data-col-index="${colIndex}" data-socket-key="${socketKey}"></div>
     `;
 
     if (socket || isMasterworkAvailable) {
       const socketIndex = socket ? socket.socketIndex : null;
       el.addEventListener('click', () => selectSocketColumn(colIndex, socketIndex));
+
+      // Populate dots under selector to reflect page capacity and selections
+      (function populateSlotDots() {
+        const dotsWrap = el.querySelector('.slot-dots');
+        if (!dotsWrap) return;
+        dotsWrap.innerHTML = '';
+        const cap = SLOT_CAPACITIES[colIndex] || 1;
+        const key = socketIndex != null ? socketIndex : 'masterwork';
+        ensureSelectedPerkArray(key);
+        const selArr = getSelectedPerks(key) || [];
+        for (let d = 0; d < cap; d++) {
+          const dot = document.createElement('div');
+          dot.className = 'dot';
+          if (selArr[d]) dot.classList.add('selected');
+          dot.dataset.page = d;
+          dot.dataset.socketKey = String(key);
+          dot.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            // Activate the column and switch to the clicked page
+            selectSocketColumn(colIndex, socketIndex);
+            setPageIndex(key, d);
+            if (socketIndex != null) renderPerkOptions(socketIndex);
+            else renderMasterworkOptions();
+          });
+          dotsWrap.appendChild(dot);
+        }
+      })();
 
       // Tooltip listener for socket display (Only for regular sockets for now)
       const iconDisplay = el.querySelector('.selector-icon');
@@ -1037,14 +1139,18 @@ function getPerkOptionsForSocket(socketIndex) {
   return variants.regular || [];
 }
 
-function ensureSelectedPerkInOptions(socketIndex, options) {
+function ensureSelectedPerkInOptions(socketIndex, options, pageIndex = 0) {
   if (!Array.isArray(options) || options.length === 0) return;
   // If auto-select is disabled (e.g., initial weapon load), don't pick a default
   if (!weaponState.autoSelectPerks) return;
 
-  const selected = weaponState.selectedPerks[socketIndex];
-  if (selected && options.some((perk) => perk.perkHash === selected)) return;
-  weaponState.selectedPerks[socketIndex] = options[0].perkHash;
+  const arr = ensureSelectedPerkArray(socketIndex);
+  // If any existing selection matches available options, skip
+  if (arr.some((h) => h && options.some((p) => p.perkHash === h))) return;
+  // Otherwise set the requested pageIndex to the first option
+  const p = Number.isFinite(pageIndex) ? pageIndex : 0;
+  arr[p] = options[0].perkHash;
+  weaponState.selectedPerks[socketIndex] = arr;
   updateSocketDisplayIcon(socketIndex);
   updateWeaponStatDeltas();
 }
@@ -1127,6 +1233,7 @@ function renderMasterworkOptions() {
        updateMasterworkDisplayIcon();
        updateWeaponStatDeltas();
        renderMasterworkOptions(); 
+       try { updateDimWishlist(); } catch (e) {}
     });
 
     // Tooltip listeners for masterwork options (update permanent panel)
@@ -1168,14 +1275,17 @@ function updateSocketDisplayIcon(socketIndex) {
   if (!displayEl) return;
 
   const perks = weaponState.socketPerksMap[socketIndex] || [];
-  const selectedHash = weaponState.selectedPerks[socketIndex];
+  const selectedArr = getSelectedPerks(socketIndex);
+  const firstSelected = selectedArr.find(Boolean) || null;
 
-  if (!selectedHash) {
+  if (!firstSelected) {
     displayEl.style.backgroundImage = 'none';
+    displayEl.removeAttribute('data-selected-count');
+    displayEl.title = '';
     return;
   }
-  
-  let activePerk = perks.find(p => p.perkHash === selectedHash);
+
+  let activePerk = perks.find(p => p.perkHash === firstSelected);
 
   if (activePerk && activePerk.icon) {
     const safeIcon = activePerk.icon.startsWith('http') ? activePerk.icon : `https://www.bungie.net${activePerk.icon}`;
@@ -1183,6 +1293,10 @@ function updateSocketDisplayIcon(socketIndex) {
   } else {
     displayEl.style.backgroundImage = 'none';
   }
+  // expose selected count for optional badge styling
+  const count = selectedArr.filter(Boolean).length;
+  if (count > 0) displayEl.setAttribute('data-selected-count', String(count)); else displayEl.removeAttribute('data-selected-count');
+  displayEl.title = count > 0 ? `${count} selected` : '';
 }
 
 function renderPerkOptions(socketIndex) {
@@ -1190,12 +1304,36 @@ function renderPerkOptions(socketIndex) {
   optionsRow.innerHTML = '';
 
   const perks = getPerkOptionsForSocket(socketIndex);
-  ensureSelectedPerkInOptions(socketIndex, perks);
-  
+  const pageIndex = getPageIndex(socketIndex);
+  ensureSelectedPerkInOptions(socketIndex, perks, pageIndex);
+
   if (perks.length === 0) {
     optionsRow.innerHTML = '<div style="color: #888; padding: 10px; font-size: 12px;">No options available</div>';
     return;
   }
+
+  // Create tabs (page selectors) at top of options row
+  const tabsBar = document.createElement('div');
+  tabsBar.className = 'options-tabs';
+  const cap = getSlotCapacityForSocket(socketIndex);
+  for (let t = 0; t < cap; t++) {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'options-tab';
+    if (t === pageIndex) tab.classList.add('active');
+    tab.textContent = String(t + 1);
+    tab.addEventListener('click', () => {
+      setPageIndex(socketIndex, t);
+      renderPerkOptions(socketIndex);
+    });
+    tabsBar.appendChild(tab);
+  }
+  optionsRow.appendChild(tabsBar);
+
+  // Options body (scrollable area)
+  const optionsBody = document.createElement('div');
+  optionsBody.className = 'options-body';
+  optionsRow.appendChild(optionsBody);
 
   perks.forEach(perk => {
     const btn = document.createElement('div');
@@ -1203,7 +1341,7 @@ function renderPerkOptions(socketIndex) {
     if (perk.isEnhanced) {
       btn.classList.add('enhanced');
     }
-    if (weaponState.selectedPerks[socketIndex] === perk.perkHash) {
+    if (getSelectedPerkAt(socketIndex, pageIndex) === perk.perkHash) {
       btn.classList.add('selected');
     }
 
@@ -1213,7 +1351,7 @@ function renderPerkOptions(socketIndex) {
     }
     btn.title = perk.perkName;
 
-    // Add tooltip listeners: update permanent panel and floating tooltip
+    // Add tooltip listeners: update permanent panel
     btn.addEventListener('mouseenter', () => {
       const tooltipPanel = document.getElementById('w-perk-tooltip');
       try {
@@ -1245,18 +1383,24 @@ function renderPerkOptions(socketIndex) {
     });
 
     btn.addEventListener('click', () => {
-       // Toggle selection: deselect if already selected
-       if (weaponState.selectedPerks[socketIndex] === perk.perkHash) {
-         delete weaponState.selectedPerks[socketIndex];
-       } else {
-         weaponState.selectedPerks[socketIndex] = perk.perkHash;
-       }
+       // Toggle selection at current page
+       togglePerkSelection(socketIndex, perk.perkHash, pageIndex);
        updateSocketDisplayIcon(socketIndex);
        updateWeaponStatDeltas();
        renderPerkOptions(socketIndex);
+       // Update dots for this selector
+       const selectorCol = document.querySelector(`.selector-col .slot-dots[data-socket-key="${socketIndex}"]`);
+       if (selectorCol) {
+         // re-populate selected state
+         const dots = selectorCol.querySelectorAll('.dot');
+         dots.forEach((d) => {
+           const p = Number(d.dataset.page);
+           if (getSelectedPerkAt(socketIndex, p)) d.classList.add('selected'); else d.classList.remove('selected');
+         });
+       }
     });
 
-    optionsRow.appendChild(btn);
+    optionsBody.appendChild(btn);
   });
 }
 
@@ -1299,14 +1443,16 @@ async function updateWeaponStatDeltas() {
     });
   }
 
-  // Add socket-based perk bonuses
+  // Add socket-based perk bonuses (support multiple selected perks per socket)
   for (const socketIndex in weaponState.selectedPerks) {
-    const perkHash = weaponState.selectedPerks[socketIndex];
-    const perkBonuses = window.weaponStatsService?.getStaticBonuses(perkHash) || {};
-
-    for (const statName in perkBonuses) {
-      if (statDeltas.hasOwnProperty(statName)) {
-        statDeltas[statName] += perkBonuses[statName];
+    const arr = getSelectedPerks(socketIndex) || [];
+    for (const perkHash of arr) {
+      if (!perkHash) continue;
+      const perkBonuses = window.weaponStatsService?.getStaticBonuses(perkHash) || {};
+      for (const statName in perkBonuses) {
+        if (statDeltas.hasOwnProperty(statName)) {
+          statDeltas[statName] += perkBonuses[statName];
+        }
       }
     }
   }
@@ -1323,6 +1469,98 @@ async function updateWeaponStatDeltas() {
 
   renderWeaponStats(statDeltas);
   d2log('✅ Weapon stat deltas updated', 'weapon-ui');
+}
+
+/**
+ * Build and update a simple DIM wishlist display string that lists selected perk hashes per slot.
+ * Format: dim://wish?hash=<weaponHash>&slots=slot1:hash,hash|slot2:...
+ */
+function buildDimWishlistString() {
+  if (!weaponState.currentWeapon) return 'dimwishlist:item=&perks=';
+  const weaponHash = weaponState.currentWeapon.weaponHash || weaponState.currentWeapon.hash || '';
+  const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories || []);
+
+  // Collect perks from slots 1-5 (columns 0-4)
+  const perkList = [];
+  for (let i = 0; i < 5; i++) {
+    const socket = columns[i];
+    if (!socket) continue;
+    const arr = getSelectedPerks(socket.socketIndex) || [];
+    arr.filter(Boolean).forEach((h) => perkList.push(String(h)));
+  }
+
+  const perksStr = perkList.join(',');
+  return `dimwishlist:item=${weaponHash}&perks=${perksStr}`;
+}
+
+function updateDimWishlist() {
+  const el = document.getElementById('w-dim-wishlist');
+  if (!el) return;
+  try {
+    const txt = buildDimWishlistString();
+    el.textContent = txt;
+  } catch (e) {
+    el.textContent = 'DIM: (error)';
+  }
+}
+
+/**
+ * Resolve a human readable perk name from a stored perk hash or masterwork id.
+ * Falls back to the raw value when a name cannot be found.
+ */
+function getPerkDisplayName(perkHash) {
+  if (!perkHash && perkHash !== 0) return '';
+  const key = String(perkHash);
+  // Check masterwork options first
+  const masterworkOpts = weaponState.socketPerksMap?.['masterwork'] || [];
+  const mm = masterworkOpts.find((o) => String(o.perkHash) === key || o.perkName === key);
+  if (mm) return mm.perkName || String(perkHash);
+
+  // Search socket perks map
+  for (const k of Object.keys(weaponState.socketPerksMap || {})) {
+    if (k === 'masterwork') continue;
+    const arr = weaponState.socketPerksMap[k] || [];
+    const found = arr.find((p) => String(p.perkHash) === key || p.perkName === key);
+    if (found) return found.perkName || String(perkHash);
+  }
+
+  // Fallback to manifest lookup if available
+  try {
+    const itemDefs = window.__manifest__?.DestinyInventoryItemDefinition;
+    if (itemDefs && typeof itemDefs.get === 'function') {
+      const def = itemDefs.get(String(perkHash));
+      if (def && def.displayProperties?.name) return def.displayProperties.name;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return String(perkHash);
+}
+
+/**
+ * Build a human-readable display string for the wish: "Weapon Name — Perk A + Perk B + ..."
+ */
+function buildReadableDisplayString() {
+  if (!weaponState.currentWeapon) return 'Unknown Weapon';
+  const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories || []);
+  const parts = [];
+  for (let i = 0; i < 5; i++) {
+    const socket = columns[i];
+    if (!socket) continue;
+    const arr = getSelectedPerks(socket.socketIndex) || [];
+    arr.filter(Boolean).forEach((h) => {
+      const name = getPerkDisplayName(h);
+      if (name) parts.push(name);
+    });
+  }
+  // Include masterwork (slot6) if present
+  if (weaponState.selectedMasterwork) {
+    parts.push(String(weaponState.selectedMasterwork));
+  }
+
+  const perkString = parts.length ? parts.join(' + ') : '';
+  return perkString ? `${weaponState.currentWeapon.name} — ${perkString}` : `${weaponState.currentWeapon.name}`;
 }
 
 
@@ -1947,14 +2185,16 @@ async function handleSaveWeaponWish() {
       detail: ''
     };
 
-    // Map columns 0-4 to slots 1-5
+    // Map columns 0-4 to slots 1-5 and collect all selected perks per socket
     for (let i = 0; i < 5; i++) {
       const socket = columns[i];
       if (socket) {
-        const selectedHash = weaponState.selectedPerks[socket.socketIndex];
-        if (selectedHash) {
+        const selectedArr = getSelectedPerks(socket.socketIndex) || [];
+        if (Array.isArray(selectedArr) && selectedArr.length > 0) {
           const slotKey = `slot${i + 1}`;
-          wishData[slotKey].push(String(selectedHash));
+          selectedArr.forEach((h) => {
+            if (h) wishData[slotKey].push(String(h));
+          });
         }
       }
     }
@@ -1964,11 +2204,14 @@ async function handleSaveWeaponWish() {
       wishData.slot6.push(String(weaponState.selectedMasterwork));
     }
 
-    // Call Manager
+    // Store DIM-format wishlist inside the wish config and pass a human-readable displayString to manager
+    wishData.dimWishlist = buildDimWishlistString();
+    const readableDisplay = buildReadableDisplayString();
     const result = await weaponManager.saveWeaponWish(
       hash,
       wishData,
-      ['pve'], // Default tag
+      ['pve'], // Default tags
+      readableDisplay,
       { mode: weaponState.currentMode || 'pve' }
     );
 

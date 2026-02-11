@@ -1951,7 +1951,7 @@ function createWeaponCardHTML(item, index) {
  * @returns {Array<string>} Array of perk display strings
  */
 function getPerkDisplayInfo(wish) {
-  if (!wish || !wish.config) return [];
+  if (!wish) return [];
 
   // Parse displayString for perk names (e.g., "Arrowhead Brake + Ricochet Rounds + Rampage")
   const displayString = wish.displayString || '';
@@ -2182,7 +2182,7 @@ async function handleSaveWeaponWish() {
       slot4: [],
       slot5: [],
       slot6: [],
-      detail: ''
+      hash: Number(hash)
     };
 
     // Map columns 0-4 to slots 1-5 and collect all selected perks per socket
@@ -2204,7 +2204,7 @@ async function handleSaveWeaponWish() {
       wishData.slot6.push(String(weaponState.selectedMasterwork));
     }
 
-    // Store DIM-format wishlist inside the wish config and pass a human-readable displayString to manager
+    // Store DIM-format wishlist on the wish object and pass a human-readable displayString to manager
     wishData.dimWishlist = buildDimWishlistString();
     const readableDisplay = buildReadableDisplayString();
     const result = await weaponManager.saveWeaponWish(

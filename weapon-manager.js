@@ -18,14 +18,14 @@
  *   - addedDate: timestamp (auto-filled if not provided)
  * @returns {Promise<Object>} Returns {success: bool, message: string, wish: Object}
  */
-async function saveWeaponWish(weaponHash, config, tags, displayString, options = {}) {
+async function saveWeaponWish(weaponHash, wish, tags, displayString, options = {}) {
   try {
     // Validate inputs
     if (!weaponHash || typeof weaponHash !== 'number') {
       throw new Error('Invalid weaponHash');
     }
-    if (!config) {
-      throw new Error('Invalid config structure');
+    if (!wish || typeof wish !== 'object') {
+      throw new Error('Invalid wish structure');
     }
     if (!displayString) {
       throw new Error('displayString required for wish identification');
@@ -70,8 +70,9 @@ async function saveWeaponWish(weaponHash, config, tags, displayString, options =
 
     // Check for duplicate (same displayString + mode = duplicate)
     const mode = options.mode || 'pve';
+    // existing wishes are stored as flat wish objects (no `config` wrapper)
     const isDuplicate = activeList.items[weaponHash].wishes.some(
-      (wish) => wish.displayString === displayString && wish.mode === mode
+      (existingWish) => (existingWish.displayString === displayString || existingWish.displayString === displayString) && existingWish.mode === mode
     );
 
     if (isDuplicate) {
@@ -81,17 +82,15 @@ async function saveWeaponWish(weaponHash, config, tags, displayString, options =
       };
     }
 
-    // Create wish entry
-    const wish = {
-      tags: tags || [],
-      config: config,
-      displayString: displayString,
-      mode: mode,
-      added: options.addedDate || Date.now(),
-    };
+    // Normalize and create wish entry (flat shape)
+    const wishEntry = Object.assign({}, wish);
+    wishEntry.tags = tags || wishEntry.tags || [];
+    wishEntry.displayString = displayString;
+    wishEntry.mode = mode;
+    wishEntry.added = options.addedDate || Date.now();
 
     // Add to wishes array
-    activeList.items[weaponHash].wishes.push(wish);
+    activeList.items[weaponHash].wishes.push(wishEntry);
 
     // Update storage
     dimData.lists = dimData.lists || {};

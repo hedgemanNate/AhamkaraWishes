@@ -125,8 +125,9 @@ function saveItem(hash, name, type, rawString, config) {
             const sameMode = (w.tags || []).includes(currentMode);
             if (!sameMode) return false;
             if (config?.archetype && config?.spark) {
-                return w.config?.archetype === config.archetype &&
-                       w.config?.spark === config.spark;
+                const existingArch = w.archetype || w.config?.archetype || '';
+                const existingSpark = w.spark || w.config?.spark || '';
+                return existingArch === config.archetype && existingSpark === config.spark;
             }
             return w.raw === rawString;
         });
@@ -136,11 +137,19 @@ function saveItem(hash, name, type, rawString, config) {
             return; // EXIT
         }
 
-        // 3. Add New Wish
+        // 3. Add New Wish (flat shape)
         activeList.items[hash].wishes.push({
             tags: [currentMode], // ['pve'] or ['pvp']
-            config: config,
-            raw: rawString,
+            name: name,
+            slot1: [],
+            slot2: [],
+            slot3: [],
+            slot4: [],
+            slot5: [],
+            slot6: [],
+            dimWishlist: rawString,
+            hash: Number(hash),
+            displayString: name,
             added: Date.now()
         });
 

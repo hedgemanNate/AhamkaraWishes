@@ -1210,3 +1210,15 @@
   text-align: right;
 }
 
+/* Make Wish button placement in craft pane */
+.w-make-wish-row {
+  margin-top: 10px;
+}
+
+#btn-create-weapon-wish {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  box-sizing: border-box;
+}
+

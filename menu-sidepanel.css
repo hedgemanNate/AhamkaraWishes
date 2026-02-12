@@ -3,14 +3,14 @@
  * Keep selectors specific to avoid collisions with existing styles.
  */
 
-.menu-title { color: var(--accent-gold, #d4af37); margin-bottom: 8px; }
+
 .auth-container { border: 1px solid rgba(255,255,255,0.04); padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.02); }
 .auth-status { font-weight: 500; color: #e6e6e6; margin-bottom: 8px; }
 .auth-actions { display:flex; gap:8px; }
 .auth-btn { background: linear-gradient(180deg,#d6ae1f,#9f7d15); color:white; border: none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:600; }
 .auth-btn.secondary { background: linear-gradient(180deg,#d6ae1f,#9f7d15); color:white; border: none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:600; }
 .auth-user-info { font-size:13px; color:#cfcfcf; min-height:18px; }
-.menu-help p { font-size:13px; }
+
 
 /* Keep layout responsive */
 @media (max-width:420px) {

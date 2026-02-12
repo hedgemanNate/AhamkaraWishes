@@ -89,6 +89,28 @@ function initAuthUI() {
     });
   }
 
+  // Listen for immediate postMessage results from the popup window
+  // Validate origin to the extension origin
+  window.addEventListener('message', (evt) => {
+    try {
+      if (evt.origin !== window.location.origin) return;
+    } catch (e) {
+      return;
+    }
+    const msg = evt.data;
+    if (!msg || msg.type !== 'BUNGIE_OAUTH_RESULT') return;
+    if (msg.success) {
+      setAuthStatus('Logged in');
+      toggleAuthButtons(true);
+      setSignedInState(true);
+      loadProfileFromStorage();
+    } else {
+      setAuthStatus('Not logged in');
+      toggleAuthButtons(false);
+      setSignedInState(false);
+    }
+  });
+
   // Check current login state
   if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
     chrome.runtime.sendMessage({ type: 'BUNGIE_OAUTH_CHECK' }, (resp) => {
@@ -184,7 +206,7 @@ function startLoginFlow() {
     return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   };
 
-  const buildAuthorizeUrl = async () => {
+    const buildAuthorizeUrl = async () => {
     const code_verifier = generateCodeVerifier();
     const hashed = await sha256(code_verifier);
     const code_challenge = base64UrlEncode(hashed);
@@ -208,7 +230,19 @@ function startLoginFlow() {
     authorizeUrl.searchParams.set('code_challenge', code_challenge);
     authorizeUrl.searchParams.set('code_challenge_method', 'S256');
 
-    window.open(authorizeUrl.toString(), '_blank', 'noopener');
+    // Open a centered popup for OAuth (fallback to new tab if popup blocked)
+    const popupWidth = 520;
+    const popupHeight = 720;
+    const left = Math.max(0, Math.floor((screen.width - popupWidth) / 2));
+    const top = Math.max(0, Math.floor((screen.height - popupHeight) / 2));
+    const popupFeatures = `width=${popupWidth},height=${popupHeight},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`;
+    const popup = window.open(authorizeUrl.toString(), 'bungie_oauth_popup', popupFeatures);
+    if (!popup) {
+      // popup blocked — open in a new tab as fallback
+      window.open(authorizeUrl.toString(), '_blank');
+    } else {
+      try { popup.focus(); } catch (e) {}
+    }
   };
 
   // start flow

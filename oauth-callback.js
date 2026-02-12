@@ -45,6 +45,14 @@ function main() {
         console.error('[OAUTH CALLBACK] Token exchange failed:', resp);
         finish('Login failed during token exchange — ' + details);
       }
+      // Inform opener (popup) about result so the opener UI can react immediately.
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({ type: 'BUNGIE_OAUTH_RESULT', success: !!(resp && resp.success), error: resp && resp.error, state }, window.location.origin);
+        }
+      } catch (e) {
+        console.warn('Failed to postMessage to opener:', e);
+      }
       // Optionally auto-close the window after a short delay
       setTimeout(() => {
         try { window.close(); } catch (e) {}

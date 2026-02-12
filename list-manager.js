@@ -55,6 +55,17 @@
       tabs.appendChild(btn);
     });
 
+    // Update header card title/body with active list info (if present)
+    try {
+      const titleEl = document.getElementById('wl-card-title');
+      const bodyEl = document.getElementById('wl-card-body');
+      const active = lists[activeId] || { name: 'No List Selected' };
+      if (titleEl) titleEl.textContent = active.name || activeId || 'No List Selected';
+      if (bodyEl) bodyEl.textContent = active.description || '';
+    } catch (err) {
+      // ignore if DOM not present
+    }
+
     // We intentionally do not render per-weapon cards here.
     // The tabs area (`#wl-tabs`) and body (`#wl-body`) can be used by other UI elements.
   }

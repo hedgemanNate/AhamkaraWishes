@@ -449,6 +449,7 @@ async function selectWeapon(weaponHash) {
 
   weaponState.currentWeapon = {
     weaponHash,
+    hash: weaponHash,
     name: weaponDef.displayProperties?.name || 'Unknown',
     icon: weaponDef.displayProperties?.icon || '',
     type: weaponDef.itemTypeDisplayName || '',

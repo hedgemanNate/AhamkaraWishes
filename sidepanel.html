@@ -215,6 +215,25 @@
         <!-- `#wl-list` removed per user request: weapon-card list UI was removed to free space -->
       </div>
 
+      <div class="step-container" style="margin: 12px 0 0;">
+        <div class="step-label">2. Inventory Macros</div>
+      </div>
+
+      <div class="inventory-manager" style="max-width:720px;margin:8px 0 12px 0;">
+        <div class="inventory-controls" style="max-width:720px; display:flex; gap:8px; align-items:center;">
+          <input id="im-create-name" class="search-input" placeholder="New macro name" style="flex:1;min-width:0;" />
+          <button id="im-create-btn" class="btn-primary">Create</button>
+          <button id="im-delete-btn" class="secondary-btn">Delete</button>
+          <button id="im-import-btn" class="secondary-btn">Import</button>
+          <button id="im-export-btn" class="secondary-btn">Export</button>
+        </div>
+
+        <div class="options-row inventory-options-row" id="im-options-row" style="display:flex;">
+          <div class="options-tabs" id="im-tabs"></div>
+          <div class="options-body" id="im-body"></div>
+        </div>
+      </div>
+
       <div class="menu-panel" style="margin:auto;text-align:center;padding:24px 12px;max-width:720px;">
       </div>
     </div>

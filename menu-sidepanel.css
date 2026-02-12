@@ -24,7 +24,12 @@
 
 /* Layout the wishlist card to the left of the auth inner row */
 .menu-auth-row { display:flex; align-items:center; gap:12px; width:100%; box-sizing:border-box; }
-.menu-auth-row .wishlist-card { flex: 0 0 240px; width:240px; }
+.menu-auth-row .wishlist-card {
+  /* fill remaining space in the auth row so the card's right edge reaches the row end */
+  flex: 1 1 auto;
+  width: auto;
+  max-width: none;
+}
 .menu-auth-row .menu-auth-inner {
   /* fixed width for the auth area requested by user */
   flex: 0 0 185px;

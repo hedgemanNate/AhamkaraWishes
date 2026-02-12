@@ -597,7 +597,18 @@ function renderWeaponSearchResults(weapons) {
     return;
   }
 
-  resultsDiv.innerHTML = weapons
+  // Sort results alphabetically by display name for deterministic ordering
+  const sortedWeapons = Array.isArray(weapons)
+    ? weapons.slice().sort((a, b) => {
+        const aName = (a?.displayProperties?.name || a?.name || '').toLowerCase();
+        const bName = (b?.displayProperties?.name || b?.name || '').toLowerCase();
+        if (aName < bName) return -1;
+        if (aName > bName) return 1;
+        return 0;
+      })
+    : [];
+
+  resultsDiv.innerHTML = sortedWeapons
     .slice(0, 15) // Limit to 15 results
     .map((weapon) => {
       const icon = weapon.icon || '';

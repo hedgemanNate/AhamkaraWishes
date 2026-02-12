@@ -312,6 +312,9 @@ async function initWeaponCraft() {
         searchInput.value = '';
         weaponState.showHistory = false;
         if (historyToggle) historyToggle.classList.remove('active');
+        // Clear in-memory history and persist the empty list
+        weaponState.recentSelections = [];
+        try { saveWeaponHistory(); } catch (e) { /* ignore */ }
         const resultsDiv = document.getElementById('w-search-results');
         if (resultsDiv) resultsDiv.innerHTML = '';
       });

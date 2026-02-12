@@ -356,7 +356,7 @@ header {
   color: var(--accent-gold);
   text-transform: uppercase;
   font-weight: bold;
-  border-bottom: 1px solid #333;
+  border-bottom: 2px solid #333;
   padding-bottom: 4px;
   padding-top: 8px;
 }

@@ -186,7 +186,29 @@
         </div>
       </div>
 
-      <div class="menu-panel" style="margin:auto;text-align:center;padding:24px 12px;max-width:420px;">
+      <div class="step-container" style="margin: 12px 0 0;">
+        <div class="step-label">1. Wishlist Manager</div>
+      </div>
+
+      <div class="wishlist-manager" style="max-width:720px;margin:8px 0 12px 0;">
+        <div class="wishlist-controls" style="max-width:720px;">
+          <input id="wl-create-name" class="search-input" placeholder="New list name" style="flex:1;min-width:0;" />
+          <button id="wl-create-btn" class="btn-primary">Create</button>
+          <button id="wl-merge-btn" class="secondary-btn">Merge</button>
+          <button id="wl-delete-btn" class="secondary-btn">Delete</button>
+          <button id="wl-import-btn" class="secondary-btn">Import</button>
+          <button id="wl-export-btn" class="secondary-btn">Export</button>
+        </div>
+
+        <div class="options-row wishlist-options-row" id="wl-options-row" style="display:flex;">
+          <div class="options-tabs" id="wl-tabs"></div>
+          <div class="options-body" id="wl-body"></div>
+        </div>
+
+        <!-- `#wl-list` removed per user request: weapon-card list UI was removed to free space -->
+      </div>
+
+      <div class="menu-panel" style="margin:auto;text-align:center;padding:24px 12px;max-width:720px;">
       </div>
     </div>
 
@@ -293,6 +315,7 @@
   <script src="weapon-tooltip-clarity.js"></script>
   <script src="destiny-manifest.js"></script>
   <script src="manager.js"></script>
+  <script src="list-manager.js"></script>
   <script src="weapon-manager.js"></script>
   <script src="weapon-ui.js"></script>
   <script src="ui-creator.js"></script>

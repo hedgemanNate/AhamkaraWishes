@@ -21,27 +21,76 @@
 /* New header section at top of Menu view */
 .menu-auth-header { padding: 0; border-radius: 0; margin: 0; width: 100%; box-sizing: border-box; }
 .menu-auth-inner { display:flex; align-items:center; gap:12px; max-width:420px; padding:12px; box-sizing:border-box; }
-.bungie-user-photo {
-  width:64px;
-  height:64px;
-  object-fit:cover;
-  border:2px solid var(--accent-gold);
-  background: #f3f3f3; /* neutral placeholder when no image */
-  display:block;
+.menu-panel .wishlist-manager {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: left;
 }
-.menu-auth-info { text-align:left; flex:1; }
-.menu-auth-info .auth-actions { display:flex; gap:8px; margin-top:8px; align-items:center; justify-content:flex-start; }
-.bungie-user-name { font-weight:700; color:var(--accent-gold); font-size:14px; }
-.menu-auth-header .auth-status.small { font-weight:400; color:#a3a3a3; font-size:12px; }
-.menu-auth-actions { display:none; }
+.menu-panel .wishlist-controls {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:8px;
+}
 
-/* Signed-out: matte pale gold */
-.menu-auth-header.signed-out { background: #2b2b2b; border: 2px solid var(--accent-gold);}
+/* Wishlist-specific layout overrides - keep very specific to avoid colliding with global button rules */
+.menu-panel .wishlist-manager,
+.wishlist-manager {
+  max-width:720px;
+  margin:0 0 12px 0;
+  text-align:left;
+  margin-left:0;
+}
 
+.menu-panel .wishlist-manager .wishlist-controls,
+.wishlist-manager .wishlist-controls {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:8px;
+}
+
+.menu-panel .wishlist-manager .wishlist-controls .search-input,
+.wishlist-manager .wishlist-controls .search-input {
+  flex:1 1 0%;
+  min-width:0;
+  margin-right:8px;
+  border-radius:4px;
+}
+
+/* Force primary button to size to its content instead of full-width */
+.menu-panel .wishlist-manager .wishlist-controls .btn-primary,
+.wishlist-manager .wishlist-controls .btn-primary {
+  width:auto !important;
+  flex:0 0 auto;
+  margin-left:8px;
+  margin-top:0;
+  padding:10px 14px;
+  white-space:nowrap;
+  box-sizing:border-box;
+  align-self:stretch;
+}
+
+.menu-panel .wishlist-manager .wishlist-controls button,
+.wishlist-manager .wishlist-controls button {
+  display:inline-block;
+}
+
+.menu-panel .wishlist-manager .wishlist-controls .secondary-btn,
+.wishlist-manager .wishlist-controls .secondary-btn {
+  margin-left:6px;
+}
+
+/* wishlist list area removed from DOM; no per-weapon card styles needed */
 /* Signed-in: pale matte green */
-.menu-auth-header.signed-in { background: linear-gradient(180deg,#343434,#181818); border: 2px solid var(--accent-gold); }
 
-@media (max-width:420px) {
-  .menu-auth-inner { flex-direction:column; align-items:flex-start; }
-  .menu-auth-actions { width:100%; justify-content:flex-start; }
+/* Bungie user photo sizing */
+#bungie-user-photo,
+.bungie-user-photo {
+  width: 90px !important;
+  height: 90px !important;
+  min-width: 90px;
+  min-height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
 }

@@ -410,6 +410,14 @@ function renderWeaponSearchResults(weapons) {
  * @param {number} weaponHash - Destiny 2 weapon hash
  */
 async function selectWeapon(weaponHash) {
+  // Clear search inputs/results immediately for snappy UX
+  const craftSearchImmediate = document.getElementById('w-search-input');
+  if (craftSearchImmediate) craftSearchImmediate.value = '';
+  const listSearchImmediate = document.getElementById('w-list-search');
+  if (listSearchImmediate) listSearchImmediate.value = '';
+  const immediateResultsDiv = document.getElementById('w-search-results');
+  if (immediateResultsDiv) immediateResultsDiv.innerHTML = '';
+
   const weaponManifest = window.__manifest__ || {};
   let weaponDef = weaponManifest.DestinyInventoryItemDefinition?.get?.(String(weaponHash));
 
@@ -638,6 +646,10 @@ async function selectWeapon(weaponHash) {
   if (searchInput) {
     searchInput.value = '';
   }
+
+  // Also clear list view search when selecting a weapon
+  const listSearchInput = document.getElementById('w-list-search');
+  if (listSearchInput) listSearchInput.value = '';
 
   renderRecentWeaponSelections();
 }

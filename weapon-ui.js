@@ -34,6 +34,48 @@ const SOCKET_CATEGORY_HASHES = {
   WEAPON_MODS: 2685412949
 };
 
+// History storage key and helpers
+const WEAPON_HISTORY_KEY = 'weapon_recent_history_v1';
+
+async function loadWeaponHistory() {
+  try {
+    if (window.chrome?.storage?.local) {
+      return new Promise((resolve) => {
+        chrome.storage.local.get([WEAPON_HISTORY_KEY], (res) => {
+          const arr = res && res[WEAPON_HISTORY_KEY] ? res[WEAPON_HISTORY_KEY] : [];
+          weaponState.recentSelections = Array.isArray(arr) ? arr.slice(0, 4) : [];
+          resolve();
+        });
+      });
+    } else if (window.localStorage) {
+      const raw = localStorage.getItem(WEAPON_HISTORY_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      weaponState.recentSelections = Array.isArray(arr) ? arr.slice(0, 4) : [];
+    } else {
+      weaponState.recentSelections = [];
+    }
+  } catch (e) {
+    weaponState.recentSelections = [];
+  }
+}
+
+async function saveWeaponHistory() {
+  try {
+    const toSave = weaponState.recentSelections.slice(0, 4);
+    if (window.chrome?.storage?.local) {
+      return new Promise((resolve) => {
+        const obj = {};
+        obj[WEAPON_HISTORY_KEY] = toSave;
+        chrome.storage.local.set(obj, () => resolve());
+      });
+    } else if (window.localStorage) {
+      localStorage.setItem(WEAPON_HISTORY_KEY, JSON.stringify(toSave));
+    }
+  } catch (e) {
+    // swallow errors — history is best-effort
+  }
+}
+
 // Slot capacities per column (cols 0..5). Columns 0-4 map to slots 1-5, col5 is masterwork.
 const SLOT_CAPACITIES = [2, 2, 3, 3, 3, 3];
 
@@ -217,6 +259,8 @@ async function initWeaponCraft() {
 
   // Load tracker blacklist before any perk rendering
   await loadTrackerBlacklist();
+  // Load persisted recent weapon history (up to 4 entries)
+  try { await loadWeaponHistory(); } catch (e) { weaponState.recentSelections = []; }
 
   if (window.weaponStatsService?.initializeWeaponStats) {
     window.weaponStatsService
@@ -702,7 +746,9 @@ function addRecentWeaponSelection(weaponDef, weaponHash) {
   }
 
   weaponState.recentSelections.unshift(entry);
-  weaponState.recentSelections = weaponState.recentSelections.slice(0, 10);
+  weaponState.recentSelections = weaponState.recentSelections.slice(0, 4);
+  // Persist history (best-effort)
+  try { saveWeaponHistory(); } catch (e) { /* ignore */ }
 }
 
 function renderRecentWeaponSelections() {

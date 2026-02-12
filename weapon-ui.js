@@ -411,16 +411,39 @@ function renderWeaponSearchResults(weapons) {
  */
 async function selectWeapon(weaponHash) {
   const weaponManifest = window.__manifest__ || {};
-  const weaponDef = weaponManifest.DestinyInventoryItemDefinition?.get?.(String(weaponHash));
+  let weaponDef = weaponManifest.DestinyInventoryItemDefinition?.get?.(String(weaponHash));
 
   if (!weaponDef) {
-    d2log(`Weapon ${weaponHash} not found in manifest`, 'weapon-ui', 'error');
-    return;
+    d2log(`Weapon ${weaponHash} not found in manifest — falling back to minimal data`, 'weapon-ui', 'warn');
+    // Provide a minimal fallback so UI can still function and enable the Make Wish button
+    weaponDef = {
+      displayProperties: { name: `Unknown (${weaponHash})`, icon: '' },
+      inventory: {},
+      equippingBlock: {},
+      hash: weaponHash,
+    };
   }
 
-  // Load weapon data
-  const stats = await window.__manifest__.getWeaponStats(weaponHash);
-  const detailedSockets = await window.__manifest__.getDetailedWeaponSockets(weaponHash);
+  // Load weapon data (be resilient if helpers are missing)
+  let stats = {};
+  let detailedSockets = { sockets: [], socketCategories: [] };
+  try {
+    if (window.__manifest__?.getWeaponStats) {
+      stats = await window.__manifest__.getWeaponStats(weaponHash);
+    }
+  } catch (e) {
+    d2log(`Failed to load weapon stats: ${e.message || e}`, 'weapon-ui', 'warn');
+    stats = {};
+  }
+
+  try {
+    if (window.__manifest__?.getDetailedWeaponSockets) {
+      detailedSockets = await window.__manifest__.getDetailedWeaponSockets(weaponHash);
+    }
+  } catch (e) {
+    d2log(`Failed to load weapon sockets: ${e.message || e}`, 'weapon-ui', 'warn');
+    detailedSockets = { sockets: [], socketCategories: [] };
+  }
   const isExoticWeapon =
     weaponDef.inventory?.tierTypeName === 'Exotic' || weaponDef.inventory?.tierType === 6;
 
@@ -438,6 +461,19 @@ async function selectWeapon(weaponHash) {
     sockets: detailedSockets.sockets,
     socketCategories: detailedSockets.socketCategories
   };
+
+  // Defensive: enable the Create Wish button early so transient errors
+  // during socket/stat retrieval don't leave the UI permanently disabled.
+  try {
+    const earlyCreateBtn = document.getElementById('btn-create-weapon-wish');
+    if (earlyCreateBtn) {
+      earlyCreateBtn.disabled = false;
+      earlyCreateBtn.textContent = 'Make Wish';
+      try { d2log('Create wish button enabled (defensive)', 'weapon-ui'); } catch (e) {}
+    }
+  } catch (e) {
+    // swallow - defensive only
+  }
 
   d2log(
     `Damage debug: hash=${weaponHash}, damageTypeHashes=${JSON.stringify(

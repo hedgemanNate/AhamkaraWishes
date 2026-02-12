@@ -2,6 +2,22 @@
    WEAPON-MANAGER.JS - Phase 4: Weapon Wish Data Persistence
    ============================================================ */
 
+// Helpers: normalize slot arrays and build a canonical, order-independent key
+function normalizeSlotArr(arr) {
+  if (!arr) return [];
+  return Array.from(arr).map(String).filter(Boolean).sort();
+}
+
+function buildCanonicalWishKey(weaponHash, slots = {}, mode = '') {
+  const parts = [];
+  for (let i = 1; i <= 6; i++) {
+    const s = normalizeSlotArr(slots['slot' + i] || slots[`slot${i}`]);
+    parts.push(s.join('|'));
+  }
+  return `${weaponHash}:${mode || ''}:${parts.join(':')}`;
+}
+
+
 /**
  * Save a weapon wish configuration to Chrome storage.
  * Follows exact pattern of armor manager for consistency.
@@ -68,12 +84,18 @@ async function saveWeaponWish(weaponHash, wish, tags, displayString, options = {
       };
     }
 
-    // Check for duplicate (same displayString + mode = duplicate)
+    // Compute canonical key and check for duplicate (order-independent)
     const mode = options.mode || 'pve';
+    const wishKey = buildCanonicalWishKey(weaponHash, wish, mode);
+
     // existing wishes are stored as flat wish objects (no `config` wrapper)
-    const isDuplicate = activeList.items[weaponHash].wishes.some(
-      (existingWish) => (existingWish.displayString === displayString || existingWish.displayString === displayString) && existingWish.mode === mode
-    );
+    const isDuplicate = activeList.items[weaponHash].wishes.some((existingWish) => {
+      if (!existingWish) return false;
+      // Prefer exact _key match when present
+      if (existingWish._key) return existingWish._key === wishKey && existingWish.mode === mode;
+      // Fallback for older entries: compare displayString + mode
+      return existingWish.displayString === displayString && existingWish.mode === mode;
+    });
 
     if (isDuplicate) {
       return {
@@ -88,6 +110,12 @@ async function saveWeaponWish(weaponHash, wish, tags, displayString, options = {
     wishEntry.displayString = displayString;
     wishEntry.mode = mode;
     wishEntry.added = options.addedDate || Date.now();
+    // Attach canonical key for reliable de-duplication
+    try {
+      wishEntry._key = buildCanonicalWishKey(weaponHash, wishEntry, wishEntry.mode);
+    } catch (e) {
+      // noop
+    }
 
     // Add to wishes array
     activeList.items[weaponHash].wishes.push(wishEntry);
@@ -171,6 +199,26 @@ async function loadWeaponWishes(listId) {
       if (!item.static.slot) {
         item.static.slot = weaponDef.equipment?.slotTypeHash || null;
         didUpdate = true;
+      }
+    }
+
+    // Backfill canonical _key for wishes missing it
+    for (const [hashKey, item] of Object.entries(items)) {
+      const weaponHash = Number(item.static?.hash || hashKey);
+      if (!item?.wishes || !Array.isArray(item.wishes)) continue;
+      for (const wish of item.wishes) {
+        if (!wish) continue;
+        if (!wish._key) {
+          const mode = wish.mode || (Array.isArray(wish.tags) && wish.tags[0]) || 'pve';
+          try {
+            wish._key = buildCanonicalWishKey(weaponHash, wish, mode);
+            // also ensure mode field exists for consistency
+            if (!wish.mode) wish.mode = mode;
+            didUpdate = true;
+          } catch (e) {
+            // ignore
+          }
+        }
       }
     }
 

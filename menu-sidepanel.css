@@ -25,7 +25,12 @@
 /* Layout the wishlist card to the left of the auth inner row */
 .menu-auth-row { display:flex; align-items:center; gap:12px; width:100%; box-sizing:border-box; }
 .menu-auth-row .wishlist-card { flex: 0 0 240px; width:240px; }
-.menu-auth-row .menu-auth-inner { flex: 1 1 auto; max-width: none; }
+.menu-auth-row .menu-auth-inner {
+  /* fixed width for the auth area requested by user */
+  flex: 0 0 185px;
+  width: 185px;
+  max-width: 185px;
+}
 
 @media (max-width:420px) {
   .menu-auth-row { flex-direction: column; align-items: stretch; }

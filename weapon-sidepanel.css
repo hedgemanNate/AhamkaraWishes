@@ -1,6 +1,14 @@
 /* ============================================
-   WEAPON-SIDEPANEL.CSS - Phase 3 Weapon Crafting System Styles
-   ============================================ */
+  WEAPON-SIDEPANEL.CSS - Phase 3 Weapon Crafting System Styles
+  ============================================ */
+
+/* Results without a full screenshot: highlight with a red border */
+.weapon-search-result.no-screenshot {
+  border: 2px solid #c00;
+  box-sizing: border-box;
+  border-radius: 6px;
+  padding: 2px; /* small padding to avoid layout shift */
+}
 
 /* --- WEAPON VIEW INFRASTRUCTURE (Parallel to Armor) --- */
 .weapon-view-stage {

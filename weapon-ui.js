@@ -76,6 +76,149 @@ async function saveWeaponHistory() {
   }
 }
 
+// Screenshot availability cache (rich records based on fullscreen URLs)
+const SCREENSHOT_CACHE_KEY = 'weapon_screenshot_cache_v1';
+const SCREENSHOT_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+// Map: weaponHash -> { ok: boolean, url: string, ts: number }
+const screenshotAvailabilityCache = new Map();
+
+function _makeCacheRecord(ok, url) {
+  return { ok: !!ok, url: String(url || ''), ts: Date.now() };
+}
+
+function getScreenshotUrlForWeapon(weaponHash) {
+  try {
+    const def = window.__manifest__?.DestinyInventoryItemDefinition?.get?.(String(weaponHash));
+    const path = def?.displayProperties?.screenshot || def?.screenshot || '';
+    if (!path) return '';
+    return resolveBungieUrl(path);
+  } catch (e) {
+    return '';
+  }
+}
+
+async function loadScreenshotCache() {
+  try {
+    if (window.chrome?.storage?.local) {
+      return new Promise((resolve) => {
+        chrome.storage.local.get([SCREENSHOT_CACHE_KEY], (res) => {
+          const obj = res && res[SCREENSHOT_CACHE_KEY] ? res[SCREENSHOT_CACHE_KEY] : {};
+          Object.keys(obj || {}).forEach((k) => {
+            const v = obj[k];
+            if (v && typeof v === 'object') screenshotAvailabilityCache.set(String(k), v);
+          });
+          resolve();
+        });
+      });
+    } else if (window.localStorage) {
+      const raw = localStorage.getItem(SCREENSHOT_CACHE_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      Object.keys(obj || {}).forEach((k) => {
+        const v = obj[k];
+        if (v && typeof v === 'object') screenshotAvailabilityCache.set(String(k), v);
+      });
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+async function saveScreenshotCache() {
+  try {
+    const obj = Object.fromEntries(
+      Array.from(screenshotAvailabilityCache.entries()).map(([k, v]) => [k, v])
+    );
+    if (window.chrome?.storage?.local) {
+      return new Promise((resolve) => {
+        const setObj = {};
+        setObj[SCREENSHOT_CACHE_KEY] = obj;
+        chrome.storage.local.set(setObj, () => resolve());
+      });
+    } else if (window.localStorage) {
+      localStorage.setItem(SCREENSHOT_CACHE_KEY, JSON.stringify(obj));
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+/**
+ * Check screenshot availability for a weapon by loading the exact fullscreen URL
+ * and validating the image natural size to avoid CDN placeholders.
+ * Returns a record: { ok, url, ts }
+ */
+function checkScreenshotForWeapon(weaponHash, timeoutMs = 12000) {
+  const key = String(weaponHash);
+  try {
+    // If we have a cached record and it's fresh, return it
+    const existing = screenshotAvailabilityCache.get(key);
+    if (existing && (Date.now() - (existing.ts || 0)) < SCREENSHOT_CACHE_TTL) {
+      return Promise.resolve(existing);
+    }
+
+    const url = getScreenshotUrlForWeapon(weaponHash);
+    if (!url) {
+      const rec = _makeCacheRecord(false, '');
+      screenshotAvailabilityCache.set(key, rec);
+      return Promise.resolve(rec);
+    }
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      let settled = false;
+      function finish(ok) {
+        if (settled) return;
+        settled = true;
+        const rec = _makeCacheRecord(ok, url);
+        screenshotAvailabilityCache.set(key, rec);
+        resolve(rec);
+      }
+
+      const to = setTimeout(() => finish(false), timeoutMs);
+
+      img.onload = () => {
+        clearTimeout(to);
+        // require a reasonable natural size to avoid tiny placeholders
+        const ok = (img.naturalWidth && img.naturalHeight) && (img.naturalWidth >= 120 || img.naturalHeight >= 80);
+        finish(!!ok);
+      };
+      img.onerror = () => {
+        clearTimeout(to);
+        finish(false);
+      };
+      // assign src last to start loading
+      img.src = url;
+    });
+  } catch (e) {
+    const rec = _makeCacheRecord(false, '');
+    screenshotAvailabilityCache.set(key, rec);
+    return Promise.resolve(rec);
+  }
+}
+
+async function initScreenshotChecks() {
+  try {
+    await loadScreenshotCache();
+    const resp = await fetch('data/weapon-list.json');
+    const list = await resp.json();
+    if (!Array.isArray(list) || list.length === 0) return;
+
+    const batchSize = 10; // smaller batches
+    const batchDelayMs = 250; // gentle pause between batches
+    for (let i = 0; i < list.length; i += batchSize) {
+      const batch = list.slice(i, i + batchSize);
+      // Only check items that are missing or stale in cache
+      const checks = batch.map((item) => checkScreenshotForWeapon(item.hash));
+      try { await Promise.all(checks); } catch (e) { /* continue */ }
+      try { await saveScreenshotCache(); } catch (e) {}
+      // small delay so we don't flood the CDN concurrently
+      if (i + batchSize < list.length) await new Promise(r => setTimeout(r, batchDelayMs));
+    }
+  } catch (e) {
+    // best-effort
+  }
+}
+
 // Slot capacities per column (cols 0..5). Columns 0-4 map to slots 1-5, col5 is masterwork.
 const SLOT_CAPACITIES = [2, 2, 3, 3, 3, 3];
 
@@ -389,6 +532,9 @@ async function initWeaponCraft() {
     });
   }
 
+  // Kick off screenshot availability checks in background (best-effort)
+  try { initScreenshotChecks(); } catch (e) { /* ignore */ }
+
   d2log('✅ Weapon craft UI initialized', 'weapon-ui');
 }
 
@@ -479,6 +625,23 @@ function renderWeaponSearchResults(weapons) {
       const weaponHash = parseInt(resultEl.dataset.hash);
       selectWeapon(weaponHash);
     });
+  });
+
+  // Mark results missing screenshots (use cached record if available,
+  // otherwise check asynchronously and update DOM when resolved)
+  resultsDiv.querySelectorAll('.weapon-search-result').forEach((resultEl) => {
+    const weaponHash = String(resultEl.dataset.hash);
+    const rec = screenshotAvailabilityCache.get(weaponHash);
+    if (rec) {
+      if (!rec.ok) resultEl.classList.add('no-screenshot');
+    } else {
+      // Fire off the check and update when complete
+      checkScreenshotForWeapon(weaponHash).then((r) => {
+        if (!r || !r.ok) resultEl.classList.add('no-screenshot');
+      }).catch(() => {
+        // ignore
+      });
+    }
   });
 }
 

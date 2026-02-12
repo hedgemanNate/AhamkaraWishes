@@ -275,7 +275,9 @@ async function initWeaponCraft() {
   }
 
   if (pvePveBtn) {
-    pvePveBtn.addEventListener('click', () => {
+    pvePveBtn.addEventListener('click', (event) => {
+      // Prevent container-level toggle handlers from also firing
+      if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
       weaponState.currentMode = 'pve';
       toggleModeButton('pve');
     });
@@ -288,7 +290,9 @@ async function initWeaponCraft() {
   }
 
   if (pvpPvpBtn) {
-    pvpPvpBtn.addEventListener('click', () => {
+    pvpPvpBtn.addEventListener('click', (event) => {
+      // Prevent container-level toggle handlers from also firing
+      if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
       weaponState.currentMode = 'pvp';
       toggleModeButton('pvp');
     });
@@ -1728,9 +1732,15 @@ function togglePane(pane) {
 function toggleModeButton(mode) {
   const pvePveBtn = document.getElementById('w-pve-btn');
   const pvpPvpBtn = document.getElementById('w-pvp-btn');
+  const modeContainer = document.getElementById('ui-mode-toggle');
 
   if (pvePveBtn) pvePveBtn.classList.toggle('active', mode === 'pve');
   if (pvpPvpBtn) pvpPvpBtn.classList.toggle('active', mode === 'pvp');
+  // Ensure the container has the corresponding mode class so CSS applies
+  if (modeContainer) {
+    modeContainer.classList.toggle('pve', mode === 'pve');
+    modeContainer.classList.toggle('pvp', mode === 'pvp');
+  }
 
   d2log(`✅ Switched to ${mode.toUpperCase()} mode`, 'weapon-ui');
 }

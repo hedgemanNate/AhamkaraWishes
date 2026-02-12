@@ -109,10 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
           await window.weaponStatsClarityService.initializeWeaponStatsClarity();
         }
         
-        // Initialize Clarity tooltips
-        if (window.weaponTooltipClarity?.init) {
-            window.weaponTooltipClarity.init();
-        }
+        // Clarity tooltips are unused when permanent tooltip is enabled.
         
         updateCacheStatus();
 
@@ -307,15 +304,16 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
       const existingWishes = activeList.items[hash].wishes || [];
       activeList.items[hash].wishes = existingWishes;
 
-      // Duplicate check: armor compares config, weapons compare raw string
+      // Duplicate check: armor compares archetype/spark, weapons compare raw string
       const isDuplicate = existingWishes.some((w) => {
         if (!w) return false;
         const sameMode = (w?.tags || []).includes(mode);
         if (!sameMode) return false;
         // Armor: same archetype + same spark + same mode = duplicate
         if (config?.archetype && config?.spark) {
-          return w.config?.archetype === config.archetype &&
-                 w.config?.spark === config.spark;
+          const existingArch = w.archetype || w.config?.archetype || '';
+          const existingSpark = w.spark || w.config?.spark || '';
+          return existingArch === config.archetype && existingSpark === config.spark;
         }
         // Weapons: same raw string + same mode = duplicate
         return w?.raw === rawString;
@@ -325,13 +323,18 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
         return;
       }
 
-      // Add new wish
-      existingWishes.push({
+      // Add new wish (flat shape)
+      const wishEntry = {
         tags: [mode],          // ['pve'] or ['pvp']
-        config,               // your armor/weapon config
+        name: name || (config && config.name) || null,
+        archetype: config?.archetype || null,
+        spark: config?.spark || null,
         raw: rawString,       // original string
+        displayString: rawString,
         added: Date.now()
-      });
+      };
+
+      existingWishes.push(wishEntry);
 
       chrome.storage.local.set({ dimData: data }, () => {
         resolve(); // Signal completion after storage operation completes
@@ -525,7 +528,7 @@ function createItemCard(hash, item) {
     const tag = (wish?.tags && wish.tags[0]) ? wish.tags[0] : 'pve';
     const badgeClass = tag === 'pvp' ? 'badge-pvp' : 'badge-pve';
 
-    let detailText = `Roll #${index + 1}`;
+    let detailText = wish.displayString || `Roll #${index + 1}`;
     if (safeType === 'armor' && wish?.config) {
       const arch = wish.config.archetype || '';
       const spark = wish.config.spark || '';

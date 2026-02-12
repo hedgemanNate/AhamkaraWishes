@@ -154,7 +154,7 @@ function applyArmorFilters() {
             wishes.forEach((wish, wishIndex) => {
                 // Filter by archetype (per-wish)
                 if (selectedArchetypes.length > 0) {
-                    const wishArchetype = wish.config?.archetype;
+                    const wishArchetype = wish.archetype;
                     if (!selectedArchetypes.includes(wishArchetype)) return;
                 }
 
@@ -810,7 +810,7 @@ function createArmorCard(item) {
     // Safety check for wish data integrity
     if (!item.wish) return card;
 
-    const wishConfig = item.wish.config;
+    const wishConfig = item.wish; // flat wish object
     const archName = wishConfig.archetype;
     const sparkName = wishConfig.spark;
     const archetype = ARCHETYPES.find(a => a.name === archName);

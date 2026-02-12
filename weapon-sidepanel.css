@@ -1,6 +1,14 @@
 /* ============================================
-   WEAPON-SIDEPANEL.CSS - Phase 3 Weapon Crafting System Styles
-   ============================================ */
+  WEAPON-SIDEPANEL.CSS - Phase 3 Weapon Crafting System Styles
+  ============================================ */
+
+/* Results without a full screenshot: highlight with a red border */
+.weapon-search-result.no-screenshot {
+  border: 2px solid #c00;
+  box-sizing: border-box;
+  border-radius: 6px;
+  padding: 2px; /* small padding to avoid layout shift */
+}
 
 /* --- WEAPON VIEW INFRASTRUCTURE (Parallel to Armor) --- */
 .weapon-view-stage {
@@ -706,14 +714,15 @@
    BOTTOM NAV
    ============================================ */
 .weapon-nav {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
-  right: 0;
+  width: 100%;
+  height: 40px;
   display: flex;
-  gap: 8px;
-  padding: 8px;
-  background: #1a1a1a;
+  z-index: 2000;
+  background: #000;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5);
   border-top: 1px solid #333;
 }
 
@@ -1064,27 +1073,175 @@
   align-items: center;
   justify-content: center;
   box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+  position: relative;
 }
 
 /* Options Row - Horizontal Scroll */
 .options-row {
   display: flex;
-  flex-direction: row;
+  flex-direction: column; /* tabs above body */
   gap: 8px;
-  overflow-x: auto;
+  overflow: visible;
   min-height: 52px;
-  padding: 8px 4px 12px 4px;
+  padding: 4px 4px 8px 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
 }
 
 .options-row::-webkit-scrollbar {
-  height: 4px;
+  height: 7px; /* increased by 3px */
 }
 
 .options-row::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.2);
+}
+
+/* Tabs above options */
+.options-tabs {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 6px 4px 4px 4px;
+}
+.options-tab {
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 6px 8px;
+  font-size: 12px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  cursor: pointer;
+}
+.options-tab.active {
+  background: linear-gradient(180deg, rgba(212,175,55,0.12), rgba(212,175,55,0.06));
+  border-color: rgba(212,175,55,0.18);
+}
+
+/* Scrollable area for option buttons */
+.options-body {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 4px 12px 4px;
+}
+
+.options-body::-webkit-scrollbar {
+  height: 7px;
+}
+.options-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.options-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+/* Slot dots under selector columns */
+.slot-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 6px;
+}
+.slot-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #000;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+}
+.slot-dots .dot.selected {
+  background: #d4af37; /* gold */
+  box-shadow: 0 0 6px rgba(212,175,55,0.35);
+}
+
+/* Small badge to show number of selected perks on selector icon */
+.selector-icon[data-selected-count]:after {
+  content: attr(data-selected-count);
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #d4af37;
+  color: #111;
+  font-weight: 700;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* DIM wishlist display */
+.dim-wishlist {
+  margin-top: 8px;
+  padding: 6px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;
+  font-size: 12px;
+  color: #e6e6e6;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Larger, scrollable variant for the weapon DIM wishlist element */
+#w-dim-wishlist {
+  min-width: 420px;
+  max-width: calc(100% - 16px);
+  padding: 6px 10px;
+  font-size: 8px; /* user requested */
+  white-space: nowrap; /* keep single line but allow scrolling */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  text-overflow: clip;
+}
+
+/* Container and copy button for DIM wishlist */
+.dim-wishlist-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dim-copy-btn {
+  background: rgba(255,255,255,0.04);
+  color: #e6e6e6;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dim-copy-btn:active { transform: translateY(1px); }
+
+/* Match the discrete scrollbar styling used across panes/lists */
+#w-dim-wishlist::-webkit-scrollbar {
+  height: 6px; /* horizontal scrollbar height */
+}
+
+#w-dim-wishlist::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#w-dim-wishlist::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+#w-dim-wishlist:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#w-dim-wishlist::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .options-row::-webkit-scrollbar-thumb {
@@ -1158,6 +1315,44 @@
   white-space: pre-wrap;
 }
 
+/* Permanent perk tooltip panel below options row */
+.perk-tooltip {
+  width: 100%;
+  background-color: #1a1a1a;
+  border: 1px solid var(--accent-gold, #d4af37);
+  border-radius: 4px;
+  padding: 12px;
+  color: #e0e0e0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  box-sizing: border-box;
+  margin-top: 8px;
+  min-height: 72px;
+}
+
+.perk-tooltip .clarity-title { font-size: 13px; }
+.perk-tooltip .clarity-desc { font-size: 12px; color: #ccc; }
+
+/* Details button inside permanent tooltip (top-right) */
+.perk-tooltip { position: relative; }
+.tooltip-details-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  background: #25252d;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.tooltip-details-btn:hover { background: #2f2f36; }
+
+/* When present, hide description text inside the permanent tooltip */
+.perk-tooltip.hide-desc .clarity-desc {
+  display: none !important;
+}
+
 .clarity-meta {
   margin-top: 8px;
   padding-top: 8px;
@@ -1208,5 +1403,17 @@
   color: #777;
   font-style: italic;
   text-align: right;
+}
+
+/* Make Wish button placement in craft pane */
+.w-make-wish-row {
+  margin-top: 10px;
+}
+
+#btn-create-weapon-wish {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  box-sizing: border-box;
 }
 

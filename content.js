@@ -4,6 +4,21 @@ const API_KEY = "fee720e84d6c4239aeb7d442b4d39f38";
 
 let currentMode = 'pve'; // Default to PvE
 
+// Helpers: normalize slot arrays and build canonical key for wishes (order-independent)
+function normalizeSlotArr(arr) {
+    if (!arr) return [];
+    return Array.from(arr).map(String).filter(Boolean).sort();
+}
+
+function buildCanonicalWishKey(weaponHash, slots = {}, mode = '') {
+    const parts = [];
+    for (let i = 1; i <= 6; i++) {
+        const s = normalizeSlotArr(slots['slot' + i] || slots[`slot${i}`]);
+        parts.push(s.join('|'));
+    }
+    return `${weaponHash}:${mode || ''}:${parts.join(':')}`;
+}
+
 // =========================================================
 // 1. D2FOUNDRY INJECTOR (With Toggle)
 // =========================================================
@@ -118,17 +133,33 @@ function saveItem(hash, name, type, rawString, config) {
             };
         }
 
-        // 2. Check for Duplicates: armor compares config, weapons compare raw string
+        // 2. Prepare slots and canonical key for dedupe
         const existingWishes = activeList.items[hash].wishes;
+        // If importer provides a perks list, put them into slot1 (import-time simplification)
+        const perksArr = config?.perks ? String(config.perks).split(',').map((s) => s.trim()).filter(Boolean) : [];
+        const slots = {
+            slot1: perksArr,
+            slot2: [],
+            slot3: [],
+            slot4: [],
+            slot5: [],
+            slot6: []
+        };
+        const newKey = buildCanonicalWishKey(Number(hash), slots, currentMode);
+
         const isDuplicate = existingWishes.some((w) => {
             if (!w) return false;
+            // Prefer _key when present
+            if (w._key) return w._key === newKey;
+            // Fallback to old behavior
             const sameMode = (w.tags || []).includes(currentMode);
             if (!sameMode) return false;
             if (config?.archetype && config?.spark) {
-                return w.config?.archetype === config.archetype &&
-                       w.config?.spark === config.spark;
+                const existingArch = w.archetype || w.config?.archetype || '';
+                const existingSpark = w.spark || w.config?.spark || '';
+                return existingArch === config.archetype && existingSpark === config.spark;
             }
-            return w.raw === rawString;
+            return w.raw === rawString || w.dimWishlist === rawString;
         });
 
         if (isDuplicate) {
@@ -136,11 +167,21 @@ function saveItem(hash, name, type, rawString, config) {
             return; // EXIT
         }
 
-        // 3. Add New Wish
+        // 3. Add New Wish (flat shape) with canonical _key
         activeList.items[hash].wishes.push({
             tags: [currentMode], // ['pve'] or ['pvp']
-            config: config,
-            raw: rawString,
+            mode: currentMode,
+            name: name,
+            slot1: slots.slot1,
+            slot2: slots.slot2,
+            slot3: slots.slot3,
+            slot4: slots.slot4,
+            slot5: slots.slot5,
+            slot6: slots.slot6,
+            dimWishlist: rawString,
+            hash: Number(hash),
+            displayString: name,
+            _key: newKey,
             added: Date.now()
         });
 

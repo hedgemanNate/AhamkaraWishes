@@ -3,7 +3,7 @@
   "name": "Ahamkara Wishes",
   "version": "0.2.9",
   "description": "Wishlist manager for D2Foundry and Armor Sets.",
-  "permissions": ["storage", "sidePanel", "identity"],
+  "permissions": ["storage", "sidePanel", "identity", "clipboardWrite"],
   "host_permissions": ["https://www.bungie.net/*"],
   "background": {
     "service_worker": "background.js"

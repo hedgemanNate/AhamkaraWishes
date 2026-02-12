@@ -7,13 +7,15 @@
  */
 const weaponState = {
   currentWeapon: null, // { weaponHash, name, stats, sockets }
-  selectedPerks: {}, // { socketIndex: perkHash }
+  selectedPerks: {}, // { socketIndex: [perkHash, ...] }
+  selectedPerkPage: {}, // { socketIndex: pageIndex }
   socketPerksMap: {}, // { socketIndex: perkData[] }
   socketPerkVariants: {}, // { socketIndex: { regular, enhanced, hasEnhanced } }
   selectedMasterwork: null, // Currently selected masterwork stat type
   perkDisplayMode: 'regular', // "regular" or "enhanced"
   activeSocketIndex: null,
   currentMode: 'pve', // "pve" or "pvp"
+  autoSelectPerks: false, // globally disable auto-selection of perks
   // ... existing fields ...
   currentFilters: {}, // Search/filter state
   currentPane: 'craft', // "craft" or "list"
@@ -31,6 +33,259 @@ const SOCKET_CATEGORY_HASHES = {
   WEAPON_PERKS: 4241085061, // Corrected from subagent to the one I researched: 4241085061
   WEAPON_MODS: 2685412949
 };
+
+// History storage key and helpers
+const WEAPON_HISTORY_KEY = 'weapon_recent_history_v1';
+
+async function loadWeaponHistory() {
+  try {
+    if (window.chrome?.storage?.local) {
+      return new Promise((resolve) => {
+        chrome.storage.local.get([WEAPON_HISTORY_KEY], (res) => {
+          const arr = res && res[WEAPON_HISTORY_KEY] ? res[WEAPON_HISTORY_KEY] : [];
+          weaponState.recentSelections = Array.isArray(arr) ? arr.slice(0, 4) : [];
+          resolve();
+        });
+      });
+    } else if (window.localStorage) {
+      const raw = localStorage.getItem(WEAPON_HISTORY_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      weaponState.recentSelections = Array.isArray(arr) ? arr.slice(0, 4) : [];
+    } else {
+      weaponState.recentSelections = [];
+    }
+  } catch (e) {
+    weaponState.recentSelections = [];
+  }
+}
+
+async function saveWeaponHistory() {
+  try {
+    const toSave = weaponState.recentSelections.slice(0, 4);
+    if (window.chrome?.storage?.local) {
+      return new Promise((resolve) => {
+        const obj = {};
+        obj[WEAPON_HISTORY_KEY] = toSave;
+        chrome.storage.local.set(obj, () => resolve());
+      });
+    } else if (window.localStorage) {
+      localStorage.setItem(WEAPON_HISTORY_KEY, JSON.stringify(toSave));
+    }
+  } catch (e) {
+    // swallow errors — history is best-effort
+  }
+}
+
+// Screenshot availability cache (rich records based on fullscreen URLs)
+const SCREENSHOT_CACHE_KEY = 'weapon_screenshot_cache_v1';
+const SCREENSHOT_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+// Map: weaponHash -> { ok: boolean, url: string, ts: number }
+const screenshotAvailabilityCache = new Map();
+
+function _makeCacheRecord(ok, url) {
+  return { ok: !!ok, url: String(url || ''), ts: Date.now() };
+}
+
+function getScreenshotUrlForWeapon(weaponHash) {
+  try {
+    const def = window.__manifest__?.DestinyInventoryItemDefinition?.get?.(String(weaponHash));
+    const path = def?.displayProperties?.screenshot || def?.screenshot || '';
+    if (!path) return '';
+    return resolveBungieUrl(path);
+  } catch (e) {
+    return '';
+  }
+}
+
+async function loadScreenshotCache() {
+  try {
+    if (window.chrome?.storage?.local) {
+      return new Promise((resolve) => {
+        chrome.storage.local.get([SCREENSHOT_CACHE_KEY], (res) => {
+          const obj = res && res[SCREENSHOT_CACHE_KEY] ? res[SCREENSHOT_CACHE_KEY] : {};
+          Object.keys(obj || {}).forEach((k) => {
+            const v = obj[k];
+            if (v && typeof v === 'object') screenshotAvailabilityCache.set(String(k), v);
+          });
+          resolve();
+        });
+      });
+    } else if (window.localStorage) {
+      const raw = localStorage.getItem(SCREENSHOT_CACHE_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      Object.keys(obj || {}).forEach((k) => {
+        const v = obj[k];
+        if (v && typeof v === 'object') screenshotAvailabilityCache.set(String(k), v);
+      });
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+async function saveScreenshotCache() {
+  try {
+    const obj = Object.fromEntries(
+      Array.from(screenshotAvailabilityCache.entries()).map(([k, v]) => [k, v])
+    );
+    if (window.chrome?.storage?.local) {
+      return new Promise((resolve) => {
+        const setObj = {};
+        setObj[SCREENSHOT_CACHE_KEY] = obj;
+        chrome.storage.local.set(setObj, () => resolve());
+      });
+    } else if (window.localStorage) {
+      localStorage.setItem(SCREENSHOT_CACHE_KEY, JSON.stringify(obj));
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+/**
+ * Check screenshot availability for a weapon by loading the exact fullscreen URL
+ * and validating the image natural size to avoid CDN placeholders.
+ * Returns a record: { ok, url, ts }
+ */
+function checkScreenshotForWeapon(weaponHash, timeoutMs = 12000) {
+  const key = String(weaponHash);
+  try {
+    // If we have a cached record and it's fresh, return it
+    const existing = screenshotAvailabilityCache.get(key);
+    if (existing && (Date.now() - (existing.ts || 0)) < SCREENSHOT_CACHE_TTL) {
+      return Promise.resolve(existing);
+    }
+
+    const url = getScreenshotUrlForWeapon(weaponHash);
+    if (!url) {
+      const rec = _makeCacheRecord(false, '');
+      screenshotAvailabilityCache.set(key, rec);
+      return Promise.resolve(rec);
+    }
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      let settled = false;
+      function finish(ok) {
+        if (settled) return;
+        settled = true;
+        const rec = _makeCacheRecord(ok, url);
+        screenshotAvailabilityCache.set(key, rec);
+        resolve(rec);
+      }
+
+      const to = setTimeout(() => finish(false), timeoutMs);
+
+      img.onload = () => {
+        clearTimeout(to);
+        // require a reasonable natural size to avoid tiny placeholders
+        const ok = (img.naturalWidth && img.naturalHeight) && (img.naturalWidth >= 120 || img.naturalHeight >= 80);
+        finish(!!ok);
+      };
+      img.onerror = () => {
+        clearTimeout(to);
+        finish(false);
+      };
+      // assign src last to start loading
+      img.src = url;
+    });
+  } catch (e) {
+    const rec = _makeCacheRecord(false, '');
+    screenshotAvailabilityCache.set(key, rec);
+    return Promise.resolve(rec);
+  }
+}
+
+async function initScreenshotChecks() {
+  try {
+    await loadScreenshotCache();
+    const resp = await fetch('data/weapon-list.json');
+    const list = await resp.json();
+    if (!Array.isArray(list) || list.length === 0) return;
+
+    const batchSize = 10; // smaller batches
+    const batchDelayMs = 250; // gentle pause between batches
+    for (let i = 0; i < list.length; i += batchSize) {
+      const batch = list.slice(i, i + batchSize);
+      // Only check items that are missing or stale in cache
+      const checks = batch.map((item) => checkScreenshotForWeapon(item.hash));
+      try { await Promise.all(checks); } catch (e) { /* continue */ }
+      try { await saveScreenshotCache(); } catch (e) {}
+      // small delay so we don't flood the CDN concurrently
+      if (i + batchSize < list.length) await new Promise(r => setTimeout(r, batchDelayMs));
+    }
+  } catch (e) {
+    // best-effort
+  }
+}
+
+// Slot capacities per column (cols 0..5). Columns 0-4 map to slots 1-5, col5 is masterwork.
+const SLOT_CAPACITIES = [2, 2, 3, 3, 3, 3];
+
+// --- Helpers for multi-perk selection state ---
+function getSlotCapacityForSocket(socketIndex) {
+  if (!weaponState.currentWeapon) return 1;
+  const cols = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories || []);
+  const colIndex = cols.findIndex(c => c && c.socketIndex === socketIndex);
+  if (colIndex === -1) return 1;
+  return SLOT_CAPACITIES[colIndex] || 1;
+}
+
+function ensureSelectedPerkArray(socketIndex) {
+  const cap = getSlotCapacityForSocket(socketIndex);
+  let arr = weaponState.selectedPerks[socketIndex];
+  if (!Array.isArray(arr)) {
+    arr = new Array(cap).fill(null);
+  } else if (arr.length !== cap) {
+    arr = arr.slice(0, cap).concat(new Array(Math.max(0, cap - arr.length)).fill(null));
+  }
+  weaponState.selectedPerks[socketIndex] = arr;
+  if (weaponState.selectedPerkPage[socketIndex] == null) weaponState.selectedPerkPage[socketIndex] = 0;
+  return arr;
+}
+
+function getSelectedPerks(socketIndex) {
+  const arr = weaponState.selectedPerks[socketIndex];
+  return Array.isArray(arr) ? arr : [];
+}
+
+function getPageIndex(socketIndex) {
+  const idx = weaponState.selectedPerkPage[socketIndex];
+  return Number.isFinite(idx) ? idx : 0;
+}
+
+function setPageIndex(socketIndex, pageIndex) {
+  const cap = getSlotCapacityForSocket(socketIndex);
+  const p = Math.max(0, Math.min(pageIndex || 0, cap - 1));
+  weaponState.selectedPerkPage[socketIndex] = p;
+}
+
+function getSelectedPerkAt(socketIndex, pageIndex) {
+  const arr = ensureSelectedPerkArray(socketIndex);
+  const p = Number.isFinite(pageIndex) ? pageIndex : getPageIndex(socketIndex);
+  return arr[p] || null;
+}
+
+function setSelectedPerkAt(socketIndex, pageIndex, perkHash) {
+  const arr = ensureSelectedPerkArray(socketIndex);
+  const p = Number.isFinite(pageIndex) ? pageIndex : getPageIndex(socketIndex);
+  arr[p] = perkHash || null;
+  weaponState.selectedPerks[socketIndex] = arr;
+}
+
+function togglePerkSelection(socketIndex, perkHash, pageIndex) {
+  const arr = ensureSelectedPerkArray(socketIndex);
+  const p = Number.isFinite(pageIndex) ? pageIndex : getPageIndex(socketIndex);
+  if (arr[p] === perkHash) {
+    arr[p] = null;
+  } else {
+    arr[p] = perkHash;
+  }
+  weaponState.selectedPerks[socketIndex] = arr;
+  // update DIM wishlist display whenever selections change
+  try { updateDimWishlist(); } catch (e) { /* ignore */ }
+}
+
 
 // Masterwork stat options by weapon type (for stat preview purposes)
 const MASTERWORK_OPTIONS_BY_TYPE = {
@@ -147,6 +402,8 @@ async function initWeaponCraft() {
 
   // Load tracker blacklist before any perk rendering
   await loadTrackerBlacklist();
+  // Load persisted recent weapon history (up to 4 entries)
+  try { await loadWeaponHistory(); } catch (e) { weaponState.recentSelections = []; }
 
   if (window.weaponStatsService?.initializeWeaponStats) {
     window.weaponStatsService
@@ -175,17 +432,57 @@ async function initWeaponCraft() {
         renderRecentWeaponSelections();
       }
     });
+    // History toggle shows/hides recent selections when search is empty
+    const historyToggle = document.getElementById('w-history-toggle');
+    const historyClearBtn = document.getElementById('w-history-clear');
+    if (historyToggle) {
+      historyToggle.addEventListener('click', () => {
+        weaponState.showHistory = !weaponState.showHistory;
+        historyToggle.classList.toggle('active', weaponState.showHistory);
+        // Only render history if search field is empty
+        if (!searchInput.value) {
+          renderRecentWeaponSelections();
+        } else {
+          const resultsDiv = document.getElementById('w-search-results');
+          if (resultsDiv) resultsDiv.innerHTML = '';
+        }
+      });
+    }
+
+    if (historyClearBtn) {
+      historyClearBtn.addEventListener('click', () => {
+        // Clear the search input and hide history
+        searchInput.value = '';
+        weaponState.showHistory = false;
+        if (historyToggle) historyToggle.classList.remove('active');
+        // Clear in-memory history and persist the empty list
+        weaponState.recentSelections = [];
+        try { saveWeaponHistory(); } catch (e) { /* ignore */ }
+        const resultsDiv = document.getElementById('w-search-results');
+        if (resultsDiv) resultsDiv.innerHTML = '';
+      });
+    }
   }
 
   if (pvePveBtn) {
-    pvePveBtn.addEventListener('click', () => {
+    pvePveBtn.addEventListener('click', (event) => {
+      // Prevent container-level toggle handlers from also firing
+      if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
       weaponState.currentMode = 'pve';
       toggleModeButton('pve');
     });
   }
 
+  // New Create Wish button
+  const createWishBtn = document.getElementById('btn-create-weapon-wish');
+  if (createWishBtn) {
+    createWishBtn.addEventListener('click', handleSaveWeaponWish);
+  }
+
   if (pvpPvpBtn) {
-    pvpPvpBtn.addEventListener('click', () => {
+    pvpPvpBtn.addEventListener('click', (event) => {
+      // Prevent container-level toggle handlers from also firing
+      if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
       weaponState.currentMode = 'pvp';
       toggleModeButton('pvp');
     });
@@ -226,10 +523,17 @@ async function initWeaponCraft() {
         weaponState.perkDisplayMode === 'enhanced' ? 'regular' : 'enhanced';
       updatePerkToggleState(weaponState.activeSocketIndex);
       if (weaponState.activeSocketIndex !== null) {
+        // Prevent auto-selection when toggling display mode
+        const prevAuto = weaponState.autoSelectPerks;
+        weaponState.autoSelectPerks = false;
         renderPerkOptions(weaponState.activeSocketIndex);
+        weaponState.autoSelectPerks = prevAuto;
       }
     });
   }
+
+  // Kick off screenshot availability checks in background (best-effort)
+  try { initScreenshotChecks(); } catch (e) { /* ignore */ }
 
   d2log('✅ Weapon craft UI initialized', 'weapon-ui');
 }
@@ -293,7 +597,18 @@ function renderWeaponSearchResults(weapons) {
     return;
   }
 
-  resultsDiv.innerHTML = weapons
+  // Sort results alphabetically by display name for deterministic ordering
+  const sortedWeapons = Array.isArray(weapons)
+    ? weapons.slice().sort((a, b) => {
+        const aName = (a?.displayProperties?.name || a?.name || '').toLowerCase();
+        const bName = (b?.displayProperties?.name || b?.name || '').toLowerCase();
+        if (aName < bName) return -1;
+        if (aName > bName) return 1;
+        return 0;
+      })
+    : [];
+
+  resultsDiv.innerHTML = sortedWeapons
     .slice(0, 15) // Limit to 15 results
     .map((weapon) => {
       const icon = weapon.icon || '';
@@ -322,6 +637,23 @@ function renderWeaponSearchResults(weapons) {
       selectWeapon(weaponHash);
     });
   });
+
+  // Mark results missing screenshots (use cached record if available,
+  // otherwise check asynchronously and update DOM when resolved)
+  resultsDiv.querySelectorAll('.weapon-search-result').forEach((resultEl) => {
+    const weaponHash = String(resultEl.dataset.hash);
+    const rec = screenshotAvailabilityCache.get(weaponHash);
+    if (rec) {
+      if (!rec.ok) resultEl.classList.add('no-screenshot');
+    } else {
+      // Fire off the check and update when complete
+      checkScreenshotForWeapon(weaponHash).then((r) => {
+        if (!r || !r.ok) resultEl.classList.add('no-screenshot');
+      }).catch(() => {
+        // ignore
+      });
+    }
+  });
 }
 
 /**
@@ -330,22 +662,54 @@ function renderWeaponSearchResults(weapons) {
  * @param {number} weaponHash - Destiny 2 weapon hash
  */
 async function selectWeapon(weaponHash) {
+  // Clear search inputs/results immediately for snappy UX
+  const craftSearchImmediate = document.getElementById('w-search-input');
+  if (craftSearchImmediate) craftSearchImmediate.value = '';
+  const listSearchImmediate = document.getElementById('w-list-search');
+  if (listSearchImmediate) listSearchImmediate.value = '';
+  const immediateResultsDiv = document.getElementById('w-search-results');
+  if (immediateResultsDiv) immediateResultsDiv.innerHTML = '';
+
   const weaponManifest = window.__manifest__ || {};
-  const weaponDef = weaponManifest.DestinyInventoryItemDefinition?.get?.(String(weaponHash));
+  let weaponDef = weaponManifest.DestinyInventoryItemDefinition?.get?.(String(weaponHash));
 
   if (!weaponDef) {
-    d2log(`Weapon ${weaponHash} not found in manifest`, 'weapon-ui', 'error');
-    return;
+    d2log(`Weapon ${weaponHash} not found in manifest — falling back to minimal data`, 'weapon-ui', 'warn');
+    // Provide a minimal fallback so UI can still function and enable the Make Wish button
+    weaponDef = {
+      displayProperties: { name: `Unknown (${weaponHash})`, icon: '' },
+      inventory: {},
+      equippingBlock: {},
+      hash: weaponHash,
+    };
   }
 
-  // Load weapon data
-  const stats = await window.__manifest__.getWeaponStats(weaponHash);
-  const detailedSockets = await window.__manifest__.getDetailedWeaponSockets(weaponHash);
+  // Load weapon data (be resilient if helpers are missing)
+  let stats = {};
+  let detailedSockets = { sockets: [], socketCategories: [] };
+  try {
+    if (window.__manifest__?.getWeaponStats) {
+      stats = await window.__manifest__.getWeaponStats(weaponHash);
+    }
+  } catch (e) {
+    d2log(`Failed to load weapon stats: ${e.message || e}`, 'weapon-ui', 'warn');
+    stats = {};
+  }
+
+  try {
+    if (window.__manifest__?.getDetailedWeaponSockets) {
+      detailedSockets = await window.__manifest__.getDetailedWeaponSockets(weaponHash);
+    }
+  } catch (e) {
+    d2log(`Failed to load weapon sockets: ${e.message || e}`, 'weapon-ui', 'warn');
+    detailedSockets = { sockets: [], socketCategories: [] };
+  }
   const isExoticWeapon =
     weaponDef.inventory?.tierTypeName === 'Exotic' || weaponDef.inventory?.tierType === 6;
 
   weaponState.currentWeapon = {
     weaponHash,
+    hash: weaponHash,
     name: weaponDef.displayProperties?.name || 'Unknown',
     icon: weaponDef.displayProperties?.icon || '',
     type: weaponDef.itemTypeDisplayName || '',
@@ -358,6 +722,19 @@ async function selectWeapon(weaponHash) {
     sockets: detailedSockets.sockets,
     socketCategories: detailedSockets.socketCategories
   };
+
+  // Defensive: enable the Create Wish button early so transient errors
+  // during socket/stat retrieval don't leave the UI permanently disabled.
+  try {
+    const earlyCreateBtn = document.getElementById('btn-create-weapon-wish');
+    if (earlyCreateBtn) {
+      earlyCreateBtn.disabled = false;
+      earlyCreateBtn.textContent = 'Make Wish';
+      try { d2log('Create wish button enabled (defensive)', 'weapon-ui'); } catch (e) {}
+    }
+  } catch (e) {
+    // swallow - defensive only
+  }
 
   d2log(
     `Damage debug: hash=${weaponHash}, damageTypeHashes=${JSON.stringify(
@@ -482,6 +859,8 @@ async function selectWeapon(weaponHash) {
 
   // Render perk slots and perks
   renderWeaponSockets();
+  // Render perks without auto-selection so slots start empty
+  weaponState.autoSelectPerks = false;
   await renderWeaponPerks();
   // attachPerkClickListeners() handled within render loop now
 
@@ -502,12 +881,27 @@ async function selectWeapon(weaponHash) {
     saveBtn.disabled = false;
   }
 
+  // Enable "Make Wish" button immediately when a weapon is selected
+  const createBtn = document.getElementById('btn-create-weapon-wish');
+  if (createBtn) {
+    createBtn.disabled = false;
+    // Use friendly verb so users can add the weapon immediately
+    createBtn.textContent = 'Make Wish';
+  }
+
+  // Initialize DIM wishlist display
+  try { updateDimWishlist(); } catch (e) {}
+
   await updateWeaponStatDeltas();
 
   const searchInput = document.getElementById('w-search-input');
   if (searchInput) {
     searchInput.value = '';
   }
+
+  // Also clear list view search when selecting a weapon
+  const listSearchInput = document.getElementById('w-list-search');
+  if (listSearchInput) listSearchInput.value = '';
 
   renderRecentWeaponSelections();
 }
@@ -529,7 +923,9 @@ function addRecentWeaponSelection(weaponDef, weaponHash) {
   }
 
   weaponState.recentSelections.unshift(entry);
-  weaponState.recentSelections = weaponState.recentSelections.slice(0, 10);
+  weaponState.recentSelections = weaponState.recentSelections.slice(0, 4);
+  // Persist history (best-effort)
+  try { saveWeaponHistory(); } catch (e) { /* ignore */ }
 }
 
 function renderRecentWeaponSelections() {
@@ -546,7 +942,46 @@ function renderRecentWeaponSelections() {
     return;
   }
 
-  renderWeaponSearchResults(weaponState.recentSelections);
+  // Show up to the last 4 recent selections for the history view (preserve chronological order)
+  const recent = weaponState.recentSelections.slice(0, 4);
+  resultsDiv.innerHTML = recent
+    .map((weapon) => {
+      const icon = weapon.icon || '';
+      const type = weapon.type || 'Unknown';
+      const rarity = weapon.rarity || 'Common';
+      return `
+        <div class="weapon-search-result" data-hash="${weapon.hash}">
+          <div class="search-result-icon">
+            ${icon ? `<img src="${icon}" alt="${weapon.name}" />` : ''}
+          </div>
+          <div class="search-result-info">
+            <div class="search-result-name">${weapon.name}</div>
+            <div class="search-result-meta">${type} • ${rarity}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+
+  // Add click listeners and screenshot markers for history results
+  resultsDiv.querySelectorAll('.weapon-search-result').forEach((resultEl) => {
+    resultEl.addEventListener('click', () => {
+      const weaponHash = parseInt(resultEl.dataset.hash);
+      selectWeapon(weaponHash);
+    });
+  });
+
+  resultsDiv.querySelectorAll('.weapon-search-result').forEach((resultEl) => {
+    const weaponHash = String(resultEl.dataset.hash);
+    const rec = screenshotAvailabilityCache.get(weaponHash);
+    if (rec) {
+      if (!rec.ok) resultEl.classList.add('no-screenshot');
+    } else {
+      checkScreenshotForWeapon(weaponHash).then((r) => {
+        if (!r || !r.ok) resultEl.classList.add('no-screenshot');
+      }).catch(() => {});
+    }
+  });
 }
 
 /**
@@ -737,8 +1172,85 @@ function renderWeaponSockets() {
     <div class="perk-selector-container">
       <div class="selector-row" id="w-selector-row"></div>
       <div class="options-row" id="w-options-row" style="display:none;"></div>
+      <div class="perk-tooltip" id="w-perk-tooltip">
+        <button id="w-perk-tooltip-details" class="tooltip-details-btn" type="button">Details</button>
+        <div class="perk-tooltip-content">
+          <div class="clarity-content">
+            <div class="clarity-title">Perk Details</div>
+            <div class="clarity-desc">Hover a perk to see details here.</div>
+          </div>
+        </div>
+      </div>
+      <div class="dim-wishlist-container">
+        <button id="w-dim-copy-btn" class="dim-copy-btn" type="button">Copy</button>
+        <div id="w-dim-wishlist" class="dim-wishlist">${buildDimWishlistString()}</div>
+      </div>
     </div>
   `;
+
+  // Wire up the Details button to toggle visibility of the description (.clarity-desc)
+  (function attachTooltipDetailsToggle() {
+    const detailsBtn = document.getElementById('w-perk-tooltip-details');
+    if (!detailsBtn) return;
+    detailsBtn.setAttribute('aria-pressed', 'true');
+    detailsBtn.addEventListener('click', () => {
+      const tooltipEl = document.getElementById('w-perk-tooltip');
+      if (!tooltipEl) return;
+      const hidden = tooltipEl.classList.toggle('hide-desc');
+      detailsBtn.setAttribute('aria-pressed', String(!hidden));
+    });
+  })();
+
+  (function attachDimCopyButton() {
+    const copyBtn = document.getElementById('w-dim-copy-btn');
+    const dimEl = document.getElementById('w-dim-wishlist');
+    if (!copyBtn || !dimEl) return;
+    copyBtn.addEventListener('click', async () => {
+      const text = (dimEl.textContent || '').trim();
+      const prevLabel = copyBtn.textContent;
+      try {
+        // Try native async clipboard first
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // Robust textarea fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          // Prevent mobile zoom and keep off-screen
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.top = '0';
+          ta.style.opacity = '0';
+          ta.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          try {
+            const ok = document.execCommand('copy');
+            if (!ok) throw new Error('execCommand returned false');
+          } finally {
+            ta.remove();
+          }
+        }
+
+        copyBtn.textContent = 'Copied';
+        copyBtn.style.color = '#4ade80'; // Green feedback
+        setTimeout(() => { 
+          copyBtn.textContent = prevLabel;
+          copyBtn.style.color = '';
+        }, 1200);
+      } catch (err) {
+        console.error('Copy to clipboard failed:', err);
+        copyBtn.textContent = 'Failed';
+        copyBtn.style.color = '#f87171'; // Red feedback
+        setTimeout(() => { 
+          copyBtn.textContent = prevLabel;
+          copyBtn.style.color = '';
+        }, 1200);
+      }
+    });
+  })();
 
   const selectorRow = document.getElementById('w-selector-row');
   const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories);
@@ -752,28 +1264,47 @@ function renderWeaponSockets() {
     const isDisabled = !socket && !isMasterworkAvailable;
 
     el.className = `selector-col ${isDisabled ? 'disabled' : ''}`;
+    const socketKey = socket ? socket.socketIndex : 'masterwork';
     el.innerHTML = `
       <div class="selector-label">${label}</div>
       <div class="selector-icon" id="w-socket-display-${colIndex}"></div>
+      <div class="slot-dots" data-col-index="${colIndex}" data-socket-key="${socketKey}"></div>
     `;
 
     if (socket || isMasterworkAvailable) {
       const socketIndex = socket ? socket.socketIndex : null;
       el.addEventListener('click', () => selectSocketColumn(colIndex, socketIndex));
 
+      // Populate dots under selector to reflect page capacity and selections
+      (function populateSlotDots() {
+        const dotsWrap = el.querySelector('.slot-dots');
+        if (!dotsWrap) return;
+        dotsWrap.innerHTML = '';
+        const cap = SLOT_CAPACITIES[colIndex] || 1;
+        const key = socketIndex != null ? socketIndex : 'masterwork';
+        ensureSelectedPerkArray(key);
+        const selArr = getSelectedPerks(key) || [];
+        for (let d = 0; d < cap; d++) {
+          const dot = document.createElement('div');
+          dot.className = 'dot';
+          if (selArr[d]) dot.classList.add('selected');
+          dot.dataset.page = d;
+          dot.dataset.socketKey = String(key);
+          dot.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            // Activate the column and switch to the clicked page
+            selectSocketColumn(colIndex, socketIndex);
+            setPageIndex(key, d);
+            if (socketIndex != null) renderPerkOptions(socketIndex);
+            else renderMasterworkOptions();
+          });
+          dotsWrap.appendChild(dot);
+        }
+      })();
+
       // Tooltip listener for socket display (Only for regular sockets for now)
       const iconDisplay = el.querySelector('.selector-icon');
-      if (iconDisplay && window.weaponTooltipClarity && socket) {
-          iconDisplay.addEventListener('mouseenter', () => {
-              const selectedHash = weaponState.selectedPerks[socket.socketIndex];
-              if (selectedHash) {
-                   window.weaponTooltipClarity.handleHover(iconDisplay, selectedHash);
-              }
-          });
-          iconDisplay.addEventListener('mouseleave', () => {
-              window.weaponTooltipClarity.handleLeave();
-          });
-      }
+        // Floating tooltip removed — permanent tooltip used instead; no hover handlers here.
     }
 
     selectorRow.appendChild(el);
@@ -881,7 +1412,7 @@ async function renderWeaponPerks() {
   const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories);
 
   // Load perks for mapped sockets
-  for (const socket of sockets) {
+    for (const socket of columns) {
     // Only process if it's in our grid to save API calls
     const isMapped = columns.some(s => s && s.socketIndex === socket.socketIndex);
     if (!isMapped) continue;
@@ -926,7 +1457,7 @@ function updateMasterworkDisplayIcon() {
   const options = ensureMasterworkOptions();
   const selectedLabel = weaponState.selectedMasterwork;
   
-  let activeOption = selectedLabel ? options.find(o => o.perkName === selectedLabel) : options[0];
+  let activeOption = selectedLabel ? options.find(o => o.perkName === selectedLabel) : null;
   
   if (activeOption) {
     const iconUrl = activeOption.icon || '';
@@ -1004,11 +1535,18 @@ function getPerkOptionsForSocket(socketIndex) {
   return variants.regular || [];
 }
 
-function ensureSelectedPerkInOptions(socketIndex, options) {
+function ensureSelectedPerkInOptions(socketIndex, options, pageIndex = 0) {
   if (!Array.isArray(options) || options.length === 0) return;
-  const selected = weaponState.selectedPerks[socketIndex];
-  if (selected && options.some((perk) => perk.perkHash === selected)) return;
-  weaponState.selectedPerks[socketIndex] = options[0].perkHash;
+  // If auto-select is disabled (e.g., initial weapon load), don't pick a default
+  if (!weaponState.autoSelectPerks) return;
+
+  const arr = ensureSelectedPerkArray(socketIndex);
+  // If any existing selection matches available options, skip
+  if (arr.some((h) => h && options.some((p) => p.perkHash === h))) return;
+  // Otherwise set the requested pageIndex to the first option
+  const p = Number.isFinite(pageIndex) ? pageIndex : 0;
+  arr[p] = options[0].perkHash;
+  weaponState.selectedPerks[socketIndex] = arr;
   updateSocketDisplayIcon(socketIndex);
   updateWeaponStatDeltas();
 }
@@ -1023,7 +1561,11 @@ function selectSocketColumn(colIndex, socketIndex) {
     updatePerkToggleState(null);
     const optionsRow = document.getElementById('w-options-row');
     optionsRow.style.display = 'flex';
+    // When user activates a selector column, do not auto-select an option.
+    const prevAuto = weaponState.autoSelectPerks;
+    weaponState.autoSelectPerks = false;
     renderMasterworkOptions();
+    weaponState.autoSelectPerks = prevAuto;
     return;
   }
 
@@ -1035,7 +1577,11 @@ function selectSocketColumn(colIndex, socketIndex) {
   updatePerkToggleState(socketIndex);
   const optionsRow = document.getElementById('w-options-row');
   optionsRow.style.display = 'flex';
+  // When user activates a selector column, render options without auto-selecting any.
+  const prevAuto = weaponState.autoSelectPerks;
+  weaponState.autoSelectPerks = false;
   renderPerkOptions(socketIndex);
+  weaponState.autoSelectPerks = prevAuto;
 }
 
 function renderMasterworkOptions() {
@@ -1074,10 +1620,42 @@ function renderMasterworkOptions() {
     btn.title = option.perkName;
 
     btn.addEventListener('click', () => {
-       weaponState.selectedMasterwork = option.perkName;
+       // Toggle selection: deselect if already selected
+       if (weaponState.selectedMasterwork === option.perkName) {
+         weaponState.selectedMasterwork = null;
+       } else {
+         weaponState.selectedMasterwork = option.perkName;
+       }
        updateMasterworkDisplayIcon();
        updateWeaponStatDeltas();
        renderMasterworkOptions(); 
+       try { updateDimWishlist(); } catch (e) {}
+    });
+
+    // Tooltip listeners for masterwork options (update permanent panel)
+    btn.addEventListener('mouseenter', () => {
+      const tooltipPanel = document.getElementById('w-perk-tooltip');
+      if (!tooltipPanel) return;
+      try {
+        if (window.weaponStatsService && window.weaponTooltipClarity) {
+          const perkData = window.weaponStatsService.getPerkData(option.perkHash || option.perkName);
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          if (contentWrap && window.weaponTooltipClarity && window.weaponTooltipClarity.buildContent) {
+            contentWrap.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
+          } else if (window.weaponTooltipClarity && window.weaponTooltipClarity.buildContent) {
+            tooltipPanel.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
+          }
+        } else {
+          const html = `<div class="clarity-content"><div class="clarity-title">${option.perkName}</div></div>`;
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          if (contentWrap) contentWrap.innerHTML = html; else tooltipPanel.innerHTML = html;
+        }
+      } catch (e) {
+        tooltipPanel.innerHTML = `<div class="clarity-content"><div class="clarity-title">${option.perkName}</div></div>`;
+      }
+    });
+    btn.addEventListener('mouseleave', () => {
+      // Floating tooltip removed — do nothing on leave for permanent tooltip.
     });
 
     optionsRow.appendChild(btn);
@@ -1093,14 +1671,17 @@ function updateSocketDisplayIcon(socketIndex) {
   if (!displayEl) return;
 
   const perks = weaponState.socketPerksMap[socketIndex] || [];
-  const selectedHash = weaponState.selectedPerks[socketIndex];
+  const selectedArr = getSelectedPerks(socketIndex);
+  const firstSelected = selectedArr.find(Boolean) || null;
 
-  if (!selectedHash) {
+  if (!firstSelected) {
     displayEl.style.backgroundImage = 'none';
+    displayEl.removeAttribute('data-selected-count');
+    displayEl.title = '';
     return;
   }
-  
-  let activePerk = perks.find(p => p.perkHash === selectedHash);
+
+  let activePerk = perks.find(p => p.perkHash === firstSelected);
 
   if (activePerk && activePerk.icon) {
     const safeIcon = activePerk.icon.startsWith('http') ? activePerk.icon : `https://www.bungie.net${activePerk.icon}`;
@@ -1108,6 +1689,10 @@ function updateSocketDisplayIcon(socketIndex) {
   } else {
     displayEl.style.backgroundImage = 'none';
   }
+  // expose selected count for optional badge styling
+  const count = selectedArr.filter(Boolean).length;
+  if (count > 0) displayEl.setAttribute('data-selected-count', String(count)); else displayEl.removeAttribute('data-selected-count');
+  displayEl.title = count > 0 ? `${count} selected` : '';
 }
 
 function renderPerkOptions(socketIndex) {
@@ -1115,12 +1700,36 @@ function renderPerkOptions(socketIndex) {
   optionsRow.innerHTML = '';
 
   const perks = getPerkOptionsForSocket(socketIndex);
-  ensureSelectedPerkInOptions(socketIndex, perks);
-  
+  const pageIndex = getPageIndex(socketIndex);
+  ensureSelectedPerkInOptions(socketIndex, perks, pageIndex);
+
   if (perks.length === 0) {
     optionsRow.innerHTML = '<div style="color: #888; padding: 10px; font-size: 12px;">No options available</div>';
     return;
   }
+
+  // Create tabs (page selectors) at top of options row
+  const tabsBar = document.createElement('div');
+  tabsBar.className = 'options-tabs';
+  const cap = getSlotCapacityForSocket(socketIndex);
+  for (let t = 0; t < cap; t++) {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'options-tab';
+    if (t === pageIndex) tab.classList.add('active');
+    tab.textContent = String(t + 1);
+    tab.addEventListener('click', () => {
+      setPageIndex(socketIndex, t);
+      renderPerkOptions(socketIndex);
+    });
+    tabsBar.appendChild(tab);
+  }
+  optionsRow.appendChild(tabsBar);
+
+  // Options body (scrollable area)
+  const optionsBody = document.createElement('div');
+  optionsBody.className = 'options-body';
+  optionsRow.appendChild(optionsBody);
 
   perks.forEach(perk => {
     const btn = document.createElement('div');
@@ -1128,7 +1737,7 @@ function renderPerkOptions(socketIndex) {
     if (perk.isEnhanced) {
       btn.classList.add('enhanced');
     }
-    if (weaponState.selectedPerks[socketIndex] === perk.perkHash) {
+    if (getSelectedPerkAt(socketIndex, pageIndex) === perk.perkHash) {
       btn.classList.add('selected');
     }
 
@@ -1138,24 +1747,56 @@ function renderPerkOptions(socketIndex) {
     }
     btn.title = perk.perkName;
 
-    // Add tooltip listeners
-        if (window.weaponTooltipClarity) {
-         btn.addEventListener('mouseenter', () => {
-           window.weaponTooltipClarity.handleHover(btn, perk.perkHash);
-         });
-         btn.addEventListener('mouseleave', () => {
-           window.weaponTooltipClarity.handleLeave();
-         });
+    // Add tooltip listeners: update permanent panel
+    btn.addEventListener('mouseenter', () => {
+      const tooltipPanel = document.getElementById('w-perk-tooltip');
+      try {
+        if (window.weaponStatsService && window.weaponTooltipClarity) {
+          const perkData = window.weaponStatsService.getPerkData(perk.perkHash);
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          if (contentWrap && window.weaponTooltipClarity.buildContent) {
+            contentWrap.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
+          } else if (window.weaponTooltipClarity.buildContent) {
+            tooltipPanel.innerHTML = window.weaponTooltipClarity.buildContent(perkData);
+          }
+          // Floating tooltip removed — only update the permanent tooltip content.
+        } else if (tooltipPanel) {
+          const html = `<div class="clarity-content"><div class="clarity-title">${perk.perkName}</div><div class="clarity-desc">${perk.perkDescription || 'No description available.'}</div></div>`;
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          if (contentWrap) contentWrap.innerHTML = html; else tooltipPanel.innerHTML = html;
         }
-
-    btn.addEventListener('click', () => {
-       weaponState.selectedPerks[socketIndex] = perk.perkHash;
-       updateSocketDisplayIcon(socketIndex);
-       updateWeaponStatDeltas();
-       renderPerkOptions(socketIndex); 
+      } catch (e) {
+        // Fallback content
+        if (tooltipPanel) {
+          const contentWrap = tooltipPanel.querySelector('.perk-tooltip-content');
+          const html = `<div class="clarity-content"><div class="clarity-title">${perk.perkName}</div></div>`;
+          if (contentWrap) contentWrap.innerHTML = html; else tooltipPanel.innerHTML = html;
+        }
+      }
+    });
+    btn.addEventListener('mouseleave', () => {
+      // Permanent panel remains; do not clear on leave per requirement
     });
 
-    optionsRow.appendChild(btn);
+    btn.addEventListener('click', () => {
+       // Toggle selection at current page
+       togglePerkSelection(socketIndex, perk.perkHash, pageIndex);
+       updateSocketDisplayIcon(socketIndex);
+       updateWeaponStatDeltas();
+       renderPerkOptions(socketIndex);
+       // Update dots for this selector
+       const selectorCol = document.querySelector(`.selector-col .slot-dots[data-socket-key="${socketIndex}"]`);
+       if (selectorCol) {
+         // re-populate selected state
+         const dots = selectorCol.querySelectorAll('.dot');
+         dots.forEach((d) => {
+           const p = Number(d.dataset.page);
+           if (getSelectedPerkAt(socketIndex, p)) d.classList.add('selected'); else d.classList.remove('selected');
+         });
+       }
+    });
+
+    optionsBody.appendChild(btn);
   });
 }
 
@@ -1198,14 +1839,16 @@ async function updateWeaponStatDeltas() {
     });
   }
 
-  // Add socket-based perk bonuses
+  // Add socket-based perk bonuses (support multiple selected perks per socket)
   for (const socketIndex in weaponState.selectedPerks) {
-    const perkHash = weaponState.selectedPerks[socketIndex];
-    const perkBonuses = window.weaponStatsService?.getStaticBonuses(perkHash) || {};
-
-    for (const statName in perkBonuses) {
-      if (statDeltas.hasOwnProperty(statName)) {
-        statDeltas[statName] += perkBonuses[statName];
+    const arr = getSelectedPerks(socketIndex) || [];
+    for (const perkHash of arr) {
+      if (!perkHash) continue;
+      const perkBonuses = window.weaponStatsService?.getStaticBonuses(perkHash) || {};
+      for (const statName in perkBonuses) {
+        if (statDeltas.hasOwnProperty(statName)) {
+          statDeltas[statName] += perkBonuses[statName];
+        }
       }
     }
   }
@@ -1222,6 +1865,98 @@ async function updateWeaponStatDeltas() {
 
   renderWeaponStats(statDeltas);
   d2log('✅ Weapon stat deltas updated', 'weapon-ui');
+}
+
+/**
+ * Build and update a simple DIM wishlist display string that lists selected perk hashes per slot.
+ * Format: dim://wish?hash=<weaponHash>&slots=slot1:hash,hash|slot2:...
+ */
+function buildDimWishlistString() {
+  if (!weaponState.currentWeapon) return 'dimwishlist:item=&perks=';
+  const weaponHash = weaponState.currentWeapon.weaponHash || weaponState.currentWeapon.hash || '';
+  const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories || []);
+
+  // Collect perks from slots 1-5 (columns 0-4)
+  const perkList = [];
+  for (let i = 0; i < 5; i++) {
+    const socket = columns[i];
+    if (!socket) continue;
+    const arr = getSelectedPerks(socket.socketIndex) || [];
+    arr.filter(Boolean).forEach((h) => perkList.push(String(h)));
+  }
+
+  const perksStr = perkList.join(',');
+  return `dimwishlist:item=${weaponHash}&perks=${perksStr}`;
+}
+
+function updateDimWishlist() {
+  const el = document.getElementById('w-dim-wishlist');
+  if (!el) return;
+  try {
+    const txt = buildDimWishlistString();
+    el.textContent = txt;
+  } catch (e) {
+    el.textContent = 'DIM: (error)';
+  }
+}
+
+/**
+ * Resolve a human readable perk name from a stored perk hash or masterwork id.
+ * Falls back to the raw value when a name cannot be found.
+ */
+function getPerkDisplayName(perkHash) {
+  if (!perkHash && perkHash !== 0) return '';
+  const key = String(perkHash);
+  // Check masterwork options first
+  const masterworkOpts = weaponState.socketPerksMap?.['masterwork'] || [];
+  const mm = masterworkOpts.find((o) => String(o.perkHash) === key || o.perkName === key);
+  if (mm) return mm.perkName || String(perkHash);
+
+  // Search socket perks map
+  for (const k of Object.keys(weaponState.socketPerksMap || {})) {
+    if (k === 'masterwork') continue;
+    const arr = weaponState.socketPerksMap[k] || [];
+    const found = arr.find((p) => String(p.perkHash) === key || p.perkName === key);
+    if (found) return found.perkName || String(perkHash);
+  }
+
+  // Fallback to manifest lookup if available
+  try {
+    const itemDefs = window.__manifest__?.DestinyInventoryItemDefinition;
+    if (itemDefs && typeof itemDefs.get === 'function') {
+      const def = itemDefs.get(String(perkHash));
+      if (def && def.displayProperties?.name) return def.displayProperties.name;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return String(perkHash);
+}
+
+/**
+ * Build a human-readable display string for the wish: "Weapon Name — Perk A + Perk B + ..."
+ */
+function buildReadableDisplayString() {
+  if (!weaponState.currentWeapon) return 'Unknown Weapon';
+  const columns = mapSocketsToColumns(weaponState.currentWeapon.sockets, weaponState.currentWeapon.socketCategories || []);
+  const parts = [];
+  for (let i = 0; i < 5; i++) {
+    const socket = columns[i];
+    if (!socket) continue;
+    const arr = getSelectedPerks(socket.socketIndex) || [];
+    arr.filter(Boolean).forEach((h) => {
+      const name = getPerkDisplayName(h);
+      if (name) parts.push(name);
+    });
+  }
+  // Include masterwork (slot6) if present
+  if (weaponState.selectedMasterwork) {
+    parts.push(String(weaponState.selectedMasterwork));
+  }
+
+  const perkString = parts.length ? parts.join(' + ') : '';
+  return perkString ? `${weaponState.currentWeapon.name} — ${perkString}` : `${weaponState.currentWeapon.name}`;
 }
 
 
@@ -1258,9 +1993,15 @@ function togglePane(pane) {
 function toggleModeButton(mode) {
   const pvePveBtn = document.getElementById('w-pve-btn');
   const pvpPvpBtn = document.getElementById('w-pvp-btn');
+  const modeContainer = document.getElementById('ui-mode-toggle');
 
   if (pvePveBtn) pvePveBtn.classList.toggle('active', mode === 'pve');
   if (pvpPvpBtn) pvpPvpBtn.classList.toggle('active', mode === 'pvp');
+  // Ensure the container has the corresponding mode class so CSS applies
+  if (modeContainer) {
+    modeContainer.classList.toggle('pve', mode === 'pve');
+    modeContainer.classList.toggle('pvp', mode === 'pvp');
+  }
 
   d2log(`✅ Switched to ${mode.toUpperCase()} mode`, 'weapon-ui');
 }
@@ -1612,7 +2353,7 @@ function createWeaponCardHTML(item, index) {
  * @returns {Array<string>} Array of perk display strings
  */
 function getPerkDisplayInfo(wish) {
-  if (!wish || !wish.config) return [];
+  if (!wish) return [];
 
   // Parse displayString for perk names (e.g., "Arrowhead Brake + Ricochet Rounds + Rampage")
   const displayString = wish.displayString || '';
@@ -1803,19 +2544,103 @@ function attachWeaponCardListeners() {
 }
 
 /**
- * Handle save button click - Phase 6 will fully implement this.
- * Stub for now.
+ * Handle save button click.
+ * Collects selected perks and calls weaponManager to save the wish.
  */
 async function handleSaveWeaponWish() {
+  const saveBtn = document.getElementById('btn-create-weapon-wish');
+  const originalText = saveBtn ? saveBtn.textContent : 'MAKE WISH';
+
   if (!weaponState.currentWeapon) {
     d2log('No weapon selected', 'weapon-ui', 'error');
+    if (saveBtn) {
+      saveBtn.textContent = "SELECT WEAPON FIRST";
+      saveBtn.disabled = true;
+      setTimeout(() => { 
+        saveBtn.textContent = originalText; 
+        saveBtn.disabled = false; 
+      }, 2000);
+    }
     return;
   }
 
-  // Phase 6: Generate displayString from selectedPerks
-  // Phase 6: Call weaponManager.saveWeaponWish()
-  
-  d2log('💾 Save weapon - Phase 6 implementation pending', 'weapon-ui');
+  try {
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "GRANTING...";
+    }
+
+    const { hash, name, sockets, socketCategories } = weaponState.currentWeapon;
+    
+    // Get column mapping to align with slots 1-6
+    // 0: Barrel, 1: Mag, 2: Trait1, 3: Trait2, 4: Origin
+    const columns = mapSocketsToColumns(sockets, socketCategories);
+    
+    const wishData = {
+      name: name || 'Unknown Weapon',
+      slot1: [],
+      slot2: [],
+      slot3: [],
+      slot4: [],
+      slot5: [],
+      slot6: [],
+      hash: Number(hash)
+    };
+
+    // Map columns 0-4 to slots 1-5 and collect all selected perks per socket
+    for (let i = 0; i < 5; i++) {
+      const socket = columns[i];
+      if (socket) {
+        const selectedArr = getSelectedPerks(socket.socketIndex) || [];
+        if (Array.isArray(selectedArr) && selectedArr.length > 0) {
+          const slotKey = `slot${i + 1}`;
+          selectedArr.forEach((h) => {
+            if (h) wishData[slotKey].push(String(h));
+          });
+        }
+      }
+    }
+
+    // Masterwork (Slot 6)
+    if (weaponState.selectedMasterwork) {
+      wishData.slot6.push(String(weaponState.selectedMasterwork));
+    }
+
+    // Store DIM-format wishlist on the wish object and pass a human-readable displayString to manager
+    wishData.dimWishlist = buildDimWishlistString();
+    const readableDisplay = buildReadableDisplayString();
+    const result = await weaponManager.saveWeaponWish(
+      hash,
+      wishData,
+      ['pve'], // Default tags
+      readableDisplay,
+      { mode: weaponState.currentMode || 'pve' }
+    );
+
+    if (result.success) {
+      if (saveBtn) {
+        saveBtn.style.backgroundColor = '#15803d'; // Green
+        saveBtn.textContent = "WISH GRANTED!";
+      }
+      d2log(`✅ Wish saved: ${wishData.name}`, 'weapon-ui');
+    } else {
+      throw new Error(result.message);
+    }
+  } catch (err) {
+    if (saveBtn) {
+      saveBtn.style.backgroundColor = '#b91c1c'; // Red
+      saveBtn.textContent = "FAILED";
+    }
+    d2log(`❌ Save failed: ${err.message}`, 'weapon-ui', 'error');
+  } finally {
+    setTimeout(() => {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.style.backgroundColor = ''; // Reset
+        saveBtn.textContent = originalText;
+      }
+    }, 2000);
+  }
 }
 
 /**

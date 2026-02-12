@@ -245,6 +245,33 @@ async function initWeaponCraft() {
         renderRecentWeaponSelections();
       }
     });
+    // History toggle shows/hides recent selections when search is empty
+    const historyToggle = document.getElementById('w-history-toggle');
+    const historyClearBtn = document.getElementById('w-history-clear');
+    if (historyToggle) {
+      historyToggle.addEventListener('click', () => {
+        weaponState.showHistory = !weaponState.showHistory;
+        historyToggle.classList.toggle('active', weaponState.showHistory);
+        // Only render history if search field is empty
+        if (!searchInput.value) {
+          renderRecentWeaponSelections();
+        } else {
+          const resultsDiv = document.getElementById('w-search-results');
+          if (resultsDiv) resultsDiv.innerHTML = '';
+        }
+      });
+    }
+
+    if (historyClearBtn) {
+      historyClearBtn.addEventListener('click', () => {
+        // Clear the search input and hide history
+        searchInput.value = '';
+        weaponState.showHistory = false;
+        if (historyToggle) historyToggle.classList.remove('active');
+        const resultsDiv = document.getElementById('w-search-results');
+        if (resultsDiv) resultsDiv.innerHTML = '';
+      });
+    }
   }
 
   if (pvePveBtn) {
@@ -688,7 +715,8 @@ function renderRecentWeaponSelections() {
     return;
   }
 
-  renderWeaponSearchResults(weaponState.recentSelections);
+  // Show up to the last 4 recent selections for the history view
+  renderWeaponSearchResults(weaponState.recentSelections.slice(0, 4));
 }
 
 /**

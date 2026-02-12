@@ -942,8 +942,46 @@ function renderRecentWeaponSelections() {
     return;
   }
 
-  // Show up to the last 4 recent selections for the history view
-  renderWeaponSearchResults(weaponState.recentSelections.slice(0, 4));
+  // Show up to the last 4 recent selections for the history view (preserve chronological order)
+  const recent = weaponState.recentSelections.slice(0, 4);
+  resultsDiv.innerHTML = recent
+    .map((weapon) => {
+      const icon = weapon.icon || '';
+      const type = weapon.type || 'Unknown';
+      const rarity = weapon.rarity || 'Common';
+      return `
+        <div class="weapon-search-result" data-hash="${weapon.hash}">
+          <div class="search-result-icon">
+            ${icon ? `<img src="${icon}" alt="${weapon.name}" />` : ''}
+          </div>
+          <div class="search-result-info">
+            <div class="search-result-name">${weapon.name}</div>
+            <div class="search-result-meta">${type} • ${rarity}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+
+  // Add click listeners and screenshot markers for history results
+  resultsDiv.querySelectorAll('.weapon-search-result').forEach((resultEl) => {
+    resultEl.addEventListener('click', () => {
+      const weaponHash = parseInt(resultEl.dataset.hash);
+      selectWeapon(weaponHash);
+    });
+  });
+
+  resultsDiv.querySelectorAll('.weapon-search-result').forEach((resultEl) => {
+    const weaponHash = String(resultEl.dataset.hash);
+    const rec = screenshotAvailabilityCache.get(weaponHash);
+    if (rec) {
+      if (!rec.ok) resultEl.classList.add('no-screenshot');
+    } else {
+      checkScreenshotForWeapon(weaponHash).then((r) => {
+        if (!r || !r.ok) resultEl.classList.add('no-screenshot');
+      }).catch(() => {});
+    }
+  });
 }
 
 /**

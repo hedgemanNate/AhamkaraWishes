@@ -32,15 +32,15 @@
         <div class="inv-metric weapon">
           <div class="inv-metric-icon" aria-hidden="true">⚔️</div>
           <div class="inv-metric-body">
-            <div class="inv-metric-label">Weapons (inventory)</div>
-            <div class="inv-metric-value">${counts.inventoryWeapons || 0}</div>
+            <div class="inv-metric-label">Weapons</div>
+            <div class="inv-metric-value">${counts.weapons || 0}</div>
           </div>
         </div>
         <div class="inv-metric armor">
           <div class="inv-metric-icon" aria-hidden="true">🛡️</div>
           <div class="inv-metric-body">
-            <div class="inv-metric-label">Armor (inventory)</div>
-            <div class="inv-metric-value">${counts.inventoryArmor || 0}</div>
+            <div class="inv-metric-label">Armor</div>
+            <div class="inv-metric-value">${counts.armor || 0}</div>
           </div>
         </div>
       </div>

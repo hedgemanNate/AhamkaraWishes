@@ -33,35 +33,56 @@
     const body = document.getElementById('wl-body');
     if (!tabs || !body) return;
 
-    tabs.innerHTML = '';
+    // Only rebuild tabs when the available lists changed; otherwise just toggle active class
+    // to avoid re-rendering other parts of the DOM (which caused the wishlist card to reload).
     // `#wl-list` (weapon-card area) has been removed; do not render weapon cards here.
 
     const lists = dimData.lists || {};
     const entries = Object.keys(lists).map(id => ({ id, name: lists[id].name || id }));
     const activeId = dimData.activeListId || 'default';
 
-    // Build tabs
-    entries.forEach((entry) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'options-tab';
-      btn.dataset.id = entry.id;
-      btn.textContent = entry.name || entry.id;
-      if (entry.id === activeId) btn.classList.add('active');
-      btn.addEventListener('click', async (e) => {
-        await setActiveList(e.currentTarget.dataset.id);
-        await loadLists();
+    // Determine whether we need to rebuild the tab buttons
+    const currentIds = Array.from(tabs.children || []).map(ch => ch.dataset && ch.dataset.id).filter(Boolean);
+    const newIds = entries.map(e => e.id);
+    const needRebuild = currentIds.length !== newIds.length || currentIds.some((id, i) => id !== newIds[i]);
+
+    if (needRebuild) {
+      tabs.innerHTML = '';
+      entries.forEach((entry) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'options-tab';
+        btn.dataset.id = entry.id;
+        btn.textContent = entry.name || entry.id;
+        if (entry.id === activeId) btn.classList.add('active');
+        btn.addEventListener('click', async (e) => {
+          await setActiveList(e.currentTarget.dataset.id);
+          await loadLists();
+        });
+        tabs.appendChild(btn);
       });
-      tabs.appendChild(btn);
-    });
+    } else {
+      // just update which tab is active
+      Array.from(tabs.children).forEach(ch => {
+        try { ch.classList.toggle('active', ch.dataset.id === activeId); } catch (e) { }
+      });
+    }
 
     // Update header card title/body with active list info (if present)
     try {
-      const titleEl = document.getElementById('wl-card-title');
+      const titleEl = document.getElementById('wl-options-title');
       const bodyEl = document.getElementById('wl-card-body');
       const active = lists[activeId] || { name: 'No List Selected' };
-      if (titleEl) titleEl.textContent = active.name || activeId || 'No List Selected';
-      if (bodyEl) bodyEl.textContent = active.description || '';
+      if (titleEl && titleEl.textContent !== (active.name || activeId || 'No List Selected')) {
+        titleEl.textContent = active.name || activeId || 'No List Selected';
+      }
+      // Only update body when there is a non-empty description to show.
+      // Avoid clearing the body to an empty string because other modules
+      // (e.g. inventory-metrics) render HTML into this container and
+      // overwriting it with '' causes visible reloads whenever tabs change.
+      if (bodyEl && active.description && bodyEl.textContent !== active.description) {
+        bodyEl.textContent = active.description;
+      }
     } catch (err) {
       // ignore if DOM not present
     }

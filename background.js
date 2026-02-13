@@ -214,7 +214,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Request inventory/vault counts. The background performs authenticated
   // requests to Bungie using the stored OAuth token and the API key.
   if (message.type === 'BUNGIE_REQUEST_INVENTORY_COUNTS') {
-    console.log('[BUNGIE INVENTORY] received request for inventory counts');
     chrome.storage.local.get(['bungie_oauth'], async (res) => {
       const token = res && res.bungie_oauth && res.bungie_oauth.access_token;
       if (!token) {
@@ -358,9 +357,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               pJson = null;
             }
             if (pJson && pJson.Response) {
-              try {
-                console.log('[BUNGIE INVENTORY] profile response keys', Object.keys(pJson.Response));
-              } catch (e) { /* ignore logging errors */ }
               scanForItems(pJson.Response, 'response');
             }
           } catch (e) {
@@ -417,7 +413,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           for (const [k, v] of manifestDefCache.entries()) persist[k] = v;
           await storageSet({ manifest_item_defs: persist });
         } catch (e) {
-          console.warn('[BUNGIE INVENTORY] failed to persist manifest cache', e);
+          // ignore persist errors
         }
 
         // If many hashes still unresolved, attempt to download the full DestinyInventoryItemDefinition
@@ -425,8 +421,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const stillMissing = hashes.filter(h => !manifestDefCache.has(String(h)) || manifestDefCache.get(String(h)) === null);
         if (stillMissing.length > 0) {
           try {
-            console.log('[BUNGIE INVENTORY] fetching full manifest component for', stillMissing.length, 'missing hashes');
-            // Fetch manifest meta
+            // Attempt to fetch the full manifest component and extract missing defs
             const metaRes = await fetch('https://www.bungie.net/Platform/Destiny2/Manifest/', { headers: { 'X-API-Key': BUNGIE_API_KEY, 'Accept': 'application/json' } });
             if (metaRes.ok) {
               const meta = await metaRes.json();
@@ -451,24 +446,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                       }
                     }
                     if (added > 0) {
-                      console.log('[BUNGIE INVENTORY] added', added, 'defs from manifest component');
-                      // persist merged cache
                       const persist2 = {};
                       for (const [k, v] of manifestDefCache.entries()) persist2[k] = v;
                       await storageSet({ manifest_item_defs: persist2 });
                     }
                   }
-                } else {
-                  console.warn('[BUNGIE INVENTORY] manifest component fetch failed', compRes.status);
                 }
-              } else {
-                console.warn('[BUNGIE INVENTORY] manifest meta did not include expected paths');
               }
-            } else {
-              console.warn('[BUNGIE INVENTORY] manifest meta fetch failed', metaRes.status);
             }
           } catch (e) {
-            console.warn('[BUNGIE INVENTORY] full manifest fetch failed', e);
+            // ignore full manifest fetch errors
           }
         }
 
@@ -492,23 +479,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         }
 
-        // Debugging info: log counts and unresolved sample to help diagnose zero counts
-        try {
-          const sampleUnresolved = unresolved.slice(0, 10).map(e => ({ hash: e.el && e.el.itemHash ? String(e.el.itemHash) : null, path: e.path }));
-          console.log('[BUNGIE INVENTORY] counts', {
-            totalWeapons,
-            totalArmor,
-            inventoryWeapons,
-            inventoryArmor,
-            vaultWeapons,
-            vaultArmor,
-            scannedItems: itemsToResolve.length,
-            unresolved: unresolved.length,
-            sampleUnresolved
-          });
-        } catch (e) {
-          console.warn('[BUNGIE INVENTORY] logging failed', e);
-        }
+        // end of classification
 
         sendResponse({ success: true, counts: {
           weapons: totalWeapons,

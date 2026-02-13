@@ -130,8 +130,8 @@
   border: 1px solid rgba(255,255,255,0.03);
 }
 
-.menu-auth-header .wishlist-card #wl-card-title,
-.wishlist-card #wl-card-title {
+.options-row .options-title,
+#wl-options-title {
   font-weight: 700;
   color: var(--accent-gold);
   font-size: 14px;
@@ -149,7 +149,8 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
+  width: 100%;
 }
 .inv-metric {
   display: flex;
@@ -171,9 +172,9 @@
   font-size: 16px;
   background: rgba(255,255,255,0.03);
 }
-.inv-metric .inv-metric-body { display:flex;flex-direction:column; }
-.inv-metric-label { font-size:11px; color:var(--text-sub); }
-.inv-metric-value { font-size:14px; font-weight:700; color:var(--text-main); }
+.inv-metric .inv-metric-body { display:flex;flex-direction:column; align-items:center; }
+.inv-metric-label { font-size:11px; color:var(--text-sub); text-align:center; }
+.inv-metric-value { font-size:15px; font-weight:700; color:var(--text-main); text-align:center; }
 .inv-metric.weapon .inv-metric-icon { color: var(--stat-weapons); background: rgba(74,111,165,0.08); }
 .inv-metric.armor .inv-metric-icon { color: var(--stat-health); background: rgba(93,122,93,0.08); }
 .inv-metric-actions { margin-top:8px; display:flex; gap:8px; justify-content:flex-start; }
@@ -182,5 +183,8 @@
 .inv-error-reason { font-size:11px; color:var(--text-sub); margin-bottom:6px; }
 
 @media (max-width:420px) {
-  .inv-metrics { flex-direction:column; align-items:flex-start; }
+  .inv-metrics { flex-direction:column; align-items:center; }
+  .inv-metric { min-width: 100px; padding:8px 10px; }
+  .inv-metric .inv-metric-icon { width:32px; height:32px; font-size:14px; }
+  .inv-metric-value { font-size:14px; }
 }

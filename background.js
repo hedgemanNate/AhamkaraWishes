@@ -211,6 +211,117 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+  // Request inventory/vault counts. The background performs authenticated
+  // requests to Bungie using the stored OAuth token and the API key.
+  if (message.type === 'BUNGIE_REQUEST_INVENTORY_COUNTS') {
+    chrome.storage.local.get(['bungie_oauth'], async (res) => {
+      const token = res && res.bungie_oauth && res.bungie_oauth.access_token;
+      if (!token) {
+        sendResponse({ success: false, error: 'Not logged in' });
+        return;
+      }
+
+      const headers = Object.assign({ 'Authorization': `Bearer ${token}` }, BUNGIE_API_KEY ? { 'X-API-Key': BUNGIE_API_KEY } : {});
+
+      try {
+        const membershipsUrl = 'https://www.bungie.net/Platform/User/GetMembershipsForCurrentUser/';
+        const msRes = await fetch(membershipsUrl, { headers });
+        const msText = await msRes.text();
+        let msJson = null;
+        try {
+          msJson = JSON.parse(msText);
+        } catch (e) {
+          console.warn('[BUNGIE OAUTH] memberships response not JSON', { status: msRes.status, text: msText.slice(0, 200) });
+          msJson = null;
+        }
+        const destinyMemberships = (msJson && msJson.Response && msJson.Response.destinyMemberships) || [];
+
+        // Counts aggregated across all destiny memberships
+        let totalWeapons = 0;
+        let totalArmor = 0;
+        let inventoryWeapons = 0; // weapons in character inventories (inventory)
+        let inventoryArmor = 0;   // armor in character inventories
+
+        // Helper: classify a single item object
+        function classifyItem(item, contextPath) {
+          // Heuristic: many Destiny item objects include `itemType` where
+          // 3 === Weapon in common mappings. Armor types vary; we check a
+          // few likely values. This heuristic may need refinement with
+          // mapping from the manifest for perfect accuracy.
+          const itype = item && (item.itemType || item.itemTypeId || item.type || null);
+          const isWeapon = (itype === 3);
+          const isArmor = (itype === 2 || itype === 4 || itype === 5);
+
+          if (isWeapon) totalWeapons++;
+          if (isArmor) totalArmor++;
+
+          // Determine if this item comes from a character (inventory) or profile (vault)
+          const path = (contextPath || '').toLowerCase();
+          const isCharacter = path.includes('character') || path.includes('characterinventories') || path.includes('characterequipment');
+          if (isCharacter && isWeapon) inventoryWeapons++;
+          if (isCharacter && isArmor) inventoryArmor++;
+        }
+
+        // Generic recursive scanner that looks for arrays of objects that look like items
+        function scanForItems(obj, path) {
+          if (!obj || typeof obj !== 'object') return;
+          if (Array.isArray(obj)) {
+            // possible item array
+            for (const el of obj) {
+              if (el && (el.itemHash || el.itemInstanceId || el.itemId)) {
+                classifyItem(el, path);
+              } else {
+                scanForItems(el, path);
+              }
+            }
+            return;
+          }
+          // Object: traverse properties
+          for (const k of Object.keys(obj)) {
+            const v = obj[k];
+            const childPath = path ? path + '/' + k : k;
+            scanForItems(v, childPath);
+          }
+        }
+
+        // For each destiny membership, fetch a broad profile payload that
+        // includes profile and character inventories to cover vault + inventory.
+        // NOTE: the `components` numeric mask may be tuned to reduce payload.
+        for (const m of destinyMemberships) {
+          const membershipType = m.membershipType;
+          const membershipId = m.membershipId;
+          const profileUrl = `https://www.bungie.net/Platform/Destiny2/${membershipType}/Profile/${membershipId}/?components=204,205,300,301,302,304,305`;
+          try {
+            const pRes = await fetch(profileUrl, { headers });
+            const pText = await pRes.text();
+            let pJson = null;
+            try {
+              pJson = JSON.parse(pText);
+            } catch (e) {
+              console.warn('[BUNGIE OAUTH] profile response not JSON', { membership: m, status: pRes.status, text: pText.slice(0,200) });
+              pJson = null;
+            }
+            if (pJson && pJson.Response) {
+              scanForItems(pJson.Response, 'response');
+            }
+          } catch (e) {
+            console.warn('Profile fetch failed for membership', m, e);
+          }
+        }
+
+        sendResponse({ success: true, counts: {
+          weapons: totalWeapons,
+          armor: totalArmor,
+          inventoryWeapons,
+          inventoryArmor
+        }});
+      } catch (err) {
+        console.error('Error fetching inventory counts', err);
+        sendResponse({ success: false, error: String(err) });
+      }
+    });
+    return true;
+  }
   // Logout handling: remove stored token and notify UI
   if (message.type === 'BUNGIE_OAUTH_LOGOUT') {
     chrome.storage.local.remove(['bungie_oauth','bungie_profile'], () => {

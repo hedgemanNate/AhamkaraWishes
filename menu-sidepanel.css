@@ -143,3 +143,44 @@
   color: var(--text-sub);
   margin-top: 6px;
 }
+
+/* Inventory metrics card styling */
+.inv-metrics {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-start;
+}
+.inv-metric {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.02);
+  min-width: 110px;
+  box-sizing: border-box;
+}
+.inv-metric .inv-metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: rgba(255,255,255,0.03);
+}
+.inv-metric .inv-metric-body { display:flex;flex-direction:column; }
+.inv-metric-label { font-size:11px; color:var(--text-sub); }
+.inv-metric-value { font-size:14px; font-weight:700; color:var(--text-main); }
+.inv-metric.weapon .inv-metric-icon { color: var(--stat-weapons); background: rgba(74,111,165,0.08); }
+.inv-metric.armor .inv-metric-icon { color: var(--stat-health); background: rgba(93,122,93,0.08); }
+.inv-metric-actions { margin-top:8px; display:flex; gap:8px; justify-content:flex-start; }
+.inv-loading, .inv-error { font-size:12px; color:var(--text-sub); }
+.inv-error-title { font-weight:700; color:var(--accent-gold); margin-bottom:4px; }
+.inv-error-reason { font-size:11px; color:var(--text-sub); margin-bottom:6px; }
+
+@media (max-width:420px) {
+  .inv-metrics { flex-direction:column; align-items:flex-start; }
+}

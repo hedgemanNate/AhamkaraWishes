@@ -271,22 +271,35 @@ function attachListeners() {
         };
     }
 
-    // 2. Tab Switching (Global: Weapons vs Armor)
+    // 2. Tab Switching (Global: Weapons vs Armor + Menu)
     const btnWeapons = document.getElementById('tab-weapons');
+    const btnMenu = document.getElementById('tab-menu');
     const btnArmor = document.getElementById('tab-armor');
     if (btnWeapons && btnArmor) {
         btnWeapons.onclick = () => {
             btnWeapons.classList.add('active');
+            if (btnMenu) btnMenu.classList.remove('active');
             btnArmor.classList.remove('active');
             document.getElementById('view-weapons').classList.add('active-view');
             document.getElementById('view-armor').classList.remove('active-view');
         };
         btnArmor.onclick = () => {
             btnArmor.classList.add('active');
+            if (btnMenu) btnMenu.classList.remove('active');
             btnWeapons.classList.remove('active');
             document.getElementById('view-armor').classList.add('active-view');
             document.getElementById('view-weapons').classList.remove('active-view');
         };
+        if (btnMenu) {
+            btnMenu.onclick = () => {
+                btnMenu.classList.add('active');
+                btnWeapons.classList.remove('active');
+                btnArmor.classList.remove('active');
+                // Menu does not swap to a dedicated content view by default.
+                document.getElementById('view-weapons').classList.remove('active-view');
+                document.getElementById('view-armor').classList.remove('active-view');
+            };
+        }
     }
 
     // 3. Bottom Nav Slider (Internal Armor Toggle: Craft vs List)
@@ -766,8 +779,9 @@ function handleSaveWish() {
  * Disables or enables the tab buttons and nav buttons to prevent user navigation during wish granting.
  */
 function disableTabButtons(disabled) {
-  const btnWeapons = document.getElementById('tab-weapons');
-  const btnArmor = document.getElementById('tab-armor');
+    const btnWeapons = document.getElementById('tab-weapons');
+    const btnMenu = document.getElementById('tab-menu');
+    const btnArmor = document.getElementById('tab-armor');
   const navCraft = document.getElementById('nav-craft');
   const navList = document.getElementById('nav-list');
   
@@ -788,6 +802,15 @@ function disableTabButtons(disabled) {
       btnArmor.classList.remove('disabled');
     }
   }
+
+    if (btnMenu) {
+        btnMenu.disabled = disabled;
+        if (disabled) {
+            btnMenu.classList.add('disabled');
+        } else {
+            btnMenu.classList.remove('disabled');
+        }
+    }
 
   if (navCraft) {
     navCraft.disabled = disabled;

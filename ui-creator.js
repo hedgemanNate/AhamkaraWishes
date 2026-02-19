@@ -271,40 +271,6 @@ function attachListeners() {
         };
     }
 
-        // Wishlist dropdown: populate from stored list and persist selection
-        const wishlistSelect = document.getElementById('wishlist-select');
-        if (wishlistSelect) {
-            try {
-                const stored = JSON.parse(localStorage.getItem('wishlists') || 'null');
-                if (Array.isArray(stored) && stored.length) {
-                    wishlistSelect.innerHTML = '';
-                    stored.forEach(w => {
-                        const opt = document.createElement('option');
-                        opt.value = w.id || w.value || String(w.label || w.id || '').toLowerCase();
-                        opt.textContent = w.label || w.value || w.id || opt.value;
-                        wishlistSelect.appendChild(opt);
-                    });
-                }
-            } catch (e) {
-                console.warn('[Wishlist] failed to parse stored wishlists', e);
-            }
-
-            const active = localStorage.getItem('activeWishlist');
-            if (active && Array.from(wishlistSelect.options).some(o => o.value === active)) {
-                wishlistSelect.value = active;
-            } else if (wishlistSelect.options.length) {
-                wishlistSelect.value = wishlistSelect.options[0].value;
-                localStorage.setItem('activeWishlist', wishlistSelect.value);
-            }
-
-            wishlistSelect.onchange = () => {
-                const val = wishlistSelect.value;
-                localStorage.setItem('activeWishlist', val);
-                document.dispatchEvent(new CustomEvent('wishListChanged', { detail: { id: val } }));
-                console.log('[Wishlist] active changed to', val);
-            };
-        }
-
     // 2. Tab Switching (Global: Weapons vs Armor + Menu)
     const btnWeapons = document.getElementById('tab-weapons');
     const btnMenu = document.getElementById('tab-menu');

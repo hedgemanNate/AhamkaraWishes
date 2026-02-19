@@ -242,13 +242,13 @@ header {
 .logo-area h1 { margin: 0; font-size: 18px; letter-spacing: 2px; color: var(--accent-gold); text-align: center; }
 .subtitle { display: block; text-align: center; font-size: 10px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 4px; }
 
-.tab-switcher { display: flex; margin-top: 15px; gap: 10px; padding: 0 25px; }
+.tab-switcher { display: flex; margin-top: 4px; gap: 8px; padding: 0 20px; }
 .tab-btn {
   flex: 1;
   background: transparent;
   border: 2px solid #444;
   color: #777;
-  padding: 12px;
+  padding: 8px;
   cursor: pointer;
   font-weight: bold;
   text-transform: uppercase;
@@ -256,6 +256,78 @@ header {
   transition: 0.3s;
 }
 .tab-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
+
+/* Make the center menu button tastefully smaller than the full tabs */
+#tab-menu {
+  flex: 0 0 56px; /* fixed width so it stays small */
+  width: 56px;
+  padding: 8px; /* slightly less padding than other tabs */
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ensure SVG icon scales nicely inside the small button */
+#tab-menu svg {
+  width: 18px;
+  height: 12px;
+}
+
+/* Minimalist wishlist select styling to replace subtitle */
+.select-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 140px; /* slightly narrower to match thinner control */
+  margin: 2px auto 0 auto;
+}
+
+#wishlist-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  color: var(--text-main);
+  border: none;
+  padding: 4px 22px 4px 8px; /* slimmer vertical padding */
+  height: 24px; /* thinner control */
+  line-height: 18px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  border-radius: 2px;
+  cursor: pointer;
+  text-align: center; /* center the displayed text */
+  box-shadow: none;
+}
+
+/* caret using pseudo-element on wrapper */
+.select-wrap {
+  width: 140px; /* slightly narrower to match thinner control */
+}
+
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--text-sub);
+  pointer-events: none;
+}
+
+/* subtle focus ring */
+#wishlist-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 6px rgba(212,175,55,0.06); /* subtle focus without border */
+}
 
 /* --- VIEWS --- */
 .content-view { display: none; flex: 1; min-height: 0; }

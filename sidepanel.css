@@ -800,6 +800,28 @@ header {
   box-sizing: border-box;
 }
 
+/* --- UTILITY BLOCK (match wishlist layout: full-width button) --- */
+.utility-block {
+  margin-top: 8px;
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: wrap; /* allow the description and button to stack */
+}
+
+.utility-block > .wishlist-action-btn {
+  flex-basis: 100%; /* make the action button stretch to full width */
+  flex-grow: 1;
+  margin-top: 4px;
+}
+
+/* Ensure view-specific spacing matches wishlist controls */
+#view-menu .utility-block {
+  gap: 10px;
+  margin-top: 12px;
+}
+
 /* Input sizing for wishlist name field: keep height, allow very small widths */
 .wishlist-name-input {
   flex: 1 1 15px; /* allow the input to shrink down to 15px before wrapping */

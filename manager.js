@@ -61,6 +61,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // Try to load UI anyway
         loadLists();
     });
+
+    // Wire utility button for manual profile refresh
+    try {
+      const utilBtn = document.getElementById('utility-refresh-profile');
+      if (utilBtn) {
+        utilBtn.addEventListener('click', async () => {
+          try {
+            utilBtn.disabled = true;
+            const prev = utilBtn.textContent;
+            utilBtn.textContent = 'Refreshing...';
+            // Component set: minimal useful set for OwnedIndex
+            const components = 'ProfileInventory,Characters,CharacterInventories,CharacterEquipment,ItemSockets,ItemInstances';
+            await refreshProfileAndBuildIndex(components);
+            utilBtn.textContent = 'Done';
+            setTimeout(() => { utilBtn.textContent = prev; }, 2000);
+          } catch (e) {
+            console.error('[Manager] utility refresh failed', e);
+            utilBtn.textContent = 'Failed';
+            setTimeout(() => { utilBtn.textContent = 'Refresh Profile & Build Index'; }, 2000);
+          } finally {
+            utilBtn.disabled = false;
+          }
+        });
+      }
+    } catch (e) { /* no-op */ }
 });
 
 // --- LIVE UPDATE LISTENER ---

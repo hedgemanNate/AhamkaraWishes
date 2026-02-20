@@ -58,7 +58,50 @@ async function launchAuthFlow() {
   return new Promise((resolve, reject) => {
     if (chrome && chrome.identity && chrome.identity.launchWebAuthFlow) {
         console.log('[BUNGIE-AUTH] launching auth URL', authUrl);
+        // Start a short-lived poll that tries to locate the auth popup window
+        // and resize it to approximately 1/6 of the monitor area (centered).
+        // This does not change the auth flow; it only adjusts the popup window
+        // that `launchWebAuthFlow` opens.
+        let pollTimer = null;
+        const stopPoll = () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
+
+        function tryResizeAuthWindow() {
+          try {
+            chrome.windows.getAll({ populate: true }, (wins) => {
+              if (!wins || !wins.length) return;
+              for (const w of wins) {
+                if (!w.tabs) continue;
+                for (const t of w.tabs) {
+                  try {
+                    const url = t && t.url ? String(t.url) : '';
+                    if (url.includes('bungie.net/en/oauth/authorize')) {
+                      // Compute size so the popup area is ~1/6 of the screen area
+                      const availW = (screen && screen.availWidth) ? screen.availWidth : window.innerWidth || 1280;
+                      const availH = (screen && screen.availHeight) ? screen.availHeight : window.innerHeight || 800;
+                      const ratio = 1 / Math.sqrt(6); // width and height scale so area ~= 1/6
+                      const newW = Math.max(320, Math.round(availW * ratio));
+                      const newH = Math.max(360, Math.round(availH * ratio));
+                      const left = Math.max(0, Math.round((availW - newW) / 2));
+                      const top = Math.max(0, Math.round((availH - newH) / 4));
+                      try {
+                        chrome.windows.update(w.id, { left, top, width: newW, height: newH }, () => { /* ignore errors */ });
+                      } catch (e) { /* ignore update errors */ }
+                      stopPoll();
+                      return;
+                    }
+                  } catch (e) { /* ignore per-tab errors */ }
+                }
+              }
+            });
+          } catch (e) { /* ignore */ }
+        }
+
+        // Start polling shortly before/after launching the flow; stop after 6s if not found
+        pollTimer = setInterval(tryResizeAuthWindow, 250);
+        setTimeout(stopPoll, 6000);
+
         chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true }, (redirectUrl) => {
+          stopPoll();
           if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
           console.log('[BUNGIE-AUTH] launchWebAuthFlow returned redirect URL', redirectUrl);
           resolve(redirectUrl);

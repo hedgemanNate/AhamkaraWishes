@@ -300,3 +300,66 @@ function deleteWish(hash, index) {
     });
 }
 
+/**
+ * Refresh profile via Bungie API and build the OwnedIndex.
+ * - Attempts to locate a Destiny membership from stored `bungie_auth.user`.
+ * - Calls `bungieAuth.fetchProfileWithComponents` and persists the response.
+ * - Builds the OwnedIndex via `OwnedInventoryIndex.buildOwnedIndex` and runs a wishlist match pass.
+ *
+ * @param {string|Array<number|string>} components - components param to pass to GetProfile (comma-separated or array)
+ */
+async function refreshProfileAndBuildIndex(components) {
+  try {
+    const s = await new Promise((res) => chrome.storage.local.get(['bungie_auth', 'dimData'], res));
+    const auth = s?.bungie_auth;
+    if (!auth || !auth.access_token) { console.warn('[Manager] No bungie_auth available. Please sign in.'); return; }
+
+    // Ensure we have a user object with memberships
+    let user = auth.user || null;
+    if (!user) {
+      try { user = await fetchBungieUser(auth.access_token); auth.user = user; await new Promise((res) => chrome.storage.local.set({ bungie_auth: auth }, res)); } catch (e) { /* ignore */ }
+    }
+
+    // Try common membership locations
+    const memberships = (user && (user.destinyMemberships || user.profiles || user.Response?.destinyMemberships)) || [];
+    if (!memberships || memberships.length === 0) { console.warn('[Manager] No destiny memberships found on user object'); return; }
+    const primary = memberships[0];
+    const membershipType = primary.membershipType ?? primary.membership_type ?? primary.membershipTypeValue;
+    const membershipId = primary.membershipId ?? primary.membership_id ?? primary.profileId ?? primary.membershipId;
+    if (membershipType === undefined || !membershipId) { console.warn('[Manager] Could not determine membershipType/membershipId'); return; }
+
+    console.log('[Manager] fetching profile for', membershipType, membershipId, 'components:', components);
+    const profile = await window.bungieAuth.fetchProfileWithComponents(membershipType, membershipId, components);
+    if (!profile) { console.warn('[Manager] fetchProfile returned no data'); return; }
+
+    // Build owned index
+    if (!window.OwnedInventoryIndex || !window.OwnedInventoryIndex.buildOwnedIndex) {
+      console.warn('[Manager] OwnedInventoryIndex not available');
+      return;
+    }
+    const idx = window.OwnedInventoryIndex.buildOwnedIndex(profile);
+    // Optionally persist a small summary
+    const totalInstances = idx.byInstanceId ? idx.byInstanceId.size : 0;
+    const uniqueItems = idx.byItemHash ? idx.byItemHash.size : 0;
+    await new Promise((res) => chrome.storage.local.set({ ownedIndexSummary: { totalInstances, uniqueItems, fetchedAt: Date.now() } }, res));
+    console.log('[Manager] OwnedIndex built:', totalInstances, 'instances,', uniqueItems, 'unique item hashes');
+
+    // Run wishlist matching pass using the built index
+    const dimRes = await new Promise((res) => chrome.storage.local.get(['dimData'], res));
+    const dimData = s?.dimData || dimRes?.dimData;
+    if (dimData && window.OwnedInventoryIndex.matchWishlist) {
+      try {
+        const summary = window.OwnedInventoryIndex.matchWishlist(dimData, idx);
+        await new Promise((res) => chrome.storage.local.set({ dimData }, res));
+        console.log('[Manager] Wishlist matching complete:', summary);
+      } catch (e) { console.warn('[Manager] matchWishlist failed', e); }
+    }
+  } catch (e) {
+    console.error('[Manager] refreshProfileAndBuildIndex failed', e);
+  }
+}
+
+// Expose to console for manual triggering
+window.appManager = window.appManager || {};
+window.appManager.refreshProfileAndBuildIndex = refreshProfileAndBuildIndex;
+

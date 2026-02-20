@@ -359,4 +359,36 @@ function escapeHtml(str) {
 }
 
 // Expose for other modules
-window.bungieAuth = { signIn, signOut };
+/**
+ * Fetch Destiny2.GetProfile with selected components.
+ * @param {number|string} membershipType
+ * @param {string|number} membershipId
+ * @param {string|Array<number|string>} components - comma-separated string or array of component ids
+ */
+async function fetchProfileWithComponents(membershipType, membershipId, components) {
+  const obj = await new Promise((res) => chrome.storage.local.get(['bungie_auth'], res));
+  const auth = obj?.bungie_auth;
+  if (!auth || !auth.access_token) throw new Error('No Bungie auth token available. Please sign in.');
+
+  let compParam = components;
+  if (Array.isArray(components)) compParam = components.join(',');
+  if (!compParam) compParam = '';
+
+  const url = `https://www.bungie.net/Platform/Destiny2/${membershipType}/Profile/${membershipId}/?components=${encodeURIComponent(compParam)}`;
+  const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${auth.access_token}`, 'X-API-Key': (typeof API_KEY !== 'undefined') ? API_KEY : '' } });
+  const text = await resp.text();
+  let parsed = null;
+  try { parsed = JSON.parse(text); } catch (e) { /* ignore */ }
+  if (!resp.ok) {
+    const serverMsg = parsed?.Message || parsed?.error_description || parsed || text;
+    throw new Error('GetProfile failed: ' + resp.status + ' - ' + serverMsg);
+  }
+
+  // Persist last raw profile response for other modules to consume
+  const toStore = { lastBungieProfile: parsed?.Response || parsed, lastBungieProfileFetchedAt: Date.now() };
+  await new Promise((res) => chrome.storage.local.set(toStore, res));
+  return parsed?.Response || parsed;
+}
+
+// Expose for other modules
+window.bungieAuth = { signIn, signOut, fetchProfileWithComponents };

@@ -225,10 +225,30 @@
 
     // initial render
     render();
+    // attempt a light-weight sync with any existing OwnedInventoryIndex cache
+    trySyncOwnedIndex();
   }
 
   document.addEventListener('DOMContentLoaded', attach);
 
   // Expose for debugging
   window.awWishlist = { render, createFromInput, duplicateSelected, deleteSelected, enterMergeMode, exitMergeMode };
+
+  /**
+   * Try to sync wishlist entries with a pre-built OwnedIndex cache.
+   * If `OwnedInventoryIndex` is available and has a cached index, the function
+   * will annotate `dimData` entries with `received`, `receivedInstances`, and `matchScore`.
+   */
+  function trySyncOwnedIndex() {
+    try {
+      if (!window.OwnedInventoryIndex || !OwnedInventoryIndex.getCachedIndex) return;
+      const idx = OwnedInventoryIndex.getCachedIndex();
+      if (!idx) return;
+      ensureData((data) => {
+        const summary = OwnedInventoryIndex.matchWishlist(data, idx);
+        // persist updated dimData
+        writeData(data, () => { console.log('[Wishlist] owned-index sync:', summary); });
+      });
+    } catch (e) { console.warn('[Wishlist] trySyncOwnedIndex error', e); }
+  }
 })();

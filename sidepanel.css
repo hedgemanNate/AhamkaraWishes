@@ -747,78 +747,87 @@ header {
     padding: 4px 0;
 }
 
-/* --- WISHLIST BLOCK --- */
+/* --- WISHLIST BLOCK (Design-guide minimal styling) --- */
 .wishlist-block {
   margin-top: 8px;
   display: flex;
-  gap: 8px;
+  gap: 4px; /* tightened gap between input and buttons */
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap; /* keep input and buttons on a single line */
+}
+
+/* Input: minimal, expands to available space */
+.wishlist-name-input {
+  flex: 1 1 180px; /* grow, shrink, smaller base to fit with buttons */
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-main);
+  padding: 8px 12px; /* 8/12 are multiples of 4 */
+  border-radius: 6px;
+  min-width: 120px; /* allow shrinking on narrow side panels */
+  box-sizing: border-box;
+}
+.wishlist-name-input::placeholder { color: #777; }
+
+/* Action buttons: compact, muted, with gold hover accent */
+.wishlist-action-btn {
+  background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-main);
+  font-weight: 600;
+  padding: 6px 6px; /* tighter padding for closer buttons */
+  min-height: 20px; /* reduce height to compact the row */
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.wishlist-action-btn:hover { border-color: rgba(212,175,55,0.6); background: rgba(212,175,55,0.03); }
+
+/* The row of saved wishlists — full width, low-contrast card */
+.wishlist-row {
+  flex-basis: 100%; /* force onto its own line */
+  display: flex;
+  gap: 4px; /* slightly tighter between pills */
+  flex-wrap: wrap;
+  align-items: center;
+  overflow-x: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.03);
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+
+/* Input sizing for wishlist name field: keep height, allow very small widths */
+.wishlist-name-input {
+  flex: 1 1 15px; /* allow the input to shrink down to 15px before wrapping */
+  min-width: 15px; /* requested minimum */
+  height: auto; /* preserve existing height rules */
+}
+
+/* Prevent the buttons from shrinking so the input takes available space */
+.wishlist-action-btn {
+  flex: 0 0 auto;
+}
+
+/* Make sure view-specific rule doesn't force wrapping */
+#view-menu .wishlist-block {
   flex-wrap: nowrap;
 }
 
-.wishlist-name-input {
-  background: var(--bg-card);
-  border: 1px solid #333;
-  color: var(--text-main);
-  padding: 6px 8px;
-  border-radius: 4px;
-  min-width: 140px;
-}
-
-.wishlist-action-btn {
-  background: transparent;
-  color: var(--text-main);
-  border: 1px solid #444;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* Make action buttons compact and consistent with original UI */
-.wishlist-action-btn {
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: var(--text-main);
-  font-weight: 600;
-  padding: 6px 10px;
-  min-height: 32px;
-  text-transform: none;
-}
-
-.wishlist-name-input {
-  background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(255,255,255,0.04);
-  color: var(--text-main);
-  padding: 8px 10px;
-  min-width: 220px;
-  border-radius: 6px;
-}
-
-.wishlist-name-input::placeholder { color: #777; }
-
-.wishlist-row { padding: 6px; align-items: center; }
-
-.wishlist-btn { padding: 6px 10px; font-size: 12px; }
-
-.wishlist-row {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 8px;
-  border-radius: 8px;
-  background: var(--bg-card);
-  border: 1px solid rgba(255,255,255,0.03);
-}
-
+/* Individual wishlist pills inside the row */
 .wishlist-btn {
   background: transparent;
-  border: 1px solid #333;
+  border: 1px solid rgba(255,255,255,0.06);
   color: var(--text-main);
-  padding: 6px 8px;
+  padding: 4px 8px; /* reduced padding for tighter pills */
   border-radius: 6px;
   cursor: pointer;
+  font-size: 12px;
 }
+.wishlist-btn.active { background: rgba(212,175,55,0.12); border-color: rgba(212,175,55,0.6); color: #000; }
 
 .wishlist-btn.active {
   background: var(--accent-gold);
@@ -869,6 +878,20 @@ header {
 #view-menu.signed-in .menu-top { background: var(--stat-health); }
 
 #view-menu .wishlist-block { gap:10px; margin-top:12px; }
+
+/* Ensure the wishlist controls can wrap so the saved wishlist row sits
+   beneath the input/buttons. The `.wishlist-row` is forced to full width
+   so it appears on its own line under the controls. */
+#view-menu .wishlist-block {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+#view-menu .wishlist-row {
+  flex-basis: 100%;
+  margin-top: 8px;
+}
 
 /* Focus and hover states */
 .wishlist-action-btn:hover { border-color: rgba(212,175,55,0.6); }

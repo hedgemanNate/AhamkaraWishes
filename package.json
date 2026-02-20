@@ -1,0 +1,11 @@
+{
+  "name": "ahamkara-wishes",
+  "version": "0.1.0",
+  "description": "Ahamkara Wishes Chrome extension — Wishlist engine tests",
+  "scripts": {
+    "test": "node tests/owned-index-test.js"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

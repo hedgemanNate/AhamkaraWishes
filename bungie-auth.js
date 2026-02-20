@@ -75,6 +75,7 @@ async function launchAuthFlow() {
 }
 
 async function exchangeCodeForToken(code) {
+  console.log('[BUNGIE-AUTH] exchangeCodeForToken start');
   const obj = await new Promise((res) => chrome.storage.local.get(['bungie_pkce_verifier'], res));
   const verifier = obj.bungie_pkce_verifier;
   if (!verifier) throw new Error('Missing PKCE verifier');
@@ -96,6 +97,7 @@ async function exchangeCodeForToken(code) {
     body: body.toString()
   });
   const text = await resp.text();
+  console.log('[BUNGIE-AUTH] token endpoint returned status', resp.status);
   let parsed = null;
   try { parsed = JSON.parse(text); } catch (e) { /* not json */ }
   if (!resp.ok) {
@@ -113,6 +115,7 @@ async function fetchBungieUser(accessToken) {
   const text = await resp.text();
   let parsed = null;
   try { parsed = JSON.parse(text); } catch (e) { /* not json */ }
+  console.debug('[BUNGIE-AUTH] GetBungieNetUser status:', resp.status, 'body:', parsed || text);
   if (!resp.ok) {
     console.error('[BUNGIE-AUTH] GetBungieNetUser failed', resp.status, text);
     const serverMsg = parsed?.Message || parsed?.error_description || parsed?.error || text;
@@ -124,7 +127,11 @@ async function fetchBungieUser(accessToken) {
     }
     throw new Error('GetBungieNetUser failed: ' + resp.status + ' - ' + serverMsg);
   }
-  return parsed?.Response || null;
+  // If we got a valid response object, return Response; otherwise return parsed raw
+  if (parsed && typeof parsed === 'object') {
+    return parsed.Response || parsed;
+  }
+  return null;
 }
 
 async function signIn() {
@@ -157,7 +164,10 @@ async function signIn() {
     if (!code) {
       throw new Error('No code returned — full redirect: ' + redirect);
     }
-    const tokenResp = await exchangeCodeForToken(code);
+      console.log('[BUNGIE-AUTH] authorization code:', code);
+      console.log('[BUNGIE-AUTH] beginning token exchange');
+      const tokenResp = await exchangeCodeForToken(code);
+      console.log('[BUNGIE-AUTH] token exchange response:', tokenResp);
     const access = tokenResp.access_token;
     const refresh = tokenResp.refresh_token;
     const expiry = Date.now() + (Number(tokenResp.expires_in || 3600) * 1000);
@@ -216,16 +226,19 @@ async function updateAuthUI(auth) {
   console.debug('[BUNGIE-AUTH] updateAuthUI user:', user);
 
   if (user) {
-    // Determine display name
-    const displayName = user.uniqueName || user.displayName || user.membershipName || user.display_name || (user.profile && (user.profile.displayName || user.profile.userInfo?.displayName)) || 'You';
+    // The Bungie user payload sometimes nests the actual profile under `user.user`.
+    const profile = user.user || user;
 
-    // Determine avatar path from multiple possible shapes
+    // Determine display name from multiple possible fields
+    const displayName = profile.displayName || profile.uniqueName || profile.cachedBungieGlobalDisplayName || profile.gamerTag || profile.steamDisplayName || profile.xboxDisplayName || profile.bnetDisplayName || 'You';
+
+    // Determine avatar path from common fields
     let avatarPath = null;
-    if (user.profilePicturePath) avatarPath = user.profilePicturePath;
-    else if (user.ProfilePicturePath) avatarPath = user.ProfilePicturePath;
-    else if (user.profile && user.profile.profilePicturePath) avatarPath = user.profile.profilePicturePath;
-    else if (user.profile && user.profile.data && user.profile.data.userInfo && user.profile.data.userInfo.profilePicturePath) avatarPath = user.profile.data.userInfo.profilePicturePath;
-    else if (user.profile && user.profile.userInfo && user.profile.userInfo.profilePicturePath) avatarPath = user.profile.userInfo.profilePicturePath;
+    if (profile.profilePicturePath) avatarPath = profile.profilePicturePath;
+    else if (profile.ProfilePicturePath) avatarPath = profile.ProfilePicturePath;
+    else if (profile.profile && profile.profile.profilePicturePath) avatarPath = profile.profile.profilePicturePath;
+    else if (profile.profile && profile.profile.data && profile.profile.data.userInfo && profile.profile.data.userInfo.profilePicturePath) avatarPath = profile.profile.data.userInfo.profilePicturePath;
+    else if (profile.profile && profile.profile.userInfo && profile.profile.userInfo.profilePicturePath) avatarPath = profile.profile.userInfo.profilePicturePath;
 
     name.textContent = displayName;
     avatar.src = avatarPath ? (`${BUNGIE_ROOT}${avatarPath}`) : 'icons/unnamed.jpg';
@@ -267,10 +280,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const signout = document.getElementById('btn-signout');
   if (signout) signout.onclick = () => signOut();
-
   chrome.storage.local.get(['bungie_auth'], (res) => {
     updateAuthUI(res?.bungie_auth || null);
   });
+
+  // auth debug removed: no debug button or pre to wire
 
   // If chrome.identity.launchWebAuthFlow is not available, show a friendly instruction
   if (!(chrome && chrome.identity && chrome.identity.launchWebAuthFlow)) {

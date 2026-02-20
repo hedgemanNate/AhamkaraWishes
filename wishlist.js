@@ -40,7 +40,8 @@
         btn.dataset.id = id;
         btn.textContent = list.name || id;
         if (id === data.activeId) btn.classList.add('active');
-        btn.onclick = () => {
+        btn.onclick = (e) => {
+          if (mergeMode) { e.preventDefault(); toggleMergeTarget(id); return; }
           data.activeId = id;
           writeData(data, () => {
             render();
@@ -105,12 +106,12 @@
       if (mergeTargets.has(b.dataset.id)) b.classList.add('merge-selected'); else b.classList.remove('merge-selected');
     });
     const mergeBtn = document.getElementById('wl-merge');
-    if (mergeTargets.size > 0) mergeBtn.classList.add('pulsing'); else mergeBtn.classList.remove('pulsing');
+    // pulse only when at least two targets selected (attention state)
+    if (mergeTargets.size >= 2) mergeBtn.classList.add('pulsing'); else mergeBtn.classList.remove('pulsing');
   }
 
   function performMerge() {
     if (!mergeMode || mergeTargets.size === 0) return;
-    if (!confirm('Merge selected wishlists into the current wishlist? This will delete the merged sources.')) return;
     ensureData((data) => {
       const dest = data.lists[data.activeId];
       if (!dest) return exitMergeMode();
@@ -127,24 +128,64 @@
     });
   }
 
+  function showMergeConfirm() {
+    // build a modal overlay listing selected wishlists
+    const existing = document.getElementById('merge-confirm-overlay');
+    if (existing) return;
+    ensureData((data) => {
+      const container = document.createElement('div');
+      container.id = 'merge-confirm-overlay';
+      container.innerHTML = `
+        <div class="merge-confirm-dialog" role="dialog" aria-modal="true">
+          <div class="merge-confirm-title">Confirm Merge</div>
+          <div class="merge-confirm-body">
+            <p>Merge the following wishlists into the current active wishlist? This will delete the merged sources.</p>
+            <ul class="merge-confirm-list">
+              ${Array.from(mergeTargets).map(id => `<li>${(data.lists[id] && data.lists[id].name) || id}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="merge-confirm-actions">
+            <button id="merge-confirm-cancel" class="wishlist-action-btn">Cancel</button>
+            <button id="merge-confirm-ok" class="wishlist-action-btn">Merge</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(container);
+      document.getElementById('merge-confirm-cancel').onclick = () => {
+        // cancel ends merge mode without merging
+        document.body.removeChild(container);
+        exitMergeMode();
+      };
+      document.getElementById('merge-confirm-ok').onclick = () => {
+        document.body.removeChild(container);
+        performMerge();
+      };
+    });
+  }
+
   function attach() {
     document.getElementById('wl-create').onclick = createFromInput;
     document.getElementById('wl-duplicate').onclick = duplicateSelected;
     document.getElementById('wl-delete').onclick = deleteSelected;
+    const nameInput = document.getElementById('wl-name');
+    if (nameInput) {
+      nameInput.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          createFromInput();
+        }
+      });
+    }
     const mergeBtn = document.getElementById('wl-merge');
     mergeBtn.onclick = () => {
       if (!mergeMode) { enterMergeMode(); return; }
-      if (mergeTargets.size === 0) { exitMergeMode(); return; }
-      performMerge();
+      // if not in pulsing/confirm state, clicking again exits merge mode
+      if (mergeTargets.size < 2) { exitMergeMode(); return; }
+      // otherwise show confirmation modal
+      showMergeConfirm();
     };
 
-    document.getElementById('wishlist-row').addEventListener('click', (e) => {
-      const btn = e.target.closest('.wishlist-btn');
-      if (!btn) return;
-      const id = btn.dataset.id;
-      if (mergeMode) { toggleMergeTarget(id); return; }
-      // otherwise handled in render via button onclick
-    });
+    // button clicks are handled on each .wishlist-btn in render(), including merge-mode toggling
 
     // header select sync
     const select = document.getElementById('wishlist-select');

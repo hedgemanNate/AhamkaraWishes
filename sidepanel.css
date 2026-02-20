@@ -827,6 +827,49 @@ header {
   cursor: pointer;
   font-size: 12px;
 }
+
+/* Merge mode styling */
+.wishlist-action-btn.merge-active {
+  background: var(--accent-gold);
+  color: #000;
+  border-color: var(--accent-gold);
+}
+.wishlist-btn.merge-selected {
+  background: var(--accent-gold);
+  color: #000;
+  border-color: var(--accent-gold);
+}
+.wishlist-action-btn.pulsing {
+  animation: mergePulse 1s infinite;
+}
+@keyframes mergePulse {
+  0% { box-shadow: 0 0 0 0 rgba(212,175,55,0.45); }
+  70% { box-shadow: 0 0 0 10px rgba(212,175,55,0); }
+  100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+}
+
+/* Merge confirmation modal */
+#merge-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+}
+.merge-confirm-dialog {
+  background: var(--bg-card);
+  padding: 16px;
+  border-radius: 8px;
+  width: min(420px, 92%);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.merge-confirm-title { font-weight: 700; margin-bottom: 8px; }
+.merge-confirm-body p { margin: 0 0 8px 0; color: var(--text-sub); }
+.merge-confirm-list { margin: 0 0 12px 18px; color: var(--text-main); }
+.merge-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .wishlist-btn.active { background: rgba(212,175,55,0.12); border-color: rgba(212,175,55,0.6); color: #000; }
 
 .wishlist-btn.active {

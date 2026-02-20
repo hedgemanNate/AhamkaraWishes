@@ -747,6 +747,134 @@ header {
     padding: 4px 0;
 }
 
+/* --- WISHLIST BLOCK --- */
+.wishlist-block {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.wishlist-name-input {
+  background: var(--bg-card);
+  border: 1px solid #333;
+  color: var(--text-main);
+  padding: 6px 8px;
+  border-radius: 4px;
+  min-width: 140px;
+}
+
+.wishlist-action-btn {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid #444;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Make action buttons compact and consistent with original UI */
+.wishlist-action-btn {
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-main);
+  font-weight: 600;
+  padding: 6px 10px;
+  min-height: 32px;
+  text-transform: none;
+}
+
+.wishlist-name-input {
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-main);
+  padding: 8px 10px;
+  min-width: 220px;
+  border-radius: 6px;
+}
+
+.wishlist-name-input::placeholder { color: #777; }
+
+.wishlist-row { padding: 6px; align-items: center; }
+
+.wishlist-btn { padding: 6px 10px; font-size: 12px; }
+
+.wishlist-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+.wishlist-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: var(--text-main);
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.wishlist-btn.active {
+  background: var(--accent-gold);
+  color: #000;
+  border-color: var(--accent-gold);
+}
+
+.wishlist-btn.merge-selected {
+  background: rgba(212,175,55,0.15);
+  border-color: rgba(212,175,55,0.6);
+}
+
+#wl-merge.merge-active {
+  background: linear-gradient(90deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08));
+  border-color: var(--accent-gold);
+}
+
+@keyframes mergeBlink {
+  0% { box-shadow: 0 0 0 0 rgba(212,175,55,0.0); }
+  50% { box-shadow: 0 0 8px 4px rgba(212,175,55,0.06); }
+  100% { box-shadow: 0 0 0 0 rgba(212,175,55,0.0); }
+}
+
+.pulsing { animation: mergeBlink 1.1s ease-in-out infinite; }
+
+/* --- SIGN-IN AREA --- */
+.user-area { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px; }
+.user-area img { width:28px; height:28px; border-radius:50%; object-fit:cover; }
+.user-area #user-name { margin-left:6px; font-weight:600; color:var(--text-main); }
+
+/* Layout tweak: center menu view content and limit width for header controls */
+#view-menu .menu-view-stage { display:flex; flex-direction:column; align-items:center; }
+/* Top banner spanning full width of Menu view */
+#view-menu { position: relative; }
+#view-menu .menu-top { position: absolute; left: 0; right: 0; top: 0; height: 72px; background: var(--stat-melee); display:flex; align-items:center; justify-content:center; transition: background 420ms ease; z-index: 30; border-bottom: 1px solid rgba(0,0,0,0.25); }
+#view-menu .menu-top-inner { width: 100%; max-width: 720px; padding: 0 16px; display:flex; align-items:center; justify-content:space-between; }
+
+/* Left/right layout inside the banner */
+.menu-left { display:flex; align-items:center; gap:10px; }
+.user-avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border: 2px solid rgba(0,0,0,0.2); }
+.user-name { font-size:13px; font-weight:700; color:var(--text-main); letter-spacing:0.6px; }
+.menu-right { display:flex; align-items:center; gap:8px; }
+.menu-right .wishlist-action-btn { min-width:86px; }
+#view-menu .menu-content { width: 100%; padding-top: 92px; display:flex; justify-content:center; }
+
+#view-menu.signed-in .menu-top { background: var(--stat-health); }
+
+#view-menu .wishlist-block { gap:10px; margin-top:12px; }
+
+/* Focus and hover states */
+.wishlist-action-btn:hover { border-color: rgba(212,175,55,0.6); }
+.wishlist-action-btn:active { transform: translateY(1px); }
+.wishlist-name-input:focus { outline: none; box-shadow: 0 0 0 6px rgba(212,175,55,0.04); }
+.user-area .hidden { display:none; }
+
+
 .filter-btn {
     flex: 1 1 auto;
     text-align: center;

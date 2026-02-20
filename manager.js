@@ -22,6 +22,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingOverlay = document.getElementById('loading-overlay');
     
     setupTabs();
+    // Ensure Menu is the default active view on startup
+    try {
+      const btnMenu = document.getElementById('tab-menu');
+      const btnWeapons = document.getElementById('tab-weapons');
+      const btnArmor = document.getElementById('tab-armor');
+      const viewMenu = document.getElementById('view-menu');
+      const viewWeapons = document.getElementById('view-weapons');
+      const viewArmor = document.getElementById('view-armor');
+      if (btnMenu) btnMenu.classList.add('active');
+      if (btnWeapons) btnWeapons.classList.remove('active');
+      if (btnArmor) btnArmor.classList.remove('active');
+      if (viewMenu) viewMenu.classList.add('active-view');
+      if (viewWeapons) viewWeapons.classList.remove('active-view');
+      if (viewArmor) viewArmor.classList.remove('active-view');
+    } catch (e) {
+      console.warn('[MANAGER] Unable to set default Menu view', e);
+    }
     
     // Load manifest data ONCE at startup
     Promise.all([
@@ -131,23 +148,40 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
 function setupTabs() {
     const btnWeapons = document.getElementById('tab-weapons');
     const btnArmor = document.getElementById('tab-armor');
+  const btnMenu = document.getElementById('tab-menu');
     const viewWeapons = document.getElementById('view-weapons');
     const viewArmor = document.getElementById('view-armor');
+  const viewMenu = document.getElementById('view-menu');
 
     btnWeapons.addEventListener('click', () => {
         btnWeapons.classList.add('active');
         btnArmor.classList.remove('active');
+      if (btnMenu) btnMenu.classList.remove('active');
         viewWeapons.classList.add('active-view');
         viewArmor.classList.remove('active-view');
+      if (viewMenu) viewMenu.classList.remove('active-view');
         loadLists();
     });
 
     btnArmor.addEventListener('click', () => {
         btnArmor.classList.add('active');
         btnWeapons.classList.remove('active');
+        if (btnMenu) btnMenu.classList.remove('active');
         viewArmor.classList.add('active-view');
         viewWeapons.classList.remove('active-view');
+        if (viewMenu) viewMenu.classList.remove('active-view');
     });
+
+    if (btnMenu) {
+      btnMenu.addEventListener('click', () => {
+        btnMenu.classList.add('active');
+        btnWeapons.classList.remove('active');
+        btnArmor.classList.remove('active');
+        if (viewWeapons) viewWeapons.classList.remove('active-view');
+        if (viewArmor) viewArmor.classList.remove('active-view');
+        if (viewMenu) viewMenu.classList.add('active-view');
+      });
+    }
 }
 
 // --- VIEWER LOGIC ---

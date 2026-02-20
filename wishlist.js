@@ -94,8 +94,33 @@
   let mergeMode = false;
   const mergeTargets = new Set();
 
-  function enterMergeMode() { mergeMode = true; mergeTargets.clear(); document.getElementById('wl-merge').classList.add('merge-active'); }
-  function exitMergeMode() { mergeMode = false; mergeTargets.clear(); document.getElementById('wl-merge').classList.remove('merge-active'); render(); }
+  function enterMergeMode() {
+    mergeMode = true;
+    mergeTargets.clear();
+    const mergeBtn = document.getElementById('wl-merge');
+    if (mergeBtn) {
+      mergeBtn.classList.add('merge-active');
+      mergeBtn.classList.remove('pulsing');
+    }
+    // clear any leftover selected visuals
+    document.querySelectorAll('.wishlist-btn.merge-selected').forEach(b => b.classList.remove('merge-selected'));
+    // mark document body for merge-mode styling (keeps wishlist button text white)
+    try { document.body.classList.add('merge-mode'); } catch (e) { /* noop in weird contexts */ }
+  }
+
+  function exitMergeMode() {
+    mergeMode = false;
+    mergeTargets.clear();
+    const mergeBtn = document.getElementById('wl-merge');
+    if (mergeBtn) {
+      mergeBtn.classList.remove('merge-active');
+      mergeBtn.classList.remove('pulsing');
+    }
+    // remove selection visuals from all wishlist buttons
+    document.querySelectorAll('.wishlist-btn.merge-selected').forEach(b => b.classList.remove('merge-selected'));
+    try { document.body.classList.remove('merge-mode'); } catch (e) { /* noop */ }
+    render();
+  }
 
   function toggleMergeTarget(id) {
     if (!mergeMode) return;

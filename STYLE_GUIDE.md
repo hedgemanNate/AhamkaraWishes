@@ -140,6 +140,30 @@ This document captures the visual tokens, component rules, and conventions used 
   - `.tab-btn.active`: `background: var(--accent-gold); color:#000; border-color:var(--accent-gold);`.
   - Center tab `#tab-menu`: `flex:0 0 56px; display:inline-flex; align-items:center; justify-content:center;`.
 
+  ### Step Labels
+
+  Step labels are small, enumerated headers used to group compact form controls and step-based UI sections (for example: "1. Wishlist", "2. Choose Archetype"). They should be visually distinct using the accent token while remaining lightweight and compact.
+
+  Recommended CSS:
+
+  ```css
+  .step-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    font-weight: 700;
+    border-bottom: 1px solid #333;
+    padding-top: 8px;
+    padding-bottom: 4px;
+  }
+  ```
+
+  Usage notes:
+  - Keep step labels short (1–4 words) and place them above the related control block.
+  - Use `--accent-gold` to maintain visual consistency with other active/step indicators.
+  - Maintain the small font size to avoid overpowering main content; prefer this for labels and micro-headers only.
+
   Buttons
   - `.btn-primary`: full-width, `padding:14px`, `background: var(--accent-gold)`, black text, bold, uppercase.
   - `.btn-primary:disabled`: `background:#333; color:#666; cursor:not-allowed;`.

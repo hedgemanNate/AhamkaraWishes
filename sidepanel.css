@@ -747,6 +747,208 @@ header {
     padding: 4px 0;
 }
 
+/* --- WISHLIST BLOCK (Design-guide minimal styling) --- */
+.wishlist-block {
+  margin-top: 8px;
+  display: flex;
+  gap: 4px; /* tightened gap between input and buttons */
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap; /* keep input and buttons on a single line */
+}
+
+/* Input: minimal, expands to available space */
+.wishlist-name-input {
+  flex: 1 1 180px; /* grow, shrink, smaller base to fit with buttons */
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-main);
+  padding: 8px 12px; /* 8/12 are multiples of 4 */
+  border-radius: 6px;
+  min-width: 120px; /* allow shrinking on narrow side panels */
+  box-sizing: border-box;
+}
+.wishlist-name-input::placeholder { color: #777; }
+
+/* Action buttons: compact, muted, with gold hover accent */
+.wishlist-action-btn {
+  background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-main);
+  font-weight: 600;
+  padding: 6px 6px; /* tighter padding for closer buttons */
+  min-height: 20px; /* reduce height to compact the row */
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.wishlist-action-btn:hover { border-color: rgba(212,175,55,0.6); background: rgba(212,175,55,0.03); }
+
+/* The row of saved wishlists — full width, low-contrast card */
+.wishlist-row {
+  flex-basis: 100%; /* force onto its own line */
+  display: flex;
+  gap: 4px; /* slightly tighter between pills */
+  flex-wrap: wrap;
+  align-items: center;
+  overflow-x: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.03);
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+
+/* Input sizing for wishlist name field: keep height, allow very small widths */
+.wishlist-name-input {
+  flex: 1 1 15px; /* allow the input to shrink down to 15px before wrapping */
+  min-width: 15px; /* requested minimum */
+  height: auto; /* preserve existing height rules */
+}
+
+/* Prevent the buttons from shrinking so the input takes available space */
+.wishlist-action-btn {
+  flex: 0 0 auto;
+}
+
+/* Make sure view-specific rule doesn't force wrapping */
+#view-menu .wishlist-block {
+  flex-wrap: nowrap;
+}
+
+/* Individual wishlist pills inside the row */
+.wishlist-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-main);
+  padding: 4px 8px; /* reduced padding for tighter pills */
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Merge mode styling */
+.wishlist-action-btn.merge-active {
+  background: var(--accent-gold);
+  color: var(--text-main);
+  border-color: var(--accent-gold);
+}
+.wishlist-btn.merge-selected {
+  background: var(--accent-gold);
+  color: #000;
+  border-color: var(--accent-gold);
+}
+.wishlist-action-btn.pulsing {
+  animation: mergePulse 1s infinite;
+}
+@keyframes mergePulse {
+  0% { box-shadow: 0 0 0 0 rgba(212,175,55,0.45); }
+  70% { box-shadow: 0 0 0 10px rgba(212,175,55,0); }
+  100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+}
+
+/* Merge confirmation modal */
+#merge-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+}
+.merge-confirm-dialog {
+  background: var(--bg-card);
+  padding: 16px;
+  border-radius: 8px;
+  width: min(420px, 92%);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.merge-confirm-title { font-weight: 700; margin-bottom: 8px; }
+.merge-confirm-body p { margin: 0 0 8px 0; color: var(--text-sub); }
+.merge-confirm-list { margin: 0 0 12px 18px; color: var(--text-main); }
+.merge-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.wishlist-btn.active { background: rgba(212,175,55,0.12); border-color: rgba(212,175,55,0.6); color: #000; }
+
+.wishlist-btn.active {
+  background: var(--accent-gold);
+  color: #000;
+  border-color: var(--accent-gold);
+}
+
+.wishlist-btn.merge-selected {
+  background: rgba(212,175,55,0.15);
+  border-color: rgba(212,175,55,0.6);
+}
+
+#wl-merge.merge-active {
+  background: linear-gradient(90deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08));
+  border-color: var(--accent-gold);
+  color: var(--text-main);
+}
+
+@keyframes mergeBlink {
+  0% { box-shadow: 0 0 0 0 rgba(212,175,55,0.0); }
+  50% { box-shadow: 0 0 8px 4px rgba(212,175,55,0.06); }
+  100% { box-shadow: 0 0 0 0 rgba(212,175,55,0.0); }
+}
+
+.pulsing { animation: mergeBlink 1.1s ease-in-out infinite; }
+
+/* While in merge mode, keep wishlist button text white for readability */
+.merge-mode .wishlist-btn { color: var(--text-main); }
+.merge-mode .wishlist-btn.merge-selected { color: var(--text-main); }
+.merge-mode .wishlist-btn.active { color: var(--text-main); }
+
+/* --- SIGN-IN AREA --- */
+.user-area { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px; }
+.user-area img { width:28px; height:28px; border-radius:50%; object-fit:cover; }
+.user-area #user-name { margin-left:6px; font-weight:600; color:var(--text-main); }
+
+/* Layout tweak: center menu view content and limit width for header controls */
+#view-menu .menu-view-stage { display:flex; flex-direction:column; align-items:center; }
+/* Top banner spanning full width of Menu view */
+#view-menu { position: relative; }
+#view-menu .menu-top { position: absolute; left: 0; right: 0; top: 0; height: 72px; background: var(--stat-melee); display:flex; align-items:center; justify-content:center; transition: background 420ms ease; z-index: 30; border-bottom: 1px solid rgba(0,0,0,0.25); }
+#view-menu .menu-top-inner { width: 100%; max-width: 720px; padding: 0 16px; display:flex; align-items:center; justify-content:space-between; }
+
+/* Left/right layout inside the banner */
+.menu-left { display:flex; align-items:center; gap:10px; }
+.user-avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border: 2px solid rgba(0,0,0,0.2); }
+.user-name { font-size:13px; font-weight:700; color:var(--text-main); letter-spacing:0.6px; }
+.menu-right { display:flex; align-items:center; gap:8px; }
+.menu-right .wishlist-action-btn { min-width:86px; }
+#view-menu .menu-content { width: 100%; padding-top: 92px; display:flex; justify-content:center; }
+
+/* (auth debug UI removed) */
+
+#view-menu.signed-in .menu-top { background: var(--stat-health); }
+
+#view-menu .wishlist-block { gap:10px; margin-top:12px; }
+
+/* Ensure the wishlist controls can wrap so the saved wishlist row sits
+   beneath the input/buttons. The `.wishlist-row` is forced to full width
+   so it appears on its own line under the controls. */
+#view-menu .wishlist-block {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+#view-menu .wishlist-row {
+  flex-basis: 100%;
+  margin-top: 8px;
+}
+
+/* Focus and hover states */
+.wishlist-action-btn:hover { border-color: rgba(212,175,55,0.6); }
+.wishlist-action-btn:active { transform: translateY(1px); }
+.wishlist-name-input:focus { outline: none; box-shadow: 0 0 0 6px rgba(212,175,55,0.04); }
+.user-area .hidden { display:none; }
+
+
 .filter-btn {
     flex: 1 1 auto;
     text-align: center;

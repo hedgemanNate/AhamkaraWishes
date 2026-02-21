@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Ahamkara Wishes Chrome extension — Wishlist engine tests",
   "scripts": {
-    "test": "node tests/owned-index-test.js"
+    "test": "node tests/owned-index-test.js && node tests/owned-index-delta-test.js"
   },
   "engines": {
     "node": ">=14"

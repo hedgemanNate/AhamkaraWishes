@@ -6,8 +6,73 @@
     chrome.storage.local.get(['dimData'], (res) => {
       let data = res.dimData || { activeId: 'default', lists: { default: { name: 'Main Wishlist', items: {} } } };
       if (!data.lists) data.lists = { default: { name: 'Main Wishlist', items: {} } };
-      cb(data);
+      // Normalize/migrate wishlist entries on load. If normalization mutated
+      // the persisted arrays (e.g. filled missing `mustHave`), persist the
+      // updated data back to storage.
+      const changed = normalizeWishlistData(data);
+      if (changed) {
+        chrome.storage.local.set({ dimData: data }, () => cb(data));
+      } else {
+        cb(data);
+      }
     });
+  }
+
+  // Normalize a single wishlist entry (in-place). Returns true if any persisted
+  // fields were changed (i.e., mustHave or desired arrays were added/modified).
+  function normalizeWishlistEntry(wish) {
+    let mutated = false;
+    if (!wish) return false;
+
+    // Ensure desired is an array
+    if (!Array.isArray(wish.desired)) {
+      if (wish.desiredSet instanceof Set) wish.desired = Array.from(wish.desiredSet);
+      else wish.desired = [];
+      mutated = true;
+    } else {
+      // normalize elements to numbers
+      const nums = wish.desired.map((v) => Number(v));
+      for (let i = 0; i < nums.length; i++) if (Number.isNaN(nums[i])) nums[i] = null;
+      wish.desired = nums.filter((v) => v !== null);
+    }
+
+    // Ensure mustHave exists; default to desired
+    if (!Array.isArray(wish.mustHave)) {
+      wish.mustHave = Array.from(wish.desired || []);
+      mutated = true;
+    } else {
+      // normalize mustHave elements
+      wish.mustHave = wish.mustHave.map((v) => Number(v)).filter((v) => !Number.isNaN(v));
+    }
+
+    // Ensure received fields exist (persistence-friendly)
+    if (!Array.isArray(wish.receivedInstances)) { wish.receivedInstances = []; mutated = true; }
+    if (typeof wish.received !== 'boolean') { wish.received = false; mutated = true; }
+
+    // Derive runtime-only Sets
+    try { wish.desiredSet = new Set(Array.isArray(wish.desired) ? wish.desired : []); } catch (e) { wish.desiredSet = new Set(); }
+    try { wish.mustHaveSet = new Set(Array.isArray(wish.mustHave) ? wish.mustHave : Array.from(wish.desiredSet || [])); } catch (e) { wish.mustHaveSet = new Set(); }
+
+    return mutated;
+  }
+
+  // Normalize entire dimData structure. Returns true if any persisted mutation occurred.
+  function normalizeWishlistData(data) {
+    if (!data || !data.lists) return false;
+    let mutated = false;
+    for (const lid of Object.keys(data.lists)) {
+      const list = data.lists[lid];
+      if (!list || !list.items) continue;
+      for (const ih of Object.keys(list.items)) {
+        const it = list.items[ih];
+        if (!it || !Array.isArray(it.wishes)) continue;
+        for (const w of it.wishes) {
+          const m = normalizeWishlistEntry(w);
+          if (m) mutated = true;
+        }
+      }
+    }
+    return mutated;
   }
 
   function writeData(data, cb) {
@@ -233,6 +298,9 @@
 
   // Expose for debugging
   window.awWishlist = { render, createFromInput, duplicateSelected, deleteSelected, enterMergeMode, exitMergeMode };
+  // Expose normalization helpers for tests and future importer
+  window.awWishlist.normalizeWishlistEntry = normalizeWishlistEntry;
+  window.awWishlist.normalizeWishlistData = normalizeWishlistData;
 
   /**
    * Try to sync wishlist entries with a pre-built OwnedIndex cache.

@@ -356,6 +356,33 @@ function attachListeners() {
         };
     }
 
+    // 3.b Weapons bottom nav inside view-weapons (Craft vs List)
+    const wNavCraft = document.getElementById('weapons-nav-craft');
+    const wNavList = document.getElementById('weapons-nav-list');
+    const weaponCraftPane = document.getElementById('weapon-craft');
+    const weaponListPane = document.getElementById('weapon-list');
+
+    if (wNavCraft && wNavList && weaponCraftPane && weaponListPane) {
+        // ensure initial state: craft active, list hidden
+        wNavCraft.onclick = () => {
+            wNavCraft.classList.add('active');
+            wNavList.classList.remove('active');
+            weaponCraftPane.classList.remove('hidden');
+            weaponListPane.classList.remove('active-pane');
+            weaponListPane.classList.add('hidden');
+        };
+
+        wNavList.onclick = () => {
+            wNavList.classList.add('active');
+            wNavCraft.classList.remove('active');
+            weaponListPane.classList.remove('hidden');
+            weaponListPane.classList.add('active-pane');
+            weaponCraftPane.classList.add('hidden');
+            // If a refresh function exists, call it
+            if (typeof refreshWeaponList === 'function') try { refreshWeaponList(); } catch (e) { console.warn('refreshWeaponList failed', e); }
+        };
+    }
+
     // Inside attachListeners() -> Section 3 (Bottom Nav Slider)
     navList.onclick = () => {
         navList.classList.add('active');

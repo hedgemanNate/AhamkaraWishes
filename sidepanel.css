@@ -942,8 +942,29 @@ header {
 .user-name { font-size:13px; font-weight:700; color:var(--text-main); letter-spacing:0.6px; }
 .menu-right { display:flex; align-items:center; gap:8px; }
 .menu-right .wishlist-action-btn { min-width:86px; }
-#view-menu .menu-content { width: 100%; padding-top: 92px; display:flex; justify-content:center; }
+#view-menu .menu-content {
+  width: 100%;
+  padding-top: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
+/* Ensure wishlist and utility sections share the same horizontal width
+   so the Utility block appears visually the same length as Wishlist. */
+#view-menu .menu-content > .wishlist-section,
+#view-menu .menu-content > .utility-section {
+  width: 100%;
+  max-width: 720px; /* match header container */
+  box-sizing: border-box;
+  padding: 0 16px;
+}
+
+/* Space between stacked step sections (wishlist, utility, etc.)
+   Use tokenized spacing from the style guide. */
+#view-menu .menu-content > .wishlist-section {
+  margin-bottom: var(--space-l, 16px);
+}
 /* (auth debug UI removed) */
 
 #view-menu.signed-in .menu-top { background: var(--stat-health); }

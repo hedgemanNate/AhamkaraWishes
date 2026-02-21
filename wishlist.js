@@ -241,13 +241,29 @@
    */
   function trySyncOwnedIndex() {
     try {
-      if (!window.OwnedInventoryIndex || !OwnedInventoryIndex.getCachedIndex) return;
-      const idx = OwnedInventoryIndex.getCachedIndex();
-      if (!idx) return;
-      ensureData((data) => {
-        const summary = OwnedInventoryIndex.matchWishlist(data, idx);
-        // persist updated dimData
-        writeData(data, () => { console.log('[Wishlist] owned-index sync:', summary); });
+      if (!window.OwnedInventoryIndex) return;
+      // If we have a cached Bungie profile, try an incremental update first
+      chrome.storage.local.get(['lastBungieProfile'], (res) => {
+        const lastProfile = res?.lastBungieProfile;
+        if (lastProfile && window.OwnedInventoryIndex.updateFromProfile) {
+          try {
+            const idx = window.OwnedInventoryIndex.updateFromProfile(lastProfile);
+            if (!idx) return;
+            ensureData((data) => {
+              const summary = window.OwnedInventoryIndex.matchWishlist(data, idx);
+              writeData(data, () => { console.log('[Wishlist] owned-index sync (updated):', summary); });
+            });
+            return;
+          } catch (e) { console.warn('[Wishlist] updateFromProfile failed', e); }
+        }
+        // Fallback: use any cached index directly
+        const idx = OwnedInventoryIndex.getCachedIndex && OwnedInventoryIndex.getCachedIndex();
+        if (!idx) return;
+        ensureData((data) => {
+          const summary = OwnedInventoryIndex.matchWishlist(data, idx);
+          // persist updated dimData
+          writeData(data, () => { console.log('[Wishlist] owned-index sync:', summary); });
+        });
       });
     } catch (e) { console.warn('[Wishlist] trySyncOwnedIndex error', e); }
   }

@@ -52,6 +52,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Now load and display the wishlist UI
         loadLists();
+        // Attempt a background OwnedIndex update from any cached Bungie profile
+        try {
+          chrome.storage.local.get(['lastBungieProfile', 'dimData'], async (res) => {
+            const lastProfile = res?.lastBungieProfile;
+            if (lastProfile && window.OwnedInventoryIndex && window.OwnedInventoryIndex.updateFromProfile) {
+              try {
+                const idx = window.OwnedInventoryIndex.updateFromProfile(lastProfile);
+                const totalInstances = idx.byInstanceId ? idx.byInstanceId.size : 0;
+                const uniqueItems = idx.byItemHash ? idx.byItemHash.size : 0;
+                await new Promise((r) => chrome.storage.local.set({ ownedIndexSummary: { totalInstances, uniqueItems, fetchedAt: Date.now() } }, r));
+                // Run lightweight wishlist sync with updated index
+                const dimData = res?.dimData;
+                if (dimData && window.OwnedInventoryIndex.matchWishlist) {
+                  try {
+                    window.OwnedInventoryIndex.matchWishlist(dimData, idx);
+                    await new Promise((r) => chrome.storage.local.set({ dimData }, r));
+                    console.log('[Manager] Background OwnedIndex update & wishlist sync complete');
+                  } catch (e) { console.warn('[Manager] background matchWishlist failed', e); }
+                }
+              } catch (e) { console.warn('[Manager] updateFromProfile background update failed', e); }
+            }
+          });
+        } catch (e) { /* ignore */ }
     }).catch(err => {
         console.warn("[D2MANIFEST] Preflight failed:", err);
         // Hide overlay even on error

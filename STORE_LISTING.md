@@ -56,6 +56,11 @@ WORKS WITH DIM
 - Opens as a sidebar alongside Destiny Item Manager
 - Wishlist icons appear directly on items in DIM
 
+WORKS WITH GODROLL.TV
+- Pick perks on any godroll.tv weapon page and click "Ahamkara Wish"
+- Choose which wishlist it goes into -- no rebuilding the roll in the app
+- PvE or PvP is picked up from the page's stats toggle
+
 No ads. No subscription. Your's forever.
 
 Eyes Up Guardian...
@@ -89,6 +94,26 @@ This extension lets Destiny 2 players build, save, and track weapon and armor ro
 
 ---
 
+## Permission Justifications
+(The Developer Dashboard asks for one per permission under "Privacy practices")
+
+```
+storage: Saves the user's wishlists, settings and Bungie sign-in session locally in the browser.
+sidePanel: The extension's whole interface lives in the browser side panel.
+identity: Signs the user in to Bungie.net with Bungie's official OAuth flow (chrome.identity.launchWebAuthFlow).
+alarms: Periodically refreshes the Bungie sign-in token so the session doesn't expire while the panel is closed.
+scripting: Adds the "Ahamkara Wish" button to godroll.tv pages, and only after the user has granted godroll.tv access.
+
+Host permission www.bungie.net: Reads the signed-in player's Destiny 2 inventory and game data (manifest) to match it against their wishlists.
+Host permission tqgewrylrjqfqzqlmmag.supabase.co: The extension's own backend -- community wishlists and the Bungie OAuth token exchange.
+Optional host permission godroll.tv: Requested only when the user clicks the Godroll.tv button in the extension. Lets the extension add an "Ahamkara Wish" button to godroll.tv weapon pages that saves the selected perk roll to the user's wishlist. Nothing is sent to godroll.tv.
+Content script on app.destinyitemmanager.com: Highlights items in Destiny Item Manager that match the user's wishlists. Reads the page only; sends nothing.
+
+Remote code: No. All code ships in the package.
+```
+
+---
+
 ## Privacy Policy URL
 
 Host PRIVACY_POLICY.md at a public URL and paste it here. Options:
@@ -113,6 +138,7 @@ Recommended shots to capture:
 3. **Armor crafting view** -- archetype and spark selected
 4. **Menu / Feed view** -- Feed log showing recent drops
 5. **Discover view** -- community wishlists browseable
+6. **godroll.tv integration** -- a godroll.tv weapon page with perks picked and the Ahamkara Wish dropdown open, the side panel's weapon list beside it
 
 Tip: take screenshots with the sidebar open next to a real DIM session to show the integration in context. That screenshot will be the most compelling for Destiny players.
 

@@ -1,6 +1,6 @@
 # Privacy Policy — Ahamkara Wishes
 
-_Last updated: August 7, 2026_
+_Last updated: October 1, 2026_
 
 Ahamkara Wishes is a Chrome extension that helps Destiny 2 players build and manage wishlists for weapon rolls and armor sets. This policy explains what data the extension accesses, how it is used, and how it is stored.
 
@@ -20,6 +20,12 @@ The extension **never** reads your messages, friends list, financial information
 ### Wishlist data
 Wishlists you create are stored locally in your browser using Chrome's built-in `storage` API. If you choose to submit a wishlist to the community Discover feed, the title, mode (PvE/PvP/Mixed), and wishlist contents are stored on our server so other users can find and subscribe to them.
 
+### Pages on supported Destiny websites
+The extension adds features to two Destiny 2 websites. In both cases it only reads the page in your own browser tab; nothing from these pages is sent to us or to anyone else.
+
+- **godroll.tv** — only if you allow access (the extension asks the first time you use its Godroll.tv button; you can revoke it at any time from Chrome's extension settings). On godroll.tv weapon pages the extension adds an "Ahamkara Wish" button. When you click it, the extension reads which weapon you are viewing, which perks you have selected, and whether the page's stats are set to PvE or PvP, and saves that roll to the wishlist you choose — locally, in your browser.
+- **Destiny Item Manager (app.destinyitemmanager.com)** — the extension reads the item tiles on the page to highlight items that match your wishlists.
+
 ---
 
 ## How data is stored
@@ -31,7 +37,7 @@ Wishlists you create are stored locally in your browser using Chrome's built-in 
 | Your wishlists | Your browser (chrome.storage.local) | You — deleted when you delete a wishlist |
 | Community-submitted wishlists | Supabase (hosted in the US) | Us — deleted on request |
 
-We do not sync your personal inventory data or OAuth tokens to any server.
+We do not sync your personal inventory data or OAuth tokens to any server. Rolls added from godroll.tv are stored exactly like any other wish: locally, in your browser.
 
 ---
 
@@ -46,7 +52,7 @@ We do not sync your personal inventory data or OAuth tokens to any server.
 
 ## Third-party services
 
-The extension communicates with two external services:
+The extension communicates with two external services (godroll.tv and Destiny Item Manager are only read in your own tab, as described above — the extension sends them nothing):
 
 - **Bungie.net API** — to authenticate your account and read your character inventory. Bungie's own privacy policy applies to that communication: https://www.bungie.net/en/Legal/PrivacyPolicy
 - **Supabase** — to store and serve community wishlists. Supabase's privacy policy applies to data stored there: https://supabase.com/privacy

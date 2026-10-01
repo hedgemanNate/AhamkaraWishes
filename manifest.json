@@ -18,6 +18,12 @@
       "css": ["dim-wishlist-overlay.css"],
       "js": ["dim-wishlist-overlay.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://godroll.tv/*", "https://www.godroll.tv/*"],
+      "css": ["godroll-content.css"],
+      "js": ["godroll-roll-core.js", "godroll-content.js"],
+      "run_at": "document_idle"
     }
   ],
   "action": {

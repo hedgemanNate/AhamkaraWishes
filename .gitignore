@@ -11,3 +11,6 @@ DIM-master/
 .DS_Store
 ._*
 node_modules/
+
+# Playwright MCP screenshots/snapshots
+.playwright-mcp/

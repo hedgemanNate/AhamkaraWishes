@@ -840,9 +840,14 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local' && changes.dimData) {
         loadLists();
     }
+    // The godroll.tv button adds wishes from the service worker, which has no
+    // owned-inventory index — match them here so ownership shows up right away.
+    if (namespace === 'local' && changes.wishAddedExternally) {
+        matchWishlistAgainstCachedIndex();
+    }
 });
 
-// Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
+// Sidepanel version of saveItem (the add/duplicate rules are shared via weapon-wish-core.js)
 // Returns a Promise that resolves after the storage operation completes
 function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null, setHash = null, linkedHashes = null, weaponMeta = null) {
   return new Promise((resolve) => {
@@ -852,71 +857,17 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
         lists: { default: { name: "Main Wishlist", items: {} } }
       };
 
-      const activeList = data.lists[data.activeId] || data.lists["default"];
-      if (!activeList.items) activeList.items = {};
-
-      // Create container if missing
-      if (!activeList.items[hash]) {
-        activeList.items[hash] = {
-          static: { name, type, set: null, icon: icon || null, classType, bucketHash, slotName, setName, setHash, linkedHashes: Array.isArray(linkedHashes) ? linkedHashes : [],
-            ammoType: weaponMeta?.ammoType ?? null,
-            itemTypeDisplayName: weaponMeta?.itemTypeDisplayName ?? null,
-            damageTypeHash: weaponMeta?.damageTypeHash ?? null
-          },
-          wishes: []
-        };
-      } else {
-        // Backfill metadata if missing
-        if (name && !activeList.items[hash].static?.name) activeList.items[hash].static.name = name;
-        if (type && !activeList.items[hash].static?.type) activeList.items[hash].static.type = type;
-
-        // Backfill icon if we now have one
-        if (icon && (!activeList.items[hash].static || !activeList.items[hash].static.icon)) {
-          activeList.items[hash].static.icon = icon;
-        }
-
-        // Backfill filter data if missing
-        if (classType !== null && !activeList.items[hash].static?.classType) activeList.items[hash].static.classType = classType;
-        if (bucketHash !== null && !activeList.items[hash].static?.bucketHash) activeList.items[hash].static.bucketHash = bucketHash;
-        if (slotName && !activeList.items[hash].static?.slotName) activeList.items[hash].static.slotName = slotName;
-        if (setName && !activeList.items[hash].static?.setName) activeList.items[hash].static.setName = setName;
-        if (setHash && !activeList.items[hash].static?.setHash) activeList.items[hash].static.setHash = setHash;
-        if (Array.isArray(linkedHashes) && linkedHashes.length && !(activeList.items[hash].static?.linkedHashes || []).length) {
-          activeList.items[hash].static.linkedHashes = linkedHashes;
-        }
-        if (weaponMeta?.ammoType != null && activeList.items[hash].static?.ammoType == null) activeList.items[hash].static.ammoType = weaponMeta.ammoType;
-        if (weaponMeta?.itemTypeDisplayName && !activeList.items[hash].static?.itemTypeDisplayName) activeList.items[hash].static.itemTypeDisplayName = weaponMeta.itemTypeDisplayName;
-        if (weaponMeta?.damageTypeHash != null && activeList.items[hash].static?.damageTypeHash == null) activeList.items[hash].static.damageTypeHash = weaponMeta.damageTypeHash;
-      }
-
-      const existingWishes = activeList.items[hash].wishes || [];
-      activeList.items[hash].wishes = existingWishes;
-
-      // Duplicate check: armor compares config, weapons compare raw string
-      const isDuplicate = existingWishes.some((w) => {
-        if (!w) return false;
-        const sameMode = (w?.tags || []).includes(mode);
-        if (!sameMode) return false;
-        // Armor: same archetype + same spark + same mode = duplicate
-        if (config?.archetype && config?.spark) {
-          return w.config?.archetype === config.archetype &&
-                 w.config?.spark === config.spark;
-        }
-        // Weapons: same raw string + same mode = duplicate
-        return w?.raw === rawString;
+      const listId = data.lists[data.activeId] ? data.activeId : "default";
+      // Container creation, metadata backfill and the duplicate rules live in
+      // weapon-wish-core.js so the godroll.tv button (service worker) shares them.
+      const status = WeaponWish.addWishToList(data, listId, {
+        hash, name, type, rawString, config, mode, icon, classType, bucketHash,
+        slotName, setName, setHash, linkedHashes, weaponMeta
       });
-      if (isDuplicate) {
+      if (status === 'duplicate') {
         resolve();
         return;
       }
-
-      // Add new wish
-      existingWishes.push({
-        tags: [mode],          // ['pve'] or ['pvp']
-        config,               // your armor/weapon config
-        raw: rawString,       // original string
-        added: Date.now()
-      });
 
       chrome.storage.local.set({ dimData: data }, () => {
         resolve(); // Signal completion after storage operation completes

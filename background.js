@@ -1,5 +1,14 @@
 importScripts('supabase-network.js', 'bungie-auth-core.js');
 
+// godroll.tv "add to wishlist" button support. Loaded defensively: a failure
+// here must never stop the service worker registering, or the token-refresh
+// alarm below would die with it.
+try {
+  importScripts('destiny-manifest.js', 'godroll-roll-core.js', 'weapon-wish-core.js', 'godroll-add.js');
+} catch (e) {
+  console.error('[BG] godroll add support failed to load:', e);
+}
+
 // Allows users to open the side panel by clicking the action toolbar icon.
 // Browsers without the chrome.sidePanel API (e.g. Opera GX) have no side
 // panel surface at all, so fall back to opening the UI in a normal tab —
@@ -14,6 +23,22 @@ if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
     chrome.tabs.create({ url: chrome.runtime.getURL('sidepanel.html') });
   });
 }
+
+// The godroll.tv content script asks us to add a picked roll to a wishlist.
+// The reply is async, hence `return true`; errors become a message the page
+// can show rather than a silent failure.
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (!msg || msg.type !== 'ahamkara:add-godroll-roll') return;
+  if (!self.GodrollAdd) {
+    sendResponse({ ok: false, error: 'Ahamkara Wishes could not start \u2014 try reloading the extension.' });
+    return;
+  }
+  self.GodrollAdd.addRoll(msg).then(sendResponse, (e) => {
+    console.error('[BG] add godroll roll failed:', e);
+    sendResponse({ ok: false, error: 'Something went wrong adding the roll.' });
+  });
+  return true;
+});
 
 // --- PROACTIVE TOKEN REFRESH ---
 // MV3 service workers terminate after inactivity, so there is no persistent

@@ -1,0 +1,104 @@
+/* godroll.tv overlay: the Ahamkara Wish split button and a confirmation toast.
+   The button is a copy of the site's Add to Compare pill: it carries the same
+   wrapper classes (save-button-container has-dropdown weapon-compare-actions),
+   so the site's own CSS supplies the joined-pill shape, the white label, the
+   teal chevron and border, and the menu. Only the star is recoloured, and a
+   glare is added that orbits the whole pill the way the Godroll button's does. */
+
+.floating-action-buttons .ahamkara-wish-btn .preview-icon,
+.floating-action-buttons .ahamkara-wish-btn .preview-icon svg {
+  color: #d4af37 !important;
+}
+.floating-action-buttons .ahamkara-wish-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Orbiting glare. The site's Godroll button animates a conic-gradient's start
+   angle behind a transparent 2px border. This pill is two joined elements, so
+   instead of one orbit per half there is a single ring on the wrapper that
+   travels around the whole outline. The arc is the app's rainbow: the six stat
+   colours from :root in sidepanel.css (--stat-melee .. --stat-super), the same
+   muted palette the Feed toggle's ring uses, so it reads as the app's branding
+   rather than a new accent. The angle gets its own registered property so none
+   of this depends on the site's internal names. */
+@property --ahamkara-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes ahamkara-wish-orbit {
+  100% { --ahamkara-angle: 360deg; }
+}
+.floating-action-buttons .ahamkara-wish-actions {
+  position: relative;
+  border-radius: 2rem;
+  /* Mirrors the stat colours in sidepanel.css :root — keep in sync. */
+  --aw-stat-melee: #8a3a3a;
+  --aw-stat-grenade: #a35d41;
+  --aw-stat-class: #9c7c4a;
+  --aw-stat-health: #5d7a5d;
+  --aw-stat-weapons: #4a6fa5;
+  --aw-stat-super: #6a4a8a;
+}
+.floating-action-buttons .ahamkara-wish-actions::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 2px;
+  border-radius: 2rem;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--ahamkara-angle),
+    transparent 0%,
+    var(--aw-stat-melee) 5%,
+    var(--aw-stat-grenade) 9.5%,
+    var(--aw-stat-class) 14%,
+    var(--aw-stat-health) 18.5%,
+    var(--aw-stat-weapons) 23%,
+    var(--aw-stat-super) 27.5%,
+    transparent 33%
+  );
+  /* Keep only the 2px ring: paint the gradient everywhere, then punch out the inside. */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: ahamkara-wish-orbit 6.66s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .floating-action-buttons .ahamkara-wish-actions::before { animation: none; }
+}
+
+.ahamkara-wish-menu .comparison-menu-count {
+  margin-left: 8px;
+}
+
+/* Long wishlist names shouldn't stretch the menu. */
+.ahamkara-wish-menu .save-dropdown-item > span:first-child {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ahamkara-wish-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  max-width: min(90vw, 420px);
+  padding: 10px 16px;
+  background: #15110a;
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.6);
+  border-radius: 8px;
+  font: 600 13px/1.4 sans-serif;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.ahamkara-wish-toast-error {
+  color: #ff8a80;
+  border-color: rgba(255, 138, 128, 0.6);
+}

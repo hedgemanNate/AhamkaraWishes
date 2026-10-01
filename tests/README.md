@@ -19,6 +19,8 @@ npm test
 | `bungie-auth-transfer-test.js` | `buildTransferItemPayload()` |
 | `armor-linked-hash-match-test.js` | Armor matching via linked item hashes |
 | `weapon-wish-consistency-test.js` | Saved weapon wishes normalize to real `desired`/`mustHave` hashes |
+| `godroll-roll-test.js` | godroll.tv roll reading: URL/DOM reading, PvE/PvP mode, column mapping |
+| `weapon-wish-core-test.js` | Shared wish payload (raw identity string, combos) and add-to-list duplicate/backfill rules |
 
 `wishlist-merge-test.html` is browser-only (cross-browser sync merge/tombstone rules).
 Open it in a browser, or headless:

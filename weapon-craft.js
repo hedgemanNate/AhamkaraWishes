@@ -27,7 +27,7 @@ let currentEditContext = null; // { hash, index }
 const COMBO_COLORS = window.OwnedInventoryIndex.COMBO_COLORS;
 
 // Four combo slots plus room for a couple of uncoloured "any of these" picks.
-const WEAPON_ACCEPTABLE_CAP = 6;
+const WEAPON_ACCEPTABLE_CAP = WeaponWish.ACCEPTABLE_CAP;
 const PERK_STAT_BAR_MAX = 40;      // delta bar in the hover panel maxes at +/-40
 const STAT_ANIM_MS = 600;
 
@@ -885,72 +885,10 @@ function animateRecoil(pathEl, target) {
 // ------------------------------------------------------------------
 
 // Shared by saveWeaponWish (append) and editWeaponWish (overwrite in place).
+// The payload shape and the `raw` identity string come from weapon-wish-core.js,
+// which the godroll.tv button also uses, so both paths save identical wishes.
 function buildWeaponWishPayload() {
-    const perksArray = perkState.map((s) => Array.from(s.acceptable));
-    const hasAny = perksArray.some((c) => c.length > 0);
-
-    // Build display data for the list card — resolved at save time so cards render instantly
-    const perkColumns = currentCraftWeapon.columns.map((col, colIndex) => {
-        const state = perkState[colIndex];
-        const selected = [];
-        for (const { base, enhanced } of col.pairs) {
-            const isAcceptable = state.acceptable.has(base.hash) || (enhanced && state.acceptable.has(enhanced.hash));
-            if (!isAcceptable) continue;
-            const color = getPerkColor(colIndex, base.hash);
-            selected.push({
-                name: base.name,
-                icon: base.icon,
-                hash: base.hash,
-                enhancedHash: enhanced?.hash ?? null,
-                // Combo membership, or null for a plain "any of this column" pick.
-                // Replaces the old isActive flag, which tracked the single perk
-                // driving the stats panel — that job now belongs to the combo
-                // toggle and is session state, not part of the wish.
-                color: color === 'plain' ? null : color
-            });
-        }
-        return selected;
-    }).filter((col) => col.length > 0);
-
-    // Column-aware acceptable perks, tagged with the weapon def's real socket
-    // index so inventory matching can compare column-to-column instead of
-    // flattening everything into one set (which would let an accepted barrel
-    // perk falsely "match" against an accepted trait perk on an owned roll).
-    // colIndex (0-based column position) is stored alongside socketIndex so
-    // matching can reliably identify "column 3" / "column 4" (the trait perk
-    // columns) regardless of which columns were actually selected — needed
-    // for the pooled columns-3-and-4 trait-perk matching rule in
-    // owned-inventory-index.js.
-    // `colors` names the one perk wearing each combo colour in this column,
-    // carrying both its base and enhanced hashes (either form counts as a hit
-    // on an owned roll). A colour spanning two or more columns is a combo; the
-    // matcher rebuilds those from these entries.
-    const perkColumnsData = currentCraftWeapon.columns
-        .map((col, colIndex) => {
-            const state = perkState[colIndex];
-            const entry = { socketIndex: col.socketIndex, colIndex, hashes: Array.from(state.acceptable) };
-            const colors = {};
-            for (const c of COMBO_COLORS) {
-                const baseHash = state.colors.get(c);
-                if (baseHash === undefined) continue;
-                const pair = col.pairs.find((p) => p.base.hash === baseHash);
-                colors[c] = pair?.enhanced ? [baseHash, pair.enhanced.hash] : [baseHash];
-            }
-            if (Object.keys(colors).length > 0) entry.colors = colors;
-            return entry;
-        })
-        .filter((c) => c.hashes.length > 0);
-
-    // Wish identity — the dup check in manager.js saveItem() and the sync merge
-    // key in wishlist-sync-core.js both hash this string, so two wishes with the
-    // same perks but different combos MUST NOT collapse into one. The colour
-    // signature is appended only when colours exist, keeping every previously
-    // saved (uncoloured) wish byte-identical to what is already stored.
-    const colorSig = perkState.map((s) => COMBO_COLORS.map((c) => s.colors.get(c) ?? 0));
-    const hasColors = colorSig.some((col) => col.some((h) => h !== 0));
-    const rawString = JSON.stringify(perksArray) + (hasColors ? `|${JSON.stringify(colorSig)}` : '');
-
-    return { hasAny, rawString, config: { perks: perksArray, perkColumns, perkColumnsData } };
+    return WeaponWish.buildWeaponWishPayload(currentCraftWeapon.columns, perkState, COMBO_COLORS);
 }
 
 async function saveWeaponWish() {

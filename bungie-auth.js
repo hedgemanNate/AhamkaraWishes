@@ -311,9 +311,13 @@ async function fetchProfileWithComponents(membershipType, membershipId, componen
     throw new Error('GetProfile failed: ' + resp.status + ' - ' + serverMsg);
   }
 
-  // Persist last raw profile response for other modules to consume
+  // Persist last raw profile response so the next panel open can show owned
+  // state before its own fetch lands. The profile runs to megabytes, so the
+  // write isn't awaited — the caller shouldn't wait on disk to start indexing.
   const toStore = { lastBungieProfile: parsed?.Response || parsed, lastBungieProfileFetchedAt: Date.now() };
-  await new Promise((res) => chrome.storage.local.set(toStore, res));
+  chrome.storage.local.set(toStore, () => {
+    if (chrome.runtime.lastError) console.warn('[BUNGIE-AUTH] could not cache profile:', chrome.runtime.lastError.message);
+  });
   return parsed?.Response || parsed;
 }
 

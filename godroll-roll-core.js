@@ -22,24 +22,32 @@
     return m ? Number(m[1]) : null;
   }
 
-  // Returns { itemHash, columns: number[][] } or null when this isn't a weapon
-  // page. `columns` has one array per perk column, in page order, holding the
-  // selected plug hashes (base or enhanced — whichever variant is showing).
+  // Returns { itemHash, columns: number[][], layoutChanged } or null when this
+  // isn't a weapon page. `columns` has one array per perk column, in page
+  // order, holding the selected plug hashes (base or enhanced — whichever
+  // variant is showing). `layoutChanged` is true when the markup this relies on
+  // is gone — no perk columns at all, or picked perks with no readable hash — so
+  // the button can say the integration needs an update instead of misleadingly
+  // asking the user to pick perks they already picked.
   function readRoll(doc, pathname) {
     const itemHash = parseItemHash(pathname);
     if (itemHash === null) return null;
 
     const columns = [];
+    let unreadable = 0;
     doc.querySelectorAll('.socket-columns .socket-column').forEach((col) => {
       const hashes = [];
       col.querySelectorAll('.perk-item.selected').forEach((el) => {
         if (el.classList.contains('masterwork-item') || el.classList.contains('mod-item-inline')) return;
         const h = el.getAttribute('data-hash');
         if (/^\d+$/.test(h || '')) hashes.push(Number(h));
+        else unreadable++;
       });
       columns.push(hashes);
     });
-    return { itemHash, columns };
+    const found = columns.reduce((n, c) => n + c.length, 0);
+    const layoutChanged = columns.length === 0 || (found === 0 && unreadable > 0);
+    return { itemHash, columns, layoutChanged };
   }
 
   function countSelected(roll) {

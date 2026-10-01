@@ -49,6 +49,12 @@ check('skips mod and masterwork picks', !roll.columns.flat().includes(2323986101
 check('countSelected totals all columns', G.countSelected(roll) === 4);
 check('readRoll returns null off weapon pages', G.readRoll(doc, '/weapons') === null);
 check('countSelected handles null', G.countSelected(null) === 0);
+check('normal page is not flagged as a layout change', roll.layoutChanged === false);
+check('nothing picked on a normal page is not a layout change',
+  G.readRoll(docWith([column([perk(1, [])]), column([perk(2, [])])]), '/1/x').layoutChanged === false);
+check('no perk columns at all = layout changed', G.readRoll(docWith([]), '/1/x').layoutChanged === true);
+check('picks with no readable hash = layout changed',
+  G.readRoll(docWith([column([perk('', ['selected'])]), column([perk('abc', ['selected'])])]), '/1/x').layoutChanged === true);
 
 // --- assignColumns ---
 const mk = (b, e) => ({ base: { hash: b }, enhanced: e ? { hash: e } : null });

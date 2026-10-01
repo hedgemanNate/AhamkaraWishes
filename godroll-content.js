@@ -7,6 +7,11 @@
 // Depends on godroll-roll-core.js (loaded first by the manifest).
 
 (function () {
+  // Injected both by registration and, right after access is granted, into
+  // already-open tabs — a tab can end up with it twice. Run once per page.
+  if (window.__ahamkaraGodrollLoaded) return;
+  window.__ahamkaraGodrollLoaded = true;
+
   const { readRoll, countSelected, readMode } = window.GodrollRoll;
   const WRAP_ID = 'ahamkara-wish-wrap';
   const BTN_ID = 'ahamkara-wish-btn';
@@ -51,6 +56,10 @@
   async function addToList(wrap, listId) {
     const roll = readRoll(document, location.pathname);
     if (!roll) return;
+    if (roll.layoutChanged) {
+      toast('godroll.tv\u2019s page layout has changed \u2014 Ahamkara Wishes needs an update before it can read rolls here.', true);
+      return;
+    }
     if (countSelected(roll) === 0) {
       toast('Select some perks first, then add them to a wishlist.', true);
       return;

@@ -89,6 +89,40 @@ function initWeaponCraft() {
             document.getElementById('weapons-nav-list')?.click();
         });
     });
+
+    initGodrollLink();
+}
+
+// godroll.tv access is optional (godroll-access.js). The first click on the
+// Godroll.tv link asks for it; the site opens either way, with the Ahamkara
+// Wish button only if access was granted. Whether access is held is cached
+// here because chrome.permissions.request() must run synchronously inside the
+// click — there is no time to ask chrome.permissions.contains() first.
+function initGodrollLink() {
+    const link = document.querySelector('.craft-link-btn[aria-label*="Godroll"]');
+    if (!link || !window.GodrollAccess || !chrome.permissions) return;
+
+    let granted = false;
+    const refresh = () => GodrollAccess.has().then((v) => { granted = v; }, () => {});
+    refresh();
+    chrome.permissions.onAdded.addListener(refresh);
+    chrome.permissions.onRemoved.addListener(refresh);
+
+    link.addEventListener('click', (e) => {
+        if (granted) return; // normal link behaviour
+        e.preventDefault();
+        GodrollAccess.request()
+            .then((ok) => ok
+                ? chrome.runtime.sendMessage({ type: 'ahamkara:sync-godroll-access' }).then(() => ok)
+                : ok)
+            .catch(() => false)
+            .then((ok) => {
+                chrome.tabs.create({ url: link.href });
+                if (!ok) {
+                    window.awWishlistIO?.showToast('Opened Godroll.tv without the Ahamkara Wish button — allow access next time to add rolls from it.');
+                }
+            });
+    });
 }
 
 // Resets the craft view to its blank starting state: no weapon, no perk picks,

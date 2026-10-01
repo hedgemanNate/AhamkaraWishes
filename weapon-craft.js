@@ -84,23 +84,33 @@ function initWeaponCraft() {
     // The Integrated Websites links still open their site in a new tab as usual;
     // the panel also jumps to Weapons > List, so the wishlist is in view beside
     // the site while rolls get added from it.
+    // Registered after initGodrollLink so a click it intercepts (to show the
+    // access explainer instead of opening the site) is skipped here; the
+    // explainer switches to the list itself once the site really opens.
+    initGodrollLink();
     document.querySelectorAll('.craft-link-btn').forEach((link) => {
-        link.addEventListener('click', () => {
-            document.getElementById('weapons-nav-list')?.click();
+        link.addEventListener('click', (e) => {
+            if (e.defaultPrevented) return;
+            showWeaponList();
         });
     });
-
-    initGodrollLink();
 }
 
-// godroll.tv access is optional (godroll-access.js). The first click on the
-// Godroll.tv link asks for it; the site opens either way, with the Ahamkara
-// Wish button only if access was granted. Whether access is held is cached
-// here because chrome.permissions.request() must run synchronously inside the
-// click — there is no time to ask chrome.permissions.contains() first.
+function showWeaponList() {
+    document.getElementById('weapons-nav-list')?.click();
+}
+
+// godroll.tv access is optional (godroll-access.js). Chrome's permission prompt
+// can't be reworded, so the first click on the Godroll.tv link (without access)
+// opens our own explainer instead of the site. "Allow access" then shows
+// Chrome's prompt (that click is the user gesture it requires) and opens the
+// site; "Just open Godroll.tv" opens it without the integration. Once access is
+// held the link behaves normally. Whether access is held is cached because
+// chrome.permissions.request() must run synchronously inside the click.
 function initGodrollLink() {
     const link = document.querySelector('.craft-link-btn[aria-label*="Godroll"]');
-    if (!link || !window.GodrollAccess || !chrome.permissions) return;
+    const overlay = document.getElementById('godroll-access-modal-overlay');
+    if (!link || !overlay || !window.GodrollAccess || !chrome.permissions) return;
 
     let granted = false;
     const refresh = () => GodrollAccess.has().then((v) => { granted = v; }, () => {});
@@ -108,20 +118,36 @@ function initGodrollLink() {
     chrome.permissions.onAdded.addListener(refresh);
     chrome.permissions.onRemoved.addListener(refresh);
 
+    const close = () => overlay.classList.add('hidden');
+    const openSite = () => { chrome.tabs.create({ url: link.href }); showWeaponList(); };
+
     link.addEventListener('click', (e) => {
         if (granted) return; // normal link behaviour
         e.preventDefault();
+        overlay.classList.remove('hidden');
+        document.getElementById('godroll-access-allow')?.focus();
+    });
+
+    document.getElementById('godroll-access-allow')?.addEventListener('click', () => {
+        close();
         GodrollAccess.request()
             .then((ok) => ok
                 ? chrome.runtime.sendMessage({ type: 'ahamkara:sync-godroll-access' }).then(() => ok)
                 : ok)
             .catch(() => false)
             .then((ok) => {
-                chrome.tabs.create({ url: link.href });
+                openSite();
                 if (!ok) {
-                    window.awWishlistIO?.showToast('Opened Godroll.tv without the Ahamkara Wish button — allow access next time to add rolls from it.');
+                    window.awWishlistIO?.showToast('Opened Godroll.tv without the Ahamkara Wish button. You can allow access next time.');
                 }
             });
+    });
+    document.getElementById('godroll-access-skip')?.addEventListener('click', () => { close(); openSite(); });
+
+    // Backdrop click or Escape dismisses without opening anything.
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close();
     });
 }
 

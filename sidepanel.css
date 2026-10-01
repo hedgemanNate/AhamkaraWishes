@@ -4118,6 +4118,18 @@ body.feed-on .feed-glow-ring {
   flex: 1;
 }
 
+/* godroll.tv access explainer (reuses the submit modal's frame) */
+.aw-godroll-explainer p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--aw-text-secondary);
+}
+
+.aw-godroll-explainer p strong {
+  color: var(--aw-gold);
+}
+
 /* --- Admin panels --- */
 .aw-admin-tabs {
   display: flex;

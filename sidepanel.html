@@ -440,6 +440,20 @@
     </div>
   </div>
 
+  <!-- godroll.tv access explainer: shown before Chrome's own permission prompt,
+       whose wording can't be changed (see initGodrollLink in weapon-craft.js) -->
+  <div id="godroll-access-modal-overlay" class="aw-submit-modal-overlay hidden">
+    <div class="aw-submit-modal aw-godroll-explainer" role="dialog" aria-modal="true" aria-labelledby="godroll-access-title">
+      <h3 id="godroll-access-title">Add rolls straight from Godroll.tv</h3>
+      <p>Pick perks on any Godroll.tv weapon page, then hit <strong>Ahamkara Wish</strong> to save that roll to one of your wishlists. No rebuilding it here.</p>
+      <p>Chrome will ask to let Ahamkara Wishes &ldquo;read and change&rdquo; godroll.tv. That's only so it can add the button and read the perks you select. Nothing is sent anywhere, and you can turn it off anytime in Chrome's extension settings.</p>
+      <div class="aw-submit-modal-actions">
+        <button id="godroll-access-allow" class="mt-btn-primary">Allow access</button>
+        <button id="godroll-access-skip" class="mt-btn-ghost">Just open Godroll.tv</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ADMIN: full-screen slide-up sheet, only ever opened when is_admin is confirmed true -->
   <div id="admin-view" class="aw-slide-sheet aw-slide-sheet-admin" aria-hidden="true">
     <div class="aw-sheet-header aw-sheet-header-admin">

@@ -28,7 +28,8 @@ Ahamkara Wishes is a wishlist manager built for serious Destiny 2 players. Open 
 WEAPONS
 - Search any weapon by name and browse its full perk pool
 - Pick perks column by column to define your ideal roll
-- See stat deltas live as you select perks
+- Color-code perk combos (up to four per wish) when only an exact pairing will do
+- See stat changes live as you select perks, in PvE or PvP
 - Save separate PvE and PvP wishes for the same weapon
 - The extension checks your vault and characters and marks wishes you already own
 
@@ -38,30 +39,31 @@ ARMOR
 - Save wishes for each class and slot
 - Owned rolls are highlighted automatically
 
+WHEN A WISH DROPS
+- New matching rolls are locked in-game automatically so they can't be dismantled by accident
+- They're moved to your vault for you
+- Turn on the Feed to log every wishlisted roll the moment it lands in your inventory
+
 WISHLISTS
 - Create and name as many wishlists as you want (PvE, PvP, season-specific, etc.)
-- Export and import wishlists as JSON files to back them up or share them
+- Export and import wishlists as files to back them up or share them
 - Duplicate or merge wishlists with one click
-
-FEED
-- Turn on the Feed to get a notification every time a wishlisted roll shows up in your inventory
-- See your full acquisition history in the Feed log
 
 DISCOVER
 - Browse community and creator wishlists
-- Subscribe to a wishlist to load it alongside your own
+- Save any of them to your own wishlists in one click
 - Submit your own wishlist for the community to find
+
+WORKS WITH GODROLL.TV
+- Pick perks on any Godroll.tv weapon page and click "Ahamkara Wish"
+- Choose which wishlist it goes into. No rebuilding the roll in the app
+- PvE or PvP is picked up from the page's stats toggle
 
 WORKS WITH DIM
 - Opens as a sidebar alongside Destiny Item Manager
 - Wishlist icons appear directly on items in DIM
 
-WORKS WITH GODROLL.TV
-- Pick perks on any godroll.tv weapon page and click "Ahamkara Wish"
-- Choose which wishlist it goes into -- no rebuilding the roll in the app
-- PvE or PvP is picked up from the page's stats toggle
-
-No ads. No subscription. Your's forever.
+No ads. No subscription. Yours forever.
 
 Eyes Up Guardian...
 ```

@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Ahamkara Wishes",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmcpqXKOMP2YrfnkMsBGNj4ogOoiHmvNLaJ3+rRT9IKmctd2iSYW2gwDo4+FnSRbXygi4l5prxI5bIfrdmPTibOvqhRf8ipW8rJpNhaBBCBUnODzLsng8B+yOXINSoxT3UL/tqp5mQVoCiBrqZ6dbJT6zrO3NuHCo/UY4pL3jqWHb7egdmDgIBexDLYjRTncmQQEXhbNoMt2EM91RzgyuGJ4OnshsIwAe+wutv+0xuzRL8jkYg/9WT7aKIU6bOMcRQW2iSSPgKeKFyadywFU/qQHHbuDFT/SWEaQFgwsqVaL4Uv49CBLOrgDr2/WG002pA0sCHonEkH57sSsNAxDBhQIDAQAB",
   "description": "Wishlist manager for Destiny 2 weapons and armor.",
-  "permissions": ["storage", "sidePanel", "identity", "alarms"],
+  "permissions": ["storage", "sidePanel", "identity", "alarms", "scripting"],
   "host_permissions": ["https://www.bungie.net/*", "https://tqgewrylrjqfqzqlmmag.supabase.co/*"],
+  "optional_host_permissions": ["https://godroll.tv/*", "https://www.godroll.tv/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },

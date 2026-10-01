@@ -328,34 +328,17 @@
   function trySyncOwnedIndex() {
     try {
       if (!window.OwnedInventoryIndex) return;
-      // If we have a cached Bungie profile, try an incremental update first
-      chrome.storage.local.get(['lastBungieProfile'], (res) => {
-        const lastProfile = res?.lastBungieProfile;
-        if (lastProfile && window.OwnedInventoryIndex.updateFromProfile) {
-          Promise.resolve(window.OwnedInventoryIndex.updateFromProfile(lastProfile))
-            .then((idx) => {
-              if (!idx) return;
-              ensureData((data) => {
-                const backfill = window.backfillLinkedHashes ? window.backfillLinkedHashes(data) : Promise.resolve(false);
-                Promise.resolve(backfill).then(() => {
-                  const summary = window.OwnedInventoryIndex.matchWishlist(data, idx);
-                  writeData(data, () => { console.log('[Wishlist] owned-index sync (updated):', summary); });
-                });
-              });
-            })
-            .catch((e) => console.warn('[Wishlist] updateFromProfile failed', e));
-          return;
-        }
-        // Fallback: use any cached index directly
-        const idx = OwnedInventoryIndex.getCachedIndex && OwnedInventoryIndex.getCachedIndex();
-        if (!idx) return;
-        ensureData((data) => {
-          const backfill = window.backfillLinkedHashes ? window.backfillLinkedHashes(data) : Promise.resolve(false);
-          Promise.resolve(backfill).then(() => {
-            const summary = OwnedInventoryIndex.matchWishlist(data, idx);
-            // persist updated dimData
-            writeData(data, () => { console.log('[Wishlist] owned-index sync:', summary); });
-          });
+      // manager.js rebuilds the index from the cached Bungie profile at
+      // startup and on every sync; this only re-matches against an index it
+      // has already built.
+      const idx = OwnedInventoryIndex.getCachedIndex && OwnedInventoryIndex.getCachedIndex();
+      if (!idx) return;
+      ensureData((data) => {
+        const backfill = window.backfillLinkedHashes ? window.backfillLinkedHashes(data) : Promise.resolve(false);
+        Promise.resolve(backfill).then(() => {
+          const summary = OwnedInventoryIndex.matchWishlist(data, idx);
+          // persist updated dimData
+          writeData(data, () => { console.log('[Wishlist] owned-index sync:', summary); });
         });
       });
     } catch (e) { console.warn('[Wishlist] trySyncOwnedIndex error', e); }

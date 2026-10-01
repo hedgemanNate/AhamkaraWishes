@@ -460,9 +460,16 @@ header {
   border-color: rgba(74,111,165,0.8);
   background: rgba(74,111,165,0.12);
 }
-.weapon-crafting-section .craft-link-btn[aria-label*="light"]:hover {
-  border-color: rgba(93,122,93,0.8);
-  background: rgba(93,122,93,0.12);
+.weapon-crafting-section .craft-link-btn[aria-label*="Godroll"]:hover {
+  border-color: rgba(9,215,208,0.8);
+  background: rgba(9,215,208,0.12);
+}
+/* The full site name is wider than the 60px square the short labels (DIM) use,
+   so this one grows to fit its text and keeps the same height. */
+.weapon-crafting-section .craft-link-btn[aria-label*="Godroll"] {
+  width: auto;
+  min-width: 60px;
+  padding: 0 14px;
 }
 
 .weapon-crafting-section .craft-link-btn .label {
@@ -4109,6 +4116,18 @@ body.feed-on .feed-glow-ring {
 
 .aw-submit-modal-actions button {
   flex: 1;
+}
+
+/* godroll.tv access explainer (reuses the submit modal's frame) */
+.aw-godroll-explainer p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--aw-text-secondary);
+}
+
+.aw-godroll-explainer p strong {
+  color: var(--aw-gold);
 }
 
 /* --- Admin panels --- */

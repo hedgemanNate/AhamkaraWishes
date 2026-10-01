@@ -27,12 +27,17 @@ let currentEditContext = null; // { hash, index }
 const COMBO_COLORS = window.OwnedInventoryIndex.COMBO_COLORS;
 
 // Four combo slots plus room for a couple of uncoloured "any of these" picks.
-const WEAPON_ACCEPTABLE_CAP = 6;
+const WEAPON_ACCEPTABLE_CAP = WeaponWish.ACCEPTABLE_CAP;
 const PERK_STAT_BAR_MAX = 40;      // delta bar in the hover panel maxes at +/-40
 const STAT_ANIM_MS = 600;
 
 
 let _weaponSearchDebounce = null;
+// Bumped by every weapon pick and by clearWeaponCraft(). selectWeaponForCraft is
+// async (manifest + oracle loads), so a load that was superseded — or cleared by
+// emptying the search box while it was still running — must not re-open the
+// craft view when it finally resolves.
+let _craftSession = 0;
 
 function initWeaponCraft() {
     const input = document.getElementById('weapon-query');
@@ -42,6 +47,8 @@ function initWeaponCraft() {
             if (clearBtn) clearBtn.classList.toggle('hidden', !e.target.value);
             clearTimeout(_weaponSearchDebounce);
             const q = e.target.value;
+            // An empty box means "no weapon": drop whatever is being crafted too.
+            if (!q.trim()) { clearWeaponCraft(); return; }
             _weaponSearchDebounce = setTimeout(() => runWeaponSearch(q), 250);
         });
     }
@@ -50,8 +57,7 @@ function initWeaponCraft() {
             clearTimeout(_weaponSearchDebounce);
             if (input) input.value = '';
             clearBtn.classList.add('hidden');
-            const resultsEl = document.getElementById('weapon-search-results');
-            if (resultsEl) resultsEl.innerHTML = '';
+            clearWeaponCraft();
             if (input) input.focus();
         });
     }
@@ -73,6 +79,103 @@ function initWeaponCraft() {
     const editBtn = document.getElementById('weapon-edit-wish-btn');
     if (editBtn) {
         editBtn.onclick = editWeaponWish;
+    }
+
+    // The Integrated Websites links still open their site in a new tab as usual;
+    // the panel also jumps to Weapons > List, so the wishlist is in view beside
+    // the site while rolls get added from it.
+    // Registered after initGodrollLink so a click it intercepts (to show the
+    // access explainer instead of opening the site) is skipped here; the
+    // explainer switches to the list itself once the site really opens.
+    initGodrollLink();
+    document.querySelectorAll('.craft-link-btn').forEach((link) => {
+        link.addEventListener('click', (e) => {
+            if (e.defaultPrevented) return;
+            showWeaponList();
+        });
+    });
+}
+
+function showWeaponList() {
+    document.getElementById('weapons-nav-list')?.click();
+}
+
+// godroll.tv access is optional (godroll-access.js). Chrome's permission prompt
+// can't be reworded, so the first click on the Godroll.tv link (without access)
+// opens our own explainer instead of the site. "Allow access" then shows
+// Chrome's prompt (that click is the user gesture it requires) and opens the
+// site; "Just open Godroll.tv" opens it without the integration. Once access is
+// held the link behaves normally. Whether access is held is cached because
+// chrome.permissions.request() must run synchronously inside the click.
+function initGodrollLink() {
+    const link = document.querySelector('.craft-link-btn[aria-label*="Godroll"]');
+    const overlay = document.getElementById('godroll-access-modal-overlay');
+    if (!link || !overlay || !window.GodrollAccess || !chrome.permissions) return;
+
+    let granted = false;
+    const refresh = () => GodrollAccess.has().then((v) => { granted = v; }, () => {});
+    refresh();
+    chrome.permissions.onAdded.addListener(refresh);
+    chrome.permissions.onRemoved.addListener(refresh);
+
+    const close = () => overlay.classList.add('hidden');
+    const openSite = () => { chrome.tabs.create({ url: link.href }); showWeaponList(); };
+
+    link.addEventListener('click', (e) => {
+        if (granted) return; // normal link behaviour
+        e.preventDefault();
+        overlay.classList.remove('hidden');
+        document.getElementById('godroll-access-allow')?.focus();
+    });
+
+    document.getElementById('godroll-access-allow')?.addEventListener('click', () => {
+        close();
+        GodrollAccess.request()
+            .then((ok) => ok
+                ? chrome.runtime.sendMessage({ type: 'ahamkara:sync-godroll-access' }).then(() => ok)
+                : ok)
+            .catch(() => false)
+            .then((ok) => {
+                openSite();
+                if (!ok) {
+                    window.awWishlistIO?.showToast('Opened Godroll.tv without the Ahamkara Wish button. You can allow access next time.');
+                }
+            });
+    });
+    document.getElementById('godroll-access-skip')?.addEventListener('click', () => { close(); openSite(); });
+
+    // Backdrop click or Escape dismisses without opening anything.
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close();
+    });
+}
+
+// Resets the craft view to its blank starting state: no weapon, no perk picks,
+// no edit in progress. Called when the weapon search box is emptied (typed empty
+// or via the clear button). PvE/PvP is a preference, not part of the weapon, so
+// it is left alone.
+function clearWeaponCraft() {
+    clearTimeout(_weaponSearchDebounce);
+    _craftSession++;
+
+    currentCraftWeapon = null;
+    perkState = [];
+    activePerkTab = 0;
+    activeComboColor = null;
+    currentEditContext = null;
+    updateEditButtonVisibility();
+
+    const resultsEl = document.getElementById('weapon-search-results');
+    if (resultsEl) resultsEl.innerHTML = '';
+    document.getElementById('weapon-craft-main')?.classList.add('hidden');
+    document.getElementById('weapon-save-section')?.classList.add('hidden');
+    document.getElementById('pp-combo-toggle')?.classList.add('hidden');
+    document.getElementById('weapon-perk-detail')?.classList.add('hidden');
+    // Emptied too, so a stale weapon can never flash when the next one loads.
+    for (const id of ['weapon-live-stats', 'weapon-season-tabs', 'pp-tabs', 'pp-grid']) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
     }
 }
 
@@ -132,6 +235,7 @@ async function selectWeaponForCraft(hash, name, linkedHashes) {
     // after this function returns.
     currentEditContext = null;
     updateEditButtonVisibility();
+    const session = ++_craftSession;
 
     const input = document.getElementById('weapon-query');
     if (input && name) input.value = name;
@@ -141,6 +245,7 @@ async function selectWeaponForCraft(hash, name, linkedHashes) {
     if (resultsEl) resultsEl.innerHTML = '';
 
     const defs = await loadInventoryItemDefsToMemory();
+    if (session !== _craftSession) return;
     const def = defs.get(String(hash));
     if (!def) {
         console.error('[WEAPON-CRAFT] no def found for hash', hash);
@@ -151,6 +256,7 @@ async function selectWeaponForCraft(hash, name, linkedHashes) {
         getWeaponPerkColumns(def),
         getWeaponDisplayStats(def)
     ]);
+    if (session !== _craftSession) return;
 
     // Flat lookup of every plug (base + enhanced) for stat math and hover details
     const plugByHash = new Map();
@@ -192,6 +298,7 @@ async function selectWeaponForCraft(hash, name, linkedHashes) {
     renderPerkPicker();
 
     const D2Calc = await window.oracleEngineReady;
+    if (session !== _craftSession) return;
     initOracleWeapon(D2Calc, def);
 
     document.getElementById('weapon-craft-main')?.classList.remove('hidden');
@@ -885,72 +992,10 @@ function animateRecoil(pathEl, target) {
 // ------------------------------------------------------------------
 
 // Shared by saveWeaponWish (append) and editWeaponWish (overwrite in place).
+// The payload shape and the `raw` identity string come from weapon-wish-core.js,
+// which the godroll.tv button also uses, so both paths save identical wishes.
 function buildWeaponWishPayload() {
-    const perksArray = perkState.map((s) => Array.from(s.acceptable));
-    const hasAny = perksArray.some((c) => c.length > 0);
-
-    // Build display data for the list card — resolved at save time so cards render instantly
-    const perkColumns = currentCraftWeapon.columns.map((col, colIndex) => {
-        const state = perkState[colIndex];
-        const selected = [];
-        for (const { base, enhanced } of col.pairs) {
-            const isAcceptable = state.acceptable.has(base.hash) || (enhanced && state.acceptable.has(enhanced.hash));
-            if (!isAcceptable) continue;
-            const color = getPerkColor(colIndex, base.hash);
-            selected.push({
-                name: base.name,
-                icon: base.icon,
-                hash: base.hash,
-                enhancedHash: enhanced?.hash ?? null,
-                // Combo membership, or null for a plain "any of this column" pick.
-                // Replaces the old isActive flag, which tracked the single perk
-                // driving the stats panel — that job now belongs to the combo
-                // toggle and is session state, not part of the wish.
-                color: color === 'plain' ? null : color
-            });
-        }
-        return selected;
-    }).filter((col) => col.length > 0);
-
-    // Column-aware acceptable perks, tagged with the weapon def's real socket
-    // index so inventory matching can compare column-to-column instead of
-    // flattening everything into one set (which would let an accepted barrel
-    // perk falsely "match" against an accepted trait perk on an owned roll).
-    // colIndex (0-based column position) is stored alongside socketIndex so
-    // matching can reliably identify "column 3" / "column 4" (the trait perk
-    // columns) regardless of which columns were actually selected — needed
-    // for the pooled columns-3-and-4 trait-perk matching rule in
-    // owned-inventory-index.js.
-    // `colors` names the one perk wearing each combo colour in this column,
-    // carrying both its base and enhanced hashes (either form counts as a hit
-    // on an owned roll). A colour spanning two or more columns is a combo; the
-    // matcher rebuilds those from these entries.
-    const perkColumnsData = currentCraftWeapon.columns
-        .map((col, colIndex) => {
-            const state = perkState[colIndex];
-            const entry = { socketIndex: col.socketIndex, colIndex, hashes: Array.from(state.acceptable) };
-            const colors = {};
-            for (const c of COMBO_COLORS) {
-                const baseHash = state.colors.get(c);
-                if (baseHash === undefined) continue;
-                const pair = col.pairs.find((p) => p.base.hash === baseHash);
-                colors[c] = pair?.enhanced ? [baseHash, pair.enhanced.hash] : [baseHash];
-            }
-            if (Object.keys(colors).length > 0) entry.colors = colors;
-            return entry;
-        })
-        .filter((c) => c.hashes.length > 0);
-
-    // Wish identity — the dup check in manager.js saveItem() and the sync merge
-    // key in wishlist-sync-core.js both hash this string, so two wishes with the
-    // same perks but different combos MUST NOT collapse into one. The colour
-    // signature is appended only when colours exist, keeping every previously
-    // saved (uncoloured) wish byte-identical to what is already stored.
-    const colorSig = perkState.map((s) => COMBO_COLORS.map((c) => s.colors.get(c) ?? 0));
-    const hasColors = colorSig.some((col) => col.some((h) => h !== 0));
-    const rawString = JSON.stringify(perksArray) + (hasColors ? `|${JSON.stringify(colorSig)}` : '');
-
-    return { hasAny, rawString, config: { perks: perksArray, perkColumns, perkColumnsData } };
+    return WeaponWish.buildWeaponWishPayload(currentCraftWeapon.columns, perkState, COMBO_COLORS);
 }
 
 async function saveWeaponWish() {

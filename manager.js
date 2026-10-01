@@ -286,7 +286,8 @@ function wireFeedToggle() {
         _feedEnabled = !_feedEnabled;
         await new Promise((r) => chrome.storage.local.set({ feedEnabled: _feedEnabled }, r));
         renderFeedToggleUI();
-        // Restart the sync loop so it picks up the 1-min (Feed on) vs 5-min (Feed off) interval
+        // Re-pace the sync loop: while the panel is hidden, Feed polls every
+        // minute instead of every 5
         startAutoRefresh();
     });
 }
@@ -405,9 +406,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
           chrome.storage.local.get(['lastBungieProfile', 'dimData'], async (res) => {
             const lastProfile = res?.lastBungieProfile;
+            // The live sync started on load may already have landed (or be
+            // building) — a stale cached snapshot must not overwrite it.
+            if (_lastProfileMintedAt || _syncInFlight) return;
             if (lastProfile && window.OwnedInventoryIndex && window.OwnedInventoryIndex.updateFromProfile) {
               try {
                 const idx = await window.OwnedInventoryIndex.updateFromProfile(lastProfile);
+                if (_lastProfileMintedAt) return;
+                // A live fetch returning this same snapshot then has nothing to redo.
+                _lastProfileMintedAt = Date.parse(lastProfile.responseMintedTimestamp) || 0;
                 const totalInstances = idx.byInstanceId ? idx.byInstanceId.size : 0;
                 const uniqueItems = idx.byItemHash ? idx.byItemHash.size : 0;
                 const ownedIndexSummary = { totalInstances, uniqueItems, fetchedAt: Date.now() };
@@ -452,15 +459,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             utilBtn.disabled = true;
             const prev = labelEl.textContent;
             labelEl.textContent = 'Refreshing…';
-            // Component set: minimal useful set for OwnedIndex
-            // GetProfile requires numeric component IDs, not names:
-            // 102=ProfileInventory, 200=Characters, 201=CharacterInventories,
-            // 205=CharacterEquipment, 300=ItemInstances, 304=ItemStats (armor
-            // archetype/spark stat values — required by computeArmorActiveStats),
-            // 305=ItemSockets, 310=ItemReusablePlugs (full per-socket roll pool,
-            // not just the active plug)
-            const components = '102,200,201,205,300,304,305,310';
-            await refreshProfileAndBuildIndex(components);
+            const err = await runSync(true);
+            if (err) throw err;
             labelEl.textContent = 'Done';
             setTimeout(() => { labelEl.textContent = prev; }, 2000);
           } catch (e) {
@@ -840,9 +840,14 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local' && changes.dimData) {
         loadLists();
     }
+    // The godroll.tv button adds wishes from the service worker, which has no
+    // owned-inventory index — match them here so ownership shows up right away.
+    if (namespace === 'local' && changes.wishAddedExternally) {
+        matchWishlistAgainstCachedIndex();
+    }
 });
 
-// Sidepanel version of saveItem (content.js has its own copy; it is NOT available here)
+// Sidepanel version of saveItem (the add/duplicate rules are shared via weapon-wish-core.js)
 // Returns a Promise that resolves after the storage operation completes
 function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null, setHash = null, linkedHashes = null, weaponMeta = null) {
   return new Promise((resolve) => {
@@ -852,71 +857,17 @@ function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon
         lists: { default: { name: "Main Wishlist", items: {} } }
       };
 
-      const activeList = data.lists[data.activeId] || data.lists["default"];
-      if (!activeList.items) activeList.items = {};
-
-      // Create container if missing
-      if (!activeList.items[hash]) {
-        activeList.items[hash] = {
-          static: { name, type, set: null, icon: icon || null, classType, bucketHash, slotName, setName, setHash, linkedHashes: Array.isArray(linkedHashes) ? linkedHashes : [],
-            ammoType: weaponMeta?.ammoType ?? null,
-            itemTypeDisplayName: weaponMeta?.itemTypeDisplayName ?? null,
-            damageTypeHash: weaponMeta?.damageTypeHash ?? null
-          },
-          wishes: []
-        };
-      } else {
-        // Backfill metadata if missing
-        if (name && !activeList.items[hash].static?.name) activeList.items[hash].static.name = name;
-        if (type && !activeList.items[hash].static?.type) activeList.items[hash].static.type = type;
-
-        // Backfill icon if we now have one
-        if (icon && (!activeList.items[hash].static || !activeList.items[hash].static.icon)) {
-          activeList.items[hash].static.icon = icon;
-        }
-
-        // Backfill filter data if missing
-        if (classType !== null && !activeList.items[hash].static?.classType) activeList.items[hash].static.classType = classType;
-        if (bucketHash !== null && !activeList.items[hash].static?.bucketHash) activeList.items[hash].static.bucketHash = bucketHash;
-        if (slotName && !activeList.items[hash].static?.slotName) activeList.items[hash].static.slotName = slotName;
-        if (setName && !activeList.items[hash].static?.setName) activeList.items[hash].static.setName = setName;
-        if (setHash && !activeList.items[hash].static?.setHash) activeList.items[hash].static.setHash = setHash;
-        if (Array.isArray(linkedHashes) && linkedHashes.length && !(activeList.items[hash].static?.linkedHashes || []).length) {
-          activeList.items[hash].static.linkedHashes = linkedHashes;
-        }
-        if (weaponMeta?.ammoType != null && activeList.items[hash].static?.ammoType == null) activeList.items[hash].static.ammoType = weaponMeta.ammoType;
-        if (weaponMeta?.itemTypeDisplayName && !activeList.items[hash].static?.itemTypeDisplayName) activeList.items[hash].static.itemTypeDisplayName = weaponMeta.itemTypeDisplayName;
-        if (weaponMeta?.damageTypeHash != null && activeList.items[hash].static?.damageTypeHash == null) activeList.items[hash].static.damageTypeHash = weaponMeta.damageTypeHash;
-      }
-
-      const existingWishes = activeList.items[hash].wishes || [];
-      activeList.items[hash].wishes = existingWishes;
-
-      // Duplicate check: armor compares config, weapons compare raw string
-      const isDuplicate = existingWishes.some((w) => {
-        if (!w) return false;
-        const sameMode = (w?.tags || []).includes(mode);
-        if (!sameMode) return false;
-        // Armor: same archetype + same spark + same mode = duplicate
-        if (config?.archetype && config?.spark) {
-          return w.config?.archetype === config.archetype &&
-                 w.config?.spark === config.spark;
-        }
-        // Weapons: same raw string + same mode = duplicate
-        return w?.raw === rawString;
+      const listId = data.lists[data.activeId] ? data.activeId : "default";
+      // Container creation, metadata backfill and the duplicate rules live in
+      // weapon-wish-core.js so the godroll.tv button (service worker) shares them.
+      const status = WeaponWish.addWishToList(data, listId, {
+        hash, name, type, rawString, config, mode, icon, classType, bucketHash,
+        slotName, setName, setHash, linkedHashes, weaponMeta
       });
-      if (isDuplicate) {
+      if (status === 'duplicate') {
         resolve();
         return;
       }
-
-      // Add new wish
-      existingWishes.push({
-        tags: [mode],          // ['pve'] or ['pvp']
-        config,               // your armor/weapon config
-        raw: rawString,       // original string
-        added: Date.now()
-      });
 
       chrome.storage.local.set({ dimData: data }, () => {
         resolve(); // Signal completion after storage operation completes
@@ -1452,17 +1403,16 @@ function deleteWish(hash, index) {
 }
 
 /**
- * Refresh profile via Bungie API and build the OwnedIndex.
- * - Attempts to locate a Destiny membership from stored `bungie_auth.user`.
- * - Calls `bungieAuth.fetchProfileWithComponents` and persists the response.
- * - Builds the OwnedIndex via `OwnedInventoryIndex.buildOwnedIndex` and runs a wishlist match pass.
- *
- * @param {string|Array<number|string>} components - components param to pass to GetProfile (comma-separated or array)
+ * Resolve the Destiny membership to fetch. Reuses the one cached by the last
+ * sync when it belongs to the signed-in Bungie account, so a routine sync is a
+ * single GetProfile round trip instead of two.
  */
-async function refreshProfileAndBuildIndex(components) {
-  // getValidAuth() refreshes an expired access token first; reading the raw
-  // stored token here would send an expired one to GetMembershipsForCurrentUser.
-  const auth = await window.bungieAuth.getValidAuth();
+async function resolveDestinyMembership(auth) {
+  const cached = (await new Promise((res) => chrome.storage.local.get(['activeMembership'], res)))?.activeMembership;
+  if (cached?.membershipId && cached.membershipType !== undefined &&
+      cached.bungieMembershipId && cached.bungieMembershipId === auth.membership_id) {
+    return { membershipType: cached.membershipType, membershipId: cached.membershipId };
+  }
 
   // Fetch Destiny 2 memberships — GetMembershipsForCurrentUser is the authoritative
   // source; GetBungieNetUser (stored as auth.user) only contains Bungie.net account
@@ -1498,25 +1448,48 @@ async function refreshProfileAndBuildIndex(components) {
   if (membershipType === undefined || !membershipId) {
     throw new Error('Could not determine membershipType/membershipId from: ' + JSON.stringify(primary));
   }
+  return { membershipType, membershipId };
+}
 
-  console.log('[Manager] fetching profile for', membershipType, membershipId, 'components:', components);
+// responseMintedTimestamp of the newest profile applied this session. Bungie
+// serves GetProfile from a short-lived cache, so a poll can come back with the
+// same snapshot (nothing to do) or, across edge nodes, an older one (applying
+// it would briefly un-own an item the user just picked up).
+let _lastProfileMintedAt = 0;
+
+/**
+ * Refresh profile via Bungie API and build the OwnedIndex.
+ * - Resolves the Destiny membership (cached after the first sync).
+ * - Calls `bungieAuth.fetchProfileWithComponents`; skips everything below when
+ *   the response is the same or an older snapshot than the last one applied.
+ * - Builds the OwnedIndex via `OwnedInventoryIndex.buildOwnedIndex` and runs a wishlist match pass.
+ *
+ * @param {string|Array<number|string>} components - components param to pass to GetProfile (comma-separated or array)
+ * @returns {Promise<boolean>} whether a newer profile was applied
+ */
+async function refreshProfileAndBuildIndex(components) {
+  // getValidAuth() refreshes an expired access token first; reading the raw
+  // stored token here would send an expired one to GetMembershipsForCurrentUser.
+  const auth = await window.bungieAuth.getValidAuth();
+  const { membershipType, membershipId } = await resolveDestinyMembership(auth);
+
   const profile = await window.bungieAuth.fetchProfileWithComponents(membershipType, membershipId, components);
   if (!profile) throw new Error('fetchProfileWithComponents returned no data.');
 
-  console.log('[Manager] profile response keys:', Object.keys(profile));
-  console.log('[Manager] profileInventory items:', profile?.profileInventory?.data?.items?.length ?? 'MISSING');
-  console.log('[Manager] itemSockets entries:', profile?.itemSockets?.data ? Object.keys(profile.itemSockets.data).length : 'MISSING');
+  const mintedAt = Date.parse(profile.responseMintedTimestamp) || 0;
+  if (mintedAt && mintedAt <= _lastProfileMintedAt) return false;
 
   // Build owned index
   if (!window.OwnedInventoryIndex || !window.OwnedInventoryIndex.buildOwnedIndex) {
     throw new Error('OwnedInventoryIndex not available (owned-inventory-index.js failed to load).');
   }
   const idx = await window.OwnedInventoryIndex.buildOwnedIndex(profile);
+  if (mintedAt) _lastProfileMintedAt = mintedAt;
   const totalInstances = idx.byInstanceId ? idx.byInstanceId.size : 0;
   const uniqueItems = idx.byItemHash ? idx.byItemHash.size : 0;
   const ownedIndexSummary = { totalInstances, uniqueItems, fetchedAt: Date.now() };
   const characterIds = Object.keys(profile?.characters?.data || {});
-  const activeMembership = { membershipType, membershipId, characterIds };
+  const activeMembership = { membershipType, membershipId, characterIds, bungieMembershipId: auth.membership_id || null };
   await new Promise((res) => chrome.storage.local.set({ ownedIndexSummary, activeMembership }, res));
   renderOwnedIndexSummary(ownedIndexSummary);
   console.log('[Manager] OwnedIndex built:', totalInstances, 'instances,', uniqueItems, 'unique item hashes');
@@ -1525,16 +1498,24 @@ async function refreshProfileAndBuildIndex(components) {
   const dimRes = await new Promise((res) => chrome.storage.local.get(['dimData'], res));
   const dimData = dimRes?.dimData;
   if (dimData && window.OwnedInventoryIndex.matchWishlist) {
+    const before = JSON.stringify(dimData);
     await backfillLinkedHashes(dimData);
     await backfillPerkColIndex(dimData);
     const beforeSnapshot = snapshotReceivedState(dimData);
     const summary = window.OwnedInventoryIndex.matchWishlist(dimData, idx);
-    await new Promise((res) => chrome.storage.local.set({ dimData }, res));
+    // Every dimData write re-renders all three views and queues a cloud push,
+    // so only write when matching actually changed something. The onChanged
+    // listener re-renders the lists as soon as this lands — before the
+    // lock/transfer calls below, which are one request per item.
+    if (JSON.stringify(dimData) !== before) {
+      await new Promise((res) => chrome.storage.local.set({ dimData }, res));
+    }
     await autoLockNewlyMatched(beforeSnapshot, dimData, idx);
     await transferNewlyMatchedToVault(beforeSnapshot, dimData, idx);
     if (_feedEnabled) await appendFeedEntries(diffFeedEntries(beforeSnapshot, dimData));
     console.log('[Manager] Wishlist matching complete:', summary);
   }
+  return true;
 }
 
 // Expose to console for manual triggering
@@ -1542,14 +1523,22 @@ window.appManager = window.appManager || {};
 window.appManager.refreshProfileAndBuildIndex = refreshProfileAndBuildIndex;
 
 // --- AUTO-REFRESH & SYNC BAR ---
-const SYNC_COMPONENTS = '102,200,201,205,300,304,305,310';
-const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+// GetProfile component IDs (numeric — GetProfile rejects names):
+// 102=ProfileInventory, 200=Characters, 201=CharacterInventories,
+// 205=CharacterEquipment, 305=ItemSockets, 310=ItemReusablePlugs (full
+// per-socket roll pool, not just the active plug). Each extra item component
+// adds a block per instance to an already multi-megabyte response, so only
+// what the OwnedIndex reads is requested.
+const SYNC_COMPONENTS = '102,200,201,205,305,310';
+const VISIBLE_REFRESH_INTERVAL_MS = 30 * 1000;  // panel open — DIM's cadence
+const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // panel hidden
 const MANUAL_REFRESH_COOLDOWN_MS = 15 * 1000;   // 15s floor (Bungie's requested minimum)
 
 let _autoRefreshTimer = null;
 let _lastSyncAt = null;
 let _syncCooldownUntil = 0;
 let _syncTickTimer = null;
+let _syncInFlight = null;
 
 function setSyncBarState(state, message) {
   const statusEls = [
@@ -1573,6 +1562,7 @@ function setSyncBarState(state, message) {
 }
 
 function getAutoRefreshIntervalMs() {
+  if (document.visibilityState === 'visible') return VISIBLE_REFRESH_INTERVAL_MS;
   return _feedEnabled ? FEED_INTERVAL_MS : AUTO_REFRESH_INTERVAL_MS;
 }
 
@@ -1588,28 +1578,47 @@ function updateSyncBarTime() {
   setSyncBarState('idle', `${label} · Auto-sync in ${nextLabel}`);
 }
 
-async function runSync(isManual = false) {
+// Schedules the next auto-sync relative to the last one, so the cadence
+// follows panel visibility instead of a fixed setInterval.
+function scheduleNextSync() {
+  if (_autoRefreshTimer) clearTimeout(_autoRefreshTimer);
+  const due = (_lastSyncAt || 0) + getAutoRefreshIntervalMs();
+  _autoRefreshTimer = setTimeout(() => runSync(false), Math.max(0, due - Date.now()));
+}
+
+// Resolves to the error when the sync failed (null on success), so callers
+// that report failures can surface it without the loop ever rejecting.
+function runSync(isManual = false) {
+  // Auto and manual syncs share one request rather than racing each other.
+  if (_syncInFlight) return _syncInFlight;
   if (isManual && Date.now() < _syncCooldownUntil) {
     const wait = Math.ceil((_syncCooldownUntil - Date.now()) / 1000);
     setSyncBarState('idle', `Please wait ${wait}s before syncing again`);
-    return;
+    return Promise.resolve(null);
   }
   setSyncBarState('syncing', 'Syncing inventory...');
-  try {
-    await refreshProfileAndBuildIndex(SYNC_COMPONENTS);
-    _lastSyncAt = Date.now();
-    _syncCooldownUntil = _lastSyncAt + MANUAL_REFRESH_COOLDOWN_MS;
-    updateSyncBarTime();
-    // Reload wishlist UI so owned badges reflect the fresh data
-    if (typeof loadLists === 'function') try { loadLists(); } catch (e) { /* no-op */ }
-  } catch (e) {
-    console.error('[AutoRefresh] sync failed:', e);
-    setSyncBarState('error', 'Sync failed — check sign-in');
-  }
+  _syncInFlight = (async () => {
+    try {
+      await refreshProfileAndBuildIndex(SYNC_COMPONENTS);
+      _lastSyncAt = Date.now();
+      _syncCooldownUntil = _lastSyncAt + MANUAL_REFRESH_COOLDOWN_MS;
+      updateSyncBarTime();
+      return null;
+    } catch (e) {
+      console.error('[AutoRefresh] sync failed:', e);
+      setSyncBarState('error', 'Sync failed — check sign-in');
+      // Retry on the normal cadence rather than hammering a failing endpoint.
+      _lastSyncAt = Date.now();
+      return e;
+    } finally {
+      _syncInFlight = null;
+      scheduleNextSync();
+    }
+  })();
+  return _syncInFlight;
 }
 
 function startAutoRefresh() {
-  if (_autoRefreshTimer) clearInterval(_autoRefreshTimer);
   if (_syncTickTimer) clearInterval(_syncTickTimer);
 
   // Wire both manual buttons
@@ -1621,11 +1630,20 @@ function startAutoRefresh() {
   // Tick every 10s to keep the "X min ago / next in Ym" label fresh
   _syncTickTimer = setInterval(updateSyncBarTime, 10_000);
 
-  // Auto-sync every 5 minutes normally, or every 1 minute while Feed is on
-  _autoRefreshTimer = setInterval(() => runSync(false), getAutoRefreshIntervalMs());
+  if (!startAutoRefresh._wired) {
+    startAutoRefresh._wired = true;
+    // Reopening the panel syncs straight away (subject to the 15s floor) and
+    // switches to the fast cadence; hiding it drops back to the slow one.
+    document.addEventListener('visibilitychange', () => {
+      if (_syncInFlight) return;
+      if (document.visibilityState === 'visible' && Date.now() >= _syncCooldownUntil) runSync(false);
+      else scheduleNextSync();
+    });
+  }
 
-  // Kick off an initial sync on load (not counted as manual, no cooldown enforced)
-  runSync(false);
+  // First call syncs immediately; later calls (Feed toggle) just re-pace.
+  if (_lastSyncAt || _syncInFlight) scheduleNextSync();
+  else runSync(false);
 }
 
 // Debug helper: run in the sidepanel devtools console as

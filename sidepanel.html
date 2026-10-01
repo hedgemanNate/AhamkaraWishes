@@ -43,6 +43,17 @@
       <div id="weapon-craft" class="weapon-pane active-pane">
         <!-- Weapon crafting pane (placeholder) -->
         <div id="weapon-crafting-section" class="weapon-crafting-section" aria-label="Weapon Crafting Section">
+          <div class="step-label">Integrated Websites</div>
+          <div class="craft-links" role="group" aria-label="Integrated website links" style="margin-top:8px;">
+            <a class="craft-link-btn" href="https://app.destinyitemmanager.com/" target="_blank" rel="noopener" aria-label="Open DIM">
+              <span class="label">DIM</span>
+            </a>
+            <a class="craft-link-btn" href="https://godroll.tv/" target="_blank" rel="noopener" aria-label="Open Godroll.tv">
+              <span class="label">Godroll.tv</span>
+            </a>
+          </div>
+          <div class="mt-divider"></div>
+
           <div class="weapon-craft-search" aria-label="Weapon Search">
             <div class="step-label">1. SEARCH WEAPON</div>
             <div class="search-input-wrap">
@@ -76,16 +87,6 @@
               <button id="weapon-save-new-btn" class="btn-primary">MAKE A NEW WISH</button>
               <button id="weapon-edit-wish-btn" class="btn-primary hidden">EDIT WISH</button>
             </div>
-          </div>
-
-          <div class="step-label">Crafting Websites</div>
-          <div class="craft-links" role="group" aria-label="Weapon crafting links" style="margin-top:8px;">
-<a class="craft-link-btn" href="https://app.destinyitemmanager.com/" target="_blank" rel="noopener" aria-label="Open DIM">
-              <span class="label">DIM</span>
-            </a>
-            <a class="craft-link-btn" href="https://www.light.gg/" target="_blank" rel="noopener" aria-label="Open light.gg">
-              <span class="label">LGG</span>
-            </a>
           </div>
         </div>
       </div>
@@ -439,6 +440,20 @@
     </div>
   </div>
 
+  <!-- godroll.tv access explainer: shown before Chrome's own permission prompt,
+       whose wording can't be changed (see initGodrollLink in weapon-craft.js) -->
+  <div id="godroll-access-modal-overlay" class="aw-submit-modal-overlay hidden">
+    <div class="aw-submit-modal aw-godroll-explainer" role="dialog" aria-modal="true" aria-labelledby="godroll-access-title">
+      <h3 id="godroll-access-title">Add rolls straight from Godroll.tv</h3>
+      <p>Pick perks on any Godroll.tv weapon page, then hit <strong>Ahamkara Wish</strong> to save that roll to one of your wishlists. No rebuilding it here.</p>
+      <p>Chrome will ask to let Ahamkara Wishes &ldquo;read and change&rdquo; godroll.tv. That's only so it can add the button and read the perks you select. Nothing is sent anywhere, and you can turn it off anytime in Chrome's extension settings.</p>
+      <div class="aw-submit-modal-actions">
+        <button id="godroll-access-allow" class="mt-btn-primary">Allow access</button>
+        <button id="godroll-access-skip" class="mt-btn-ghost">Just open Godroll.tv</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ADMIN: full-screen slide-up sheet, only ever opened when is_admin is confirmed true -->
   <div id="admin-view" class="aw-slide-sheet aw-slide-sheet-admin" aria-hidden="true">
     <div class="aw-sheet-header aw-sheet-header-admin">
@@ -472,6 +487,7 @@
 
   <script src="supabase-network.js"></script>
   <script src="wishlist-sync-core.js"></script>
+  <script src="weapon-wish-core.js"></script>
   <script src="destiny-manifest.js"></script>
   <script src="owned-inventory-index.js"></script>
   <script src="manager.js"></script>
@@ -484,6 +500,7 @@
   <script src="admin.js"></script>
   <script src="admin-sync.js"></script>
   <script src="oracle-engine-bridge.js"></script>
+  <script src="godroll-access.js"></script>
   <script src="weapon-craft.js"></script>
 </body>
 </html>

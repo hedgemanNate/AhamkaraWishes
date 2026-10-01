@@ -26,7 +26,7 @@ Related external services: Bungie.net (API + OAuth), Destiny Item Manager (DIM �
 | Tests | Plain Node scripts, no framework (`npm test`) |
 | CI | GitHub Actions, Node 18 (`.github/workflows/ci.yml`) |
 
-Manifest permissions: `storage`, `sidePanel`, `identity`, `alarms`. Host permissions: `https://www.bungie.net/*` and the Supabase project. Content script: `dim-wishlist-overlay.js/.css` on `https://app.destinyitemmanager.com/*`. CSP: `script-src 'self' 'wasm-unsafe-eval'`, so **no inline scripts** (this is why debug code is its own file).
+Manifest permissions: `storage`, `sidePanel`, `identity`, `alarms`, `scripting`. Optional host permission: godroll.tv (asked on first click of the panel's Godroll.tv button, so the update adds no install warning). Host permissions: `https://www.bungie.net/*` and the Supabase project. Content scripts: `dim-wishlist-overlay.js/.css` on `https://app.destinyitemmanager.com/*` (manifest). The godroll.tv script (`godroll-roll-core.js` + `godroll-content.js/.css`) is registered at runtime by `godroll-access.js` only while godroll.tv access is granted; `chrome.permissions.onAdded/onRemoved` keep it in sync and newly granted access injects into already-open godroll.tv tabs. CSP: `script-src 'self' 'wasm-unsafe-eval'`, so **no inline scripts** (this is why debug code is its own file).
 
 ## Project Structure
 
@@ -51,6 +51,11 @@ admin-sync.js               Admin-only cloud backup/sync of dimData via Supabase
 oracle-engine-bridge.js     Loads the WASM module; exposes window.oracleEngineReady
 weapon-craft.js             Native weapon crafting UI: search → pick weapon → pick perks (with combo colours) → live stats → save/edit wish
 dim-wishlist-overlay.js/css Content script: rings DIM tiles whose instance ID matches a wish
+godroll-roll-core.js        Shared (content script + service worker) pure helpers: read selected perks + PvE/PvP off a godroll.tv page, map them onto manifest perk columns by hash
+godroll-content.js/css      Content script on godroll.tv: injects an "Ahamkara Wish" split button (main = add to active wishlist, chevron = pick a wishlist) into the floating action bar
+godroll-access.js           Optional godroll.tv permission: request (panel, in the click), runtime content-script register/unregister (service worker)
+godroll-add.js              Service-worker side: builds a full weapon wish from the picked perks (Bungie manifest) and writes it into the chosen list
+weapon-wish-core.js         Shared (side panel + service worker) pure logic: weapon wish payload / `raw` identity string, and addWishToList (container, metadata backfill, duplicate rules)
 
 oracle-engine/              WASM build + manifest-data (weapon frames, perk hashes, frame damage)
 supabase/functions/         bungie-oauth, wishlist-actions, admin-actions (+ _shared helpers)
@@ -63,6 +68,7 @@ PRIVACY_POLICY.md, STORE_LISTING.md   Chrome Web Store material
 
 **Script load order in `sidepanel.html` is significant:**
 `supabase-network` → `wishlist-sync-core` → `destiny-manifest` → `owned-inventory-index` → `manager` → `ui-creator` → `bungie-auth-core` → `bungie-auth` → `wishlist` → `wishlist-io` → `discover` → `admin` → `admin-sync` → `oracle-engine-bridge` → `weapon-craft`.
+`weapon-wish-core` loads right after `wishlist-sync-core` (manager.js `saveItem` and weapon-craft.js use it). The service worker `importScripts` `destiny-manifest.js`, `godroll-roll-core.js`, `weapon-wish-core.js`, `godroll-add.js` inside a try/catch so a failure can't stop token refresh.
 (`weapon-craft.js` reads `window.OwnedInventoryIndex.COMBO_COLORS` at load, so `owned-inventory-index.js` must precede it.)
 
 ### Repo clutter to know about
@@ -134,6 +140,7 @@ Armor uses six stats — Weapons, Health, Class, Grenade, Super, Melee — the p
 
 - **Matching**: `appManager.refreshProfile()` → `bungieAuth.fetchProfileWithComponents()` → `OwnedInventoryIndex.buildOwnedIndex()` → `matchWishlist(dimData, index)` annotates wishes and persists. The index rebuilds only when the profile version changes and supports incremental delta updates (≤200 changed instances).
 - **Feed + vault transfer**: after a refresh, `diffFeedEntries()` compares before/after; new matches are appended to `feedEntries`, and `transferNewlyMatchedToVault()` moves newly obtained matching items to the vault via `bungieAuth.transferItemToVault`.
+- **godroll.tv add-to-wishlist**: on a godroll.tv weapon page the content script injects a split button styled like the site's own Add to Compare pill (reusing its `.save-button-container.has-dropdown` / `.save-dropdown-*` classes). It reads `.socket-columns .socket-column .perk-item.selected[data-hash]` (real Bungie plug hashes; masterwork/mod picks excluded), the itemHash from the first URL segment, and PvE/PvP from `.stats-mode-toggle .stats-mode-btn.active`. The main button targets the active wishlist; the chevron lists every wishlist from `dimData` and adds to the one picked. It sends `ahamkara:add-godroll-roll` to the service worker, whose `GodrollAdd.addRoll` loads the Bungie manifest from the shared IndexedDB cache, maps godroll's columns onto the weapon's perk columns **by hash, not position**, builds the wish with `WeaponWish.buildWeaponWishPayload` (same code as the craft view, so the `raw` identity string matches) and writes through `WeaponWish.addWishToList` into the chosen list (adds are serialised; read-modify-write of `dimData`). Perks arrive as plain "any of" picks, not combos. It then sets `wishAddedExternally` so an open side panel runs `matchWishlistAgainstCachedIndex()` (the service worker has no owned index). The first add after the service worker has idled takes a few seconds (loading item defs into memory); later ones are fast. If the manifest has never been downloaded the user is told to open the extension once. godroll.tv's URL roll code is an obfuscated binary encoding and is deliberately not parsed. The selectors depend on godroll.tv's markup; if the perk columns vanish (or picks have no readable hash) `readRoll` sets `layoutChanged` and the button says the integration needs an update rather than failing silently.
 - **DIM overlay**: the content script reads `dimData` from storage and rings any DIM tile whose element id equals a matched `receivedInstances` entry (class `ahamkara-wish-match`).
 - **Import/export**: `.awwish` JSON (`{aw:"wishes", v:1, exportedAt, list}`). Ownership state is stripped on export. Discover's "save" reuses `importFromPayload`, so file import and community save share one validate/normalize/persist path.
 - **Cross-browser sync (admin only)**: `admin-sync.js` mirrors `dimData` to the `wishlist_backups` table through `admin-actions` (`backup_get` / `backup_put`). Merging is an **additive union** of lists → items → wishes, filtered by tombstones; pushes are read-merge-write. All delete sites (`manager.js`, `ui-creator.js`, `wishlist.js`) must record tombstones using `wishlist-sync-core.js`'s identity for "which wish is this". Don't add a delete path that skips this.

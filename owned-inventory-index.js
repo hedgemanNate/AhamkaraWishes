@@ -173,72 +173,89 @@
     return rolled;
   }
 
+  const POSTMASTER_BUCKET_HASH = 215593132;
+  // DestinyItemState.Crafted. `state` lives on the inventory item itself
+  // (DestinyItemComponent), not on the ItemInstances component.
+  const ITEM_STATE_CRAFTED = 8;
+
+  /**
+   * Bungie stamps every GetProfile response with responseMintedTimestamp; two
+   * responses carrying the same stamp are the same cached snapshot. Falls back
+   * to the inventory version for fixtures/older payloads that lack it.
+   */
+  function profileVersionOf(profile) {
+    return profile?.responseMintedTimestamp || profile?.profileInventory?.data?.version || profile?.profile?.data?.version || null;
+  }
+
+  /**
+   * One pass over every inventory source: instanceId -> {itemHash, characterId,
+   * bucketHash, state}. Vault items (profileInventory) have no owning
+   * character; character inventory/equipment items need that characterId for
+   * the SetLockState and TransferItem APIs.
+   * @returns {Map<string, {itemHash:number, characterId:string|null, bucketHash:number, state:number}>}
+   */
+  function scanInventoryItems(profile) {
+    const items = new Map();
+    const scan = (arr, characterId = null) => {
+      for (const item of (arr || [])) {
+        if (!item.itemInstanceId || !item.itemHash) continue;
+        items.set(String(item.itemInstanceId), {
+          itemHash: item.itemHash,
+          characterId,
+          bucketHash: item.bucketHash,
+          state: item.state || 0
+        });
+      }
+    };
+    scan(profile?.profileInventory?.data?.items);
+    const charInvs = profile?.characterInventories?.data || {};
+    const charEquip = profile?.characterEquipment?.data || {};
+    for (const cid of Object.keys(charInvs)) scan(charInvs[cid]?.items, cid);
+    for (const cid of Object.keys(charEquip)) scan(charEquip[cid]?.items, cid);
+    return items;
+  }
+
+  /** Build the OwnedIndex entry for one instance, or null if it isn't in any inventory. */
+  function buildOwnedEntry(profile, instanceId, item) {
+    if (!item) return null;
+    const perkSockets = buildPerkSockets(profile, instanceId);
+    const rolledPerkSet = new Set();
+    for (const socket of perkSockets) for (const h of socket.options) rolledPerkSet.add(h);
+    return {
+      instanceId,
+      itemHash: item.itemHash,
+      rolledPerkSet,
+      perkSockets,
+      location: item.bucketHash === POSTMASTER_BUCKET_HASH ? 'postmaster' : 'inventory',
+      characterId: item.characterId,
+      isCrafted: (item.state & ITEM_STATE_CRAFTED) !== 0
+    };
+  }
+
   /**
    * Build OwnedIndex from a profile response.
-   * Note: expects `profile` to include itemSockets and itemInstances components.
+   * Note: expects `profile` to include the inventory (102/201/205), ItemSockets
+   * (305) and ItemReusablePlugs (310) components.
    * @param {object} profile - profile response
    * @returns {OwnedIndex}
    */
   async function buildOwnedIndex(profile) {
     if (!profile) return { byInstanceId: new Map(), byItemHash: new Map() };
 
-    const version = profile?.profileInventory?.data?.version || profile?.profile?.data?.version || null;
+    const version = profileVersionOf(profile);
     if (cache.profileVersion && cache.profileVersion === version && cache.index) return cache.index;
 
     const byInstanceId = new Map();
     const byItemHash = new Map(); // itemHash -> Set<instanceId>
 
-    // Build instanceId -> itemHash and instanceId -> characterId lookups by
-    // scanning all inventory sources. Items in profileInventory are in the vault
-    // (no owning character); items in characterInventories/Equipment belong to a
-    // specific character and need that characterId for the SetLockState API.
-    const instanceToHash = new Map();
-    const instanceToCharacter = new Map();
-    const scanItems = (arr, characterId = null) => {
-      for (const item of (arr || [])) {
-        if (item.itemInstanceId && item.itemHash) {
-          instanceToHash.set(String(item.itemInstanceId), item.itemHash);
-          if (characterId) instanceToCharacter.set(String(item.itemInstanceId), characterId);
-        }
-      }
-    };
-    scanItems(profile?.profileInventory?.data?.items); // vault — no character
-    const charInvs = profile?.characterInventories?.data || {};
-    const charEquip = profile?.characterEquipment?.data || {};
-    for (const cid of Object.keys(charInvs)) scanItems(charInvs[cid]?.items, cid);
-    for (const cid of Object.keys(charEquip)) scanItems(charEquip[cid]?.items, cid);
-
-    const instances = profile?.itemComponents?.instances?.data || {};
+    const items = scanInventoryItems(profile);
     const socketEntries = profile?.itemComponents?.sockets?.data || {};
 
     for (const instanceId of Object.keys(socketEntries)) {
       try {
-        const instComp = instances[instanceId] || {};
-        const itemHash = instanceToHash.get(instanceId) ?? null;
-        if (!itemHash) continue;
-
-        const perkSockets = buildPerkSockets(profile, instanceId);
-        const rolledPerkSet = new Set();
-        for (const socket of perkSockets) for (const h of socket.options) rolledPerkSet.add(h);
-
-        // determine location and characterId best-effort from available components
-        let location = 'inventory';
-        let characterId = null;
-        const itemLocation = profile?.itemInventories?.data?.[instanceId] || profile?.profileInventory?.data?.items?.find?.(i => i.itemInstanceId === instanceId);
-        if (itemLocation && itemLocation.bucketHash === 215593132) location = 'postmaster';
-
-        // crafted detection (best-effort) — check itemInstances or itemComponents
-        const isCrafted = !!(instComp?.state && (instComp.state & 16));
-
-        const owned = {
-          instanceId,
-          itemHash,
-          rolledPerkSet,
-          perkSockets,
-          location,
-          characterId: instanceToCharacter.get(instanceId) ?? null,
-          isCrafted
-        };
+        const owned = buildOwnedEntry(profile, instanceId, items.get(instanceId));
+        if (!owned) continue;
+        const itemHash = owned.itemHash;
 
         byInstanceId.set(instanceId, owned);
 
@@ -592,41 +609,17 @@
       }
     }
 
-    // Handle additions — scan inventory arrays for the itemHash and characterId
-    const deltaHashLookup = new Map();
-    const deltaCharLookup = new Map();
-    const scanForDelta = (arr, characterId = null) => {
-      for (const item of (arr || [])) {
-        if (item.itemInstanceId && item.itemHash) {
-          deltaHashLookup.set(String(item.itemInstanceId), item.itemHash);
-          if (characterId) deltaCharLookup.set(String(item.itemInstanceId), characterId);
-        }
-      }
-    };
+    // Handle additions — look up each new instance in the latest profile
     const lp = cache.lastProfile;
-    scanForDelta(lp?.profileInventory?.data?.items);
-    for (const cid of Object.keys(lp?.characterInventories?.data || {})) scanForDelta(lp.characterInventories.data[cid]?.items, cid);
-    for (const cid of Object.keys(lp?.characterEquipment?.data || {})) scanForDelta(lp.characterEquipment.data[cid]?.items, cid);
+    const items = scanInventoryItems(lp);
 
     for (const iid of added) {
       try {
-        const instComp = (lp?.itemComponents?.instances?.data || {})[iid] || {};
-        const itemHash = deltaHashLookup.get(iid) ?? null;
-        if (!itemHash) continue;
-        const perkSockets = buildPerkSockets(cache.lastProfile, iid);
-        const rolledPerkSet = new Set();
-        for (const socket of perkSockets) for (const h of socket.options) rolledPerkSet.add(h);
+        const owned = buildOwnedEntry(lp, iid, items.get(iid));
+        if (!owned) continue;
+        const itemHash = owned.itemHash;
 
-        let location = 'inventory';
-        const itemLocation = cache.lastProfile?.itemInventories?.data?.[iid] || cache.lastProfile?.profileInventory?.data?.items?.find?.(i => i.itemInstanceId === iid);
-        if (itemLocation && itemLocation.bucketHash === 215593132) location = 'postmaster';
-
-        const isCrafted = !!(instComp?.state && (instComp.state & 16));
-        const characterId = deltaCharLookup.get(iid) ?? null;
-
-        const owned = { instanceId: iid, itemHash, rolledPerkSet, perkSockets, location, characterId, isCrafted };
-
-        const roll = computeArmorRoll(perkSockets, _itemDefs);
+        const roll = computeArmorRoll(owned.perkSockets, _itemDefs);
         if (roll) {
           owned.armorArchetype = roll.archetype;
           owned.armorSpark = roll.spark;
@@ -656,13 +649,14 @@
   async function updateFromProfile(newProfile) {
     if (!newProfile) return cache.index;
     cache.lastProfile = newProfile;
-    const newVersion = newProfile?.profileInventory?.data?.version || newProfile?.profile?.data?.version || null;
+    const newVersion = profileVersionOf(newProfile);
     const newInstanceIds = new Set(Object.keys(newProfile?.itemComponents?.sockets?.data || {}));
 
     if (!cache.index || !cache.instanceIds || cache.instanceIds.size === 0) {
       // No existing index — build fresh
       return buildOwnedIndex(newProfile);
     }
+    if (newVersion && newVersion === cache.profileVersion) return cache.index;
 
     // Compute delta
     const added = [];
@@ -675,6 +669,18 @@
     if ((added.length + removed.length) > deltaThreshold) return await buildOwnedIndex(newProfile);
 
     applyProfileDelta({ addedInstanceIds: added, removedInstanceIds: removed }, cache.index);
+
+    // An item moved between the vault and a character keeps its instanceId, so
+    // the delta above never sees it — refresh where every kept item now sits,
+    // or lock/vault-transfer calls go out with a stale characterId.
+    const items = scanInventoryItems(newProfile);
+    for (const [iid, owned] of cache.index.byInstanceId) {
+      const item = items.get(iid);
+      if (!item) continue;
+      owned.characterId = item.characterId;
+      owned.location = item.bucketHash === POSTMASTER_BUCKET_HASH ? 'postmaster' : 'inventory';
+    }
+
     cache.profileVersion = newVersion;
     cache.instanceIds = newInstanceIds;
     return cache.index;

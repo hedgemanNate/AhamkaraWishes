@@ -33,6 +33,11 @@ const STAT_ANIM_MS = 600;
 
 
 let _weaponSearchDebounce = null;
+// Bumped by every weapon pick and by clearWeaponCraft(). selectWeaponForCraft is
+// async (manifest + oracle loads), so a load that was superseded — or cleared by
+// emptying the search box while it was still running — must not re-open the
+// craft view when it finally resolves.
+let _craftSession = 0;
 
 function initWeaponCraft() {
     const input = document.getElementById('weapon-query');
@@ -42,6 +47,8 @@ function initWeaponCraft() {
             if (clearBtn) clearBtn.classList.toggle('hidden', !e.target.value);
             clearTimeout(_weaponSearchDebounce);
             const q = e.target.value;
+            // An empty box means "no weapon": drop whatever is being crafted too.
+            if (!q.trim()) { clearWeaponCraft(); return; }
             _weaponSearchDebounce = setTimeout(() => runWeaponSearch(q), 250);
         });
     }
@@ -50,8 +57,7 @@ function initWeaponCraft() {
             clearTimeout(_weaponSearchDebounce);
             if (input) input.value = '';
             clearBtn.classList.add('hidden');
-            const resultsEl = document.getElementById('weapon-search-results');
-            if (resultsEl) resultsEl.innerHTML = '';
+            clearWeaponCraft();
             if (input) input.focus();
         });
     }
@@ -83,6 +89,34 @@ function initWeaponCraft() {
             document.getElementById('weapons-nav-list')?.click();
         });
     });
+}
+
+// Resets the craft view to its blank starting state: no weapon, no perk picks,
+// no edit in progress. Called when the weapon search box is emptied (typed empty
+// or via the clear button). PvE/PvP is a preference, not part of the weapon, so
+// it is left alone.
+function clearWeaponCraft() {
+    clearTimeout(_weaponSearchDebounce);
+    _craftSession++;
+
+    currentCraftWeapon = null;
+    perkState = [];
+    activePerkTab = 0;
+    activeComboColor = null;
+    currentEditContext = null;
+    updateEditButtonVisibility();
+
+    const resultsEl = document.getElementById('weapon-search-results');
+    if (resultsEl) resultsEl.innerHTML = '';
+    document.getElementById('weapon-craft-main')?.classList.add('hidden');
+    document.getElementById('weapon-save-section')?.classList.add('hidden');
+    document.getElementById('pp-combo-toggle')?.classList.add('hidden');
+    document.getElementById('weapon-perk-detail')?.classList.add('hidden');
+    // Emptied too, so a stale weapon can never flash when the next one loads.
+    for (const id of ['weapon-live-stats', 'weapon-season-tabs', 'pp-tabs', 'pp-grid']) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+    }
 }
 
 function updateEditButtonVisibility() {
@@ -141,6 +175,7 @@ async function selectWeaponForCraft(hash, name, linkedHashes) {
     // after this function returns.
     currentEditContext = null;
     updateEditButtonVisibility();
+    const session = ++_craftSession;
 
     const input = document.getElementById('weapon-query');
     if (input && name) input.value = name;
@@ -150,6 +185,7 @@ async function selectWeaponForCraft(hash, name, linkedHashes) {
     if (resultsEl) resultsEl.innerHTML = '';
 
     const defs = await loadInventoryItemDefsToMemory();
+    if (session !== _craftSession) return;
     const def = defs.get(String(hash));
     if (!def) {
         console.error('[WEAPON-CRAFT] no def found for hash', hash);
@@ -160,6 +196,7 @@ async function selectWeaponForCraft(hash, name, linkedHashes) {
         getWeaponPerkColumns(def),
         getWeaponDisplayStats(def)
     ]);
+    if (session !== _craftSession) return;
 
     // Flat lookup of every plug (base + enhanced) for stat math and hover details
     const plugByHash = new Map();
@@ -201,6 +238,7 @@ async function selectWeaponForCraft(hash, name, linkedHashes) {
     renderPerkPicker();
 
     const D2Calc = await window.oracleEngineReady;
+    if (session !== _craftSession) return;
     initOracleWeapon(D2Calc, def);
 
     document.getElementById('weapon-craft-main')?.classList.remove('hidden');

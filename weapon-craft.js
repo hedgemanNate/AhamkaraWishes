@@ -74,6 +74,15 @@ function initWeaponCraft() {
     if (editBtn) {
         editBtn.onclick = editWeaponWish;
     }
+
+    // The Integrated Websites links still open their site in a new tab as usual;
+    // the panel also jumps to Weapons > List, so the wishlist is in view beside
+    // the site while rolls get added from it.
+    document.querySelectorAll('.craft-link-btn').forEach((link) => {
+        link.addEventListener('click', () => {
+            document.getElementById('weapons-nav-list')?.click();
+        });
+    });
 }
 
 function updateEditButtonVisibility() {

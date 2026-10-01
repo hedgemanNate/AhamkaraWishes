@@ -1,0 +1,44 @@
+/* Ahamkara Wishes — DIM wishlist match overlay.
+   Draws a 2px rainbow ring around DIM item tiles whose instance ID is a
+   receivedInstances match for a saved wish in ANY of the user's wishlists.
+   Uses fully-saturated rainbow hues rather than the app's own muted stat-color
+   ring (sidepanel.css .mt-feed-toggle.active / .feed-glow-ring) — this needs
+   to grab attention against DIM's busy tile grid, where the muted palette
+   didn't stand out enough.
+   Ring is drawn with the mask-composite double-layer trick so it sits as a
+   fixed 2px band regardless of the tile's own border-radius, and doesn't
+   require wrapping or replacing DIM's existing element. Drawn INSET (flush
+   with the tile's own edge, not extending past it) rather than around it —
+   DIM's inventory grid is virtualized/scrollable and clips overflow on its
+   rows, so anything sticking out past a tile's own box gets silently
+   clipped away. */
+
+@property --aw-dim-rainbow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.ahamkara-wish-match {
+  position: relative;
+}
+
+.ahamkara-wish-match::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--aw-dim-rainbow-angle),
+    #ff003c, #ff8a00, #ffee00, #2bff00, #00e5ff, #7000ff, #ff003c);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 5;
+  animation: ahamkara-dim-rainbow-spin 3s linear infinite;
+}
+
+@keyframes ahamkara-dim-rainbow-spin {
+  to { --aw-dim-rainbow-angle: 360deg; }
+}

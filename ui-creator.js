@@ -11,6 +11,10 @@ let loadedArmorPieces = {}; // Track loaded pieces by slot
 let currentArchetype = null;
 let currentSpark = null;
 let currentMode = 'pve';
+// Set only when the current craft session was loaded from an existing saved
+// wish via the list card's EDIT button. Drives whether EDIT WISH is shown,
+// and which wish it overwrites.
+let armorEditContext = null; // { hash, wishIndex }
 
 // --- FILTER STATE ---
 let filterMode = null; // 'archetype' or 'class'
@@ -125,12 +129,18 @@ function applyArmorFilters() {
         container.innerHTML = '';
 
         const data = result.dimData;
-        if (!data || !data.lists || !data.lists.default) {
+        if (!data || !data.lists) {
+            container.innerHTML = '<div class="empty-list-text">No Armor Wishes yet.</div>';
+            return;
+        }
+        const activeId = data.activeId || 'default';
+        const activeList = data.lists[activeId] || data.lists['default'];
+        if (!activeList) {
             container.innerHTML = '<div class="empty-list-text">No Armor Wishes yet.</div>';
             return;
         }
 
-        const items = data.lists.default.items;
+        const items = activeList.items;
         const virtualEntries = [];
 
         // Flatten: one virtual entry per wish, with per-wish filtering
@@ -254,6 +264,12 @@ function initArmorWizard() {
     populateStatGrids();
 }
 
+chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.dimData) {
+        applyArmorFilters();
+    }
+});
+
 /**
  * Attaches all event listeners for buttons, inputs, and toggles.
  */
@@ -356,6 +372,33 @@ function attachListeners() {
         };
     }
 
+    // 3.b Weapons bottom nav inside view-weapons (Craft vs List)
+    const wNavCraft = document.getElementById('weapons-nav-craft');
+    const wNavList = document.getElementById('weapons-nav-list');
+    const weaponCraftPane = document.getElementById('weapon-craft');
+    const weaponListPane = document.getElementById('weapon-list');
+
+    if (wNavCraft && wNavList && weaponCraftPane && weaponListPane) {
+        // ensure initial state: craft active, list hidden
+        wNavCraft.onclick = () => {
+            wNavCraft.classList.add('active');
+            wNavList.classList.remove('active');
+            weaponCraftPane.classList.remove('hidden');
+            weaponListPane.classList.remove('active-pane');
+            weaponListPane.classList.add('hidden');
+        };
+
+        wNavList.onclick = () => {
+            wNavList.classList.add('active');
+            wNavCraft.classList.remove('active');
+            weaponListPane.classList.remove('hidden');
+            weaponListPane.classList.add('active-pane');
+            weaponCraftPane.classList.add('hidden');
+            // If a refresh function exists, call it
+            if (typeof refreshWeaponList === 'function') try { refreshWeaponList(); } catch (e) { console.warn('refreshWeaponList failed', e); }
+        };
+    }
+
     // Inside attachListeners() -> Section 3 (Bottom Nav Slider)
     navList.onclick = () => {
         navList.classList.add('active');
@@ -380,13 +423,23 @@ function attachListeners() {
 
     // 5. Search Input Logic
     const searchInput = document.getElementById('armor-query');
+    const searchClearBtn = document.getElementById('armor-query-clear');
     if (searchInput) {
         searchInput.oninput = (e) => {
+            if (searchClearBtn) searchClearBtn.classList.toggle('hidden', !e.target.value);
             clearTimeout(searchTimeout);
             const query = e.target.value.trim();
             if (query.length < 2) return;
             document.querySelectorAll('.armor-box').forEach(b => b.classList.add('loading'));
             searchTimeout = setTimeout(() => triggerSearch(query), 500);
+        };
+    }
+    if (searchClearBtn) {
+        searchClearBtn.onclick = () => {
+            clearTimeout(searchTimeout);
+            if (searchInput) searchInput.value = '';
+            searchClearBtn.classList.add('hidden');
+            if (searchInput) searchInput.focus();
         };
     }
 
@@ -421,6 +474,7 @@ function attachListeners() {
             loadedArmorPieces = {};
             currentArchetype = null;
             currentSpark = null;
+            armorEditContext = null;
             const input = document.getElementById('armor-query');
             if (input) input.value = "";
             document.querySelectorAll('.armor-box').forEach(b => {
@@ -468,6 +522,11 @@ function attachListeners() {
     const saveBtn = document.getElementById('btn-create-armor');
     if (saveBtn) {
         saveBtn.onclick = handleSaveWish;
+    }
+
+    const editBtn = document.getElementById('btn-edit-armor');
+    if (editBtn) {
+        editBtn.onclick = handleEditWish;
     }
 
     // 10. Armor List Filter UI
@@ -526,11 +585,19 @@ function attachListeners() {
 
 /**
  * Searches the local manifest via manager.js and updates the grid.
+ * A fresh manual search always starts a new wish, never an edit —
+ * loadWishIntoArmorCraft calls doArmorSearch directly to skip this reset.
  */
 async function triggerSearch(query) {
+    armorEditContext = null;
+    updateArmorEditButtonVisibility();
+    await doArmorSearch(query);
+}
+
+async function doArmorSearch(query) {
     try {
         const results = await searchArmorLocally(query, currentClass);
-        
+
         const buckets = {
             Head: results.find(i => i.bucketHash === BUCKET_HASHES.HELMET),
             Arms: results.find(i => i.bucketHash === BUCKET_HASHES.GAUNTLETS),
@@ -745,6 +812,27 @@ function updatePrimaryBtn() {
             btn.textContent = `MAKE ${selectedCount} WISHES: ${currentArchetype.name} + ${currentSpark.toUpperCase()}`;
         }
     }
+
+    updateArmorEditButtonVisibility();
+}
+
+/**
+ * EDIT WISH is only shown once a saved wish has been loaded via a list
+ * card's EDIT button, and only enabled while that same piece is still the
+ * one (and only one) selected — switching pieces/slots while "editing"
+ * would otherwise silently overwrite the wrong wish.
+ */
+function updateArmorEditButtonVisibility() {
+    const editBtn = document.getElementById('btn-edit-armor');
+    if (!editBtn) return;
+
+    editBtn.classList.toggle('hidden', !armorEditContext);
+    if (!armorEditContext) return;
+
+    const selectedCount = Object.keys(selectedPieces).length;
+    const editingSamePiece = selectedCount === 1 &&
+        String(Object.values(selectedPieces)[0]?.hash) === String(armorEditContext.hash);
+    editBtn.disabled = !editingSamePiece || !currentArchetype || !currentSpark;
 }
 
 /**
@@ -780,9 +868,16 @@ function handleSaveWish() {
     saveChain = saveChain.then(() => {
       console.log("[SaveWish] Starting save for item", index + 1, ":", item.name);
       const slotName = getBucketName(item.bucketHash);
-      const setName = item.static?.name || "Unknown";
-      
-      return saveItem(
+      const setName = getArmorSetName(item.setHash) || item.name || "Unknown";
+
+      // Season reissues give the same physical piece several manifest hashes;
+      // capture them all so inventory matching finds owned copies under any.
+      return findArmorSiblingHashes(item.hash)
+        .catch((err) => {
+          console.warn("[SaveWish] sibling hash lookup failed for", item.name, err);
+          return [];
+        })
+        .then((linkedHashes) => saveItem(
         item.hash,
         item.name,
         "armor",
@@ -795,8 +890,9 @@ function handleSaveWish() {
         item.bucketHash,
         slotName,
         setName,
-        item.setHash
-      ).then(() => {
+        item.setHash,
+        linkedHashes
+      )).then(() => {
         console.log("[SaveWish] Item saved successfully:", item.name);
       }).catch(err => {
         console.error("[SaveWish] Error saving item:", item.name, err);
@@ -807,6 +903,126 @@ function handleSaveWish() {
   saveChain.catch(err => {
     console.error("[SaveWish] Save chain failed:", err);
   });
+}
+
+/**
+ * Overwrites the single wish currently loaded via a list card's EDIT
+ * button, instead of appending a new one.
+ */
+function handleEditWish() {
+  if (!armorEditContext || !currentArchetype || !currentSpark) return;
+
+  const btn = document.getElementById("btn-edit-armor");
+  const original = btn.textContent;
+  btn.textContent = "WISH UPDATED!";
+  btn.classList.add("success");
+  setTimeout(() => {
+    btn.classList.remove("success");
+    btn.textContent = original;
+    updatePrimaryBtn();
+  }, 1500);
+
+  editItemWish(
+    armorEditContext.hash,
+    armorEditContext.wishIndex,
+    `armor-wish:${armorEditContext.hash}`,
+    { archetype: currentArchetype.name, spark: currentSpark },
+    currentMode
+  ).catch(err => console.error("[EditWish] Error updating wish:", err));
+}
+
+/**
+ * Drives the craft pane to a specific armor piece + stat pair. Shared by the
+ * list's EDIT button and by double-clicking an owned roll in inventory search,
+ * so both land on exactly the same pre-filled state.
+ */
+async function applyArmorCraftSelection({ hash, classType, setName, slotName, archetype, spark }) {
+  document.getElementById('nav-craft')?.click();
+
+  if (classType !== undefined && classType !== null) {
+    currentClass = classType;
+    document.querySelectorAll('.class-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.class) === classType);
+    });
+  }
+
+  const input = document.getElementById('armor-query');
+  if (input) input.value = setName || '';
+
+  selectedPieces = {};
+  await doArmorSearch(setName || '');
+
+  // Select just the one slot this came from, never the whole set.
+  const piece = loadedArmorPieces[slotName];
+  const box = document.querySelector(`.armor-box[data-slot="${slotName}"]`);
+  if (piece && String(piece.hash) === String(hash)) {
+    selectedPieces[slotName] = piece;
+    if (box) {
+      box.classList.remove('dimmed');
+      box.classList.add('selected');
+    }
+  } else {
+    // Season reissues give the same piece several manifest hashes, so the set
+    // search can return a sibling instead. Leave the slot unselected rather
+    // than silently picking the wrong variant.
+    console.warn('[ArmorCraft] Could not re-locate the exact piece in the manifest search results.');
+  }
+  updateSelectionDisplay();
+
+  const arch = ARCHETYPES.find(a => a.name === archetype);
+  if (arch) {
+    document.querySelectorAll('#archetype-grid .stat-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector(`#archetype-grid .stat-btn[data-archetype="${arch.id}"]`)?.classList.add('selected');
+    currentArchetype = arch;
+    // Must run before the spark is applied — it clears currentSpark for any
+    // stat the archetype already covers.
+    syncSparkAvailability(arch.stats);
+  }
+
+  if (spark) {
+    document.querySelectorAll('#spark-grid .stat-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector(`#spark-grid .stat-btn[data-stat="${spark}"]`)?.classList.add('selected');
+    currentSpark = spark;
+  }
+}
+
+/**
+ * Called from a list card's EDIT button (createArmorCard). Loads the exact
+ * set/piece/archetype/spark/mode this wish was saved with into the craft
+ * page and reveals EDIT WISH so it can be overwritten in place.
+ */
+async function loadWishIntoArmorCraft(hash, wishIndex, entry, wish) {
+  await applyArmorCraftSelection({
+    hash,
+    classType: entry.static.classType,
+    setName: getArmorSetName(entry.static.setHash) || entry.static.setName || entry.static.name,
+    slotName: entry.static.slotName,
+    archetype: wish.config?.archetype,
+    spark: wish.config?.spark
+  });
+
+  currentMode = (wish.tags && wish.tags[0]) || 'pve';
+  const modeToggle = document.getElementById('ui-mode-toggle');
+  if (modeToggle) modeToggle.className = `toggle-container ${currentMode}`;
+
+  armorEditContext = { hash, wishIndex };
+  updatePrimaryBtn();
+}
+
+/**
+ * Called on double-click of an owned roll in Menu > Utility inventory search.
+ * Opens that piece in the craft pane with its real rolled archetype/spark
+ * (derived by owned-inventory-index.js) as a starting point for a new wish.
+ */
+async function loadOwnedArmorIntoCraft({ hash, classType, setName, slotName, archetype, spark }) {
+  document.getElementById('tab-armor')?.click();
+
+  await applyArmorCraftSelection({ hash, classType, setName, slotName, archetype, spark });
+
+  // A new wish, not an edit of a saved one, so EDIT WISH stays hidden. PvE/PvP
+  // is left where the user had it — an owned roll carries no mode of its own.
+  armorEditContext = null;
+  updatePrimaryBtn();
 }
 
 /**
@@ -878,8 +1094,8 @@ function refreshArmorList() {
 
 function createArmorCard(item) {
     const card = document.createElement('div');
-    card.className = 'armor-card';
-    
+    card.className = `armor-card${item.wish?.received ? ' armor-card-owned' : ''}`;
+
     // Safety check for wish data integrity
     if (!item.wish) return card;
 
@@ -914,20 +1130,31 @@ function createArmorCard(item) {
         `;
     }).join('');
 
+    const ownedCount = Array.isArray(item.wish.receivedInstances) ? item.wish.receivedInstances.length : 0;
+    const ownedBadgeHTML = item.wish.received
+        ? `<span class="wc-badge wc-badge-owned">OWNED x${ownedCount}</span>`
+        : '';
+
+    const isOwned = !!item.wish.received;
+    const ownedInstanceIds = Array.isArray(item.wish.receivedInstances) ? item.wish.receivedInstances : [];
+
     card.innerHTML = `
         <div class="card-img-side">
             <img src="${item.static.icon}" alt="">
         </div>
         <div class="card-info-side">
             <div class="card-armor-name">${item.static.name}</div>
-            <div class="card-archetype-sub">${archName} +${sparkName.toLowerCase()}</div>
+            <div class="card-archetype-sub">${archName} +${sparkName.toLowerCase()} ${ownedBadgeHTML}</div>
         </div>
         <div class="card-stats-side">
             ${statRowsHTML}
         </div>
         <div class="delete-overlay">
-            <button class="del-btn">DELETE</button>
-            <button class="cancel-btn">CANCEL</button>
+            ${isOwned ? '<button class="overlay-btn lock-btn">LOCK</button>' : ''}
+            ${isOwned ? '<button class="overlay-btn equip-btn">EQUIP</button>' : ''}
+            <button class="overlay-btn edit-btn">EDIT</button>
+            <button class="overlay-btn del-btn">DELETE</button>
+            <button class="overlay-btn cancel-btn">CANCEL</button>
         </div>
     `;
 
@@ -937,13 +1164,12 @@ function createArmorCard(item) {
         card.classList.toggle('selected');
     };
 
-    // Double Click: Delete Mode
+    // Double Click: action overlay
     card.ondblclick = (e) => {
         e.stopPropagation();
         card.classList.add('deleting');
     };
 
-    // Overlay Buttons
     card.querySelector('.cancel-btn').onclick = (e) => {
         e.stopPropagation();
         card.classList.remove('deleting');
@@ -951,16 +1177,80 @@ function createArmorCard(item) {
 
     card.querySelector('.del-btn').onclick = (e) => {
         e.stopPropagation();
-        // Visual feedback: Shrink and fade before it vanishes
         card.style.transform = "scale(0.9)";
         card.style.opacity = "0";
         card.style.transition = "0.3s ease";
-
-        // Delay the data deletion slightly so the animation finishes
-        setTimeout(() => {
-            deleteArmorWish(item.hash, item.wishIndex);
-        }, 300);
+        setTimeout(() => { deleteArmorWish(item.hash, item.wishIndex); }, 300);
     };
+
+    card.querySelector('.edit-btn').onclick = (e) => {
+        e.stopPropagation();
+        card.classList.remove('deleting');
+        loadWishIntoArmorCraft(item.hash, item.wishIndex, item, item.wish);
+    };
+
+    // --- LOCK button: locks every owned instance via Bungie API ---
+    const lockBtn = card.querySelector('.lock-btn');
+    if (lockBtn) {
+        lockBtn.onclick = async (e) => {
+            e.stopPropagation();
+            lockBtn.disabled = true;
+            lockBtn.textContent = '...';
+            try {
+                const res = await new Promise(r => chrome.storage.local.get(['activeMembership'], r));
+                const mem = res?.activeMembership;
+                if (!mem?.membershipType || !mem?.membershipId || !mem?.characterIds?.length) {
+                    throw new Error('No membership info cached — sync inventory first');
+                }
+                const idx = window.OwnedInventoryIndex?.getCachedIndex?.();
+                const fallbackCharId = mem.characterIds[0];
+                for (const iid of ownedInstanceIds) {
+                    const owned = idx?.byInstanceId?.get(String(iid));
+                    const charId = owned?.characterId || fallbackCharId;
+                    await window.bungieAuth.setItemLockState(iid, charId, mem.membershipType, mem.membershipId, true);
+                }
+                lockBtn.textContent = 'LOCKED';
+            } catch (err) {
+                console.warn('[Card] Lock failed:', err);
+                lockBtn.textContent = 'FAILED';
+                lockBtn.disabled = false;
+            }
+        };
+    }
+
+    // --- EQUIP button: equips the first instance already in a character inventory ---
+    const equipBtn = card.querySelector('.equip-btn');
+    if (equipBtn) {
+        equipBtn.onclick = async (e) => {
+            e.stopPropagation();
+            equipBtn.disabled = true;
+            equipBtn.textContent = '...';
+            try {
+                const res = await new Promise(r => chrome.storage.local.get(['activeMembership'], r));
+                const mem = res?.activeMembership;
+                if (!mem?.membershipType || !mem?.membershipId) {
+                    throw new Error('No membership info cached — sync inventory first');
+                }
+                const idx = window.OwnedInventoryIndex?.getCachedIndex?.();
+                let targetIid = null, targetCharId = null;
+                for (const iid of ownedInstanceIds) {
+                    const owned = idx?.byInstanceId?.get(String(iid));
+                    if (owned?.characterId) { targetIid = iid; targetCharId = owned.characterId; break; }
+                }
+                if (!targetIid) {
+                    // All copies are in the vault — equip isn't possible without a transfer
+                    equipBtn.textContent = 'IN VAULT';
+                    return;
+                }
+                await window.bungieAuth.equipItem(targetIid, targetCharId, mem.membershipType, mem.membershipId);
+                equipBtn.textContent = 'EQUIPPED';
+            } catch (err) {
+                console.warn('[Card] Equip failed:', err);
+                equipBtn.textContent = 'FAILED';
+                equipBtn.disabled = false;
+            }
+        };
+    }
 
     return card;
 }
@@ -974,14 +1264,20 @@ function deleteArmorWish(hash, wishIndex) {
         let data = result.dimData;
 
         // Safety check: ensure the data structure exists
-        if (data && data.lists && data.lists.default && data.lists.default.items) {
-            const item = data.lists.default.items[hash];
+        const activeId = data && (data.activeId || 'default');
+        const listId = (data && data.lists && data.lists[activeId]) ? activeId : 'default';
+        const activeList = data && data.lists && data.lists[listId];
+        if (activeList && activeList.items) {
+            const item = activeList.items[hash];
             if (item && item.wishes && wishIndex < item.wishes.length) {
-                item.wishes.splice(wishIndex, 1);
+                const [removed] = item.wishes.splice(wishIndex, 1);
+                // Record the deletion so cross-browser sync can't restore it from
+                // a browser still holding the old copy — see wishlist-sync-core.js.
+                if (removed) window.WishlistSync?.recordWishTombstone(data, listId, hash, removed);
 
                 // Remove item entirely if no wishes remain
                 if (item.wishes.length === 0) {
-                    delete data.lists.default.items[hash];
+                    delete activeList.items[hash];
                 }
 
                 // Save the updated list back to storage
@@ -1028,4 +1324,11 @@ function getSetDisplayName(setItems) {
 
     return firstItem.static?.name || "Unknown Set";
 }
+
+/**
+ * Resolve perk/item names from manifest hashes.
+ * Returns array of names (or fallback strings) for given numeric hashes.
+ */
+// Expose API
+window.uiCreator = window.uiCreator || {};
 

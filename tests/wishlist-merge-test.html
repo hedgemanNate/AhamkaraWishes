@@ -1,0 +1,254 @@
+<!doctype html>
+<!--
+  Regression tests for wishlist-sync-core.js — the merge rules that keep the
+  same admin account's wishlists consistent across browsers.
+
+  These guard against a real incident: the previous last-write-wins sync
+  destroyed an entire wishlist that existed in only one browser. Anything that
+  weakens the union/tombstone rules should fail here.
+
+  Run: open this file in a browser (no server needed), or headless:
+    chrome --headless=new --allow-file-access-from-files --dump-dom \
+           file:///<repo>/tests/wishlist-merge-test.html
+-->
+<html><head><meta charset="utf-8"><title>Wishlist merge tests</title></head>
+<body style="font:13px monospace;background:#1e1e24;color:#eee;padding:16px">
+<pre id="out">running…</pre>
+<script src="../wishlist-sync-core.js"></script>
+<script>
+const lines = [];
+let pass = 0, fail = 0;
+function check(name, cond, detail) {
+  if (cond) { pass++; lines.push('PASS  ' + name); }
+  else { fail++; lines.push('FAIL  ' + name + (detail ? '  -> ' + detail : '')); }
+}
+const copy = (o) => o == null ? o : JSON.parse(JSON.stringify(o));
+
+if (!window.WishlistSync) {
+  lines.push('FATAL: wishlist-sync-core.js did not load');
+} else {
+const { mergeDimData, stableStringify, recordWishTombstone, recordListTombstone, wishKey } = window.WishlistSync;
+
+// Tombstone timestamps must be realistic epoch values — mergeTombstones prunes
+// anything past its 90-day TTL, so a toy clock starting at 0 reads as ancient.
+let clock = Date.now() - (60 * 60 * 1000);
+function tick() { return (clock += 1000); }
+
+const older = Date.now() - 100000;
+const newer = Date.now() - 1000;
+const weaponWish = (raw, tag, added) => ({ raw, tags: [tag], added, config: { perks: [] } });
+const armorWish = (arch, spark, tag, added) => ({ raw: 'armor-wish:1', tags: [tag], added, config: { archetype: arch, spark } });
+const list = (name, items) => ({ name, items: items || {} });
+const item = (s, w) => ({ static: s || {}, wishes: w || [] });
+
+lines.push('--- unit: mergeDimData ---');
+
+// The regression itself: a list present on only one side must survive.
+{
+  const local = { activeId: 'wl_bl', lists: { default: list('Main Wishlist'),
+    wl_bl: list('Beyond Light', { '111': item({name:'Bonechiller'}, [weaponWish('[[1]]','pve',older)]) }) } };
+  const remote = { activeId: 'default', lists: { default: list('Main Wishlist') } };
+  const m = mergeDimData(local, remote);
+  check('local-only list survives', !!m.lists.wl_bl);
+  check('local-only list keeps wishes', m.lists.wl_bl.items['111'].wishes.length === 1);
+}
+{
+  const local = { activeId: 'default', lists: { default: list('Main Wishlist') } };
+  const remote = { activeId: 'wl_ib', lists: { default: list('Main Wishlist'),
+    wl_ib: list('Iron Banner', { '222': item({}, [weaponWish('[[2]]','pvp',older)]) }) } };
+  check('remote-only list survives', !!mergeDimData(local, remote).lists.wl_ib);
+}
+
+// Tombstones
+{
+  const w = weaponWish('[[3]]','pve',older);
+  const local = { activeId: 'default', lists: { default: list('M', { '333': item({}, [weaponWish('[[keep]]','pve',older)]) }) } };
+  recordWishTombstone(local, 'default', '333', w, newer);
+  const remote = { activeId: 'default', lists: { default: list('M', { '333': item({}, [weaponWish('[[keep]]','pve',older), w]) }) } };
+  const wishes = mergeDimData(local, remote).lists.default.items['333'].wishes;
+  check('deleted wish not resurrected', wishes.length === 1, JSON.stringify(wishes.map(x=>x.raw)));
+  check('sibling wish retained', wishes[0].raw === '[[keep]]');
+}
+{
+  const w = weaponWish('[[only]]','pve',older);
+  const local = { activeId: 'default', lists: { default: list('M') } };
+  recordWishTombstone(local, 'default', '444', w, newer);
+  const remote = { activeId: 'default', lists: { default: list('M', { '444': item({}, [w]) }) } };
+  check('item with all wishes deleted disappears', !mergeDimData(local, remote).lists.default.items['444']);
+}
+{
+  const local = { activeId: 'default', lists: { default: list('M') } };
+  recordListTombstone(local, 'wl_gone', newer);
+  const remote = { activeId: 'default', lists: { default: list('M'),
+    wl_gone: list('Old', { '555': item({}, [weaponWish('[[5]]','pve',older)]) }) } };
+  check('deleted list not resurrected', !mergeDimData(local, remote).lists.wl_gone);
+}
+{
+  const local = { activeId: 'default', lists: { default: list('M') } };
+  recordWishTombstone(local, 'default', '666', weaponWish('[[6]]','pve',older), newer);
+  const remote = { activeId: 'default', lists: { default: list('M', { '666': item({}, [weaponWish('[[6]]','pve', Date.now() + 5000)]) }) } };
+  check('wish re-created after deletion survives', !!mergeDimData(local, remote).lists.default.items['666']);
+}
+
+// Union / identity / ordering
+{
+  const local = { activeId: 'default', lists: { default: list('M', { '777': item({}, [weaponWish('[[A]]','pve',older)]) }) } };
+  const remote = { activeId: 'default', lists: { default: list('M', { '777': item({}, [weaponWish('[[B]]','pve',newer)]) }) } };
+  const wishes = mergeDimData(local, remote).lists.default.items['777'].wishes;
+  check('concurrent adds both survive', wishes.length === 2);
+  check('wishes ordered by added', wishes[0].raw === '[[A]]');
+}
+{
+  const local = { activeId: 'default', lists: { default: list('M', { '888': item({}, [armorWish('GUNNER','Health','pve',older)]) }) } };
+  const remote = { activeId: 'default', lists: { default: list('M', { '888': item({}, [armorWish('GUNNER','Health','pve',newer)]) }) } };
+  const wishes = mergeDimData(local, remote).lists.default.items['888'].wishes;
+  check('identical armor wish dedupes', wishes.length === 1);
+  check('local copy wins ties', wishes[0].added === older);
+}
+{
+  const local = { activeId: 'default', lists: { default: list('M', { '999': item({}, [armorWish('GUNNER','Health','pve',older)]) }) } };
+  const remote = { activeId: 'default', lists: { default: list('M', { '999': item({}, [armorWish('GUNNER','Health','pvp',older)]) }) } };
+  check('pve/pvp variants both kept', mergeDimData(local, remote).lists.default.items['999'].wishes.length === 2);
+}
+{
+  const local = { activeId: 'default', lists: { default: list('M', { 'aaa': item({ icon:null, linkedHashes:[] }, [weaponWish('[[x]]','pve',older)]) }) } };
+  const remote = { activeId: 'default', lists: { default: list('M', { 'aaa': item({ icon:'ICON', linkedHashes:[1,2] }, [weaponWish('[[x]]','pve',older)]) }) } };
+  const st = mergeDimData(local, remote).lists.default.items['aaa'].static;
+  check('null field backfilled from remote', st.icon === 'ICON');
+  check('empty array backfilled from remote', st.linkedHashes.length === 2);
+}
+{
+  const m = mergeDimData({ activeId: 'nope', lists: {} }, { activeId: 'x', lists: {} });
+  check('default list always present', !!m.lists.default);
+  check('activeId falls back to default', m.activeId === 'default');
+  const m2 = mergeDimData({ activeId: 'wl_x', lists: { default: list('M'), wl_x: list('X') } }, { activeId: 'default', lists: { default: list('M') } });
+  check('valid local activeId preferred', m2.activeId === 'wl_x');
+}
+{
+  const local = { activeId: 'wl_bl', lists: { default: list('M'), wl_bl: list('BL', { '111': item({}, [weaponWish('[[1]]','pve',older)]) }) } };
+  const remote = { activeId: 'default', lists: { default: list('M'), wl_ib: list('IB', { '222': item({}, [weaponWish('[[2]]','pvp',older)]) }) } };
+  const m1 = mergeDimData(local, remote);
+  check('merge is idempotent', stableStringify(m1) === stableStringify(mergeDimData(m1, m1)));
+  check('re-merging remote is stable', stableStringify(m1) === stableStringify(mergeDimData(m1, remote)));
+  check('union independent of argument order',
+    Object.keys(m1.lists).sort().join() === Object.keys(mergeDimData(remote, local).lists).sort().join());
+}
+{
+  let ok = true;
+  try { mergeDimData(null, null); mergeDimData(undefined, { lists: { default: list('M') } }); mergeDimData({}, {}); }
+  catch (e) { ok = false; lines.push('  threw: ' + e.message); }
+  check('handles null/empty input', ok);
+}
+{
+  check('armor key ignores raw (matches saveItem dupe rule)',
+    wishKey(armorWish('GUNNER','Health','pve',1)) === wishKey({ raw:'other', tags:['pve'], config:{archetype:'GUNNER',spark:'Health'} }));
+  check('weapon key uses raw', wishKey(weaponWish('[[1]]','pve',1)) !== wishKey(weaponWish('[[2]]','pve',1)));
+}
+
+// --- protocol: models admin-sync.js, where push and startup-sync both merge
+// local with remote and write the result to BOTH sides. ---
+lines.push('');
+lines.push('--- protocol: multi-browser convergence ---');
+
+let cloud = null;
+function sync(b) {
+  const merged = cloud ? mergeDimData(b.data, cloud) : b.data;
+  b.data = copy(merged);
+  cloud = copy(merged);
+}
+const newBrowser = () => ({ data: { activeId: 'default', lists: { default: list('Main Wishlist') } } });
+function addWish(b, listId, name, hash, raw, mode) {
+  const d = b.data;
+  if (!d.lists[listId]) d.lists[listId] = list(name);
+  if (!d.lists[listId].items[hash]) d.lists[listId].items[hash] = item({ name: 'Item' + hash });
+  d.lists[listId].items[hash].wishes.push(weaponWish(raw, mode || 'pve', tick()));
+}
+function delWish(b, listId, hash, raw, mode) {
+  const it = b.data.lists[listId] && b.data.lists[listId].items[hash];
+  if (!it) return;
+  const i = it.wishes.findIndex(w => w.raw === raw && w.tags[0] === (mode || 'pve'));
+  if (i < 0) return;
+  const [removed] = it.wishes.splice(i, 1);
+  recordWishTombstone(b.data, listId, hash, removed, tick());
+  if (it.wishes.length === 0) delete b.data.lists[listId].items[hash];
+}
+function delList(b, listId) { delete b.data.lists[listId]; recordListTombstone(b.data, listId, tick()); }
+const listNames = (d) => Object.keys(d.lists).sort().join(',');
+const raws = (d, l, h) => (d.lists[l] && d.lists[l].items[h]) ? d.lists[l].items[h].wishes.map(w=>w.raw).sort().join(',') : '(none)';
+
+{ // the incident scenario
+  cloud = null; const A = newBrowser(), B = newBrowser();
+  addWish(A, 'wl_bl', 'Beyond Light', '111', '[[bl]]');
+  sync(A); sync(B);
+  check('S1 stale browser receives the list', !!B.data.lists.wl_bl);
+  sync(A);
+  check('S1 original browser keeps the list', !!A.data.lists.wl_bl);
+  check('S1 cloud retains the list', !!cloud.lists.wl_bl);
+}
+{ // divergent offline edits
+  cloud = null; const A = newBrowser(), B = newBrowser();
+  sync(A); sync(B);
+  addWish(A, 'wl_a', 'A', '222', '[[a]]');
+  addWish(B, 'wl_b', 'B', '333', '[[b]]');
+  sync(A); sync(B); sync(A);
+  check('S2 both offline lists survive', listNames(A.data) === 'default,wl_a,wl_b', listNames(A.data));
+  check('S2 cloud has both', listNames(cloud) === 'default,wl_a,wl_b');
+}
+{ // deletion propagates and is not undone
+  cloud = null; const A = newBrowser(), B = newBrowser();
+  addWish(A, 'wl_s', 'S', '444', '[[keep]]'); addWish(A, 'wl_s', 'S', '444', '[[drop]]');
+  sync(A); sync(B);
+  delWish(A, 'wl_s', '444', '[[drop]]');
+  sync(A); sync(B);
+  check('S3 deletion reaches other browser', raws(B.data, 'wl_s', '444') === '[[keep]]', raws(B.data,'wl_s','444'));
+  sync(A);
+  check('S3 deletion not undone by push-back', raws(A.data, 'wl_s', '444') === '[[keep]]');
+  check('S3 cloud reflects deletion', raws(cloud, 'wl_s', '444') === '[[keep]]');
+}
+{ // whole-list deletion propagates
+  cloud = null; const A = newBrowser(), B = newBrowser();
+  addWish(A, 'wl_tmp', 'T', '555', '[[t]]');
+  sync(A); sync(B);
+  delList(A, 'wl_tmp');
+  sync(A); sync(B); sync(A);
+  check('S4 list deletion propagates', !B.data.lists.wl_tmp && !A.data.lists.wl_tmp && !cloud.lists.wl_tmp);
+}
+{ // delete here vs add there, same item
+  cloud = null; const A = newBrowser(), B = newBrowser();
+  addWish(A, 'wl_c', 'C', '666', '[[old]]');
+  sync(A); sync(B);
+  delWish(A, 'wl_c', '666', '[[old]]');
+  addWish(B, 'wl_c', 'C', '666', '[[new]]');
+  sync(A); sync(B); sync(A);
+  check('S5 deletion honoured', raws(A.data,'wl_c','666').indexOf('[[old]]') === -1, raws(A.data,'wl_c','666'));
+  check('S5 concurrent addition preserved', raws(A.data,'wl_c','666').indexOf('[[new]]') !== -1);
+}
+{ // three browsers interleaved
+  cloud = null; const A = newBrowser(), B = newBrowser(), C = newBrowser();
+  addWish(A, 'wl_1', '1', '777', '[[1]]'); sync(A);
+  sync(B); addWish(B, 'wl_2', '2', '888', '[[2]]'); sync(B);
+  sync(C); addWish(C, 'wl_1', '1', '777', '[[1c]]'); sync(C);
+  delWish(B, 'wl_2', '888', '[[2]]'); sync(B);
+  sync(A); sync(B); sync(C); sync(A); sync(B); sync(C);
+  const a = stableStringify(A.data);
+  check('S6 all browsers converge', a === stableStringify(B.data) && a === stableStringify(C.data));
+  check('S6 cloud matches browsers', stableStringify(cloud) === a);
+  check('S6 concurrent wishes both kept', raws(A.data,'wl_1','777') === '[[1]],[[1c]]');
+  check('S6 deleted wish stays gone', raws(A.data,'wl_2','888') === '(none)');
+}
+{ // a fresh install must not wipe the cloud
+  cloud = null; const A = newBrowser();
+  addWish(A, 'wl_big', 'Big', '999', '[[x]]'); addWish(A, 'wl_big', 'Big', '999', '[[y]]');
+  sync(A);
+  const fresh = newBrowser();
+  sync(fresh);
+  check('S7 empty browser does not wipe cloud', !!cloud.lists.wl_big);
+  check('S7 empty browser receives everything', raws(fresh.data,'wl_big','999') === '[[x]],[[y]]');
+}
+}
+
+lines.push('');
+lines.push('RESULT: ' + pass + ' passed, ' + fail + ' failed');
+document.getElementById('out').textContent = lines.join('\n');
+document.title = fail === 0 ? 'ALL PASS' : (fail + ' FAILED');
+</script></body></html>

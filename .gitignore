@@ -1,0 +1,13 @@
+# Build outputs — regenerate with: bash build-extension.sh
+dist/
+ahamkara-wishes/
+ahamkara-wishes.zip
+
+# Local tooling / junk
+supabase.exe
+supabase/.temp/
+untitled folder/
+DIM-master/
+.DS_Store
+._*
+node_modules/

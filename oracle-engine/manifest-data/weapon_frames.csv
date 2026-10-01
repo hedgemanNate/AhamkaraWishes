@@ -1,0 +1,312 @@
+weapon_type,frame_hash,frame_name
+Auto Rifle,1294026524,Adaptive Frame
+Auto Rifle,3771737927,Balanced Heat Weapon
+Auto Rifle,2976676960,Command Frame
+Auto Rifle,1967250736,Command Frame II
+Auto Rifle,1967250737,Command Frame III
+Auto Rifle,1967250742,Command Frame IV
+Auto Rifle,4184462049,Cursebringer
+Auto Rifle,1219897208,Empty Frames Socket
+Auto Rifle,3208839961,Four-Headed Dog
+Auto Rifle,1019291327,High-Impact Frame
+Auto Rifle,961505134,Ignition Trigger
+Auto Rifle,1458010786,Lightweight Frame
+Auto Rifle,3602718766,Missile Tracers
+Auto Rifle,1484442054,Monte Carlo Method
+Auto Rifle,1385166695,Overcharge Capacitor
+Auto Rifle,3755070117,Payday
+Auto Rifle,1636108362,Precision Frame
+Auto Rifle,878286503,Rapid-Fire Frame
+Auto Rifle,2622129339,Support Frame
+Auto Rifle,3488129416,Support Frame
+Auto Rifle,2235383762,Support Frame
+Auto Rifle,2078075300,Support Frame
+Auto Rifle,2799967529,Support Frame
+Auto Rifle,944506345,SUROS Legacy
+Auto Rifle,34498892,The Right Choice
+Auto Rifle,3610814281,Volatile Light
+Combat Bow,1699724249,Big-Game Hunter
+Combat Bow,1258693557,Bolt Thrower
+Combat Bow,1219897208,Empty Frames Socket
+Combat Bow,2226793914,Guidance Ring
+Combat Bow,2636679416,Hail Barrage
+Combat Bow,1019291327,High-Impact Frame
+Combat Bow,3572001649,High-Impact Longbow
+Combat Bow,2108556049,Lightweight Frame
+Combat Bow,2186532310,Poison Arrows
+Combat Bow,715195141,Precision Frame
+Combat Bow,1470121888,Queen's Wrath
+Combat Bow,3239299468,Sacred Flame
+Combat Bow,214670074,Snareweaver
+Combat Bow,2655147894,Snareweaver II
+Combat Bow,2655147895,Snareweaver III
+Combat Bow,2655147888,Snareweaver IV
+Combat Bow,1573888036,Split Electron
+Fusion Rifle,1294026524,Adaptive Frame
+Fusion Rifle,2518716062,Aggressive Frame
+Fusion Rifle,1657056865,Ahamkara's Eye
+Fusion Rifle,1656957541,Charge Shot
+Fusion Rifle,656200654,Conserve Momentum
+Fusion Rifle,1019291327,High-Impact Frame
+Fusion Rifle,1636108362,Precision Frame
+Fusion Rifle,2769013282,Property: Undecidable
+Fusion Rifle,878286503,Rapid-Fire Frame
+Fusion Rifle,1186480754,Saint's Fists
+Fusion Rifle,136208450,Soulburn
+Fusion Rifle,3610750208,Timeless Mythoclast
+Fusion Rifle,2585427437,Traitor's Vessel
+Fusion Rifle,1927916065,Unplanned Reprieve
+Glaive,1316753551,Adaptive Glaive
+Glaive,1986105578,Aggressive Glaive
+Glaive,1207608520,Big Frigid Glaive
+Glaive,1900919151,Edge of Action
+Glaive,3551884421,Edge of Concurrence
+Glaive,3024740338,Edge of Intent
+Glaive,1219897208,Empty Frames Socket
+Glaive,2751656639,M1R Distribution Matrix
+Glaive,2898674463,M1R Distribution Matrix II
+Glaive,2898674462,M1R Distribution Matrix III
+Glaive,2898674457,M1R Distribution Matrix IV
+Glaive,1956005708,Rapid-Fire Glaive
+Grenade Launcher,1294026524,Adaptive Frame
+Grenade Launcher,389268985,Arc Traps
+Grenade Launcher,385138649,Area Denial Frame
+Grenade Launcher,2571259936,Compressed Wave Frame
+Grenade Launcher,3183537623,Corrupted Nucleosynthesis
+Grenade Launcher,1315870387,Cryocannon
+Grenade Launcher,425960662,Delayed Gratification
+Grenade Launcher,1759472859,Double Fire
+Grenade Launcher,1219897208,Empty Frames Socket
+Grenade Launcher,2977709078,Excavation
+Grenade Launcher,470163129,Harvester Spike
+Grenade Launcher,3913463509,Insectoid Robot Grenades
+Grenade Launcher,474269988,Lightweight Frame
+Grenade Launcher,3758615625,Micro-Missile Frame
+Grenade Launcher,4130495068,Precision Frame
+Grenade Launcher,3063320916,Primeval's Torment
+Grenade Launcher,2353477480,Rapid-Fire Frame
+Grenade Launcher,2733244971,Trinary Vision
+Grenade Launcher,4133742355,Trinary Vision
+Grenade Launcher,4133742354,Trinary Vision
+Grenade Launcher,4133742357,Trinary Vision
+Grenade Launcher,1395789926,Wave Frame
+Grenade Launcher,1174163613,Worm's Hunger
+Hand Cannon,507151084,Accomplice
+Hand Cannon,1294026524,Adaptive Frame
+Hand Cannon,2189829540,Adaptive Frame
+Hand Cannon,2757685314,Aggressive Frame
+Hand Cannon,3468089894,Aggressive Frame
+Hand Cannon,1030990989,Banned Weapon
+Hand Cannon,1406835319,Dynamic Heat Weapon
+Hand Cannon,1611330137,Dynamic Heat Weapon
+Hand Cannon,1219897208,Empty Frames Socket
+Hand Cannon,1791592647,Explosive Shadow
+Hand Cannon,2770223582,Fan Fire
+Hand Cannon,3923638944,Heavy Burst
+Hand Cannon,1017906546,Latent Power
+Hand Cannon,1458010786,Lightweight Frame
+Hand Cannon,3174300811,Looks Can Kill
+Hand Cannon,1863355414,Mark of the Devourer
+Hand Cannon,647617635,Memento Mori
+Hand Cannon,2144092201,Noble Rounds
+Hand Cannon,213689231,Paracausal Shot
+Hand Cannon,1322370662,Precision Frame
+Hand Cannon,2427219599,Spread Shot
+Hand Cannon,4045839491,Sunburn
+Hand Cannon,360865966,Temporal Manipulation
+Hand Cannon,3235313314,Temporal Manipulation II
+Hand Cannon,3235313315,Temporal Manipulation III
+Hand Cannon,3235313316,Temporal Manipulation IV
+Linear Fusion Rifle,3530948111,Adaptive Burst
+Linear Fusion Rifle,2564164194,Compounding Force
+Linear Fusion Rifle,3884127242,Dornröschen
+Linear Fusion Rifle,2881100038,Lagrangian Sight
+Linear Fusion Rifle,2057203855,Precision Frame
+Linear Fusion Rifle,640169129,Quantum Nova
+Linear Fusion Rifle,626115084,Ruinscribe's Forge
+Linear Fusion Rifle,3894668351,Unwound
+Linear Fusion Rifle,1531126198,Wire Rifle
+Machine Gun,1294026524,Adaptive Frame
+Machine Gun,3468089894,Aggressive Frame
+Machine Gun,2732952950,Balanced Heat Weapon
+Machine Gun,1818108773,Dichotomous Thinking
+Machine Gun,2608508147,Heavy Slug Thrower
+Machine Gun,1019291327,High-Impact Frame
+Machine Gun,2261491232,Pyrotoxin Rounds
+Machine Gun,878286503,Rapid-Fire Frame
+Machine Gun,4148158229,Reign Havoc
+Machine Gun,1468523096,Vexadecimal
+Machine Gun,2940035732,Wrath of the Colossus
+Pulse Rifle,1294026524,Adaptive Frame
+Pulse Rifle,2874284214,Aggressive Burst
+Pulse Rifle,2575933030,Atomizing Rounds
+Pulse Rifle,3771737927,Balanced Heat Weapon
+Pulse Rifle,3905543891,Black Hole
+Pulse Rifle,2331097520,Dynamic Heat Weapon
+Pulse Rifle,1219897208,Empty Frames Socket
+Pulse Rifle,2307143135,Harsh Truths
+Pulse Rifle,1634975868,Heavy Burst
+Pulse Rifle,1019291327,High-Impact Frame
+Pulse Rifle,3834106778,Hunter's Trace
+Pulse Rifle,891750166,Hunter's Trace II
+Pulse Rifle,891750167,Hunter's Trace III
+Pulse Rifle,891750160,Hunter's Trace IV
+Pulse Rifle,4172222323,Legacy PR-55 Frame
+Pulse Rifle,1458010786,Lightweight Frame
+Pulse Rifle,2928496916,Micro-Missile Frame
+Pulse Rifle,878286503,Rapid-Fire Frame
+Pulse Rifle,3632437946,Redemption
+Pulse Rifle,3837077246,Rewind Again
+Pulse Rifle,4004944400,String of Curses
+Pulse Rifle,4208418110,The Corruption Spreads
+Pulse Rifle,3639389650,The Corruption Spreads II
+Pulse Rifle,3639389651,The Corruption Spreads III
+Pulse Rifle,3639389652,The Corruption Spreads IV
+Pulse Rifle,3441203855,Void Leech
+Rocket Launcher,1294026524,Adaptive Frame
+Rocket Launcher,3468089894,Aggressive Frame
+Rocket Launcher,2440389870,Composite Propellant
+Rocket Launcher,3200860608,Coronal Culmination
+Rocket Launcher,411799453,Dark Deliverance
+Rocket Launcher,2200569208,Eyes on All
+Rocket Launcher,1019291327,High-Impact Frame
+Rocket Launcher,2473404935,Mad Scientist
+Rocket Launcher,3419274965,Precision Frame
+Rocket Launcher,216781713,Precision Frame
+Rocket Launcher,2491817779,Prototype Trueseeker
+Rocket Launcher,3649430342,Twintails
+Rocket Launcher,2962361451,Wolfpack Rounds
+Scout Rifle,3468089894,Aggressive Frame
+Scout Rifle,1002219198,Balanced Heat Weapon
+Scout Rifle,1319823571,Cranial Spike
+Scout Rifle,1064669307,Cranial Spike II
+Scout Rifle,1064669306,Cranial Spike III
+Scout Rifle,1064669309,Cranial Spike IV
+Scout Rifle,1266604956,Creeping Attrition
+Scout Rifle,1219897208,Empty Frames Socket
+Scout Rifle,1019291327,High-Impact Frame
+Scout Rifle,1458010786,Lightweight Frame
+Scout Rifle,377257911,MIDA Multi-Tool
+Scout Rifle,1636108362,Precision Frame
+Scout Rifle,3920852688,Rapid-Fire Frame
+Scout Rifle,3364911712,Rapid-Fire Frame
+Scout Rifle,4185339856,Revolution
+Scout Rifle,2741975068,Slug Rifle
+Scout Rifle,3668782036,The Fate of All Fools
+Scout Rifle,1000724343,The Perfect Fifth
+Scout Rifle,2724693746,Touch of Malice
+Scout Rifle,2144580852,Tri-Planar Mass Driver
+Shotgun,3983457027,Aggressive Frame
+Shotgun,3468089894,Aggressive Frame
+Shotgun,536517534,Compression Chamber
+Shotgun,1219897208,Empty Frames Socket
+Shotgun,3923638944,Heavy Burst
+Shotgun,1458010786,Lightweight Frame
+Shotgun,1888623310,MIDA Synergy
+Shotgun,2565885237,Nightsworn Sight
+Shotgun,2919190145,Nightsworn Sight II
+Shotgun,2919190144,Nightsworn Sight III
+Shotgun,2919190151,Nightsworn Sight IV
+Shotgun,918679156,Pinpoint Slug Frame
+Shotgun,1636108362,Precision Frame
+Shotgun,895140517,Precision Frame
+Shotgun,1394384862,Precision Slug
+Shotgun,407573255,Rapid Fire Slug
+Shotgun,996573084,Rapid-Fire Frame
+Shotgun,1210807262,Repulsor Force
+Shotgun,372430833,Shock Blast
+Shotgun,3751354116,Shock Blast
+Shotgun,3054949324,Shot Package
+Shotgun,481338655,Shrapnel Launcher
+Shotgun,3787406018,Split Decision
+Shotgun,2223914385,Thunderer
+Sidearm,3449390870,Adaptive Burst
+Sidearm,31057037,Adaptive Burst
+Sidearm,1294026524,Adaptive Frame
+Sidearm,1903618525,All at Once
+Sidearm,334466122,Close the Gap
+Sidearm,4108848057,Dynamic Heat Weapon
+Sidearm,2984682260,Full Stop
+Sidearm,975429949,Gathering Light
+Sidearm,3330548924,Heavy Burst
+Sidearm,90392189,Hungering Quarrel
+Sidearm,1458010786,Lightweight Frame
+Sidearm,986191425,LN2 Burst
+Sidearm,2928496916,Micro-Missile Frame
+Sidearm,1636108362,Precision Frame
+Sidearm,806997698,Rapid-Fire Frame
+Sidearm,2121086290,Rat Pack
+Sidearm,1282254042,Together Forever
+Sidearm,1615948893,Together Forever
+Sidearm,2641107734,Unrepentant
+Sniper Rifle,1294026524,Adaptive Frame
+Sniper Rifle,3468089894,Aggressive Frame
+Sniper Rifle,928399924,Cayde's Retribution
+Sniper Rifle,1546108491,Disruption Weapon [Shield-Piercing]
+Sniper Rifle,1442784346,Dynamic Heat Weapon
+Sniper Rifle,1219897208,Empty Frames Socket
+Sniper Rifle,1019291327,High-Impact Frame
+Sniper Rifle,1070100196,Honed Edge
+Sniper Rifle,2909403175,Mortal Polarity
+Sniper Rifle,744619683,No Backpack
+Sniper Rifle,938999636,Personal Assistant
+Sniper Rifle,878286503,Rapid-Fire Frame
+Sniper Rifle,3081173348,The Fundamentals
+Sniper Rifle,218281600,The Master
+Sniper Rifle,281315705,White Nail
+Sniper Rifle,4285971293,White Nail II
+Sniper Rifle,4285971292,White Nail III
+Sniper Rifle,4285971291,White Nail IV
+Submachine Gun,1294026524,Adaptive Frame
+Submachine Gun,695966445,Aggressive Burst
+Submachine Gun,1525239159,Aggressive Frame
+Submachine Gun,3468089894,Aggressive Frame
+Submachine Gun,2516532331,Arc Conductor
+Submachine Gun,2167115920,Balanced Heat Weapon
+Submachine Gun,1219897208,Empty Frames Socket
+Submachine Gun,1458010786,Lightweight Frame
+Submachine Gun,2213377102,MIDA Synergy
+Submachine Gun,4127881474,Panic Response
+Submachine Gun,1963279230,Panic Response II
+Submachine Gun,1963279231,Panic Response III
+Submachine Gun,1963279224,Panic Response IV
+Submachine Gun,1963279225,Panic Response V
+Submachine Gun,1636108362,Precision Frame
+Submachine Gun,2540536653,Ravenous Beast
+Submachine Gun,630329983,Ride the Bull
+Submachine Gun,2965975126,Screaming Swarm
+Submachine Gun,228577175,Soaring Fang
+Sword,4172267910,Adaptive Frame
+Sword,836583820,Aggressive Frame
+Sword,3949068808,Arc Conductor
+Sword,2179914730,Banshee's Wail
+Sword,183772609,Caster Frame
+Sword,4072668471,Crow's Wings
+Sword,1219897208,Empty Frames Socket
+Sword,1100877327,Exhumation
+Sword,3551049142,Gathering Light
+Sword,3325420353,Insectoid Robot Grenades
+Sword,1713206376,Lightweight Frame
+Sword,89777927,Ranged Weapon
+Sword,1303792749,Resurgence Directive
+Sword,2493618393,Resurgence Directive II
+Sword,2493618392,Resurgence Directive III
+Sword,2493618399,Resurgence Directive IV
+Sword,3034060702,Sacred Flame
+Sword,461437088,Stormbringer
+Sword,3642491337,Tesseract
+Sword,1522566605,The Perfect Fifth
+Sword,1327961177,Unplanned Reprieve
+Sword,263649945,Vortex Frame
+Sword,430173891,Wave Sword Frame
+Sword,1959135343,Wolfpack Rounds
+Trace Rifle,1294026524,Adaptive Frame
+Trace Rifle,3164944314,Ager's Call
+Trace Rifle,1036269296,Cold Fusion
+Trace Rifle,459441288,Harmonic Laser
+Trace Rifle,1797707170,Judgment
+Trace Rifle,2767894946,Paracausal Beam
+Trace Rifle,571267712,Prismatic Inferno
+Trace Rifle,3172115769,Protective Weave
+Trace Rifle,3505000148,Starlight Beam
+Trace Rifle,1657401727,Transmutation

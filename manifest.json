@@ -1,21 +1,22 @@
 {
   "manifest_version": 3,
   "name": "Ahamkara Wishes",
-  "version": "0.2.9",
-  "description": "Wishlist manager for D2Foundry and Armor Sets.",
-  "permissions": ["storage", "sidePanel", "identity"],
-  "host_permissions": ["https://www.bungie.net/*"],
+  "version": "0.2.10",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmcpqXKOMP2YrfnkMsBGNj4ogOoiHmvNLaJ3+rRT9IKmctd2iSYW2gwDo4+FnSRbXygi4l5prxI5bIfrdmPTibOvqhRf8ipW8rJpNhaBBCBUnODzLsng8B+yOXINSoxT3UL/tqp5mQVoCiBrqZ6dbJT6zrO3NuHCo/UY4pL3jqWHb7egdmDgIBexDLYjRTncmQQEXhbNoMt2EM91RzgyuGJ4OnshsIwAe+wutv+0xuzRL8jkYg/9WT7aKIU6bOMcRQW2iSSPgKeKFyadywFU/qQHHbuDFT/SWEaQFgwsqVaL4Uv49CBLOrgDr2/WG002pA0sCHonEkH57sSsNAxDBhQIDAQAB",
+  "description": "Wishlist manager for Destiny 2 weapons and armor.",
+  "permissions": ["storage", "sidePanel", "identity", "alarms"],
+  "host_permissions": ["https://www.bungie.net/*", "https://tqgewrylrjqfqzqlmmag.supabase.co/*"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://app.destinyitemmanager.com/*", 
-        "https://beta.destinyitemmanager.com/*",
-        "https://d2foundry.gg/*"
-      ],
-      "js": ["content.js"],
+      "matches": ["https://app.destinyitemmanager.com/*"],
+      "css": ["dim-wishlist-overlay.css"],
+      "js": ["dim-wishlist-overlay.js"],
       "run_at": "document_idle"
     }
   ],

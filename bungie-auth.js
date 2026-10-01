@@ -1,11 +1,23 @@
-// Bungie PKCE Auth helper for Ahamkara Wishes
-// Uses client_id and redirect URI provided by user.
+// Bungie sign-in, auth UI, and Bungie API calls for the side panel.
+//
+// Token storage and refresh are NOT handled here — they live in
+// bungie-auth-core.js (window.BungieAuthCore), which background.js shares.
+// This file only: runs the OAuth flow, renders the signed-in state, and makes
+// authenticated Bungie API calls via getValidAuth().
 
+// The redirect URI must be https://<this extension's ID>.chromiumapp.org/...
+// or launchWebAuthFlow can never intercept the redirect and fails with
+// "Authorization page could not be loaded". The ID depends on the manifest
+// `key` / the store-assigned ID, so derive it from the running extension
+// rather than hardcoding one. Whatever it resolves to must be the Redirect URL
+// registered for the app in the Bungie Developer Portal.
 const BUNGIE_OAUTH = {
   client_id: '51511',
-  redirect_uri: 'https://kbbcefcmkpkmmalappllbcklhmlcoajc.chromiumapp.org/bungie-oauth-callback.html',
+  redirect_path: 'bungie-oauth-callback.html',
   auth_endpoint: 'https://www.bungie.net/en/oauth/authorize',
-  token_endpoint: 'https://www.bungie.net/platform/app/oauth/token'
+  get redirect_uri() {
+    return chrome.identity.getRedirectURL(this.redirect_path);
+  }
 };
 
 function base64url(buffer) {
@@ -14,141 +26,40 @@ function base64url(buffer) {
 }
 
 async function sha256(input) {
-  const enc = new TextEncoder();
-  const data = enc.encode(input);
-  const hash = await crypto.subtle.digest('SHA-256', data);
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
   return new Uint8Array(hash);
 }
 
-function makeVerifier(len = 64) {
+function randomToken(len = 64) {
   const arr = new Uint8Array(len);
   crypto.getRandomValues(arr);
   return base64url(arr);
 }
 
-async function makeChallenge(verifier) {
-  const hashed = await sha256(verifier);
-  return base64url(hashed);
-}
-
-async function launchAuthFlow() {
-  const verifier = makeVerifier();
-  const challenge = await makeChallenge(verifier);
-  const state = Math.random().toString(36).slice(2);
-
-  const params = new URLSearchParams({
-    client_id: BUNGIE_OAUTH.client_id,
-    response_type: 'code',
-    redirect_uri: BUNGIE_OAUTH.redirect_uri,
-    code_challenge: challenge,
-    code_challenge_method: 'S256',
-    state
-  });
-
-  // NOTE: Bungie requires scopes to be configured on the application in the
-  // Developer Portal. Do not force `scope` here if the app is configured to
-  // provide scopes automatically. Leave scope configuration to the app's
-  // registration so the server enforces allowed scopes.
-
-  const authUrl = `${BUNGIE_OAUTH.auth_endpoint}?${params.toString()}`;
-
-  // Persist verifier for exchange
-  await new Promise((res) => chrome.storage.local.set({ bungie_pkce_verifier: verifier }, res));
-
+function launchWebAuthFlow(url) {
   return new Promise((resolve, reject) => {
-    if (chrome && chrome.identity && chrome.identity.launchWebAuthFlow) {
-        console.log('[BUNGIE-AUTH] launching auth URL', authUrl);
-        // Start a short-lived poll that tries to locate the auth popup window
-        // and resize it to approximately 1/6 of the monitor area (centered).
-        // This does not change the auth flow; it only adjusts the popup window
-        // that `launchWebAuthFlow` opens.
-        let pollTimer = null;
-        const stopPoll = () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
-
-        function tryResizeAuthWindow() {
-          try {
-            chrome.windows.getAll({ populate: true }, (wins) => {
-              if (!wins || !wins.length) return;
-              for (const w of wins) {
-                if (!w.tabs) continue;
-                for (const t of w.tabs) {
-                  try {
-                    const url = t && t.url ? String(t.url) : '';
-                    if (url.includes('bungie.net/en/oauth/authorize')) {
-                      // Compute size so the popup area is ~1/6 of the screen area
-                      const availW = (screen && screen.availWidth) ? screen.availWidth : window.innerWidth || 1280;
-                      const availH = (screen && screen.availHeight) ? screen.availHeight : window.innerHeight || 800;
-                      const ratio = 1 / Math.sqrt(6); // width and height scale so area ~= 1/6
-                      const newW = Math.max(320, Math.round(availW * ratio));
-                      const newH = Math.max(360, Math.round(availH * ratio));
-                      const left = Math.max(0, Math.round((availW - newW) / 2));
-                      const top = Math.max(0, Math.round((availH - newH) / 4));
-                      try {
-                        chrome.windows.update(w.id, { left, top, width: newW, height: newH }, () => { /* ignore errors */ });
-                      } catch (e) { /* ignore update errors */ }
-                      stopPoll();
-                      return;
-                    }
-                  } catch (e) { /* ignore per-tab errors */ }
-                }
-              }
-            });
-          } catch (e) { /* ignore */ }
-        }
-
-        // Start polling shortly before/after launching the flow; stop after 6s if not found
-        pollTimer = setInterval(tryResizeAuthWindow, 250);
-        setTimeout(stopPoll, 6000);
-
-        chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true }, (redirectUrl) => {
-          stopPoll();
-          if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
-          console.log('[BUNGIE-AUTH] launchWebAuthFlow returned redirect URL', redirectUrl);
-          resolve(redirectUrl);
-        });
-    } else {
-      // Running outside of Chrome extension context — the registered redirect URI
-      // (https://<app-id>.chromiumapp.org/...) is not resolvable from a normal
-      // browser window. Provide a clear error so the caller can surface it.
-      const err = new Error('chrome.identity.launchWebAuthFlow is not available.\n' +
-        'Sign-in must be performed from the Chrome/Chromium extension (load as an unpacked extension) so the OAuth redirect URI is handled by the platform.');
-      reject(err);
+    if (!(chrome && chrome.identity && chrome.identity.launchWebAuthFlow)) {
+      return reject(new Error('Sign-in must be run from the installed Chrome/Chromium extension.'));
     }
+    chrome.identity.launchWebAuthFlow({ url, interactive: true }, (redirectUrl) => {
+      if (chrome.runtime.lastError) {
+        return reject(new Error(chrome.runtime.lastError.message || String(chrome.runtime.lastError)));
+      }
+      resolve(redirectUrl);
+    });
   });
 }
 
-async function exchangeCodeForToken(code) {
-  console.log('[BUNGIE-AUTH] exchangeCodeForToken start');
-  const obj = await new Promise((res) => chrome.storage.local.get(['bungie_pkce_verifier'], res));
-  const verifier = obj.bungie_pkce_verifier;
-  if (!verifier) throw new Error('Missing PKCE verifier');
-
-  const body = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code,
-    client_id: BUNGIE_OAUTH.client_id,
-    code_verifier: verifier,
-    redirect_uri: BUNGIE_OAUTH.redirect_uri
-  });
-
-  const resp = await fetch(BUNGIE_OAUTH.token_endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-API-Key': (typeof API_KEY !== 'undefined') ? API_KEY : ''
-    },
-    body: body.toString()
-  });
-  const text = await resp.text();
-  console.log('[BUNGIE-AUTH] token endpoint returned status', resp.status);
-  let parsed = null;
-  try { parsed = JSON.parse(text); } catch (e) { /* not json */ }
-  if (!resp.ok) {
-    console.error('[BUNGIE-AUTH] token exchange response', resp.status, text);
-    const serverMsg = parsed?.error_description || parsed?.error || text;
-    throw new Error('Token exchange failed: ' + resp.status + ' - ' + serverMsg);
+// Turn launchWebAuthFlow's terse errors into something actionable.
+// Returns null for "user closed the window", which is not an error.
+function describeLaunchError(message, redirectUri) {
+  if (/did not approve|cancel/i.test(message)) return null;
+  if (/could not be loaded/i.test(message)) {
+    return 'Bungie\'s sign-in page could not be loaded. Check that bungie.net is reachable ' +
+      '(it may be down for maintenance) and try again. If it keeps failing, the Redirect URL ' +
+      'registered for this app at Bungie must be exactly: ' + redirectUri;
   }
-  return parsed || JSON.parse(text);
+  return message + ' (redirect URI: ' + redirectUri + ')';
 }
 
 async function fetchBungieUser(accessToken) {
@@ -158,205 +69,343 @@ async function fetchBungieUser(accessToken) {
   const text = await resp.text();
   let parsed = null;
   try { parsed = JSON.parse(text); } catch (e) { /* not json */ }
-  console.debug('[BUNGIE-AUTH] GetBungieNetUser status:', resp.status, 'body:', parsed || text);
   if (!resp.ok) {
-    console.error('[BUNGIE-AUTH] GetBungieNetUser failed', resp.status, text);
     const serverMsg = parsed?.Message || parsed?.error_description || parsed?.error || text;
-    // If Bungie indicates a missing application scope, include instructions
-    if (parsed && parsed.ErrorStatus === 'AccessNotPermittedByApplicationScope' && parsed.MessageData && parsed.MessageData.RequiredScope) {
-      const required = parsed.MessageData.RequiredScope;
-      const msg = `Access not permitted by application scope. The application must be authorized for the '${required}' scope in the Bungie Developer Portal.`;
-      throw new Error('GetBungieNetUser failed: ' + resp.status + ' - ' + msg + ' (server: ' + serverMsg + ')');
-    }
     throw new Error('GetBungieNetUser failed: ' + resp.status + ' - ' + serverMsg);
   }
-  // If we got a valid response object, return Response; otherwise return parsed raw
-  if (parsed && typeof parsed === 'object') {
-    return parsed.Response || parsed;
-  }
-  return null;
+  return (parsed && typeof parsed === 'object') ? (parsed.Response || parsed) : null;
 }
 
-async function signIn() {
+// Best-effort profile info for display and membership lookup. Never fails
+// sign-in: the tokens are what matter, and these are re-fetched later if missing.
+async function loadProfileInfo() {
   try {
-    const redirect = await launchAuthFlow();
-    console.log('[BUNGIE-AUTH] auth redirect received:', redirect);
-    if (!redirect) throw new Error('No redirect returned from auth flow');
-    const u = new URL(redirect);
-    let code = u.searchParams.get('code');
-    // Some providers return params in the hash fragment instead of search
-    if (!code && u.hash) {
-      try {
-        const hashParams = new URLSearchParams(u.hash.replace(/^#/, ''));
-        code = hashParams.get('code') || code;
-        if (!code && hashParams.get('error')) {
-          const errDesc = hashParams.get('error_description') || hashParams.get('error');
-          throw new Error('OAuth error from redirect (hash): ' + (errDesc || hashParams.get('error')));
-        }
-      } catch (e) {
-        console.warn('[BUNGIE-AUTH] failed to parse hash params', e);
-      }
-    }
-
-    // If still no code, check for an error param in the query string
-    if (!code && u.searchParams.get('error')) {
-      const err = u.searchParams.get('error_description') || u.searchParams.get('error');
-      throw new Error('OAuth error from redirect: ' + err);
-    }
-
-    if (!code) {
-      throw new Error('No code returned — full redirect: ' + redirect);
-    }
-      console.log('[BUNGIE-AUTH] authorization code:', code);
-      console.log('[BUNGIE-AUTH] beginning token exchange');
-      const tokenResp = await exchangeCodeForToken(code);
-      console.log('[BUNGIE-AUTH] token exchange response:', tokenResp);
-    const access = tokenResp.access_token;
-    const refresh = tokenResp.refresh_token;
-    const expiry = Date.now() + (Number(tokenResp.expires_in || 3600) * 1000);
-
-    const user = await fetchBungieUser(access).catch(() => null);
-
-    const store = { bungie_auth: { access_token: access, refresh_token: refresh, expires_at: expiry, user } };
-    await new Promise((res) => chrome.storage.local.set(store, res));
-    updateAuthUI(store.bungie_auth);
-    // Toggle Menu view banner signed-in state
-    try {
-      const doc = (typeof document !== 'undefined') ? document : null;
-      if (doc) {
-        const view = doc.getElementById('view-menu');
-        if (view) view.classList.add('signed-in');
-      }
-    } catch (e) {
-      console.warn('[BUNGIE-AUTH] could not toggle signed-in banner', e);
-    }
-    return store.bungie_auth;
+    const auth = await getValidAuth();
+    const [user, destinyMemberships] = await Promise.all([
+      fetchBungieUser(auth.access_token).catch(() => null),
+      fetchDestinyMemberships(auth.access_token).catch(() => null)
+    ]);
+    const patch = {};
+    if (user) patch.user = user;
+    if (destinyMemberships && destinyMemberships.length) patch.destinyMemberships = destinyMemberships;
+    if (Object.keys(patch).length) await BungieAuthCore.updateSession(() => patch);
   } catch (e) {
-    console.error('[BUNGIE-AUTH] signIn failed', e);
-    throw e;
+    console.warn('[BUNGIE-AUTH] could not load profile info', e);
   }
+}
+
+let _signInInFlight = null;
+
+/**
+ * Run the OAuth flow and store a new session.
+ * Resolves to the session, or null if the user closed the sign-in window.
+ * Concurrent calls share one flow.
+ */
+function signIn() {
+  if (_signInInFlight) return _signInInFlight;
+  _signInInFlight = (async () => {
+    const redirectUri = BUNGIE_OAUTH.redirect_uri;
+    // The verifier and state stay in memory for this one attempt — nothing
+    // in storage for a second attempt to overwrite.
+    const verifier = randomToken(64);
+    const state = randomToken(16);
+    const params = new URLSearchParams({
+      client_id: BUNGIE_OAUTH.client_id,
+      response_type: 'code',
+      redirect_uri: redirectUri,
+      code_challenge: base64url(await sha256(verifier)),
+      code_challenge_method: 'S256',
+      state
+    });
+
+    let redirect;
+    try {
+      redirect = await launchWebAuthFlow(`${BUNGIE_OAUTH.auth_endpoint}?${params}`);
+    } catch (e) {
+      const msg = describeLaunchError(e.message, redirectUri);
+      if (msg === null) return null;
+      throw new Error(msg);
+    }
+    if (!redirect) throw new Error('Sign-in returned no redirect.');
+
+    const u = new URL(redirect);
+    const q = u.searchParams.has('code') || u.searchParams.has('error')
+      ? u.searchParams
+      : new URLSearchParams(u.hash.replace(/^#/, ''));
+    if (q.get('error')) throw new Error('Bungie refused sign-in: ' + (q.get('error_description') || q.get('error')));
+    // Bungie echoes `state`; reject a redirect that carries a different one.
+    if (q.has('state') && q.get('state') !== state) throw new Error('Sign-in response did not match this request. Please try again.');
+    const code = q.get('code');
+    if (!code) throw new Error('Sign-in returned no authorization code.');
+
+    const session = await BungieAuthCore.exchangeCode(code, verifier, redirectUri);
+    await loadProfileInfo();
+    return session;
+  })().finally(() => { _signInInFlight = null; });
+  return _signInInFlight;
 }
 
 async function signOut() {
-  await new Promise((res) => chrome.storage.local.remove(['bungie_auth', 'bungie_pkce_verifier'], res));
-  updateAuthUI(null);
+  await BungieAuthCore.clearSession();
 }
 
-async function updateAuthUI(auth) {
+/**
+ * The one way other modules get a usable access token.
+ * Refreshes when needed (coordinated across all extension contexts).
+ * Throws BungieAuthCore.AuthError; err.code is 'NOT_SIGNED_IN',
+ * 'SESSION_EXPIRED', 'TRANSIENT' or 'CONFIG'.
+ */
+function getValidAuth() {
+  return BungieAuthCore.getValidSession();
+}
+
+// --- auth UI ---------------------------------------------------------------
+// Rendering is driven by chrome.storage.onChanged, so the UI follows the
+// session no matter which context changed it (sign-in here, refresh or
+// expiry in background.js). renderAuth never writes storage.
+
+let _lastAuthIdentity; // undefined until first render
+
+function renderAuth(session, expired) {
   const btn = document.getElementById('btn-signin');
   const name = document.getElementById('user-name');
   const avatar = document.getElementById('user-avatar');
   const signout = document.getElementById('btn-signout');
   const view = document.getElementById('view-menu');
-
   if (!btn || !name || !avatar) return;
 
-  // If we have an auth object but no user payload, try fetching it
-  if (auth && !auth.user && auth.access_token) {
-    try {
-      const fetched = await fetchBungieUser(auth.access_token).catch(() => null);
-      if (fetched) {
-        auth.user = fetched;
-        // persist the user onto the stored auth object
-        await new Promise((res) => chrome.storage.local.set({ bungie_auth: auth }, res));
-      }
-    } catch (e) {
-      console.warn('[BUNGIE-AUTH] failed to fetch user during updateAuthUI', e);
-    }
-  }
+  const user = session && session.user ? session.user : null;
+  const profile = user ? (user.user || user) : null;
 
-  const user = auth && auth.user ? auth.user : null;
-  console.debug('[BUNGIE-AUTH] updateAuthUI user:', user);
-
-  if (user) {
-    // The Bungie user payload sometimes nests the actual profile under `user.user`.
-    const profile = user.user || user;
-
-    // Determine display name from multiple possible fields
-    const displayName = profile.displayName || profile.uniqueName || profile.cachedBungieGlobalDisplayName || profile.gamerTag || profile.steamDisplayName || profile.xboxDisplayName || profile.bnetDisplayName || 'You';
-
-    // Determine avatar path from common fields
-    let avatarPath = null;
-    if (profile.profilePicturePath) avatarPath = profile.profilePicturePath;
-    else if (profile.ProfilePicturePath) avatarPath = profile.ProfilePicturePath;
-    else if (profile.profile && profile.profile.profilePicturePath) avatarPath = profile.profile.profilePicturePath;
-    else if (profile.profile && profile.profile.data && profile.profile.data.userInfo && profile.profile.data.userInfo.profilePicturePath) avatarPath = profile.profile.data.userInfo.profilePicturePath;
-    else if (profile.profile && profile.profile.userInfo && profile.profile.userInfo.profilePicturePath) avatarPath = profile.profile.userInfo.profilePicturePath;
-
+  if (session) {
+    const displayName = profile && (profile.displayName || profile.uniqueName || profile.cachedBungieGlobalDisplayName || profile.bnetDisplayName) || 'Signed in';
+    const avatarPath = profile && (profile.profilePicturePath || profile.ProfilePicturePath);
     name.textContent = displayName;
-    avatar.src = avatarPath ? (`${BUNGIE_ROOT}${avatarPath}`) : 'icons/unnamed.jpg';
-
+    avatar.src = avatarPath ? `${BUNGIE_ROOT}${avatarPath}` : 'icons/unnamed.jpg';
     btn.classList.add('hidden');
     if (signout) signout.classList.remove('hidden');
-    if (signout) signout.onclick = () => signOut();
     if (view) view.classList.add('signed-in');
+    clearAuthMessage();
+    // Profile info can be missing if Bungie hiccuped during sign-in.
+    if (!user) loadProfileInfo();
   } else {
-    // Default guest view on left, show sign-in on right
     name.textContent = 'Guest';
     avatar.src = 'icons/unnamed.jpg';
     btn.classList.remove('hidden');
     if (signout) signout.classList.add('hidden');
     if (view) view.classList.remove('signed-in');
+    if (expired) showAuthMessage('Your Bungie session expired. Please sign in again.', 'Signed out');
+  }
+
+  // Notify listeners (admin.js, discover.js) only when the signed-in identity
+  // changes, not on every token refresh.
+  const identity = session ? (session.membership_id || 'signed-in') : null;
+  if (identity !== _lastAuthIdentity) {
+    _lastAuthIdentity = identity;
+    document.dispatchEvent(new CustomEvent('bungieAuthChanged', { detail: { auth: session } }));
   }
 }
 
-// Initialize UI wiring
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('btn-signin');
-  if (btn) {
-    btn.addEventListener('click', async (e) => {
-      console.log('[BUNGIE-AUTH] sign-in button clicked');
-      try {
-        btn.disabled = true;
-        const prev = btn.textContent;
-        btn.textContent = 'Signing in...';
-        await signIn();
-        btn.textContent = prev;
-      } catch (err) {
-        console.error('[BUNGIE-AUTH] signIn failed', err);
-        showAuthMessage(err?.message || String(err));
-      } finally {
-        btn.disabled = false;
-      }
-    });
-  }
+async function refreshAuthUI() {
+  const obj = await new Promise((res) => chrome.storage.local.get([BungieAuthCore.STORAGE_KEY, BungieAuthCore.EXPIRED_KEY], res));
+  const session = obj[BungieAuthCore.STORAGE_KEY];
+  renderAuth(session && session.access_token ? session : null, !!obj[BungieAuthCore.EXPIRED_KEY]);
+}
 
-  const signout = document.getElementById('btn-signout');
-  if (signout) signout.onclick = () => signOut();
-  chrome.storage.local.get(['bungie_auth'], (res) => {
-    updateAuthUI(res?.bungie_auth || null);
-  });
-
-  // auth debug removed: no debug button or pre to wire
-
-  // If chrome.identity.launchWebAuthFlow is not available, show a friendly instruction
-  if (!(chrome && chrome.identity && chrome.identity.launchWebAuthFlow)) {
-    showAuthMessage('Sign-in requires running as a Chrome/Chromium extension (load unpacked). Click "Open Extensions" for instructions.');
-  }
-});
-
-function showAuthMessage(text) {
-  const area = document.getElementById('menu-user-area') || document.getElementById('btn-signin');
+function showAuthMessage(text, title = 'Sign-in failed') {
+  const area = document.getElementById('menu-user-area');
   if (!area) return;
-  // Remove existing message
-  const existing = area.parentNode.querySelector('.auth-hint');
-  if (existing) existing.remove();
+  clearAuthMessage();
   const note = document.createElement('div');
   note.className = 'auth-hint';
   note.innerHTML = `
     <div style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.02);border-radius:6px;">
-      <strong>Sign-in unavailable</strong>
-      <div style="margin-top:6px;">${escapeHtml(text)}</div>
-      <div style="margin-top:8px;"><button id="open-extensions-btn" class="wishlist-action-btn">Open Extensions</button></div>
+      <strong>${escapeHtml(title)}</strong>
+      <div style="margin-top:6px;word-break:break-word;">${escapeHtml(text)}</div>
     </div>`;
   area.parentNode.insertBefore(note, area.nextSibling);
-  const btn = document.getElementById('open-extensions-btn');
-  if (btn) btn.onclick = () => { window.open('chrome://extensions'); };
+}
+
+function clearAuthMessage() {
+  const area = document.getElementById('menu-user-area');
+  const existing = area && area.parentNode.querySelector('.auth-hint');
+  if (existing) existing.remove();
 }
 
 function escapeHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('btn-signin');
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        const prev = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+        clearAuthMessage();
+        try {
+          await signIn();
+        } catch (err) {
+          console.error('[BUNGIE-AUTH] signIn failed', err);
+          showAuthMessage(err?.message || String(err));
+        } finally {
+          btn.disabled = false;
+          btn.textContent = prev;
+        }
+      });
+    }
+
+    const signout = document.getElementById('btn-signout');
+    if (signout) signout.onclick = () => signOut();
+
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local') return;
+      if (changes[BungieAuthCore.STORAGE_KEY] || changes[BungieAuthCore.EXPIRED_KEY]) refreshAuthUI();
+    });
+    refreshAuthUI();
+  });
+}
+
+/**
+ * Fetch Destiny 2 memberships for the currently authenticated user.
+ * Uses /User/GetMembershipsForCurrentUser/ which returns destinyMemberships
+ * with proper platformMembershipType and membershipId for use with GetProfile.
+ */
+async function fetchDestinyMemberships(accessToken) {
+  const resp = await fetch('https://www.bungie.net/Platform/User/GetMembershipsForCurrentUser/', {
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'X-API-Key': (typeof API_KEY !== 'undefined') ? API_KEY : '' }
+  });
+  const text = await resp.text();
+  let parsed = null;
+  try { parsed = JSON.parse(text); } catch (e) { /* not json */ }
+  if (!resp.ok) {
+    const serverMsg = parsed?.Message || parsed?.error_description || text;
+    throw new Error('GetMembershipsForCurrentUser failed: ' + resp.status + ' - ' + serverMsg);
+  }
+  return (parsed?.Response?.destinyMemberships) || [];
+}
+
+
+/**
+ * Fetch Destiny2.GetProfile with selected components.
+ * @param {number|string} membershipType
+ * @param {string|number} membershipId
+ * @param {string|Array<number|string>} components - comma-separated string or array of component ids
+ */
+async function fetchProfileWithComponents(membershipType, membershipId, components) {
+  const auth = await getValidAuth();
+
+  let compParam = components;
+  if (Array.isArray(components)) compParam = components.join(',');
+  if (!compParam) compParam = '';
+
+  const url = `https://www.bungie.net/Platform/Destiny2/${membershipType}/Profile/${membershipId}/?components=${encodeURIComponent(compParam)}`;
+  const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${auth.access_token}`, 'X-API-Key': (typeof API_KEY !== 'undefined') ? API_KEY : '' } });
+  const text = await resp.text();
+  let parsed = null;
+  try { parsed = JSON.parse(text); } catch (e) { /* ignore */ }
+  if (!resp.ok) {
+    const serverMsg = parsed?.Message || parsed?.error_description || parsed || text;
+    throw new Error('GetProfile failed: ' + resp.status + ' - ' + serverMsg);
+  }
+
+  // Persist last raw profile response for other modules to consume
+  const toStore = { lastBungieProfile: parsed?.Response || parsed, lastBungieProfileFetchedAt: Date.now() };
+  await new Promise((res) => chrome.storage.local.set(toStore, res));
+  return parsed?.Response || parsed;
+}
+
+/**
+ * Lock or unlock a single item instance via Destiny2 SetLockState.
+ * @param {string} instanceId - item instance ID (string form of int64)
+ * @param {string} characterId - owning character ID (any character for vault items)
+ * @param {number} membershipType - Destiny membership type (1=Xbox, 2=PSN, 3=Steam, etc.)
+ * @param {string} membershipId - Destiny membership ID
+ * @param {boolean} [state=true] - true to lock, false to unlock
+ */
+async function setItemLockState(instanceId, characterId, membershipType, membershipId, state = true) {
+  const auth = await getValidAuth();
+  const resp = await fetch('https://www.bungie.net/Platform/Destiny2/Actions/Items/SetLockState/', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${auth.access_token}`,
+      'X-API-Key': API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      state,
+      itemId: String(instanceId),
+      characterId: String(characterId),
+      membershipType: Number(membershipType)
+    })
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`SetLockState failed ${resp.status}: ${text.slice(0, 200)}`);
+  }
+  return resp.json();
+}
+
+/**
+ * Equip an item instance on a character. The item must already be in the
+ * character's inventory (not the vault); transfer it first if needed.
+ * @param {string} instanceId
+ * @param {string} characterId - character that owns the item
+ * @param {number} membershipType
+ * @param {string} membershipId
+ */
+async function equipItem(instanceId, characterId, membershipType, membershipId) {
+  const auth = await getValidAuth();
+  const resp = await fetch('https://www.bungie.net/Platform/Destiny2/Actions/Items/EquipItem/', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${auth.access_token}`,
+      'X-API-Key': API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      itemId: String(instanceId),
+      characterId: String(characterId),
+      membershipType: Number(membershipType)
+    })
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`EquipItem failed ${resp.status}: ${text.slice(0, 200)}`);
+  }
+  return resp.json();
+}
+
+function buildTransferItemPayload(instanceId, itemReferenceHash, characterId, membershipType, transferToVault, stackSize = 1) {
+  return {
+    itemReferenceHash: Number(itemReferenceHash),
+    stackSize,
+    transferToVault: !!transferToVault,
+    itemId: String(instanceId),
+    characterId: String(characterId),
+    membershipType: Number(membershipType)
+  };
+}
+
+async function transferItemToVault(instanceId, itemReferenceHash, characterId, membershipType, membershipId) {
+  const auth = await getValidAuth();
+  const resp = await fetch('https://www.bungie.net/Platform/Destiny2/Actions/Items/TransferItem/', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${auth.access_token}`,
+      'X-API-Key': API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(buildTransferItemPayload(instanceId, itemReferenceHash, characterId, membershipType, true))
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`TransferItem failed ${resp.status}: ${text.slice(0, 200)}`);
+  }
+  return resp.json();
+}
+
 // Expose for other modules
-window.bungieAuth = { signIn, signOut };
+window.bungieAuth = { signIn, signOut, getValidAuth, fetchProfileWithComponents, fetchDestinyMemberships, setItemLockState, equipItem, transferItemToVault, buildTransferItemPayload };

@@ -12,6 +12,7 @@
     <div class="loading-spinner"></div>
     <div class="loading-text">Oh User Mine...</div>
   </div>
+  <div id="feed-glow-ring" class="feed-glow-ring" aria-hidden="true"></div>
   <div class="app-container">
     <header>
       <div class="logo-area">
@@ -39,8 +40,96 @@
     </header>
 
     <div id="view-weapons" class="content-view active-view">
-      <div id="empty-state" class="hidden">No wishes yet.</div>
-      <div id="weapon-list"></div>
+      <div id="weapon-craft" class="weapon-pane active-pane">
+        <!-- Weapon crafting pane (placeholder) -->
+        <div id="weapon-crafting-section" class="weapon-crafting-section" aria-label="Weapon Crafting Section">
+          <div class="weapon-craft-search" aria-label="Weapon Search">
+            <div class="step-label">1. SEARCH WEAPON</div>
+            <div class="search-input-wrap">
+              <input type="text" class="search-input" id="weapon-query" placeholder="e.g. Eyasluna, Fatebringer...">
+              <button type="button" id="weapon-query-clear" class="search-input-clear hidden" aria-label="Clear weapon search">&times;</button>
+            </div>
+            <div id="weapon-search-results" class="weapon-search-results"></div>
+          </div>
+
+          <div id="weapon-craft-main" class="craft-main-row hidden">
+            <div class="weapon-stats-col">
+              <div id="weapon-season-tabs" class="weapon-season-tabs"></div>
+              <div id="weapon-live-stats" class="weapon-live-stats" aria-label="Live Weapon Stats"></div>
+            </div>
+            <div class="craft-perks-side">
+              <div id="weapon-perk-picker" class="perk-picker" aria-label="Perk Picker">
+                <div id="pp-tabs" class="pp-tabs"></div>
+                <div id="pp-grid" class="pp-grid"></div>
+                <div id="pp-combo-toggle" class="pp-combo-toggle hidden" aria-label="Combo Stat Preview"></div>
+              </div>
+              <div id="weapon-perk-detail" class="wpd hidden" aria-label="Perk Stat Detail"></div>
+            </div>
+          </div>
+
+          <div id="weapon-save-section" class="action-area hidden" style="margin-top: 20px;">
+            <div class="toggle-container pve" id="weapon-mode-toggle">
+              <div class="opt-pve">PvE</div>
+              <div class="opt-pvp">PvP</div>
+            </div>
+            <div class="split-btn-row">
+              <button id="weapon-save-new-btn" class="btn-primary">MAKE A NEW WISH</button>
+              <button id="weapon-edit-wish-btn" class="btn-primary hidden">EDIT WISH</button>
+            </div>
+          </div>
+
+          <div class="step-label">Crafting Websites</div>
+          <div class="craft-links" role="group" aria-label="Weapon crafting links" style="margin-top:8px;">
+<a class="craft-link-btn" href="https://app.destinyitemmanager.com/" target="_blank" rel="noopener" aria-label="Open DIM">
+              <span class="label">DIM</span>
+            </a>
+            <a class="craft-link-btn" href="https://www.light.gg/" target="_blank" rel="noopener" aria-label="Open light.gg">
+              <span class="label">LGG</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div id="weapon-list" class="weapon-pane hidden">
+        <div class="weapon-filter-section">
+          <div class="filter-search">
+            <input type="text" id="weapon-list-search" class="filter-input" placeholder="Search weapons...">
+            <button id="weapon-filter-toggle-btn" class="filter-toggle-btn-icon" title="Toggle Filters">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10,18h4v-2h-4V18z M3,6v2h18V6H3z M6,13h12v-2H6V13z"/>
+              </svg>
+            </button>
+          </div>
+          <div id="weapon-filter-controls" class="filter-controls collapsed">
+            <div class="filter-toggle-buttons">
+              <button id="wf-btn-type" class="filter-toggle-btn active">TYPE</button>
+              <button id="wf-btn-ammo" class="filter-toggle-btn">AMMO</button>
+              <button id="wf-btn-element" class="filter-toggle-btn">ELEMENT</button>
+            </div>
+            <div id="weapon-filter-buttons-container" class="filter-buttons-container"></div>
+            <div class="filter-clear-buttons">
+              <button id="weapon-filter-clear" class="filter-clear-btn">Clear</button>
+              <button id="weapon-filter-clear-all" class="filter-clear-all-btn">Clear All</button>
+            </div>
+          </div>
+        </div>
+        <div class="sync-bar" id="weapon-sync-bar">
+          <span class="sync-bar-status" id="weapon-sync-status">Not synced yet</span>
+          <button class="sync-bar-btn" id="weapon-sync-btn" title="Refresh inventory now">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+            SYNC NOW
+          </button>
+        </div>
+        <div id="weapon-list-items" class="weapon-list-items"></div>
+      </div>
+
+      <div class="bottom-nav-container weapons-bottom-nav">
+        <div class="bottom-nav-pill">
+          <button id="weapons-nav-craft" class="nav-btn active">CRAFT</button>
+          <button id="weapons-nav-list" class="nav-btn">LIST</button>
+        </div>
+      </div>
     </div>
 
     <div id="view-armor" class="content-view">
@@ -57,7 +146,10 @@
 
             <div class="armor-search-container">
               <div class="step-label">1. SEARCH ARMOR (Set Name)</div>
-              <input type="text" class="search-input" id="armor-query" placeholder="e.g. Iron, Artifice, Noble...">
+              <div class="search-input-wrap">
+                <input type="text" class="search-input" id="armor-query" placeholder="e.g. Iron, Artifice, Noble...">
+                <button type="button" id="armor-query-clear" class="search-input-clear hidden" aria-label="Clear armor search">&times;</button>
+              </div>
 
               <div class="armor-grid" id="armor-grid">
                 <div id="armor-set-name"></div>
@@ -85,7 +177,10 @@
                 <div class="opt-pve">PvE</div>
                 <div class="opt-pvp">PvP</div>
               </div>
-              <button id="btn-create-armor" class="btn-primary" disabled>SELECT ARMOR PIECE FIRST</button>
+              <div class="split-btn-row">
+                <button id="btn-create-armor" class="btn-primary" disabled>SELECT ARMOR PIECE FIRST</button>
+                <button id="btn-edit-armor" class="btn-primary hidden">EDIT WISH</button>
+              </div>
             </div>
 
             <div class="cache-controls" style="text-align: center; margin-top: 20px;">
@@ -120,6 +215,15 @@
                </div>
              </div>
 
+             <div class="sync-bar" id="armor-sync-bar">
+               <span class="sync-bar-status" id="armor-sync-status">Not synced yet</span>
+               <button class="sync-bar-btn" id="armor-sync-btn" title="Refresh inventory now">
+                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                   <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                 </svg>
+                 SYNC NOW
+               </button>
+             </div>
              <div id="armor-list-container">
                 <div class="empty-list-text">No Armor Wishes yet.</div>
              </div>
@@ -139,41 +243,247 @@
     
     <div id="view-menu" class="content-view">
       <div class="menu-view-stage">
-        <div class="menu-top">
-          <div class="menu-top-inner">
-            <div class="menu-left">
-              <img id="user-avatar" class="user-avatar" src="icons/unnamed.jpg" alt="User avatar" />
-              <span id="user-name" class="user-name">Guest</span>
-            </div>
-            <div class="menu-right" id="menu-user-area">
-              <button id="btn-signin" class="wishlist-action-btn" aria-label="Sign in">Sign in</button>
-              <button id="btn-signout" class="wishlist-action-btn hidden" aria-label="Sign out">Sign out</button>
-            </div>
+
+        <!-- Profile Card -->
+        <div class="mt-profile-card" id="menu-user-area">
+          <div class="mt-avatar-circle">
+            <img id="user-avatar" class="mt-avatar-img" src="icons/unnamed.jpg" alt="User avatar" />
           </div>
+          <div class="mt-profile-text">
+            <span id="user-name" class="mt-profile-name">Guest</span>
+            <span class="mt-profile-sub">Signed in with Bungie</span>
+          </div>
+          <button id="btn-signin" class="mt-btn-card-action" aria-label="Sign in">Sign in</button>
+          <button id="btn-signout" class="mt-btn-card-action hidden" aria-label="Sign out">Sign out</button>
         </div>
 
-        <div class="menu-content">
-          <div class="wishlist-section">
-            <div class="step-label">1. Wishlist</div>
-            <div class="wishlist-block" style="margin-top:12px;">
-            <input id="wl-name" class="wishlist-name-input" placeholder="New wishlist name">
-            <button id="wl-create" class="wishlist-action-btn">Create</button>
-            <button id="wl-duplicate" class="wishlist-action-btn">Duplicate</button>
-            <button id="wl-merge" class="wishlist-action-btn">Merge</button>
-            <button id="wl-delete" class="wishlist-action-btn">Delete</button>
-            <div class="wishlist-row" id="wishlist-row" aria-hidden="false"></div>
+        <!-- Scrollable body -->
+        <div class="mt-body">
+
+          <!-- Wishlists Section -->
+          <div class="mt-section">
+            <div class="mt-section-label-row">
+              <div class="mt-section-label">WISHLISTS</div>
+              <button class="mt-info-icon" data-info="wishlists" aria-label="How to use Wishlists">i</button>
             </div>
+
+            <div class="mt-input-row">
+              <input id="wl-name" class="mt-input" placeholder="New wishlist name">
+              <button id="wl-create" class="mt-btn-primary">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                Create
+              </button>
+            </div>
+
+            <div class="mt-actions-row">
+              <button id="wl-duplicate" class="mt-btn-ghost">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                Duplicate
+              </button>
+              <button id="wl-merge" class="mt-btn-ghost">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/></svg>
+                Merge
+              </button>
+              <button id="wl-delete" class="mt-btn-ghost mt-btn-danger">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                Delete
+              </button>
+            </div>
+
+            <div class="mt-actions-row">
+              <button id="wl-export" class="mt-btn-ghost">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Export
+              </button>
+              <button id="wl-import" class="mt-btn-ghost">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+                Import
+              </button>
+            </div>
+
+            <div class="wishlist-row" id="wishlist-row" aria-hidden="false"></div>
           </div>
-          
+
+          <div class="mt-divider"></div>
+
+          <!-- Feed Section -->
+          <div class="mt-section">
+            <div class="mt-section-label-row">
+              <div class="mt-section-label">FEED</div>
+              <button class="mt-info-icon" data-info="feed" aria-label="How to use Feed">i</button>
+              <button id="feed-clear-btn" class="mt-btn-ghost mt-btn-danger mt-feed-clear-btn hidden" title="Clear the entire Feed" aria-label="Clear the entire Feed">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                Clear
+              </button>
+            </div>
+
+            <button id="feed-toggle-btn" class="mt-btn-secondary mt-feed-toggle" aria-pressed="false">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+              <span class="btn-text">Turn On Feed</span>
+            </button>
+
+            <div id="feed-list" class="mt-feed-list"></div>
+            <div id="feed-empty" class="mt-feed-empty">No wishes obtained yet. Turn on Feed to get notified when a wishlisted roll drops.</div>
+          </div>
+
+          <div class="mt-divider"></div>
+
+          <!-- Utility Section -->
+          <div class="mt-section">
+            <div class="mt-section-label-row">
+              <div class="mt-section-label">UTILITY</div>
+              <button class="mt-info-icon" data-info="utility" aria-label="How to use Utility">i</button>
+            </div>
+
+            <div class="mt-sync-row">
+              <div class="mt-sync-info">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+                <span id="owned-index-summary" class="mt-sync-time">No inventory data yet.</span>
+              </div>
+              <button id="utility-refresh-profile" class="mt-btn-secondary">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                <span class="btn-text">Refresh</span>
+              </button>
+            </div>
+
+            <div class="mt-search-wrap">
+              <svg class="mt-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              <input type="text" id="inventory-search-input" class="mt-search-input" placeholder="Search your inventory...">
+            </div>
+            <div id="inventory-filter-chips" class="inv-filter-chips"></div>
+            <div id="inventory-search-results" class="inv-results"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="bottom-nav-container">
+        <div class="bottom-nav-pill">
+          <button id="nav-discover" class="nav-btn">DISCOVER</button>
+          <div id="admin-nav-slot"></div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- DISCOVER: full-screen slide-up sheet, browse/search/submit/save community & creator wishlists -->
+  <div id="discover-view" class="aw-slide-sheet" aria-hidden="true">
+    <div class="aw-sheet-header">
+      <button id="discover-close" class="aw-sheet-close" aria-label="Close Discover">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        CLOSE
+      </button>
+      <div class="aw-sheet-title">DISCOVER</div>
+    </div>
+    <div class="aw-sheet-body">
+      <div class="aw-discover-search-row">
+        <input type="text" id="discover-search" placeholder="Search wishlists or creators...">
+      </div>
+      <div class="aw-discover-chips" id="discover-chips">
+        <button class="aw-chip active" data-filter="all">ALL</button>
+        <button class="aw-chip" data-filter="pve">PVE</button>
+        <button class="aw-chip" data-filter="pvp">PVP</button>
+        <button class="aw-chip" data-filter="weapons">WEAPONS</button>
+        <button class="aw-chip" data-filter="armor">ARMOR</button>
+      </div>
+
+      <div class="aw-discover-section hidden" id="discover-mine-section">
+        <div class="aw-discover-section-label">MY SUBMISSIONS <span class="cap-note" id="discover-mine-cap"></span></div>
+        <div id="discover-mine-list" class="aw-discover-list"></div>
+      </div>
+
+      <div class="aw-discover-section hidden" id="discover-results-section">
+        <div class="aw-discover-section-label">RESULTS</div>
+        <div id="discover-results-list" class="aw-discover-list"></div>
+        <button id="discover-results-load-more" class="aw-btn-ghost-wide hidden">Load More</button>
+        <div id="discover-results-empty" class="empty-list-text hidden">No wishlists found.</div>
+      </div>
+
+      <div class="aw-discover-section" id="discover-featured-section">
+        <div class="aw-discover-section-label">FEATURED</div>
+        <div id="discover-featured-list" class="aw-discover-list"></div>
+      </div>
+
+      <div class="aw-discover-section" id="discover-community-section">
+        <div class="aw-discover-section-label">COMMUNITY</div>
+        <div id="discover-community-list" class="aw-discover-list"></div>
+        <button id="discover-community-load-more" class="aw-btn-ghost-wide hidden">Load More</button>
+        <div id="discover-community-empty" class="empty-list-text hidden">No wishlists found.</div>
+      </div>
+    </div>
+
+    <button id="discover-submit-fab" class="aw-fab">SUBMIT WISHLIST</button>
+  </div>
+
+  <!-- Submit modal, opened from the Discover FAB -->
+  <div id="discover-submit-modal-overlay" class="aw-submit-modal-overlay hidden">
+    <div class="aw-submit-modal" role="dialog" aria-modal="true">
+      <h3>Submit Active Wishlist</h3>
+      <div class="aw-submit-field">
+        <label for="discover-submit-title">Title</label>
+        <input type="text" id="discover-submit-title" placeholder="e.g. Datto's PvE Meta">
+      </div>
+      <div class="aw-submit-field">
+        <label for="discover-submit-mode">Mode</label>
+        <select id="discover-submit-mode">
+          <option value="pve">PvE</option>
+          <option value="pvp">PvP</option>
+          <option value="mixed">Mixed</option>
+        </select>
+      </div>
+      <div class="aw-submit-field" id="discover-submit-info"></div>
+      <div class="aw-submit-modal-actions">
+        <button id="discover-submit-cancel" class="mt-btn-ghost">Cancel</button>
+        <button id="discover-submit-confirm" class="mt-btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN: full-screen slide-up sheet, only ever opened when is_admin is confirmed true -->
+  <div id="admin-view" class="aw-slide-sheet aw-slide-sheet-admin" aria-hidden="true">
+    <div class="aw-sheet-header aw-sheet-header-admin">
+      <button id="admin-close" class="aw-sheet-close" aria-label="Close Admin">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        CLOSE
+      </button>
+      <div class="aw-sheet-title">ADMIN</div>
+    </div>
+    <div class="aw-sheet-body">
+      <div class="aw-admin-tabs">
+        <button class="aw-admin-tab active" data-admin-tab="creators">CREATORS</button>
+        <button class="aw-admin-tab" data-admin-tab="wishlists">WISHLISTS</button>
+      </div>
+
+      <div id="admin-tab-creators" class="aw-admin-panel">
+        <div class="aw-admin-form-row">
+          <input type="text" id="admin-creator-bungie-name" placeholder="Bungie name (exact, e.g. Guardian#1234)">
+          <input type="text" id="admin-creator-display-name" placeholder="Display name to show instead">
+          <button id="admin-creator-add" class="mt-btn-primary">Add / Update Creator</button>
+        </div>
+        <div id="admin-creators-list" class="aw-discover-list"></div>
+      </div>
+
+      <div id="admin-tab-wishlists" class="aw-admin-panel hidden">
+        <input type="text" id="admin-wishlist-search" class="filter-input" placeholder="Search all wishlists...">
+        <div id="admin-wishlists-list" class="aw-discover-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="supabase-network.js"></script>
+  <script src="wishlist-sync-core.js"></script>
   <script src="destiny-manifest.js"></script>
+  <script src="owned-inventory-index.js"></script>
   <script src="manager.js"></script>
   <script src="ui-creator.js"></script>
+  <script src="bungie-auth-core.js"></script>
   <script src="bungie-auth.js"></script>
   <script src="wishlist.js"></script>
+  <script src="wishlist-io.js"></script>
+  <script src="discover.js"></script>
+  <script src="admin.js"></script>
+  <script src="admin-sync.js"></script>
+  <script src="oracle-engine-bridge.js"></script>
+  <script src="weapon-craft.js"></script>
 </body>
 </html>

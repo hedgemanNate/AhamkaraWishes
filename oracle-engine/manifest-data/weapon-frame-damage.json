@@ -1,0 +1,2244 @@
+[
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 3771737927,
+    "frame_name": "Balanced Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 2976676960,
+    "frame_name": "Command Frame",
+    "damage": 148.905,
+    "_sourceWeaponHash": 3698448090,
+    "_sourceWeaponName": "Choir of One"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1967250736,
+    "frame_name": "Command Frame II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1967250737,
+    "frame_name": "Command Frame III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1967250742,
+    "frame_name": "Command Frame IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 4184462049,
+    "frame_name": "Cursebringer",
+    "damage": 13.41,
+    "_sourceWeaponHash": 1034055198,
+    "_sourceWeaponName": "Necrochasm"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 3208839961,
+    "frame_name": "Four-Headed Dog",
+    "damage": 18,
+    "_sourceWeaponHash": 1541131350,
+    "_sourceWeaponName": "Cerberus+1"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1019291327,
+    "frame_name": "High-Impact Frame",
+    "damage": 70.62,
+    "_sourceWeaponHash": 2290416,
+    "_sourceWeaponName": "The Wizened Rebuke"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 961505134,
+    "frame_name": "Ignition Trigger",
+    "damage": 13.41,
+    "_sourceWeaponHash": 776191470,
+    "_sourceWeaponName": "Tommy's Matchbook"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1458010786,
+    "frame_name": "Lightweight Frame",
+    "damage": 19.2,
+    "_sourceWeaponHash": 877384,
+    "_sourceWeaponName": "The Martlet"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 3602718766,
+    "frame_name": "Missile Tracers",
+    "damage": 13.41,
+    "_sourceWeaponHash": 4293613902,
+    "_sourceWeaponName": "Quicksilver Storm"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1484442054,
+    "frame_name": "Monte Carlo Method",
+    "damage": 15.009,
+    "_sourceWeaponHash": 4068264807,
+    "_sourceWeaponName": "Monte Carlo"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1385166695,
+    "frame_name": "Overcharge Capacitor",
+    "damage": 20,
+    "_sourceWeaponHash": 1912669214,
+    "_sourceWeaponName": "Centrifuse"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 3755070117,
+    "frame_name": "Payday",
+    "damage": 15,
+    "_sourceWeaponHash": 1345867570,
+    "_sourceWeaponName": "Sweet Business"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 1636108362,
+    "frame_name": "Precision Frame",
+    "damage": 38,
+    "_sourceWeaponHash": 20025671,
+    "_sourceWeaponName": "Tango-45 XK5094"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 878286503,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 16.8,
+    "_sourceWeaponHash": 4425887,
+    "_sourceWeaponName": "The Time-Worn Spire"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 2622129339,
+    "frame_name": "Support Frame",
+    "damage": 18.626,
+    "_sourceWeaponHash": 1801007332,
+    "_sourceWeaponName": "No Hesitation"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 3488129416,
+    "frame_name": "Support Frame",
+    "damage": 18.626,
+    "_sourceWeaponHash": 601574723,
+    "_sourceWeaponName": "Adamantite (Adept)"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 2235383762,
+    "frame_name": "Support Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 2078075300,
+    "frame_name": "Support Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 2799967529,
+    "frame_name": "Support Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 944506345,
+    "frame_name": "SUROS Legacy",
+    "damage": 15.009,
+    "_sourceWeaponHash": 2856683562,
+    "_sourceWeaponName": "SUROS Regime"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 34498892,
+    "frame_name": "The Right Choice",
+    "damage": 15.009,
+    "_sourceWeaponHash": 4129629253,
+    "_sourceWeaponName": "Khvostov 7G-0X"
+  },
+  {
+    "weapon_type": "Auto Rifle",
+    "frame_hash": 3610814281,
+    "frame_name": "Volatile Light",
+    "damage": 15.009,
+    "_sourceWeaponHash": 4124984448,
+    "_sourceWeaponName": "Hard Light"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 1699724249,
+    "frame_name": "Big-Game Hunter",
+    "damage": 345.6,
+    "_sourceWeaponHash": 2591746970,
+    "_sourceWeaponName": "Leviathan's Breath"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 1258693557,
+    "frame_name": "Bolt Thrower",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 2226793914,
+    "frame_name": "Guidance Ring",
+    "damage": 100.74,
+    "_sourceWeaponHash": 4174431791,
+    "_sourceWeaponName": "Hierarchy of Needs"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 2636679416,
+    "frame_name": "Hail Barrage",
+    "damage": 85.61,
+    "_sourceWeaponHash": 3659414143,
+    "_sourceWeaponName": "Verglas Curve"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 1019291327,
+    "frame_name": "High-Impact Frame",
+    "damage": 70.62,
+    "_sourceWeaponHash": 2290416,
+    "_sourceWeaponName": "The Wizened Rebuke"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 3572001649,
+    "frame_name": "High-Impact Longbow",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 2108556049,
+    "frame_name": "Lightweight Frame",
+    "damage": 85.61,
+    "_sourceWeaponHash": 161675590,
+    "_sourceWeaponName": "Whistler's Whim (Adept)"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 2186532310,
+    "frame_name": "Poison Arrows",
+    "damage": 85,
+    "_sourceWeaponHash": 3588934839,
+    "_sourceWeaponName": "Le Monarque"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 715195141,
+    "frame_name": "Precision Frame",
+    "damage": 100.74,
+    "_sourceWeaponHash": 45643573,
+    "_sourceWeaponName": "Raconteur"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 1470121888,
+    "frame_name": "Queen's Wrath",
+    "damage": 71.775,
+    "_sourceWeaponHash": 814876684,
+    "_sourceWeaponName": "Wish-Ender"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 3239299468,
+    "frame_name": "Sacred Flame",
+    "damage": 100.74,
+    "_sourceWeaponHash": 3260753130,
+    "_sourceWeaponName": "Ticuu's Divination"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 214670074,
+    "frame_name": "Snareweaver",
+    "damage": 100.74,
+    "_sourceWeaponHash": 2910326942,
+    "_sourceWeaponName": "Wish-Keeper"
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 2655147894,
+    "frame_name": "Snareweaver II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 2655147895,
+    "frame_name": "Snareweaver III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 2655147888,
+    "frame_name": "Snareweaver IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Combat Bow",
+    "frame_hash": 1573888036,
+    "frame_name": "Split Electron",
+    "damage": 34.3,
+    "_sourceWeaponHash": 814876685,
+    "_sourceWeaponName": "Trinity Ghoul"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 2518716062,
+    "frame_name": "Aggressive Frame",
+    "damage": 49.22,
+    "_sourceWeaponHash": 74733286,
+    "_sourceWeaponName": "Nox Sidereal IV"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 1657056865,
+    "frame_name": "Ahamkara's Eye",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 1656957541,
+    "frame_name": "Charge Shot",
+    "damage": 348.82,
+    "_sourceWeaponHash": 417164956,
+    "_sourceWeaponName": "Jötunn"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 656200654,
+    "frame_name": "Conserve Momentum",
+    "damage": 70.62,
+    "_sourceWeaponHash": 4190156464,
+    "_sourceWeaponName": "Merciless"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 1019291327,
+    "frame_name": "High-Impact Frame",
+    "damage": 70.62,
+    "_sourceWeaponHash": 2290416,
+    "_sourceWeaponName": "The Wizened Rebuke"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 1636108362,
+    "frame_name": "Precision Frame",
+    "damage": 38,
+    "_sourceWeaponHash": 20025671,
+    "_sourceWeaponName": "Tango-45 XK5094"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 2769013282,
+    "frame_name": "Property: Undecidable",
+    "damage": 41.27,
+    "_sourceWeaponHash": 3561203890,
+    "_sourceWeaponName": "Tessellation"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 878286503,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 16.8,
+    "_sourceWeaponHash": 4425887,
+    "_sourceWeaponName": "The Time-Worn Spire"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 1186480754,
+    "frame_name": "Saint's Fists",
+    "damage": 27.745,
+    "_sourceWeaponHash": 2415517654,
+    "_sourceWeaponName": "Bastion"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 136208450,
+    "frame_name": "Soulburn",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 3610750208,
+    "frame_name": "Timeless Mythoclast",
+    "damage": 23.54,
+    "_sourceWeaponHash": 4289226715,
+    "_sourceWeaponName": "Vex Mythoclast"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 2585427437,
+    "frame_name": "Traitor's Vessel",
+    "damage": 30.912,
+    "_sourceWeaponHash": 374573733,
+    "_sourceWeaponName": "Delicate Tomb"
+  },
+  {
+    "weapon_type": "Fusion Rifle",
+    "frame_hash": 1927916065,
+    "frame_name": "Unplanned Reprieve",
+    "damage": 42.8,
+    "_sourceWeaponHash": 2208405142,
+    "_sourceWeaponName": "Telesto"
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 1316753551,
+    "frame_name": "Adaptive Glaive",
+    "damage": 120.91,
+    "_sourceWeaponHash": 25228802,
+    "_sourceWeaponName": "Refusal of the Call (Adept)"
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 1986105578,
+    "frame_name": "Aggressive Glaive",
+    "damage": 133.75,
+    "_sourceWeaponHash": 617566156,
+    "_sourceWeaponName": "The Heron"
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 1207608520,
+    "frame_name": "Big Frigid Glaive",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 1900919151,
+    "frame_name": "Edge of Action",
+    "damage": 120.91,
+    "_sourceWeaponHash": 2535142413,
+    "_sourceWeaponName": "Edge of Action"
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 3551884421,
+    "frame_name": "Edge of Concurrence",
+    "damage": 108.07,
+    "_sourceWeaponHash": 542203595,
+    "_sourceWeaponName": "Edge of Concurrence"
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 3024740338,
+    "frame_name": "Edge of Intent",
+    "damage": 133.75,
+    "_sourceWeaponHash": 14194600,
+    "_sourceWeaponName": "Edge of Intent"
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 2751656639,
+    "frame_name": "M1R Distribution Matrix",
+    "damage": 108.07,
+    "_sourceWeaponHash": 3118061005,
+    "_sourceWeaponName": "Vexcalibur"
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 2898674463,
+    "frame_name": "M1R Distribution Matrix II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 2898674462,
+    "frame_name": "M1R Distribution Matrix III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 2898674457,
+    "frame_name": "M1R Distribution Matrix IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Glaive",
+    "frame_hash": 1956005708,
+    "frame_name": "Rapid-Fire Glaive",
+    "damage": 108.07,
+    "_sourceWeaponHash": 267672635,
+    "_sourceWeaponName": "Backfang"
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 389268985,
+    "frame_name": "Arc Traps",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 385138649,
+    "frame_name": "Area Denial Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 2571259936,
+    "frame_name": "Compressed Wave Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 3183537623,
+    "frame_name": "Corrupted Nucleosynthesis",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 1315870387,
+    "frame_name": "Cryocannon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 425960662,
+    "frame_name": "Delayed Gratification",
+    "damage": 150,
+    "_sourceWeaponHash": 3549153978,
+    "_sourceWeaponName": "Fighting Lion"
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 1759472859,
+    "frame_name": "Double Fire",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 2977709078,
+    "frame_name": "Excavation",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 470163129,
+    "frame_name": "Harvester Spike",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 3913463509,
+    "frame_name": "Insectoid Robot Grenades",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 474269988,
+    "frame_name": "Lightweight Frame",
+    "damage": 200,
+    "_sourceWeaponHash": 40394833,
+    "_sourceWeaponName": "The Militia's Birthright"
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 3758615625,
+    "frame_name": "Micro-Missile Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 4130495068,
+    "frame_name": "Precision Frame",
+    "damage": 300,
+    "_sourceWeaponHash": 311852248,
+    "_sourceWeaponName": "Bushwhacker"
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 3063320916,
+    "frame_name": "Primeval's Torment",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 2353477480,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 240.75,
+    "_sourceWeaponHash": 301362380,
+    "_sourceWeaponName": "Terran Wind"
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 2733244971,
+    "frame_name": "Trinary Vision",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 4133742355,
+    "frame_name": "Trinary Vision",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 4133742354,
+    "frame_name": "Trinary Vision",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 4133742357,
+    "frame_name": "Trinary Vision",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 1395789926,
+    "frame_name": "Wave Frame",
+    "damage": 130,
+    "_sourceWeaponHash": 233402416,
+    "_sourceWeaponName": "New Pacific Epitaph (Adept)"
+  },
+  {
+    "weapon_type": "Grenade Launcher",
+    "frame_hash": 1174163613,
+    "frame_name": "Worm's Hunger",
+    "damage": 835,
+    "_sourceWeaponHash": 2812324400,
+    "_sourceWeaponName": "Parasite"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 507151084,
+    "frame_name": "Accomplice",
+    "damage": 50,
+    "_sourceWeaponHash": 2907129556,
+    "_sourceWeaponName": "Sturm"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 2189829540,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 2429822976,
+    "_sourceWeaponName": "Rose"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 2757685314,
+    "frame_name": "Aggressive Frame",
+    "damage": 50,
+    "_sourceWeaponHash": 198854575,
+    "_sourceWeaponName": "Crimil's Dagger"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 3468089894,
+    "frame_name": "Aggressive Frame",
+    "damage": 70.2,
+    "_sourceWeaponHash": 8293111,
+    "_sourceWeaponName": "Long Arm"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1030990989,
+    "frame_name": "Banned Weapon",
+    "damage": 19,
+    "_sourceWeaponHash": 3437746471,
+    "_sourceWeaponName": "Crimson"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1406835319,
+    "frame_name": "Dynamic Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1611330137,
+    "frame_name": "Dynamic Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1791592647,
+    "frame_name": "Explosive Shadow",
+    "damage": 40,
+    "_sourceWeaponHash": 204878059,
+    "_sourceWeaponName": "Malfeasance"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 2770223582,
+    "frame_name": "Fan Fire",
+    "damage": 40.3118,
+    "_sourceWeaponHash": 1364093401,
+    "_sourceWeaponName": "The Last Word"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 3923638944,
+    "frame_name": "Heavy Burst",
+    "damage": 25.006,
+    "_sourceWeaponHash": 233423981,
+    "_sourceWeaponName": "Warden's Law"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1017906546,
+    "frame_name": "Latent Power",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1458010786,
+    "frame_name": "Lightweight Frame",
+    "damage": 19.2,
+    "_sourceWeaponHash": 877384,
+    "_sourceWeaponName": "The Martlet"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 3174300811,
+    "frame_name": "Looks Can Kill",
+    "damage": 78,
+    "_sourceWeaponHash": 3524313097,
+    "_sourceWeaponName": "Eriana's Vow"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1863355414,
+    "frame_name": "Mark of the Devourer",
+    "damage": 46.502,
+    "_sourceWeaponHash": 3973202132,
+    "_sourceWeaponName": "Thorn"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 647617635,
+    "frame_name": "Memento Mori",
+    "damage": 46.502,
+    "_sourceWeaponHash": 347366834,
+    "_sourceWeaponName": "Ace of Spades"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 2144092201,
+    "frame_name": "Noble Rounds",
+    "damage": 46.502,
+    "_sourceWeaponHash": 3512014804,
+    "_sourceWeaponName": "Lumina"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 213689231,
+    "frame_name": "Paracausal Shot",
+    "damage": 46.502,
+    "_sourceWeaponHash": 3856705927,
+    "_sourceWeaponName": "Hawkmoon"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 1322370662,
+    "frame_name": "Precision Frame",
+    "damage": 40,
+    "_sourceWeaponHash": 59060498,
+    "_sourceWeaponName": "Service Revolver"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 2427219599,
+    "frame_name": "Spread Shot",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 4045839491,
+    "frame_name": "Sunburn",
+    "damage": 42,
+    "_sourceWeaponHash": 2907129557,
+    "_sourceWeaponName": "Sunshot"
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 360865966,
+    "frame_name": "Temporal Manipulation",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 3235313314,
+    "frame_name": "Temporal Manipulation II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 3235313315,
+    "frame_name": "Temporal Manipulation III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Hand Cannon",
+    "frame_hash": 3235313316,
+    "frame_name": "Temporal Manipulation IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Linear Fusion Rifle",
+    "frame_hash": 3530948111,
+    "frame_name": "Adaptive Burst",
+    "damage": 91.245,
+    "_sourceWeaponHash": 270610849,
+    "_sourceWeaponName": "Mistral Lift"
+  },
+  {
+    "weapon_type": "Linear Fusion Rifle",
+    "frame_hash": 2564164194,
+    "frame_name": "Compounding Force",
+    "damage": 153.615,
+    "_sourceWeaponHash": 2130065553,
+    "_sourceWeaponName": "Arbalest"
+  },
+  {
+    "weapon_type": "Linear Fusion Rifle",
+    "frame_hash": 3884127242,
+    "frame_name": "Dornröschen",
+    "damage": 838.53,
+    "_sourceWeaponHash": 4036115577,
+    "_sourceWeaponName": "Sleeper Simulant"
+  },
+  {
+    "weapon_type": "Linear Fusion Rifle",
+    "frame_hash": 2881100038,
+    "frame_name": "Lagrangian Sight",
+    "damage": 153.615,
+    "_sourceWeaponHash": 3761898871,
+    "_sourceWeaponName": "Lorentz Driver"
+  },
+  {
+    "weapon_type": "Linear Fusion Rifle",
+    "frame_hash": 2057203855,
+    "frame_name": "Precision Frame",
+    "damage": 191.73,
+    "_sourceWeaponHash": 282549639,
+    "_sourceWeaponName": "Eyes Unveiled (Adept)"
+  },
+  {
+    "weapon_type": "Linear Fusion Rifle",
+    "frame_hash": 640169129,
+    "frame_name": "Quantum Nova",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Linear Fusion Rifle",
+    "frame_hash": 626115084,
+    "frame_name": "Ruinscribe's Forge",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Linear Fusion Rifle",
+    "frame_hash": 3894668351,
+    "frame_name": "Unwound",
+    "damage": 43.053,
+    "_sourceWeaponHash": 3284383335,
+    "_sourceWeaponName": "Euphony"
+  },
+  {
+    "weapon_type": "Linear Fusion Rifle",
+    "frame_hash": 1531126198,
+    "frame_name": "Wire Rifle",
+    "damage": 151.305,
+    "_sourceWeaponHash": 2044500762,
+    "_sourceWeaponName": "The Queenbreaker"
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 3468089894,
+    "frame_name": "Aggressive Frame",
+    "damage": 70.2,
+    "_sourceWeaponHash": 8293111,
+    "_sourceWeaponName": "Long Arm"
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 2732952950,
+    "frame_name": "Balanced Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 1818108773,
+    "frame_name": "Dichotomous Thinking",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 2608508147,
+    "frame_name": "Heavy Slug Thrower",
+    "damage": 32.1,
+    "_sourceWeaponHash": 2084878005,
+    "_sourceWeaponName": "Heir Apparent"
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 1019291327,
+    "frame_name": "High-Impact Frame",
+    "damage": 70.62,
+    "_sourceWeaponHash": 2290416,
+    "_sourceWeaponName": "The Wizened Rebuke"
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 2261491232,
+    "frame_name": "Pyrotoxin Rounds",
+    "damage": 160.5,
+    "_sourceWeaponHash": 1395261499,
+    "_sourceWeaponName": "Xenophage"
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 878286503,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 16.8,
+    "_sourceWeaponHash": 4425887,
+    "_sourceWeaponName": "The Time-Worn Spire"
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 4148158229,
+    "frame_name": "Reign Havoc",
+    "damage": 34.261,
+    "_sourceWeaponHash": 3325463374,
+    "_sourceWeaponName": "Thunderlord"
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 1468523096,
+    "frame_name": "Vexadecimal",
+    "damage": 39.601,
+    "_sourceWeaponHash": 449318888,
+    "_sourceWeaponName": "Deterministic Chaos"
+  },
+  {
+    "weapon_type": "Machine Gun",
+    "frame_hash": 2940035732,
+    "frame_name": "Wrath of the Colossus",
+    "damage": 160.5,
+    "_sourceWeaponHash": 1763584999,
+    "_sourceWeaponName": "Grand Overture"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 2874284214,
+    "frame_name": "Aggressive Burst",
+    "damage": 18.6,
+    "_sourceWeaponHash": 52683113,
+    "_sourceWeaponName": "Blast Furnace"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 2575933030,
+    "frame_name": "Atomizing Rounds",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 3771737927,
+    "frame_name": "Balanced Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 3905543891,
+    "frame_name": "Black Hole",
+    "damage": 19.018,
+    "_sourceWeaponHash": 3628991658,
+    "_sourceWeaponName": "Graviton Lance"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 2331097520,
+    "frame_name": "Dynamic Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 2307143135,
+    "frame_name": "Harsh Truths",
+    "damage": 18.9,
+    "_sourceWeaponHash": 3628991659,
+    "_sourceWeaponName": "Vigilance Wing"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 1634975868,
+    "frame_name": "Heavy Burst",
+    "damage": 18.786,
+    "_sourceWeaponHash": 157601190,
+    "_sourceWeaponName": "Joxer's Longsword"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 1019291327,
+    "frame_name": "High-Impact Frame",
+    "damage": 70.62,
+    "_sourceWeaponHash": 2290416,
+    "_sourceWeaponName": "The Wizened Rebuke"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 3834106778,
+    "frame_name": "Hunter's Trace",
+    "damage": 18.6,
+    "_sourceWeaponHash": 1473821207,
+    "_sourceWeaponName": "Revision Zero"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 891750166,
+    "frame_name": "Hunter's Trace II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 891750167,
+    "frame_name": "Hunter's Trace III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 891750160,
+    "frame_name": "Hunter's Trace IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 4172222323,
+    "frame_name": "Legacy PR-55 Frame",
+    "damage": 19.2,
+    "_sourceWeaponHash": 747743636,
+    "_sourceWeaponName": "Redrix's Estoc"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 1458010786,
+    "frame_name": "Lightweight Frame",
+    "damage": 19.2,
+    "_sourceWeaponHash": 877384,
+    "_sourceWeaponName": "The Martlet"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 2928496916,
+    "frame_name": "Micro-Missile Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 878286503,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 16.8,
+    "_sourceWeaponHash": 4425887,
+    "_sourceWeaponName": "The Time-Worn Spire"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 3632437946,
+    "frame_name": "Redemption",
+    "damage": 26.4,
+    "_sourceWeaponHash": 427899681,
+    "_sourceWeaponName": "Red Death Reformed"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 3837077246,
+    "frame_name": "Rewind Again",
+    "damage": 26.4,
+    "_sourceWeaponHash": 1594120904,
+    "_sourceWeaponName": "No Time to Explain"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 4004944400,
+    "frame_name": "String of Curses",
+    "damage": 19.2,
+    "_sourceWeaponHash": 2816212794,
+    "_sourceWeaponName": "Bad Juju"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 4208418110,
+    "frame_name": "The Corruption Spreads",
+    "damage": 19.2,
+    "_sourceWeaponHash": 400096939,
+    "_sourceWeaponName": "Outbreak Perfected"
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 3639389650,
+    "frame_name": "The Corruption Spreads II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 3639389651,
+    "frame_name": "The Corruption Spreads III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 3639389652,
+    "frame_name": "The Corruption Spreads IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Pulse Rifle",
+    "frame_hash": 3441203855,
+    "frame_name": "Void Leech",
+    "damage": 22.812,
+    "_sourceWeaponHash": 3505113722,
+    "_sourceWeaponName": "Collective Obligation"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 3468089894,
+    "frame_name": "Aggressive Frame",
+    "damage": 70.2,
+    "_sourceWeaponHash": 8293111,
+    "_sourceWeaponName": "Long Arm"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 2440389870,
+    "frame_name": "Composite Propellant",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 3200860608,
+    "frame_name": "Coronal Culmination",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 411799453,
+    "frame_name": "Dark Deliverance",
+    "damage": 50,
+    "_sourceWeaponHash": 2232171099,
+    "_sourceWeaponName": "Deathbringer"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 2200569208,
+    "frame_name": "Eyes on All",
+    "damage": 321.4,
+    "_sourceWeaponHash": 2399110176,
+    "_sourceWeaponName": "Eyes of Tomorrow"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 1019291327,
+    "frame_name": "High-Impact Frame",
+    "damage": 70.62,
+    "_sourceWeaponHash": 2290416,
+    "_sourceWeaponName": "The Wizened Rebuke"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 2473404935,
+    "frame_name": "Mad Scientist",
+    "damage": 321.4,
+    "_sourceWeaponHash": 1508896098,
+    "_sourceWeaponName": "The Wardcliff Coil"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 3419274965,
+    "frame_name": "Precision Frame",
+    "damage": 366.326,
+    "_sourceWeaponHash": 42351395,
+    "_sourceWeaponName": "Subzero Salvo"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 216781713,
+    "frame_name": "Precision Frame",
+    "damage": 366.326,
+    "_sourceWeaponHash": 372212741,
+    "_sourceWeaponName": "Weaver-C"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 2491817779,
+    "frame_name": "Prototype Trueseeker",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 3649430342,
+    "frame_name": "Twintails",
+    "damage": 193,
+    "_sourceWeaponHash": 2694576561,
+    "_sourceWeaponName": "Two-Tailed Fox"
+  },
+  {
+    "weapon_type": "Rocket Launcher",
+    "frame_hash": 2962361451,
+    "frame_name": "Wolfpack Rounds",
+    "damage": 424.193,
+    "_sourceWeaponHash": 1363886209,
+    "_sourceWeaponName": "Gjallarhorn"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 3468089894,
+    "frame_name": "Aggressive Frame",
+    "damage": 70.2,
+    "_sourceWeaponHash": 8293111,
+    "_sourceWeaponName": "Long Arm"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1002219198,
+    "frame_name": "Balanced Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1319823571,
+    "frame_name": "Cranial Spike",
+    "damage": 70.2,
+    "_sourceWeaponHash": 2188764214,
+    "_sourceWeaponName": "Dead Man's Tale"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1064669307,
+    "frame_name": "Cranial Spike II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1064669306,
+    "frame_name": "Cranial Spike III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1064669309,
+    "frame_name": "Cranial Spike IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1266604956,
+    "frame_name": "Creeping Attrition",
+    "damage": 38,
+    "_sourceWeaponHash": 940371471,
+    "_sourceWeaponName": "Wicked Implement"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1019291327,
+    "frame_name": "High-Impact Frame",
+    "damage": 70.62,
+    "_sourceWeaponHash": 2290416,
+    "_sourceWeaponName": "The Wizened Rebuke"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1458010786,
+    "frame_name": "Lightweight Frame",
+    "damage": 19.2,
+    "_sourceWeaponHash": 877384,
+    "_sourceWeaponName": "The Martlet"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 377257911,
+    "frame_name": "MIDA Multi-Tool",
+    "damage": 32.025,
+    "_sourceWeaponHash": 1331482397,
+    "_sourceWeaponName": "MIDA Multi-Tool"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1636108362,
+    "frame_name": "Precision Frame",
+    "damage": 38,
+    "_sourceWeaponHash": 20025671,
+    "_sourceWeaponName": "Tango-45 XK5094"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 3920852688,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 27.5,
+    "_sourceWeaponHash": 128782990,
+    "_sourceWeaponName": "Fang of Ir Yût (Adept)"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 3364911712,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 27.5,
+    "_sourceWeaponHash": 525750263,
+    "_sourceWeaponName": "Black Scorpion-4sr"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 4185339856,
+    "frame_name": "Revolution",
+    "damage": 27.5,
+    "_sourceWeaponHash": 4017959782,
+    "_sourceWeaponName": "Symmetry"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 2741975068,
+    "frame_name": "Slug Rifle",
+    "damage": 40,
+    "_sourceWeaponHash": 4255268456,
+    "_sourceWeaponName": "Skyburner's Oath"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 3668782036,
+    "frame_name": "The Fate of All Fools",
+    "damage": 40,
+    "_sourceWeaponHash": 3844694310,
+    "_sourceWeaponName": "The Jade Rabbit"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 1000724343,
+    "frame_name": "The Perfect Fifth",
+    "damage": 40,
+    "_sourceWeaponHash": 3413074534,
+    "_sourceWeaponName": "Polaris Lance"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 2724693746,
+    "frame_name": "Touch of Malice",
+    "damage": 27.5,
+    "_sourceWeaponHash": 1802135586,
+    "_sourceWeaponName": "Touch of Malice"
+  },
+  {
+    "weapon_type": "Scout Rifle",
+    "frame_hash": 2144580852,
+    "frame_name": "Tri-Planar Mass Driver",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 3983457027,
+    "frame_name": "Aggressive Frame",
+    "damage": 22.25,
+    "_sourceWeaponHash": 318443586,
+    "_sourceWeaponName": "Imperial Decree"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 3468089894,
+    "frame_name": "Aggressive Frame",
+    "damage": 70.2,
+    "_sourceWeaponHash": 8293111,
+    "_sourceWeaponName": "Long Arm"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 536517534,
+    "frame_name": "Compression Chamber",
+    "damage": 163.718,
+    "_sourceWeaponHash": 3460576091,
+    "_sourceWeaponName": "Duality"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 3923638944,
+    "frame_name": "Heavy Burst",
+    "damage": 25.006,
+    "_sourceWeaponHash": 233423981,
+    "_sourceWeaponName": "Warden's Law"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 1458010786,
+    "frame_name": "Lightweight Frame",
+    "damage": 19.2,
+    "_sourceWeaponHash": 877384,
+    "_sourceWeaponName": "The Martlet"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 1888623310,
+    "frame_name": "MIDA Synergy",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 2565885237,
+    "frame_name": "Nightsworn Sight",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 2919190145,
+    "frame_name": "Nightsworn Sight II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 2919190144,
+    "frame_name": "Nightsworn Sight III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 2919190151,
+    "frame_name": "Nightsworn Sight IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 918679156,
+    "frame_name": "Pinpoint Slug Frame",
+    "damage": 163.718,
+    "_sourceWeaponHash": 2307365,
+    "_sourceWeaponName": "The Inquisitor (Adept)"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 1636108362,
+    "frame_name": "Precision Frame",
+    "damage": 38,
+    "_sourceWeaponHash": 20025671,
+    "_sourceWeaponName": "Tango-45 XK5094"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 895140517,
+    "frame_name": "Precision Frame",
+    "damage": 20.988,
+    "_sourceWeaponHash": 367772693,
+    "_sourceWeaponName": "Precipial"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 1394384862,
+    "frame_name": "Precision Slug",
+    "damage": 163.718,
+    "_sourceWeaponHash": 3413860062,
+    "_sourceWeaponName": "The Chaperone"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 407573255,
+    "frame_name": "Rapid Fire Slug",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 996573084,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 18.337,
+    "_sourceWeaponHash": 217140611,
+    "_sourceWeaponName": "The Deicide"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 1210807262,
+    "frame_name": "Repulsor Force",
+    "damage": 18.33,
+    "_sourceWeaponHash": 3580904581,
+    "_sourceWeaponName": "Tractor Cannon"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 372430833,
+    "frame_name": "Shock Blast",
+    "damage": 22.25,
+    "_sourceWeaponHash": 3580904580,
+    "_sourceWeaponName": "Legend of Acrius"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 3751354116,
+    "frame_name": "Shock Blast",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 3054949324,
+    "frame_name": "Shot Package",
+    "damage": 22.25,
+    "_sourceWeaponHash": 218787950,
+    "_sourceWeaponName": "Felwinter's Lie"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 481338655,
+    "frame_name": "Shrapnel Launcher",
+    "damage": 39,
+    "_sourceWeaponHash": 3413860063,
+    "_sourceWeaponName": "Lord of Wolves"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 3787406018,
+    "frame_name": "Split Decision",
+    "damage": 22.25,
+    "_sourceWeaponHash": 3371017761,
+    "_sourceWeaponName": "Conditional Finality"
+  },
+  {
+    "weapon_type": "Shotgun",
+    "frame_hash": 2223914385,
+    "frame_name": "Thunderer",
+    "damage": 16.67,
+    "_sourceWeaponHash": 1665952087,
+    "_sourceWeaponName": "The Fourth Horseman"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 3449390870,
+    "frame_name": "Adaptive Burst",
+    "damage": 20,
+    "_sourceWeaponHash": 247984829,
+    "_sourceWeaponName": "Peacebond"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 31057037,
+    "frame_name": "Adaptive Burst",
+    "damage": 20,
+    "_sourceWeaponHash": 5159537,
+    "_sourceWeaponName": "Senuna SI6"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 1903618525,
+    "frame_name": "All at Once",
+    "damage": 25,
+    "_sourceWeaponHash": 3121540812,
+    "_sourceWeaponName": "Final Warning"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 334466122,
+    "frame_name": "Close the Gap",
+    "damage": 36,
+    "_sourceWeaponHash": 3824106094,
+    "_sourceWeaponName": "Devil's Ruin"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 4108848057,
+    "frame_name": "Dynamic Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 2984682260,
+    "frame_name": "Full Stop",
+    "damage": 39.114,
+    "_sourceWeaponHash": 2179048386,
+    "_sourceWeaponName": "Forerunner"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 975429949,
+    "frame_name": "Gathering Light",
+    "damage": 36,
+    "_sourceWeaponHash": 1853180924,
+    "_sourceWeaponName": "Traveler's Chosen"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 3330548924,
+    "frame_name": "Heavy Burst",
+    "damage": 30,
+    "_sourceWeaponHash": 355893876,
+    "_sourceWeaponName": "Liminal Vigil"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 90392189,
+    "frame_name": "Hungering Quarrel",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 1458010786,
+    "frame_name": "Lightweight Frame",
+    "damage": 19.2,
+    "_sourceWeaponHash": 877384,
+    "_sourceWeaponName": "The Martlet"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 986191425,
+    "frame_name": "LN2 Burst",
+    "damage": 40,
+    "_sourceWeaponHash": 603721696,
+    "_sourceWeaponName": "Cryosthesia 77K"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 2928496916,
+    "frame_name": "Micro-Missile Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 1636108362,
+    "frame_name": "Precision Frame",
+    "damage": 38,
+    "_sourceWeaponHash": 20025671,
+    "_sourceWeaponName": "Tango-45 XK5094"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 806997698,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 25,
+    "_sourceWeaponHash": 65611680,
+    "_sourceWeaponName": "The Fool's Remedy"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 2121086290,
+    "frame_name": "Rat Pack",
+    "damage": 36,
+    "_sourceWeaponHash": 2362471601,
+    "_sourceWeaponName": "Rat King"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 1282254042,
+    "frame_name": "Together Forever",
+    "damage": 36,
+    "_sourceWeaponHash": 79075821,
+    "_sourceWeaponName": "Drang (Baroque)"
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 1615948893,
+    "frame_name": "Together Forever",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sidearm",
+    "frame_hash": 2641107734,
+    "frame_name": "Unrepentant",
+    "damage": 20,
+    "_sourceWeaponHash": 1234150730,
+    "_sourceWeaponName": "Trespasser"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 3468089894,
+    "frame_name": "Aggressive Frame",
+    "damage": 70.2,
+    "_sourceWeaponHash": 8293111,
+    "_sourceWeaponName": "Long Arm"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 928399924,
+    "frame_name": "Cayde's Retribution",
+    "damage": 127.329,
+    "_sourceWeaponHash": 2905188646,
+    "_sourceWeaponName": "Still Hunt"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 1546108491,
+    "frame_name": "Disruption Weapon [Shield-Piercing]",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 1442784346,
+    "frame_name": "Dynamic Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 1019291327,
+    "frame_name": "High-Impact Frame",
+    "damage": 70.62,
+    "_sourceWeaponHash": 2290416,
+    "_sourceWeaponName": "The Wizened Rebuke"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 1070100196,
+    "frame_name": "Honed Edge",
+    "damage": 127.329,
+    "_sourceWeaponHash": 3211806999,
+    "_sourceWeaponName": "Izanagi's Burden"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 2909403175,
+    "frame_name": "Mortal Polarity",
+    "damage": 90.952,
+    "_sourceWeaponHash": 2603483885,
+    "_sourceWeaponName": "Cloudstrike"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 744619683,
+    "frame_name": "No Backpack",
+    "damage": 172.554,
+    "_sourceWeaponHash": 1111334348,
+    "_sourceWeaponName": "Ice Breaker"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 938999636,
+    "frame_name": "Personal Assistant",
+    "damage": 90.952,
+    "_sourceWeaponHash": 3141979346,
+    "_sourceWeaponName": "D.A.R.C.I."
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 878286503,
+    "frame_name": "Rapid-Fire Frame",
+    "damage": 16.8,
+    "_sourceWeaponHash": 4425887,
+    "_sourceWeaponName": "The Time-Worn Spire"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 3081173348,
+    "frame_name": "The Fundamentals",
+    "damage": 144.457,
+    "_sourceWeaponHash": 3141979347,
+    "_sourceWeaponName": "Borealis"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 218281600,
+    "frame_name": "The Master",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 281315705,
+    "frame_name": "White Nail",
+    "damage": 181.9,
+    "_sourceWeaponHash": 1891561814,
+    "_sourceWeaponName": "Whisper of the Worm"
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 4285971293,
+    "frame_name": "White Nail II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 4285971292,
+    "frame_name": "White Nail III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sniper Rifle",
+    "frame_hash": 4285971291,
+    "frame_name": "White Nail IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 695966445,
+    "frame_name": "Aggressive Burst",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 1525239159,
+    "frame_name": "Aggressive Frame",
+    "damage": 14,
+    "_sourceWeaponHash": 55393445,
+    "_sourceWeaponName": "The Title"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 3468089894,
+    "frame_name": "Aggressive Frame",
+    "damage": 70.2,
+    "_sourceWeaponHash": 8293111,
+    "_sourceWeaponName": "Long Arm"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 2516532331,
+    "frame_name": "Arc Conductor",
+    "damage": 11.25,
+    "_sourceWeaponHash": 3089417789,
+    "_sourceWeaponName": "Riskrunner"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 2167115920,
+    "frame_name": "Balanced Heat Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 1458010786,
+    "frame_name": "Lightweight Frame",
+    "damage": 19.2,
+    "_sourceWeaponHash": 877384,
+    "_sourceWeaponName": "The Martlet"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 2213377102,
+    "frame_name": "MIDA Synergy",
+    "damage": 10.86,
+    "_sourceWeaponHash": 174192097,
+    "_sourceWeaponName": "CALUS Mini-Tool"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 4127881474,
+    "frame_name": "Panic Response",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 1963279230,
+    "frame_name": "Panic Response II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 1963279231,
+    "frame_name": "Panic Response III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 1963279224,
+    "frame_name": "Panic Response IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 1963279225,
+    "frame_name": "Panic Response V",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 1636108362,
+    "frame_name": "Precision Frame",
+    "damage": 38,
+    "_sourceWeaponHash": 20025671,
+    "_sourceWeaponName": "Tango-45 XK5094"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 2540536653,
+    "frame_name": "Ravenous Beast",
+    "damage": 14,
+    "_sourceWeaponHash": 3110698812,
+    "_sourceWeaponName": "Tarrabah"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 630329983,
+    "frame_name": "Ride the Bull",
+    "damage": 14,
+    "_sourceWeaponHash": 2286143274,
+    "_sourceWeaponName": "The Huckleberry"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 2965975126,
+    "frame_name": "Screaming Swarm",
+    "damage": 18.73,
+    "_sourceWeaponHash": 46524085,
+    "_sourceWeaponName": "Osteo Striga"
+  },
+  {
+    "weapon_type": "Submachine Gun",
+    "frame_hash": 228577175,
+    "frame_name": "Soaring Fang",
+    "damage": 10.86,
+    "_sourceWeaponHash": 219145368,
+    "_sourceWeaponName": "The Manticore"
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 4172267910,
+    "frame_name": "Adaptive Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 836583820,
+    "frame_name": "Aggressive Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 3949068808,
+    "frame_name": "Arc Conductor",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 2179914730,
+    "frame_name": "Banshee's Wail",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 183772609,
+    "frame_name": "Caster Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 4072668471,
+    "frame_name": "Crow's Wings",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 1219897208,
+    "frame_name": "Empty Frames Socket",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 1100877327,
+    "frame_name": "Exhumation",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 3551049142,
+    "frame_name": "Gathering Light",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 3325420353,
+    "frame_name": "Insectoid Robot Grenades",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 1713206376,
+    "frame_name": "Lightweight Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 89777927,
+    "frame_name": "Ranged Weapon",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 1303792749,
+    "frame_name": "Resurgence Directive",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 2493618393,
+    "frame_name": "Resurgence Directive II",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 2493618392,
+    "frame_name": "Resurgence Directive III",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 2493618399,
+    "frame_name": "Resurgence Directive IV",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 3034060702,
+    "frame_name": "Sacred Flame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 461437088,
+    "frame_name": "Stormbringer",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 3642491337,
+    "frame_name": "Tesseract",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 1522566605,
+    "frame_name": "The Perfect Fifth",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 1327961177,
+    "frame_name": "Unplanned Reprieve",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 263649945,
+    "frame_name": "Vortex Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 430173891,
+    "frame_name": "Wave Sword Frame",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Sword",
+    "frame_hash": 1959135343,
+    "frame_name": "Wolfpack Rounds",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 1294026524,
+    "frame_name": "Adaptive Frame",
+    "damage": 46.502,
+    "_sourceWeaponHash": 6857689,
+    "_sourceWeaponName": "Annual Skate"
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 3164944314,
+    "frame_name": "Ager's Call",
+    "damage": 12.511,
+    "_sourceWeaponHash": 1833195496,
+    "_sourceWeaponName": "Ager's Scepter"
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 1036269296,
+    "frame_name": "Cold Fusion",
+    "damage": 12.511,
+    "_sourceWeaponHash": 1345867571,
+    "_sourceWeaponName": "Coldheart"
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 459441288,
+    "frame_name": "Harmonic Laser",
+    "damage": 12.511,
+    "_sourceWeaponHash": 1852863732,
+    "_sourceWeaponName": "Wavesplitter"
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 1797707170,
+    "frame_name": "Judgment",
+    "damage": 12.511,
+    "_sourceWeaponHash": 4103414242,
+    "_sourceWeaponName": "Divinity"
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 2767894946,
+    "frame_name": "Paracausal Beam",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 571267712,
+    "frame_name": "Prismatic Inferno",
+    "damage": 12.511,
+    "_sourceWeaponHash": 19024058,
+    "_sourceWeaponName": "Prometheus Lens"
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 3172115769,
+    "frame_name": "Protective Weave",
+    "damage": 12.511,
+    "_sourceWeaponHash": 1441805468,
+    "_sourceWeaponName": "The Navigator"
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 3505000148,
+    "frame_name": "Starlight Beam",
+    "damage": 0
+  },
+  {
+    "weapon_type": "Trace Rifle",
+    "frame_hash": 1657401727,
+    "frame_name": "Transmutation",
+    "damage": 12.511,
+    "_sourceWeaponHash": 1363238943,
+    "_sourceWeaponName": "Ruinous Effigy"
+  }
+]

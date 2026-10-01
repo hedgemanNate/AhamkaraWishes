@@ -90,6 +90,9 @@ This document captures the visual tokens, component rules, and conventions used 
   - `--border-thin: 1px`
   - `--border-default: 2px`
 
+  Section spacing
+  - `--space-section`: 16px — vertical spacing used between grouped step sections (for example: between `.wishlist-section` and `.utility-section`). Use `var(--space-section, var(--space-l))` when spacing stacked sections.
+
   Implementation snippet (place near top of main CSS):
 
     :root {

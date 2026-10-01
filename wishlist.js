@@ -6,8 +6,85 @@
     chrome.storage.local.get(['dimData'], (res) => {
       let data = res.dimData || { activeId: 'default', lists: { default: { name: 'Main Wishlist', items: {} } } };
       if (!data.lists) data.lists = { default: { name: 'Main Wishlist', items: {} } };
-      cb(data);
+      // Normalize/migrate wishlist entries on load. If normalization mutated
+      // the persisted arrays (e.g. filled missing `mustHave`), persist the
+      // updated data back to storage.
+      const changed = normalizeWishlistData(data);
+      if (changed) {
+        chrome.storage.local.set({ dimData: data }, () => cb(data));
+      } else {
+        cb(data);
+      }
     });
+  }
+
+  // Normalize a single wishlist entry (in-place). Returns true if any persisted
+  // fields were changed (i.e., mustHave or desired arrays were added/modified).
+  function normalizeWishlistEntry(wish) {
+    let mutated = false;
+    if (!wish) return false;
+
+    // Ensure desired is an array. For weapon wishes, derive from config.perks if not already set.
+    if (!Array.isArray(wish.desired) || wish.desired.length === 0) {
+      if (wish.desiredSet instanceof Set && wish.desiredSet.size > 0) {
+        wish.desired = Array.from(wish.desiredSet);
+      } else if (Array.isArray(wish.config?.perks)) {
+        wish.desired = wish.config.perks.flat().filter((h) => typeof h === 'number' && h > 0);
+      } else if (typeof wish.config?.perks === 'string' && wish.config.perks.trim()) {
+        // Content-script (DIM) saves store perks as the raw comma-separated
+        // URL param. Without parsing it, desired/mustHave stay empty and the
+        // legacy matcher treats ANY owned copy as a match (false positive).
+        wish.desired = wish.config.perks.split(',').map((v) => Number(v)).filter((h) => Number.isFinite(h) && h > 0);
+      } else {
+        wish.desired = [];
+      }
+      mutated = true;
+    } else {
+      // normalize elements to numbers
+      const nums = wish.desired.map((v) => Number(v));
+      for (let i = 0; i < nums.length; i++) if (Number.isNaN(nums[i])) nums[i] = null;
+      wish.desired = nums.filter((v) => v !== null);
+    }
+
+    // Ensure mustHave exists; default to desired. Also re-default when a
+    // previously-broken entry persisted an empty mustHave despite having
+    // desired perks (empty mustHave makes every owned copy match).
+    if (!Array.isArray(wish.mustHave) || (wish.mustHave.length === 0 && wish.desired.length > 0)) {
+      wish.mustHave = Array.from(wish.desired || []);
+      mutated = true;
+    } else {
+      // normalize mustHave elements
+      wish.mustHave = wish.mustHave.map((v) => Number(v)).filter((v) => !Number.isNaN(v));
+    }
+
+    // Ensure received fields exist (persistence-friendly)
+    if (!Array.isArray(wish.receivedInstances)) { wish.receivedInstances = []; mutated = true; }
+    if (typeof wish.received !== 'boolean') { wish.received = false; mutated = true; }
+
+    // Derive runtime-only Sets
+    try { wish.desiredSet = new Set(Array.isArray(wish.desired) ? wish.desired : []); } catch (e) { wish.desiredSet = new Set(); }
+    try { wish.mustHaveSet = new Set(Array.isArray(wish.mustHave) ? wish.mustHave : Array.from(wish.desiredSet || [])); } catch (e) { wish.mustHaveSet = new Set(); }
+
+    return mutated;
+  }
+
+  // Normalize entire dimData structure. Returns true if any persisted mutation occurred.
+  function normalizeWishlistData(data) {
+    if (!data || !data.lists) return false;
+    let mutated = false;
+    for (const lid of Object.keys(data.lists)) {
+      const list = data.lists[lid];
+      if (!list || !list.items) continue;
+      for (const ih of Object.keys(list.items)) {
+        const it = list.items[ih];
+        if (!it || !Array.isArray(it.wishes)) continue;
+        for (const w of it.wishes) {
+          const m = normalizeWishlistEntry(w);
+          if (m) mutated = true;
+        }
+      }
+    }
+    return mutated;
   }
 
   function writeData(data, cb) {
@@ -85,6 +162,9 @@
       const id = data.activeId;
       if (!id || id === 'default') return;
       delete data.lists[id];
+      // Record the deletion so cross-browser sync can't restore the list from
+      // a browser still holding the old copy — see wishlist-sync-core.js.
+      window.WishlistSync?.recordListTombstone(data, id);
       data.activeId = 'default';
       writeData(data, render);
     });
@@ -148,6 +228,9 @@
           if (!dest.items[h]) dest.items[h] = src.items[h];
         });
         delete data.lists[id];
+        // Without a tombstone the folded-in list would reappear on the next
+        // cloud sync, silently undoing the merge — see wishlist-sync-core.js.
+        window.WishlistSync?.recordListTombstone(data, id);
       });
       writeData(data, () => { exitMergeMode(); render(); });
     });
@@ -225,10 +308,56 @@
 
     // initial render
     render();
+    // attempt a light-weight sync with any existing OwnedInventoryIndex cache
+    trySyncOwnedIndex();
   }
 
   document.addEventListener('DOMContentLoaded', attach);
 
   // Expose for debugging
   window.awWishlist = { render, createFromInput, duplicateSelected, deleteSelected, enterMergeMode, exitMergeMode };
+  // Expose normalization helpers for tests and future importer
+  window.awWishlist.normalizeWishlistEntry = normalizeWishlistEntry;
+  window.awWishlist.normalizeWishlistData = normalizeWishlistData;
+
+  /**
+   * Try to sync wishlist entries with a pre-built OwnedIndex cache.
+   * If `OwnedInventoryIndex` is available and has a cached index, the function
+   * will annotate `dimData` entries with `received`, `receivedInstances`, and `matchScore`.
+   */
+  function trySyncOwnedIndex() {
+    try {
+      if (!window.OwnedInventoryIndex) return;
+      // If we have a cached Bungie profile, try an incremental update first
+      chrome.storage.local.get(['lastBungieProfile'], (res) => {
+        const lastProfile = res?.lastBungieProfile;
+        if (lastProfile && window.OwnedInventoryIndex.updateFromProfile) {
+          Promise.resolve(window.OwnedInventoryIndex.updateFromProfile(lastProfile))
+            .then((idx) => {
+              if (!idx) return;
+              ensureData((data) => {
+                const backfill = window.backfillLinkedHashes ? window.backfillLinkedHashes(data) : Promise.resolve(false);
+                Promise.resolve(backfill).then(() => {
+                  const summary = window.OwnedInventoryIndex.matchWishlist(data, idx);
+                  writeData(data, () => { console.log('[Wishlist] owned-index sync (updated):', summary); });
+                });
+              });
+            })
+            .catch((e) => console.warn('[Wishlist] updateFromProfile failed', e));
+          return;
+        }
+        // Fallback: use any cached index directly
+        const idx = OwnedInventoryIndex.getCachedIndex && OwnedInventoryIndex.getCachedIndex();
+        if (!idx) return;
+        ensureData((data) => {
+          const backfill = window.backfillLinkedHashes ? window.backfillLinkedHashes(data) : Promise.resolve(false);
+          Promise.resolve(backfill).then(() => {
+            const summary = OwnedInventoryIndex.matchWishlist(data, idx);
+            // persist updated dimData
+            writeData(data, () => { console.log('[Wishlist] owned-index sync:', summary); });
+          });
+        });
+      });
+    } catch (e) { console.warn('[Wishlist] trySyncOwnedIndex error', e); }
+  }
 })();

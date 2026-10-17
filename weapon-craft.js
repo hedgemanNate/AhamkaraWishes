@@ -1007,7 +1007,7 @@ async function saveWeaponWish() {
         return;
     }
 
-    await saveItem(
+    const status = await saveItem(
         currentCraftWeapon.hash,
         currentCraftWeapon.name,
         'weapon',
@@ -1028,7 +1028,9 @@ async function saveWeaponWish() {
     const saveBtn = document.getElementById('weapon-save-new-btn');
     if (saveBtn) {
         const original = saveBtn.textContent;
-        saveBtn.textContent = 'WISH GRANTED!';
+        // saveItem reports 'duplicate' when this exact roll is already saved in
+        // the active list for this mode — nothing was added, so don't claim it was.
+        saveBtn.textContent = status === 'added' ? 'WISH GRANTED!' : 'ALREADY ON YOUR LIST';
         setTimeout(() => { saveBtn.textContent = original; }, 1500);
     }
 }

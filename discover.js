@@ -161,13 +161,16 @@
       `<span class="aw-wl-author">${escapeHtml(author.name)}</span>` +
       (author.verified ? '<span class="aw-wl-verified-badge" title="Verified creator">&#10003;</span>' : '') +
       (row.featured ? '<span class="aw-wl-featured-tag">&#9733; FEATURED</span>' : '') +
-      `<span>&middot; ${row.item_count} item${row.item_count === 1 ? '' : 's'}</span>`;
+      `<span>&middot; ${Number(row.item_count) || 0} item${Number(row.item_count) === 1 ? '' : 's'}</span>`;
     main.appendChild(metaEl);
 
+    // Rows come from the server and anyone can submit one, so only known modes
+    // reach the markup (and the class name).
+    const gameMode = ['pve', 'pvp', 'mixed'].includes(row.game_mode) ? row.game_mode : 'mixed';
     const tagsEl = document.createElement('div');
     tagsEl.className = 'aw-wl-tags';
     tagsEl.innerHTML =
-      `<span class="aw-wl-tag aw-wl-tag-${row.game_mode}">${row.game_mode}</span>` +
+      `<span class="aw-wl-tag aw-wl-tag-${gameMode}">${gameMode}</span>` +
       (row.has_weapons ? '<span class="aw-wl-tag">weapons</span>' : '') +
       (row.has_armor ? '<span class="aw-wl-tag">armor</span>' : '');
     main.appendChild(tagsEl);

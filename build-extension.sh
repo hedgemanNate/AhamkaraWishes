@@ -38,6 +38,9 @@ cp wishlist-sync-core.js "$DIST/"
 cp weapon-wish-core.js "$DIST/"
 cp admin.js          "$DIST/"
 cp admin-sync.js     "$DIST/"
+cp aw-dom.js         "$DIST/"
+cp aw-store.js       "$DIST/"
+cp wishlist-validate.js "$DIST/"
 
 # --- Assets ---
 mkdir -p "$DIST/icons" "$DIST/vendor" "$DIST/oracle-engine/manifest-data"

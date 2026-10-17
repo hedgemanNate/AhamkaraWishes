@@ -8,13 +8,9 @@
 // wish it stores has exactly the shape the craft view's MAKE A NEW WISH does.
 
 (function (root) {
-  const DEFAULT_DATA = () => ({
-    activeId: 'default',
-    lists: { default: { name: 'Main Wishlist', items: {} } }
-  });
-
-  // Adds are serialised: each one is a read-modify-write of `dimData`, so two
-  // quick clicks must not interleave and drop one of the wishes.
+  // Adds are serialised end to end (including the slow manifest lookups), so
+  // two quick clicks resolve in order. The storage write itself is protected
+  // separately, by AWStore's lock.
   let queue = Promise.resolve();
   function enqueue(fn) {
     const run = queue.then(fn, fn);
@@ -83,20 +79,24 @@
       }
     };
 
-    const { dimData } = await chrome.storage.local.get('dimData');
-    const data = dimData || DEFAULT_DATA();
-    if (!data.lists || !data.lists[req.listId]) {
-      return { ok: false, error: 'That wishlist no longer exists.' };
-    }
-    const listName = data.lists[req.listId].name;
-
-    const status = WeaponWish.addWishToList(data, req.listId, spec);
-    if (status === 'added') {
-      // wishAddedExternally prompts the side panel (if open) to match the new
-      // wish against the cached inventory; the service worker has no owned index.
-      await chrome.storage.local.set({ dimData: data, wishAddedExternally: Date.now() });
-    }
-    return { ok: true, status, listName, name, mode };
+    // AWStore reads dimData fresh under the lock it shares with the side panel,
+    // so an add made here can't overwrite — or be overwritten by — a save the
+    // panel is making at the same moment. wishAddedExternally (written with the
+    // wish, only when one is added) prompts the side panel, if open, to match
+    // the new wish against the cached inventory; the service worker has no
+    // owned index.
+    let outcome;
+    await AWStore.update((data) => {
+      if (!data.lists[req.listId]) {
+        outcome = { ok: false, error: 'That wishlist no longer exists.' };
+        return AWStore.SKIP;
+      }
+      const listName = data.lists[req.listId].name;
+      const status = WeaponWish.addWishToList(data, req.listId, spec);
+      outcome = { ok: true, status, listName, name, mode };
+      return status === 'added' ? status : AWStore.SKIP;
+    }, { also: { wishAddedExternally: Date.now() } });
+    return outcome;
   }
 
   root.GodrollAdd = { addRoll: (req) => enqueue(() => addRoll(req)) };

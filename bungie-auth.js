@@ -232,9 +232,7 @@ function clearAuthMessage() {
   if (existing) existing.remove();
 }
 
-function escapeHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+// escapeHtml() comes from aw-dom.js, which loads before this file.
 
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {

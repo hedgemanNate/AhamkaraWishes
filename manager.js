@@ -222,7 +222,7 @@ function renderFeedList(entries) {
         const storedIndex = entries.length - 1 - displayIdx;
         return `
         <div class="mt-feed-item">
-            <img class="mt-feed-icon" src="${e.iconUrl ? (String(e.iconUrl).startsWith('http') ? e.iconUrl : BUNGIE_ROOT + e.iconUrl) : 'icons/unnamed.jpg'}" alt="">
+            <img class="mt-feed-icon" src="${escapeHtml(AWDom.safeImageUrl(e.iconUrl) || 'icons/unnamed.jpg')}" alt="">
             <div class="mt-feed-text">
                 <span class="mt-feed-name">${escapeHtml(e.itemName)}</span>
                 <span class="mt-feed-list-name">${escapeHtml(e.listName)}</span>
@@ -404,7 +404,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadLists();
         // Attempt a background OwnedIndex update from any cached Bungie profile
         try {
-          chrome.storage.local.get(['lastBungieProfile', 'dimData'], async (res) => {
+          chrome.storage.local.get(['lastBungieProfile'], async (res) => {
             const lastProfile = res?.lastBungieProfile;
             // The live sync started on load may already have landed (or be
             // building) — a stale cached snapshot must not overwrite it.
@@ -420,18 +420,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const ownedIndexSummary = { totalInstances, uniqueItems, fetchedAt: Date.now() };
                 await new Promise((r) => chrome.storage.local.set({ ownedIndexSummary }, r));
                 renderOwnedIndexSummary(ownedIndexSummary);
-                // Run lightweight wishlist sync with updated index
-                const dimData = res?.dimData;
-                if (dimData && window.OwnedInventoryIndex.matchWishlist) {
+                // Run lightweight wishlist sync with updated index. The wishlist is
+                // read inside matchWishlistPass, after the index build above, so
+                // a wish saved while the index was building isn't overwritten.
+                if (window.OwnedInventoryIndex.matchWishlist) {
                   try {
-                    await backfillLinkedHashes(dimData);
-                    await backfillPerkColIndex(dimData);
-                    const beforeSnapshot = snapshotReceivedState(dimData);
-                    window.OwnedInventoryIndex.matchWishlist(dimData, idx);
-                    await new Promise((r) => chrome.storage.local.set({ dimData }, r));
-                    await autoLockNewlyMatched(beforeSnapshot, dimData, idx);
-                    await transferNewlyMatchedToVault(beforeSnapshot, dimData, idx);
-                    if (_feedEnabled) await appendFeedEntries(diffFeedEntries(beforeSnapshot, dimData));
+                    const pass = await matchWishlistPass(idx, { backfill: true });
+                    if (pass) {
+                      await autoLockNewlyMatched(pass.beforeSnapshot, pass.dimData, idx);
+                      await transferNewlyMatchedToVault(pass.beforeSnapshot, pass.dimData, idx);
+                      if (_feedEnabled) await appendFeedEntries(diffFeedEntries(pass.beforeSnapshot, pass.dimData));
+                    }
                     console.log('[Manager] Background OwnedIndex update & wishlist sync complete');
                   } catch (e) { console.warn('[Manager] background matchWishlist failed', e); }
                 }
@@ -848,36 +847,25 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 });
 
 // Sidepanel version of saveItem (the add/duplicate rules are shared via weapon-wish-core.js)
-// Returns a Promise that resolves after the storage operation completes
-function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null, setHash = null, linkedHashes = null, weaponMeta = null) {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(["dimData"], (result) => {
-      let data = result.dimData || {
-        activeId: "default",
-        lists: { default: { name: "Main Wishlist", items: {} } }
-      };
-
-      const listId = data.lists[data.activeId] ? data.activeId : "default";
-      // Container creation, metadata backfill and the duplicate rules live in
-      // weapon-wish-core.js so the godroll.tv button (service worker) shares them.
-      const status = WeaponWish.addWishToList(data, listId, {
-        hash, name, type, rawString, config, mode, icon, classType, bucketHash,
-        slotName, setName, setHash, linkedHashes, weaponMeta
-      });
-      if (status === 'duplicate') {
-        resolve();
-        return;
-      }
-
-      chrome.storage.local.set({ dimData: data }, () => {
-        resolve(); // Signal completion after storage operation completes
-        // Don't call loadLists here - onChanged listener will handle UI refresh
-        // Immediately check the new wish against any already-fetched inventory,
-        // so ownership shows up without requiring a full profile re-fetch.
-        matchWishlistAgainstCachedIndex();
-      });
+// Resolves 'added' or 'duplicate' once the storage write (if any) has completed,
+// so callers can tell the player what really happened.
+async function saveItem(hash, name, type, rawString, keyId, config, mode = "pve", icon = null, classType = null, bucketHash = null, slotName = null, setName = null, setHash = null, linkedHashes = null, weaponMeta = null) {
+  let status = 'duplicate';
+  await AWStore.update((data) => {
+    const listId = AWStore.ensureActiveList(data);
+    // Container creation, metadata backfill and the duplicate rules live in
+    // weapon-wish-core.js so the godroll.tv button (service worker) shares them.
+    status = WeaponWish.addWishToList(data, listId, {
+      hash, name, type, rawString, config, mode, icon, classType, bucketHash,
+      slotName, setName, setHash, linkedHashes, weaponMeta
     });
+    return status === 'duplicate' ? AWStore.SKIP : status;
   });
+  // Don't call loadLists here - onChanged listener will handle UI refresh.
+  // Immediately check the new wish against any already-fetched inventory,
+  // so ownership shows up without requiring a full profile re-fetch.
+  if (status === 'added') matchWishlistAgainstCachedIndex();
+  return status;
 }
 
 // Backfill for wishes saved before linkedHashes existed (or saved via the
@@ -967,21 +955,43 @@ async function backfillPerkColIndex(data) {
 }
 window.backfillPerkColIndex = backfillPerkColIndex;
 
+/**
+ * One wishlist-matching pass. Reads dimData fresh under the AWStore lock,
+ * annotates it from `idx` and writes it back only if something changed. The
+ * caller waits on the network (profile fetch, index build) BEFORE calling this,
+ * never between a read and the write — matching a stale copy and writing it
+ * back is what used to drop saves made in the meantime.
+ *
+ * `backfill` also fills in linked hashes / column indexes from the manifest
+ * (local data only; no network).
+ * Resolves { beforeSnapshot, dimData, summary }: what the caller needs to lock,
+ * vault and feed newly matched items, which are network calls made after the
+ * lock is released.
+ */
+async function matchWishlistPass(idx, { backfill = false } = {}) {
+  if (!idx || !window.OwnedInventoryIndex || !window.OwnedInventoryIndex.matchWishlist) return null;
+  return AWStore.update(async (dimData) => {
+    if (backfill) {
+      await backfillLinkedHashes(dimData);
+      await backfillPerkColIndex(dimData);
+    }
+    const beforeSnapshot = snapshotReceivedState(dimData);
+    const summary = window.OwnedInventoryIndex.matchWishlist(dimData, idx);
+    return { beforeSnapshot, dimData, summary };
+  });
+}
+window.matchWishlistPass = matchWishlistPass;
+
 // Re-runs wishlist matching against whatever OwnedIndex is already cached in
 // memory (from the last profile refresh this session) and persists results.
-function matchWishlistAgainstCachedIndex() {
+async function matchWishlistAgainstCachedIndex() {
   try {
     const idx = window.OwnedInventoryIndex && window.OwnedInventoryIndex.getCachedIndex && window.OwnedInventoryIndex.getCachedIndex();
     if (!idx) return;
-    chrome.storage.local.get(['dimData'], async (res) => {
-      const dimData = res?.dimData;
-      if (!dimData) return;
-      const beforeSnapshot = snapshotReceivedState(dimData);
-      window.OwnedInventoryIndex.matchWishlist(dimData, idx);
-      chrome.storage.local.set({ dimData });
-      await autoLockNewlyMatched(beforeSnapshot, dimData, idx);
-      await transferNewlyMatchedToVault(beforeSnapshot, dimData, idx);
-    });
+    const pass = await matchWishlistPass(idx);
+    if (!pass) return;
+    await autoLockNewlyMatched(pass.beforeSnapshot, pass.dimData, idx);
+    await transferNewlyMatchedToVault(pass.beforeSnapshot, pass.dimData, idx);
   } catch (e) { console.warn('[Manager] matchWishlistAgainstCachedIndex failed', e); }
 }
 
@@ -1210,11 +1220,10 @@ function createWeaponCard(hash, item) {
     const card = document.createElement('div');
     card.className = 'wc-card';
 
-    const safeName = item?.static?.name || '(unknown)';
-    const iconValue = item?.static?.icon;
-    const iconUrl = iconValue
-        ? (iconValue.startsWith('http') ? iconValue : `${BUNGIE_ROOT}${iconValue}`)
-        : '';
+    // Wishlists can come from other people (Discover, .awwish files), so the
+    // name is escaped and the icon must be Bungie-hosted art — see aw-dom.js.
+    const safeName = escapeHtml(item?.static?.name || '(unknown)');
+    const iconUrl = escapeHtml(AWDom.safeImageUrl(item?.static?.icon));
 
     const wishes = Array.isArray(item?.wishes) ? item.wishes : [];
 
@@ -1223,7 +1232,8 @@ function createWeaponCard(hash, item) {
     rollsEl.className = 'wc-rolls';
 
     wishes.forEach((wish, index) => {
-        const tag = (wish?.tags && wish.tags[0]) ? wish.tags[0] : 'pve';
+        // Anything but a known mode falls back to PvE rather than reaching a class name.
+        const tag = (wish?.tags?.[0] === 'pvp') ? 'pvp' : 'pve';
         const perkColumns = wish?.config?.perkColumns || [];
 
         const row = document.createElement('div');
@@ -1287,7 +1297,8 @@ function createWeaponCard(hash, item) {
                     // Combo number rides along with the colour so the grouping
                     // survives for anyone who can't separate the four hues.
                     if (slot >= 0) wrap.dataset.combo = String(slot + 1);
-                    if (icon) {
+                    const iconSrc = AWDom.safeImageUrl(icon);
+                    if (iconSrc) {
                         const isMatched = matchedPerkHashes.has(hash) || (enhancedHash && matchedPerkHashes.has(enhancedHash));
                         // A matched perk in a combo is bordered in that combo's
                         // colour, not gold — one weapon often satisfies several
@@ -1296,7 +1307,7 @@ function createWeaponCard(hash, item) {
                             : (slot >= 0 && matchedCombos.has(color)) ? ` wc-perk-icon-matched wc-perk-matched-${color}`
                             : ' wc-perk-icon-matched';
                         const img = document.createElement('img');
-                        img.src = icon;
+                        img.src = iconSrc;
                         img.alt = name;
                         // isActive only exists on wishes saved before combos; it
                         // marked the perk driving the old stats preview.
@@ -1360,46 +1371,35 @@ function createItemCard(hash, item) {
 
 // Overwrites a specific existing wish in place (used by the weapon craft page's
 // EDIT WISH button) instead of appending a new entry the way saveItem does.
-function editItemWish(hash, index, rawString, config, mode = "pve") {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(["dimData"], (result) => {
-      const data = result.dimData;
-      const activeList = data?.lists?.[data.activeId] || data?.lists?.["default"];
-      const wishes = activeList?.items?.[hash]?.wishes;
-      if (!wishes || !wishes[index]) {
-        resolve();
-        return;
-      }
+async function editItemWish(hash, index, rawString, config, mode = "pve") {
+  let wrote = false;
+  await AWStore.update((data) => {
+    const listId = AWStore.ensureActiveList(data);
+    const old = data.lists[listId].items[hash]?.wishes?.[index];
+    if (!old) return AWStore.SKIP;
 
-      wishes[index] = {
-        tags: [mode],
-        config,
-        raw: rawString,
-        added: wishes[index].added || Date.now()
-      };
-
-      chrome.storage.local.set({ dimData: data }, () => {
-        resolve();
-        matchWishlistAgainstCachedIndex();
-      });
-    });
+    const next = { tags: [mode], config, raw: rawString, added: old.added || Date.now() };
+    // replaceWish tombstones the old wish if the edit changed its sync identity
+    // (perks, or archetype+spark), so cloud sync can't bring it back.
+    wrote = window.WishlistSync.replaceWish(data, listId, hash, index, next);
+    if (!wrote) return AWStore.SKIP;
   });
+  if (wrote) matchWishlistAgainstCachedIndex();
 }
 
 function deleteWish(hash, index) {
-    chrome.storage.local.get(['dimData'], (result) => {
-        let data = result.dimData;
-        const activeId = data.activeId || 'default';
-        const listId = data.lists[activeId] ? activeId : 'default';
+    return AWStore.update((data) => {
+        const listId = AWStore.ensureActiveList(data);
         const activeList = data.lists[listId];
-        let wishes = activeList.items[hash].wishes;
+        const wishes = activeList.items[hash]?.wishes;
+        if (!wishes) return AWStore.SKIP;
         const [removed] = wishes.splice(index, 1);
+        if (!removed) return AWStore.SKIP;
         // Record the deletion so cross-browser sync can't restore it from a
         // browser still holding the old copy — see wishlist-sync-core.js.
-        if (removed) window.WishlistSync?.recordWishTombstone(data, listId, hash, removed);
+        window.WishlistSync?.recordWishTombstone(data, listId, hash, removed);
         if (wishes.length === 0) delete activeList.items[hash];
-        chrome.storage.local.set({ dimData: data }, loadLists);
-    });
+    }).then(loadLists);
 }
 
 /**
@@ -1494,26 +1494,19 @@ async function refreshProfileAndBuildIndex(components) {
   renderOwnedIndexSummary(ownedIndexSummary);
   console.log('[Manager] OwnedIndex built:', totalInstances, 'instances,', uniqueItems, 'unique item hashes');
 
-  // Run wishlist matching pass using the built index
-  const dimRes = await new Promise((res) => chrome.storage.local.get(['dimData'], res));
-  const dimData = dimRes?.dimData;
-  if (dimData && window.OwnedInventoryIndex.matchWishlist) {
-    const before = JSON.stringify(dimData);
-    await backfillLinkedHashes(dimData);
-    await backfillPerkColIndex(dimData);
-    const beforeSnapshot = snapshotReceivedState(dimData);
-    const summary = window.OwnedInventoryIndex.matchWishlist(dimData, idx);
-    // Every dimData write re-renders all three views and queues a cloud push,
-    // so only write when matching actually changed something. The onChanged
-    // listener re-renders the lists as soon as this lands — before the
-    // lock/transfer calls below, which are one request per item.
-    if (JSON.stringify(dimData) !== before) {
-      await new Promise((res) => chrome.storage.local.set({ dimData }, res));
+  // Run wishlist matching pass using the built index. Every dimData write
+  // re-renders all three views and queues a cloud push, so AWStore only writes
+  // when matching actually changed something. The onChanged listener
+  // re-renders the lists as soon as it lands — before the lock/transfer calls
+  // below, which are one request per item.
+  if (window.OwnedInventoryIndex.matchWishlist) {
+    const pass = await matchWishlistPass(idx, { backfill: true });
+    if (pass) {
+      await autoLockNewlyMatched(pass.beforeSnapshot, pass.dimData, idx);
+      await transferNewlyMatchedToVault(pass.beforeSnapshot, pass.dimData, idx);
+      if (_feedEnabled) await appendFeedEntries(diffFeedEntries(pass.beforeSnapshot, pass.dimData));
+      console.log('[Manager] Wishlist matching complete:', pass.summary);
     }
-    await autoLockNewlyMatched(beforeSnapshot, dimData, idx);
-    await transferNewlyMatchedToVault(beforeSnapshot, dimData, idx);
-    if (_feedEnabled) await appendFeedEntries(diffFeedEntries(beforeSnapshot, dimData));
-    console.log('[Manager] Wishlist matching complete:', summary);
   }
   return true;
 }

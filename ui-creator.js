@@ -56,7 +56,31 @@ function getClassName(classType) {
 
 document.addEventListener('DOMContentLoaded', () => {
     initArmorWizard();
+    initManifestCacheReset();
 });
+
+/**
+ * "Reset Manifest Cache": the fix for stale or corrupt game data. Empties the
+ * cached manifest and reloads the panel, which downloads it again.
+ */
+function initManifestCacheReset() {
+    const btn = document.getElementById('clearCacheBtn');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+        if (!confirm('Clear the downloaded Destiny game data?\n\nIt will be downloaded again when the panel reloads (about 200 MB). Your wishlists are not affected.')) return;
+        btn.disabled = true;
+        const original = btn.textContent;
+        btn.textContent = 'Clearing...';
+        try {
+            await clearD2ManifestCache();
+            location.reload();
+        } catch (err) {
+            console.error('[ManifestCache] reset failed', err);
+            btn.textContent = "Couldn't clear — try again";
+            setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2500);
+        }
+    });
+}
 
 /**
  * Populates filter buttons based on current filterMode
@@ -146,11 +170,13 @@ function applyArmorFilters() {
         // Flatten: one virtual entry per wish, with per-wish filtering
         Object.keys(items).forEach(hash => {
             const item = items[hash];
-            if (item.static.type !== 'armor') return;
+            // Imported or synced data can be malformed; skip that entry rather
+            // than let one bad item throw and blank the whole list.
+            if (item?.static?.type !== 'armor') return;
 
             // Filter by armor name (item-level)
             if (armorNameSearch) {
-                const itemName = item.static.name.toLowerCase();
+                const itemName = String(item.static.name || '').toLowerCase();
                 if (!itemName.includes(armorNameSearch)) return;
             }
 
@@ -213,10 +239,9 @@ function applyArmorFilters() {
                     return true;
                 })
                 .map(entry => {
-                    const iconUrl = entry.static.icon
-                        ? (entry.static.icon.startsWith('http') ? entry.static.icon : `${BUNGIE_ROOT}${entry.static.icon}`)
-                        : '';
-                    return `<img src="${iconUrl}" class="set-piece-bg" alt=""/>`;
+                    // Armor lists can come from other people; only Bungie art loads.
+                    const iconUrl = AWDom.safeImageUrl(entry.static.icon);
+                    return iconUrl ? `<img src="${escapeHtml(iconUrl)}" class="set-piece-bg" alt=""/>` : '';
                 })
                 .join('');
 
@@ -227,22 +252,26 @@ function applyArmorFilters() {
                         <div class="set-pieces-overlay"></div>
                     </div>
                     <div class="set-name-area">
-                        <span class="set-name-text">${displayName}</span>
+                        <span class="set-name-text">${escapeHtml(displayName)}</span>
                         <span class="set-count-text">${armorSets[setId].length} WISHES</span>
                     </div>
                     <div class="set-badge-area">
                         <div class="expansion-badge" title="Renegades Expansion"></div>
                     </div>
                 </div>
-                <div class="set-content" id="set-content-${setId.replace(/[\s-]+/g, '')}" style="display: none;">
+                <div class="set-content" id="set-content-${escapeHtml(setId.replace(/[^\w]+/g, ''))}" style="display: none;">
                 </div>
             `;
 
             const contentArea = setContainer.querySelector('.set-content');
 
             armorSets[setId].forEach(item => {
-                const card = createArmorCard(item);
-                contentArea.appendChild(card);
+                // One malformed wish must not take the rest of the list down with it.
+                try {
+                    contentArea.appendChild(createArmorCard(item));
+                } catch (err) {
+                    console.warn('[ArmorList] skipped a wish that could not be rendered', item?.hash, err);
+                }
             });
 
             const header = setContainer.querySelector('.set-header');
@@ -852,18 +881,26 @@ function handleSaveWish() {
     return;
   }
   
-  // Show feedback with green flash
-  btn.textContent = "WISH GRANTED!";
-  btn.classList.add("success");
-  
-  // Reset after 1.5 seconds
-  setTimeout(() => {
-    btn.classList.remove("success");
-    updatePrimaryBtn();
-  }, 1500);
-  
+  // Feedback waits for the saves to finish, so it can say what really happened
+  // (saved vs. already on the list vs. failed) instead of always claiming success.
+  const outcome = { added: 0, duplicate: 0, failed: 0 };
+  const showOutcome = () => {
+    const { added, duplicate, failed } = outcome;
+    let label;
+    if (failed && !added) label = "COULDN'T SAVE";
+    else if (added && !duplicate && !failed) label = "WISH GRANTED!";
+    else if (!added && duplicate && !failed) label = "ALREADY ON YOUR LIST";
+    else label = `${added} SAVED · ${duplicate + failed} NOT SAVED`;
+    btn.textContent = label;
+    btn.classList.toggle("success", added > 0);
+    setTimeout(() => {
+      btn.classList.remove("success");
+      updatePrimaryBtn();
+    }, 1500);
+  };
+
   let saveChain = Promise.resolve();
-  
+
   itemsToSave.forEach((item, index) => {
     saveChain = saveChain.then(() => {
       console.log("[SaveWish] Starting save for item", index + 1, ":", item.name);
@@ -892,17 +929,19 @@ function handleSaveWish() {
         setName,
         item.setHash,
         linkedHashes
-      )).then(() => {
-        console.log("[SaveWish] Item saved successfully:", item.name);
+      )).then((status) => {
+        if (status === 'added') outcome.added++; else outcome.duplicate++;
+        console.log("[SaveWish] Item", status === 'added' ? "saved:" : "already on the list:", item.name);
       }).catch(err => {
+        outcome.failed++;
         console.error("[SaveWish] Error saving item:", item.name, err);
       });
     });
   });
-  
+
   saveChain.catch(err => {
     console.error("[SaveWish] Save chain failed:", err);
-  });
+  }).then(showOutcome);
 }
 
 /**
@@ -1099,17 +1138,22 @@ function createArmorCard(item) {
     // Safety check for wish data integrity
     if (!item.wish) return card;
 
-    const wishConfig = item.wish.config;
-    const archName = wishConfig.archetype;
-    const sparkName = wishConfig.spark;
+    // Config can come from an import or an older/newer version, so nothing here
+    // may assume the archetype is one we know or that a spark is present — a
+    // throw here would take the card (and used to take the whole list) down.
+    const wishConfig = item.wish.config || {};
+    const archName = typeof wishConfig.archetype === 'string' ? wishConfig.archetype : '';
     const archetype = ARCHETYPES.find(a => a.name === archName);
+    // Only a real stat name is ever used, since it ends up in a CSS class name.
+    const sparkStat = STATS.find(s => s.toLowerCase() === String(wishConfig.spark || '').toLowerCase()) || null;
 
-    // 1. Assemble the 3 stats into a list for sorting
-    const statsToDisplay = [
-        { name: archetype.stats[0], type: 'pri', weight: 85 },
-        { name: archetype.stats[1], type: 'sec', weight: 60 },
-        { name: sparkName.toLowerCase(), type: 'spark', weight: 40 }
-    ];
+    // 1. Assemble the stats we can show into a list for sorting
+    const statsToDisplay = [];
+    if (archetype) {
+        statsToDisplay.push({ name: archetype.stats[0], type: 'pri', weight: 85 });
+        statsToDisplay.push({ name: archetype.stats[1], type: 'sec', weight: 60 });
+    }
+    if (sparkStat) statsToDisplay.push({ name: sparkStat, type: 'spark', weight: 40 });
 
     // 2. Sort stats by in-game Rank (Health at top, Weapons at bottom)
     statsToDisplay.sort((a, b) => STAT_RANK[a.name] - STAT_RANK[b.name]);
@@ -1138,13 +1182,18 @@ function createArmorCard(item) {
     const isOwned = !!item.wish.received;
     const ownedInstanceIds = Array.isArray(item.wish.receivedInstances) ? item.wish.receivedInstances : [];
 
+    // Names and icons are untrusted (shared lists): escape the text, and only
+    // load Bungie-hosted art. See aw-dom.js.
+    const iconSrc = escapeHtml(AWDom.safeImageUrl(item.static?.icon));
+    const archSub = escapeHtml(archName) + (sparkStat ? ` +${sparkStat.toLowerCase()}` : '');
+
     card.innerHTML = `
         <div class="card-img-side">
-            <img src="${item.static.icon}" alt="">
+            ${iconSrc ? `<img src="${iconSrc}" alt="">` : ''}
         </div>
         <div class="card-info-side">
-            <div class="card-armor-name">${item.static.name}</div>
-            <div class="card-archetype-sub">${archName} +${sparkName.toLowerCase()} ${ownedBadgeHTML}</div>
+            <div class="card-armor-name">${escapeHtml(item.static?.name || '(unknown)')}</div>
+            <div class="card-archetype-sub">${archSub} ${ownedBadgeHTML}</div>
         </div>
         <div class="card-stats-side">
             ${statRowsHTML}
@@ -1260,35 +1309,25 @@ function createArmorCard(item) {
  * Removes the entire item if no wishes remain.
  */
 function deleteArmorWish(hash, wishIndex) {
-    chrome.storage.local.get(['dimData'], (result) => {
-        let data = result.dimData;
+    return AWStore.update((data) => {
+        const listId = AWStore.ensureActiveList(data);
+        const activeList = data.lists[listId];
+        const item = activeList.items[hash];
+        if (!item || !item.wishes || wishIndex >= item.wishes.length) return AWStore.SKIP;
 
-        // Safety check: ensure the data structure exists
-        const activeId = data && (data.activeId || 'default');
-        const listId = (data && data.lists && data.lists[activeId]) ? activeId : 'default';
-        const activeList = data && data.lists && data.lists[listId];
-        if (activeList && activeList.items) {
-            const item = activeList.items[hash];
-            if (item && item.wishes && wishIndex < item.wishes.length) {
-                const [removed] = item.wishes.splice(wishIndex, 1);
-                // Record the deletion so cross-browser sync can't restore it from
-                // a browser still holding the old copy — see wishlist-sync-core.js.
-                if (removed) window.WishlistSync?.recordWishTombstone(data, listId, hash, removed);
+        const [removed] = item.wishes.splice(wishIndex, 1);
+        // Record the deletion so cross-browser sync can't restore it from
+        // a browser still holding the old copy — see wishlist-sync-core.js.
+        if (removed) window.WishlistSync?.recordWishTombstone(data, listId, hash, removed);
 
-                // Remove item entirely if no wishes remain
-                if (item.wishes.length === 0) {
-                    delete activeList.items[hash];
-                }
-
-                // Save the updated list back to storage
-                chrome.storage.local.set({ dimData: data }, () => {
-                    console.log(`[Manager] Wish rescinded for hash: ${hash}, index: ${wishIndex}`);
-
-                    // Refresh the UI to reflect the removal
-                    refreshArmorList();
-                });
-            }
+        // Remove item entirely if no wishes remain
+        if (item.wishes.length === 0) {
+            delete activeList.items[hash];
         }
+    }).then(() => {
+        console.log(`[Manager] Wish rescinded for hash: ${hash}, index: ${wishIndex}`);
+        // Refresh the UI to reflect the removal
+        refreshArmorList();
     });
 }
 

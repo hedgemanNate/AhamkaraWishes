@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Ahamkara Wishes Chrome extension — Wishlist engine tests",
   "scripts": {
-    "test": "node tests/owned-index-test.js && node tests/owned-index-delta-test.js && node tests/owned-index-location-test.js && node tests/owned-index-bg-update-test.js && node tests/normalize-wishlist-test.js && node tests/weapon-combo-match-test.js && node tests/bungie-auth-core-test.js && node tests/bungie-auth-transfer-test.js && node tests/armor-linked-hash-match-test.js && node tests/weapon-wish-consistency-test.js && node tests/godroll-roll-test.js && node tests/weapon-wish-core-test.js"
+    "test": "node tests/owned-index-test.js && node tests/owned-index-delta-test.js && node tests/owned-index-location-test.js && node tests/owned-index-bg-update-test.js && node tests/normalize-wishlist-test.js && node tests/weapon-combo-match-test.js && node tests/bungie-auth-core-test.js && node tests/bungie-auth-transfer-test.js && node tests/armor-linked-hash-match-test.js && node tests/weapon-wish-consistency-test.js && node tests/godroll-roll-test.js && node tests/weapon-wish-core-test.js && node tests/safe-rendering-test.js && node tests/aw-store-test.js && node tests/wish-edit-sync-test.js"
   },
   "engines": {
     "node": ">=14"

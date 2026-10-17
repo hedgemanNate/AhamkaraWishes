@@ -57,9 +57,26 @@
     return parsed;
   }
 
-  async function selfWrite(dimData) {
-    lastSelfWrite = window.WishlistSync.stableStringify(dimData);
-    await storageSet({ dimData });
+  /**
+   * Merges `remote` into the local wishlists and stores the result. The local
+   * copy is read fresh inside the AWStore lock (so wishes saved while we were
+   * waiting on the network are merged, not overwritten), and the network
+   * round trip happens BEFORE this, never inside it.
+   * Resolves the merged dimData; nothing is written if the merge changed nothing.
+   */
+  async function mergeRemoteIntoLocal(remote) {
+    let merged = null;
+    await window.AWStore.update((local) => {
+      merged = remote ? window.WishlistSync.mergeDimData(local, remote) : local;
+      if (window.WishlistSync.stableStringify(merged) === window.WishlistSync.stableStringify(local)) {
+        return window.AWStore.SKIP;
+      }
+      // Remembered so the storage listener can tell this write apart from a user edit.
+      lastSelfWrite = window.WishlistSync.stableStringify(merged);
+      console.log('[ADMIN-SYNC] merged cloud backup into local wishlists');
+      return window.AWStore.replace(merged);
+    });
+    return merged;
   }
 
   async function fetchRemote() {
@@ -84,8 +101,8 @@
     pushInFlight = true;
 
     try {
-      const { dimData: local } = await storageGet(['dimData']);
-      if (!local) return;
+      const { dimData: existing } = await storageGet(['dimData']);
+      if (!existing) return;
 
       let remote;
       try {
@@ -97,12 +114,7 @@
         return;
       }
 
-      const merged = remote ? window.WishlistSync.mergeDimData(local, remote) : local;
-      const mergedJson = window.WishlistSync.stableStringify(merged);
-
-      if (mergedJson !== window.WishlistSync.stableStringify(local)) {
-        await selfWrite(merged);
-      }
+      const merged = await mergeRemoteIntoLocal(remote);
       await putRemote(merged);
       console.log('[ADMIN-SYNC] pushed merged dimData to backup');
     } catch (e) {
@@ -121,18 +133,13 @@
   async function syncOnBecomeAdmin() {
     try {
       const remote = await fetchRemote();
-      const { dimData: local } = await storageGet(['dimData']);
 
       // Always merge. The old rule ("pull if remote looks newer, else push")
       // had to guess which side was authoritative, and guessing wrong silently
       // deleted whichever lists only existed on the losing side.
-      const merged = window.WishlistSync.mergeDimData(local, remote);
-      const mergedJson = window.WishlistSync.stableStringify(merged);
+      const merged = await mergeRemoteIntoLocal(remote);
 
-      if (mergedJson !== window.WishlistSync.stableStringify(local)) {
-        await selfWrite(merged);
-        console.log('[ADMIN-SYNC] merged cloud backup into local wishlists');
-      }
+      const mergedJson = window.WishlistSync.stableStringify(merged);
       if (!remote || mergedJson !== window.WishlistSync.stableStringify(remote)) {
         await putRemote(merged);
         console.log('[ADMIN-SYNC] pushed merged wishlists to cloud backup');

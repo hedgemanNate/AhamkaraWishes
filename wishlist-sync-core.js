@@ -65,6 +65,30 @@
     bucket[key] = Math.max(now || Date.now(), bucket[key] || 0);
   }
 
+  /**
+   * Replaces wishes[index] with `next` (an edit). Editing can change which wish
+   * this is, because identity is the perks (weapons) or archetype+spark (armor).
+   * When it does, the old identity is tombstoned — otherwise the next merge with
+   * a browser still holding the old version would bring it back beside the
+   * edited one — and `next` gets a fresh `added`, so that editing back to an
+   * earlier identity isn't mistaken for the deleted original (a tombstone only
+   * kills wishes added at or before it). Mutates `data`; returns false when
+   * there is no wish at that index.
+   */
+  function replaceWish(data, listId, itemHash, index, next, now) {
+    const item = data && data.lists && data.lists[listId] && data.lists[listId].items &&
+      data.lists[listId].items[itemHash];
+    const wishes = item && item.wishes;
+    if (!wishes || !wishes[index] || !next) return false;
+    const old = wishes[index];
+    if (wishKey(old) !== wishKey(next)) {
+      recordWishTombstone(data, listId, itemHash, old, now);
+      next.added = now || Date.now();
+    }
+    wishes[index] = next;
+    return true;
+  }
+
   function mergeTombstones(a, b) {
     const out = { lists: {}, wishes: {} };
     const cutoff = Date.now() - TOMBSTONE_TTL_MS;
@@ -226,6 +250,7 @@
     wishKey,
     recordListTombstone,
     recordWishTombstone,
+    replaceWish,
     mergeDimData,
     stableStringify,
     emptyDimData,

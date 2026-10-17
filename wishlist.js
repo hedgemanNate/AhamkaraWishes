@@ -2,20 +2,27 @@
 // Uses `dimData` in chrome.storage.local for persistence.
 
 (function(){
+  // Reads dimData for display. Normalizes/migrates wishlist entries on load;
+  // if normalization mutated the persisted arrays (e.g. filled missing
+  // `mustHave`), that is written back. Never hand the result to a write: it is
+  // a snapshot, and anything that changes data goes through mutate() below.
   function ensureData(cb) {
-    chrome.storage.local.get(['dimData'], (res) => {
-      let data = res.dimData || { activeId: 'default', lists: { default: { name: 'Main Wishlist', items: {} } } };
-      if (!data.lists) data.lists = { default: { name: 'Main Wishlist', items: {} } };
-      // Normalize/migrate wishlist entries on load. If normalization mutated
-      // the persisted arrays (e.g. filled missing `mustHave`), persist the
-      // updated data back to storage.
-      const changed = normalizeWishlistData(data);
-      if (changed) {
-        chrome.storage.local.set({ dimData: data }, () => cb(data));
-      } else {
-        cb(data);
-      }
-    });
+    let data;
+    AWStore.update((fresh) => {
+      data = fresh;
+      return normalizeWishlistData(fresh) ? fresh : AWStore.SKIP;
+    }).then(() => cb(data)).catch((e) => console.warn('[Wishlist] could not read wishlists', e));
+  }
+
+  // Applies `fn` to dimData as it is right now, under the AWStore lock, then
+  // calls `after`. `fn` may return AWStore.SKIP to abandon the write. Writing a
+  // snapshot taken earlier (e.g. when a button was drawn) would overwrite
+  // anything saved in between.
+  function mutate(fn, after) {
+    AWStore.update((data) => {
+      normalizeWishlistData(data);
+      return fn(data);
+    }).then(() => { if (after) after(); });
   }
 
   // Normalize a single wishlist entry (in-place). Returns true if any persisted
@@ -87,10 +94,6 @@
     return mutated;
   }
 
-  function writeData(data, cb) {
-    chrome.storage.local.set({ dimData: data }, cb || (()=>{}));
-  }
-
   function makeId() {
     return 'wl_' + Math.random().toString(36).slice(2, 9);
   }
@@ -119,8 +122,12 @@
         if (id === data.activeId) btn.classList.add('active');
         btn.onclick = (e) => {
           if (mergeMode) { e.preventDefault(); toggleMergeTarget(id); return; }
-          data.activeId = id;
-          writeData(data, () => {
+          // Only the active id changes. Writing back the `data` this row was
+          // rendered from would overwrite any wish saved since.
+          mutate((fresh) => {
+            if (!fresh.lists[id]) return AWStore.SKIP;
+            fresh.activeId = id;
+          }, () => {
             render();
             document.dispatchEvent(new CustomEvent('wishListChanged', { detail: { id } }));
           });
@@ -138,36 +145,33 @@
     if (!input) return;
     const name = (input.value || '').trim();
     if (!name) return;
-    ensureData((data) => {
+    mutate((data) => {
       const id = makeId();
       data.lists[id] = { name, items: {} };
       data.activeId = id;
-      writeData(data, () => { input.value = ''; render(); });
-    });
+    }, () => { input.value = ''; render(); });
   }
 
   function duplicateSelected() {
-    ensureData((data) => {
+    mutate((data) => {
       const src = data.lists[data.activeId];
-      if (!src) return;
+      if (!src) return AWStore.SKIP;
       const id = makeId();
       data.lists[id] = { name: src.name + ' (copy)', items: JSON.parse(JSON.stringify(src.items || {})) };
       data.activeId = id;
-      writeData(data, render);
-    });
+    }, render);
   }
 
   function deleteSelected() {
-    ensureData((data) => {
+    mutate((data) => {
       const id = data.activeId;
-      if (!id || id === 'default') return;
+      if (!id || id === 'default') return AWStore.SKIP;
       delete data.lists[id];
       // Record the deletion so cross-browser sync can't restore the list from
       // a browser still holding the old copy — see wishlist-sync-core.js.
       window.WishlistSync?.recordListTombstone(data, id);
       data.activeId = 'default';
-      writeData(data, render);
-    });
+    }, render);
   }
 
   // Simple merge: merge selected source(s) into active destination
@@ -217,9 +221,10 @@
 
   function performMerge() {
     if (!mergeMode || mergeTargets.size === 0) return;
-    ensureData((data) => {
+    mutate((data) => {
       const dest = data.lists[data.activeId];
-      if (!dest) return exitMergeMode();
+      if (!dest) return AWStore.SKIP;
+      if (!dest.items) dest.items = {};
       mergeTargets.forEach(id => {
         if (!data.lists[id] || id === data.activeId) return;
         const src = data.lists[id];
@@ -232,8 +237,7 @@
         // cloud sync, silently undoing the merge — see wishlist-sync-core.js.
         window.WishlistSync?.recordListTombstone(data, id);
       });
-      writeData(data, () => { exitMergeMode(); render(); });
-    });
+    }, () => { exitMergeMode(); render(); });
   }
 
   function showMergeConfirm() {
@@ -249,7 +253,7 @@
           <div class="merge-confirm-body">
             <p>Merge the following wishlists into the current active wishlist? This will delete the merged sources.</p>
             <ul class="merge-confirm-list">
-              ${Array.from(mergeTargets).map(id => `<li>${(data.lists[id] && data.lists[id].name) || id}</li>`).join('')}
+              ${Array.from(mergeTargets).map(id => `<li>${escapeHtml((data.lists[id] && data.lists[id].name) || id)}</li>`).join('')}
             </ul>
           </div>
           <div class="merge-confirm-actions">
@@ -299,7 +303,10 @@
     const select = document.getElementById('wishlist-select');
     if (select) select.onchange = (e) => {
       const val = e.target.value;
-      ensureData((data) => { data.activeId = val; writeData(data, render); });
+      mutate((data) => {
+        if (!data.lists[val]) return AWStore.SKIP;
+        data.activeId = val;
+      }, render);
     };
 
     chrome.storage.onChanged.addListener((changes, ns) => {
@@ -332,15 +339,12 @@
       // startup and on every sync; this only re-matches against an index it
       // has already built.
       const idx = OwnedInventoryIndex.getCachedIndex && OwnedInventoryIndex.getCachedIndex();
-      if (!idx) return;
-      ensureData((data) => {
-        const backfill = window.backfillLinkedHashes ? window.backfillLinkedHashes(data) : Promise.resolve(false);
-        Promise.resolve(backfill).then(() => {
-          const summary = OwnedInventoryIndex.matchWishlist(data, idx);
-          // persist updated dimData
-          writeData(data, () => { console.log('[Wishlist] owned-index sync:', summary); });
-        });
-      });
+      if (!idx || !window.matchWishlistPass) return;
+      // matchWishlistPass (manager.js) reads dimData fresh under the AWStore lock
+      // and writes only what matching changed.
+      window.matchWishlistPass(idx, { backfill: true })
+        .then((pass) => { if (pass) console.log('[Wishlist] owned-index sync:', pass.summary); })
+        .catch((e) => console.warn('[Wishlist] trySyncOwnedIndex error', e));
     } catch (e) { console.warn('[Wishlist] trySyncOwnedIndex error', e); }
   }
 })();

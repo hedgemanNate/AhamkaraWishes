@@ -143,39 +143,49 @@
       return;
     }
 
-    const importedList = payload.list;
+    // The list came from a file or from someone else's Discover submission, so
+    // rebuild it from known fields only before it touches storage.
+    const importedList = window.WishlistValidate && window.WishlistValidate.sanitizeList(payload.list);
+    if (!importedList) {
+      showToast('Wishlist file is missing list data.', true);
+      return;
+    }
+    if (importedList.itemCount === 0 && (importedList.droppedItems > 0 || importedList.droppedWishes > 0)) {
+      showToast('No valid wishes found in this file.', true);
+      return;
+    }
 
-    chrome.storage.local.get(['dimData'], (res) => {
-      let data = res.dimData || {
-        activeId: 'default',
-        lists: { default: { name: 'Main Wishlist', items: {} } },
-      };
-      if (!data.lists) data.lists = {};
+    let name = importedList.name;
+    let newId = null;
 
+    AWStore.update((data) => {
       // Resolve name collision by appending a suffix
-      const existingNames = new Set(Object.values(data.lists).map((l) => l.name));
-      let name = importedList.name || 'Imported Wishlist';
+      const existingNames = new Set(Object.values(data.lists).map((l) => l && l.name));
+      name = importedList.name;
       if (existingNames.has(name)) {
         let suffix = 2;
         while (existingNames.has(name + ' (' + suffix + ')')) suffix++;
         name = name + ' (' + suffix + ')';
       }
 
-      const newId = 'wl_' + Math.random().toString(36).slice(2, 9);
-      data.lists[newId] = { name, items: importedList.items || {} };
+      newId = 'wl_' + Math.random().toString(36).slice(2, 9);
+      data.lists[newId] = { name, items: importedList.items };
       data.activeId = newId;
 
       // Normalise imported entries (fills in mustHave, desired, runtime Sets)
       if (window.awWishlist && window.awWishlist.normalizeWishlistData) {
         window.awWishlist.normalizeWishlistData(data);
       }
-
-      chrome.storage.local.set({ dimData: data }, () => {
-        if (window.awWishlist && window.awWishlist.render) window.awWishlist.render();
-        document.dispatchEvent(new CustomEvent('wishListChanged', { detail: { id: newId } }));
-        const itemCount = Object.keys(data.lists[newId].items || {}).length;
-        showToast('Imported "' + name + '" — ' + itemCount + ' item' + (itemCount !== 1 ? 's' : ''));
-      });
+    }).then(() => {
+      if (window.awWishlist && window.awWishlist.render) window.awWishlist.render();
+      document.dispatchEvent(new CustomEvent('wishListChanged', { detail: { id: newId } }));
+      const itemCount = importedList.itemCount;
+      const skipped = importedList.droppedItems + importedList.droppedWishes;
+      showToast('Imported "' + name + '" — ' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') +
+        (skipped ? ' (' + skipped + ' skipped)' : ''));
+    }).catch((e) => {
+      console.warn('[Import] failed', e);
+      showToast('Could not import this wishlist.', true);
     });
   }
 

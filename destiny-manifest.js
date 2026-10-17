@@ -63,6 +63,25 @@ async function idbSet(key, value, storeName) {
   });
 }
 
+// Empties the cached game data so the next load downloads it afresh. Clears
+// the stores instead of deleting the database: openD2DB() leaves connections
+// open, and deleteDatabase() would sit blocked behind them.
+async function clearD2ManifestCache() {
+  const db = await openD2DB();
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([STORE_META, STORE_BLOBS], "readwrite");
+      tx.objectStore(STORE_META).clear();
+      tx.objectStore(STORE_BLOBS).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
 // --- MANIFEST DOWNLOAD & PARSE ---
 async function fetchManifestMeta() {
   const url = `${BUNGIE_ROOT}/Platform/Destiny2/Manifest/`;

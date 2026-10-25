@@ -1,0 +1,155 @@
+/* Ahamkara Wishes — design tokens.
+ *
+ * The only file where raw colour values belong (tools/lint-ratchet.js counts
+ * hex colours everywhere else). Everything new is named --ui-* so it can never
+ * collide with the legacy stylesheet's --aw-*, --text-*, --accent-*, --bg-*
+ * variables, which keep styling the old screens until they are rebuilt.
+ *
+ * Three tiers:
+ *   palette   raw values. Don't use these in components.
+ *   semantic  what a colour means (surface, text, accent, danger...). Use these.
+ *   game      colours that carry game meaning (combo groups, elements, stats,
+ *             rarity). Use them only as small markers, never as decoration,
+ *             so gold keeps meaning "act here" / "you own this" (D7).
+ *
+ * The panel is dark-only by design (D7). Spacing is a 4px grid. Sizes are px
+ * because the side panel's zoom is the browser's, not a phone's text size.
+ */
+@layer tokens {
+  :root {
+    /* ---- palette ---- */
+    --ui-palette-ink-0: #0b0b0d;
+    --ui-palette-ink-1: #141418;
+    --ui-palette-ink-2: #1c1c21;
+    --ui-palette-ink-3: #26262c;
+    --ui-palette-ink-4: #2b2b32;
+    --ui-palette-ink-5: #3a3a43;
+    --ui-palette-paper-0: #eeece5;
+    --ui-palette-paper-1: #9a98a0;
+    --ui-palette-paper-2: #6a6970;
+    --ui-palette-gold: #d4af37;
+    --ui-palette-gold-ink: #1a1405;
+    --ui-palette-green: #7cc58a;
+    --ui-palette-amber: #e6b450;
+    --ui-palette-red: #f2867e;
+    --ui-palette-blue: #79bbe8;
+
+    /* ---- semantic: surfaces ---- */
+    --ui-bg: var(--ui-palette-ink-0);
+    --ui-surface-1: var(--ui-palette-ink-1);   /* cards, sheets */
+    --ui-surface-2: var(--ui-palette-ink-2);   /* raised rows, selected */
+    --ui-surface-3: var(--ui-palette-ink-3);   /* controls, chips, toasts */
+    --ui-line: var(--ui-palette-ink-4);        /* hairlines, borders */
+    --ui-line-strong: var(--ui-palette-ink-5);
+    --ui-scrim: rgba(0, 0, 0, 0.62);
+
+    /* ---- semantic: text ---- */
+    --ui-text: var(--ui-palette-paper-0);
+    --ui-text-muted: var(--ui-palette-paper-1);
+    --ui-text-dim: var(--ui-palette-paper-2);
+
+    /* ---- semantic: accent and status ---- */
+    --ui-accent: var(--ui-palette-gold);
+    --ui-on-accent: var(--ui-palette-gold-ink);
+    --ui-accent-soft: rgba(212, 175, 55, 0.14);
+    --ui-accent-line: rgba(212, 175, 55, 0.35);
+    --ui-success: var(--ui-palette-green);
+    --ui-success-soft: rgba(124, 197, 138, 0.14);
+    --ui-warning: var(--ui-palette-amber);
+    --ui-warning-soft: rgba(230, 180, 80, 0.12);
+    --ui-danger: var(--ui-palette-red);
+    --ui-danger-soft: rgba(242, 134, 126, 0.1);
+    --ui-info: var(--ui-palette-blue);
+    --ui-focus: var(--ui-palette-gold);
+
+    /* ---- game colours (markers only) ---- */
+    --ui-combo-1: #d9534f;
+    --ui-combo-2: #4a86c8;
+    --ui-combo-3: #5fa860;
+    --ui-combo-4: #d98c30;
+    --ui-element-kinetic: #c9c9c9;
+    --ui-element-arc: #79bbe8;
+    --ui-element-solar: #f0631e;
+    --ui-element-void: #8e749e;
+    --ui-element-stasis: #4d88ff;
+    --ui-element-strand: #35e366;
+    --ui-element-prismatic: #e3619b;
+    --ui-stat-weapons: #4a6fa5;
+    --ui-stat-health: #5d7a5d;
+    --ui-stat-class: #9c7c4a;
+    --ui-stat-grenade: #a35d41;
+    --ui-stat-super: #6a4a8a;
+    --ui-stat-melee: #8a3a3a;
+    --ui-rarity-exotic: #c3a019;
+    --ui-rarity-legendary: #513065;
+    --ui-mode-pve: #79bbe8;
+    --ui-mode-pvp: #f2867e;
+
+    /* ---- type ---- */
+    --ui-font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --ui-font-display: "IBM Plex Sans Condensed", "IBM Plex Sans", "Arial Narrow", system-ui, sans-serif;
+    --ui-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --ui-text-xs: 11px;     /* the floor: nothing smaller (audit) */
+    --ui-text-sm: 12px;
+    --ui-text-md: 13px;     /* body */
+    --ui-text-lg: 15px;
+    --ui-text-xl: 17px;
+    --ui-text-2xl: 20px;
+    --ui-text-3xl: 24px;
+    --ui-leading-tight: 1.2;
+    --ui-leading: 1.4;
+    --ui-weight-regular: 400;
+    --ui-weight-medium: 500;
+    --ui-weight-semibold: 600;
+    --ui-weight-bold: 700;
+    --ui-tracking-caps: 0.08em;
+
+    /* ---- space (4px grid) ---- */
+    --ui-space-1: 4px;
+    --ui-space-2: 8px;
+    --ui-space-3: 12px;
+    --ui-space-4: 16px;
+    --ui-space-5: 20px;
+    --ui-space-6: 24px;
+    --ui-space-8: 32px;
+    --ui-gutter: var(--ui-space-3);   /* panel side padding */
+
+    /* ---- size ---- */
+    --ui-tap: 44px;          /* minimum touch target (D2) */
+    --ui-control: 40px;      /* chips and compact controls */
+    --ui-icon-sm: 16px;
+    --ui-icon-md: 20px;
+    --ui-icon-lg: 24px;
+    --ui-item-icon: 44px;    /* weapon / armor art */
+    --ui-perk: 28px;         /* perk icon in a list row */
+
+    /* ---- shape ---- */
+    --ui-radius-sm: 6px;
+    --ui-radius-md: 9px;
+    --ui-radius-lg: 12px;
+    --ui-radius-xl: 18px;
+    --ui-radius-pill: 999px;
+    --ui-border: 1px solid var(--ui-line);
+
+    /* ---- elevation ---- */
+    --ui-shadow-1: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --ui-shadow-2: 0 10px 26px rgba(0, 0, 0, 0.5);
+    --ui-shadow-3: 0 -10px 30px rgba(0, 0, 0, 0.45);
+
+    /* ---- motion ---- */
+    --ui-dur-fast: 120ms;
+    --ui-dur: 180ms;
+    --ui-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+    /* ---- stacking ---- */
+    --ui-z-sticky: 5;
+    --ui-z-fab: 6;
+    --ui-z-sheet: 20;
+    --ui-z-dialog: 30;
+    --ui-z-toast: 40;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root { --ui-dur-fast: 0ms; --ui-dur: 0ms; }
+  }
+}

@@ -40,3 +40,13 @@ Starts the server and a private headless Chrome (`headless.js`), then loads the 
 `headless.js` drives Chrome over the DevTools Protocol with Node's built-in WebSocket (Node 22+), so there are no dependencies. It uses its own profile in `.chrome-profile/` and never touches your normal Chrome. Set `CHROME_PATH` if Chrome isn't in a standard place.
 
 It isn't part of `npm test` or CI because it needs Chrome and downloads Bungie's game data (~200 MB) on its first run. Later runs reuse the cached copy and take well under a minute.
+
+## Visual snapshots
+
+```bash
+npm run visual -- capture /tmp/before     # on the old code
+npm run visual -- capture /tmp/after      # on the new code
+npm run visual -- compare /tmp/before /tmp/after
+```
+
+Captures a fixed set of real screens (weapon craft, a loaded weapon, both lists, menu, Discover) from the `demo` fixture and compares them pixel by pixel, reporting where anything changed. Clocks, animations and the caret are frozen and Chrome renders in software, so two captures of the same code are identical. It was used to prove that moving `sidepanel.css` into the `legacy` cascade layer changed nothing on screen.

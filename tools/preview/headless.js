@@ -122,6 +122,9 @@ async function launch({ profileDir, headless = true } = {}) {
     headless ? '--headless=new' : '', '--remote-debugging-port=0', `--user-data-dir=${dir}`,
     // Mock keychain: a fresh profile on macOS can otherwise stall on Keychain access.
     '--use-mock-keychain', '--password-store=basic',
+    // Deterministic rendering, so two screenshots of the same code match pixel
+    // for pixel (GPU raster and LCD text anti-aliasing vary between runs).
+    '--disable-gpu', '--force-color-profile=srgb', '--disable-lcd-text', '--font-render-hinting=none',
     '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--mute-audio', 'about:blank'
   ].filter(Boolean), { stdio: 'ignore' });

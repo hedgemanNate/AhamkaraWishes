@@ -1,0 +1,34 @@
+/* Base styles for the new UI. Everything is scoped to .ui-root (the redesigned
+ * shell's container) so nothing here can reach the legacy screens, which must
+ * keep rendering exactly as before until they are rebuilt. */
+@layer base {
+  .ui-root {
+    /* The panel is the container: components adapt to the panel's width, not
+       the window's (the side panel can be 320px to very wide; D2). */
+    container-type: inline-size;
+    container-name: panel;
+    font-family: var(--ui-font-body);
+    font-size: var(--ui-text-md);
+    line-height: var(--ui-leading);
+    color: var(--ui-text);
+    background: var(--ui-bg);
+    -webkit-font-smoothing: antialiased;
+    color-scheme: dark;
+  }
+  :where(.ui-root) *,
+  :where(.ui-root) *::before,
+  :where(.ui-root) *::after { box-sizing: border-box; }
+
+  /* Controls inherit the UI's type instead of the browser's defaults. */
+  :where(.ui-root) :where(button, input, select, textarea) { font: inherit; color: inherit; }
+  :where(.ui-root) :where(button) { background: none; border: 0; padding: 0; cursor: pointer; text-align: inherit; }
+  :where(.ui-root) :where(img, svg) { display: block; max-width: 100%; }
+  :where(.ui-root) :where(h1, h2, h3, h4, p, ul, ol, figure) { margin: 0; }
+  :where(.ui-root) :where(h1, h2, h3, h4) { font-family: var(--ui-font-display); line-height: var(--ui-leading-tight); text-wrap: balance; }
+
+  /* One visible focus style everywhere (keyboard users, D2). */
+  :where(.ui-root) :focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
+
+  :where(.ui-root) ::placeholder { color: var(--ui-text-dim); }
+  :where(.ui-root) ::selection { background: var(--ui-accent-soft); }
+}

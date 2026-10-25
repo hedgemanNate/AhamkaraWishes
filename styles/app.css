@@ -1,0 +1,24 @@
+/* Ahamkara Wishes — stylesheet entry point (linked from sidepanel.html).
+ *
+ * Cascade layers, lowest priority first. A rule in a later layer beats a rule
+ * in an earlier one regardless of selector specificity, so new styles never
+ * fight the legacy stylesheet:
+ *
+ *   legacy      sidepanel.css, unchanged, until each old screen is rebuilt
+ *   tokens      --ui-* design tokens
+ *   base        .ui-root scoped defaults
+ *   components  .ui-* building blocks
+ *   views       screen-specific layout for the redesigned screens
+ *   utilities   last-word helpers ([hidden], .ui-sr-only, ...)
+ *
+ * Moving sidepanel.css into the legacy layer was checked to be pixel-identical
+ * with tools/preview/visual.js. Delete it from here once no screen uses it.
+ */
+@layer legacy, tokens, base, components, views, utilities;
+
+@import url("../sidepanel.css") layer(legacy);
+@import url("tokens.css");
+@import url("fonts.css");
+@import url("base.css");
+@import url("components.css");
+@import url("utilities.css");

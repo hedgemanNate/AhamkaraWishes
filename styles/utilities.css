@@ -1,0 +1,16 @@
+/* Utilities: the last layer, so these win over component display rules without
+ * needing !important (a component may set display:flex; [hidden] still hides it). */
+@layer utilities {
+  :where(.ui-root) [hidden],
+  .ui-root[hidden] { display: none; }
+
+  /* Visually hidden but read by screen readers. */
+  .ui-sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  .ui-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .ui-grow { flex: 1 1 auto; min-width: 0; }
+  .ui-tabular { font-variant-numeric: tabular-nums; }
+}

@@ -43,6 +43,14 @@ cp aw-store.js       "$DIST/"
 cp aw-nav.js         "$DIST/"
 cp wishlist-validate.js "$DIST/"
 
+# --- Styles (entry: styles/app.css; sidepanel.css is imported into its legacy layer) ---
+mkdir -p "$DIST/styles"
+cp styles/*.css "$DIST/styles/"
+
+# --- Fonts (IBM Plex, SIL OFL 1.1; license ships with them) ---
+mkdir -p "$DIST/vendor/fonts"
+cp -r vendor/fonts/ibm-plex "$DIST/vendor/fonts/"
+
 # --- Assets ---
 mkdir -p "$DIST/icons" "$DIST/vendor" "$DIST/oracle-engine/manifest-data"
 cp icons/icon16.png  "$DIST/icons/"

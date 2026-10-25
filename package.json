@@ -7,7 +7,8 @@
     "preview": "node tools/preview/serve.js",
     "ui-check": "node tools/preview/ui-check.js",
     "check-build": "bash build-extension.sh && node tools/check-build.js",
-    "lint": "node tools/lint-ratchet.js"
+    "lint": "node tools/lint-ratchet.js",
+    "visual": "node tools/preview/visual.js"
   },
   "engines": {
     "node": ">=14"

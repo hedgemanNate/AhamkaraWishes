@@ -177,7 +177,7 @@ Project ref `tqgewrylrjqfqzqlmmag`. Client code reads public tables with the ano
 | `wishlist-actions` | `whoami`, `submit`, `delete` (identity verified against Bungie server-side) |
 | `admin-actions` | `check`, `list_creators`, `add/update/remove_creator`, `feature/unfeature_wishlist`, `delete_wishlist`, `backup_get`, `backup_put` (gated by `ADMIN_BUNGIE_MEMBERSHIP_ID` secret) |
 
-`wishlist-actions` `submit` cleans the list with the extension's own `WishlistValidate.sanitizeList` before storing it (`_shared/submission.js`; the client files are byte-identical copies in `_shared/client/`, kept in step by `node tools/sync-edge-shared.js` and checked by `npm test`). **This version is not deployed yet**: `supabase functions deploy wishlist-actions`.
+`wishlist-actions` `submit` cleans the list with the extension's own `WishlistValidate.sanitizeList` before storing it (`_shared/submission.js`; the client files are byte-identical copies in `_shared/client/`, kept in step by `node tools/sync-edge-shared.js` and checked by `npm test`). **This version is not deployed yet**: `supabase functions deploy wishlist-actions`. Deploy it **after** the extension update that reads armor `{archetype, tertiary, spark}` is live: the server stores lists in that shape, and older builds can't read it.
 
 Tables referenced include `wishlists`, `creators`, `wishlist_backups`. The admin nav button is cosmetic; the real gate is the server-side re-check on every mutating call. Free-tier projects auto-pause after ~1 week idle, which surfaces as a bare "Failed to fetch" — hence `supabaseFetch`.
 

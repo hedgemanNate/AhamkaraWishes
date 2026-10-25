@@ -97,6 +97,11 @@ let prevented = false;
 doc.listeners.keydown.forEach((f) => f({ key: 'Escape', preventDefault() { prevented = true; } }));
 check('Escape closes the top layer', nav.state.stack.length === 0 && prevented);
 check('other keys do nothing', nav.handleKey({ key: 'Enter' }) === false);
+nav.open('lists');
+const inDialog = { closest: (sel) => (sel === 'dialog[open]' ? {} : null) };
+check('Escape inside an open <dialog> (confirm) leaves the sheet beneath open', nav.handleKey({ key: 'Escape', target: inDialog }) === false && nav.top === 'lists');
+check('Escape already handled elsewhere is ignored', nav.handleKey({ key: 'Escape', defaultPrevented: true }) === false && nav.top === 'lists');
+nav.closeAll();
 
 // guards
 nav.open('builder');

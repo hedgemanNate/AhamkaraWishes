@@ -145,6 +145,9 @@
       /** Escape key: closes the top layer. Returns true if it handled the key. */
       handleKey(e) {
         if (e.key !== 'Escape' || !stack.length) return false;
+        // A native <dialog> (AWUI.confirm) handles its own Escape; it must not
+        // also close the sheet underneath it.
+        if (e.defaultPrevented || (e.target && e.target.closest && e.target.closest('dialog[open]'))) return false;
         api.close();
         if (e.preventDefault) e.preventDefault();
         return true;

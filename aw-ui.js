@@ -241,6 +241,7 @@
       const id = nextId('ui-dialog');
       const returnTo = doc.activeElement;
       let done = false;
+      let watcher = null;
       // Resolves exactly once, from whichever path ends the dialog. The buttons
       // and Escape resolve directly instead of waiting for the 'close' event:
       // Chrome sometimes skips that event for a dialog opened after another
@@ -248,6 +249,7 @@
       const finish = (value) => {
         if (done) return;
         done = true;
+        if (watcher) watcher.disconnect();
         if (dlg.open) dlg.close();
         dlg.remove();
         if (returnTo && returnTo.isConnected && typeof returnTo.focus === 'function') returnTo.focus();
@@ -264,6 +266,12 @@
       (o.container || doc.querySelector('.ui-root') || doc.body).appendChild(dlg);
       dlg.showModal();
       cancelBtn.focus();
+      // If the screen holding the dialog is re-rendered, Chrome drops the
+      // dialog without a 'close' event; settle as "no" instead of hanging.
+      if (root.MutationObserver) {
+        watcher = new root.MutationObserver(() => { if (!dlg.isConnected) finish(false); });
+        watcher.observe(doc.documentElement || doc.body, { childList: true, subtree: true });
+      }
     });
   }
 

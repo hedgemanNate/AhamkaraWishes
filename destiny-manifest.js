@@ -136,16 +136,32 @@ function tableVersionKey(tableName) { return `version:${tableName}`; }
 
 async function cachedTableVersion(tableName) {
   const own = await idbGet(tableVersionKey(tableName), STORE_META);
-  // Caches written before per-table versions: trust the old shared key once.
-  return own || idbGet("manifestVersion", STORE_META);
+  if (own) return own;
+  // Caches written before per-table versions shared one key. Trust it only for
+  // the ~200 MB item table, which every startup refreshed first; the smaller
+  // tables re-check (and re-download if stale) once.
+  return tableName === "DestinyInventoryItemDefinition" ? idbGet("manifestVersion", STORE_META) : null;
 }
 
+// Bumped whenever the item or set table is replaced, so a lookup or parse that
+// started on the old copy can't store its result over the new one.
+let _manifestGen = 0;
+
 // What each table invalidates in memory when a new copy is stored.
+// The armor set lookup is rebuilt in the background rather than dropped:
+// getArmorSetName() is synchronous and keeps answering from the old copy
+// until the new one is ready.
 const TABLE_MEMORY = {
-  DestinyInventoryItemDefinition: () => { _invItemDefs = null; _invItemDefsLoading = null; _nameIndex = null; _armorSetLookup = null; _armorSetLookupLoading = null; },
-  [ARMOR_SET_TABLE]: () => { _armorSetDefs = null; _armorSetLookup = null; _armorSetLookupLoading = null; },
+  DestinyInventoryItemDefinition: () => { _manifestGen++; _invItemDefs = null; _invItemDefsLoading = null; _nameIndex = null; rebuildArmorSetLookup(); },
+  [ARMOR_SET_TABLE]: () => { _manifestGen++; _armorSetDefs = null; rebuildArmorSetLookup(); },
   DestinyPlugSetDefinition: () => { _plugSetDefs = null; },
 };
+
+// Tables already confirmed usable this session. Later callers (perk columns
+// during a matching pass, which runs under the dimData lock) get an answer
+// without another network round trip. A Bungie update mid-session is picked
+// up on the next panel open.
+const _tablesConfirmed = new Set();
 
 /**
  * Makes sure one manifest table is cached in IndexedDB at the current
@@ -155,9 +171,13 @@ const TABLE_MEMORY = {
  * startup used to fetch it twice when two modules asked at once.
  */
 function ensureManifestTableReady(tableName, { force = false } = {}) {
+  if (!force && _tablesConfirmed.has(tableName)) return Promise.resolve(true);
   const running = _tableDownloads.get(tableName);
   if (running && !force) return running;
-  const job = downloadTableIfStale(tableName, force).finally(() => {
+  const job = downloadTableIfStale(tableName, force).then((ok) => {
+    if (ok) _tablesConfirmed.add(tableName);
+    return ok;
+  }).finally(() => {
     if (_tableDownloads.get(tableName) === job) _tableDownloads.delete(tableName);
   });
   _tableDownloads.set(tableName, job);
@@ -233,7 +253,8 @@ let _invItemDefsLoading = null;
 function loadInventoryItemDefsToMemory() {
   if (_invItemDefs) return Promise.resolve(_invItemDefs);
   if (!_invItemDefsLoading) {
-    _invItemDefsLoading = (async () => {
+    const gen = _manifestGen;
+    const job = (async () => {
       let blob = await idbGet("DestinyInventoryItemDefinition", STORE_BLOBS);
       if (!blob) {
         d2warn("No cached item defs found. Attempting download...");
@@ -241,10 +262,12 @@ function loadInventoryItemDefsToMemory() {
         blob = await idbGet("DestinyInventoryItemDefinition", STORE_BLOBS);
       }
       if (!blob) throw new Error("Item defs still missing after ensureInventoryItemDefsReady.");
-      _invItemDefs = tableToMap(blob);
-      d2log("Loaded item defs into memory:", _invItemDefs.size);
-      return _invItemDefs;
-    })().finally(() => { _invItemDefsLoading = null; });
+      const map = tableToMap(blob);
+      if (gen === _manifestGen) _invItemDefs = map; // else a newer copy landed meanwhile
+      d2log("Loaded item defs into memory:", map.size);
+      return map;
+    })().finally(() => { if (_invItemDefsLoading === job) _invItemDefsLoading = null; });
+    _invItemDefsLoading = job;
   }
   return _invItemDefsLoading;
 }
@@ -252,15 +275,17 @@ function loadInventoryItemDefsToMemory() {
 /** Armor set definitions (name, pieces, 2-/4-piece perks), or null if unavailable. */
 async function loadArmorSetDefsToMemory() {
   if (_armorSetDefs) return _armorSetDefs;
+  const gen = _manifestGen;
   let blob = await idbGet(ARMOR_SET_TABLE, STORE_BLOBS);
   if (!blob && await ensureEquippableItemSetDefsReady()) blob = await idbGet(ARMOR_SET_TABLE, STORE_BLOBS);
   if (!blob) {
     d2warn("No armor set defs available.");
     return null;
   }
-  _armorSetDefs = tableToMap(blob);
-  d2log("Loaded armor set defs into memory:", _armorSetDefs.size);
-  return _armorSetDefs;
+  const map = tableToMap(blob);
+  if (gen === _manifestGen) _armorSetDefs = map;
+  d2log("Loaded armor set defs into memory:", map.size);
+  return map;
 }
 
 async function loadPlugSetDefsToMemory() {
@@ -471,12 +496,27 @@ async function getWeaponDisplayStats(def) {
 // ("Techsec", "AION Renewal"); guessing from the pieces' shared words is only
 // a fallback for when that table couldn't be loaded.
 let _armorSetLookupLoading = null;
+let _armorSetLookupGen = -1;
 function getArmorSetLookup() {
-  if (_armorSetLookup) return Promise.resolve(_armorSetLookup);
+  if (_armorSetLookup && _armorSetLookupGen === _manifestGen) return Promise.resolve(_armorSetLookup);
   if (!_armorSetLookupLoading) {
-    _armorSetLookupLoading = buildArmorSetLookup().finally(() => { _armorSetLookupLoading = null; });
+    const gen = _manifestGen;
+    const job = buildArmorSetLookup().then((lookup) => {
+      // A lookup from a replaced table is still better than none; its old
+      // generation makes the next call rebuild it.
+      if (gen === _manifestGen || !_armorSetLookup) { _armorSetLookup = lookup; _armorSetLookupGen = gen; }
+      return lookup;
+    }).finally(() => { if (_armorSetLookupLoading === job) _armorSetLookupLoading = null; });
+    _armorSetLookupLoading = job;
   }
   return _armorSetLookupLoading;
+}
+
+/** After a table update: build a fresh lookup if one was in use, keeping the old meanwhile. */
+function rebuildArmorSetLookup() {
+  const inUse = _armorSetLookup || _armorSetLookupLoading;
+  _armorSetLookupLoading = null;
+  if (inUse) getArmorSetLookup().catch((e) => d2warn("Armor set lookup rebuild failed:", e));
 }
 
 async function buildArmorSetLookup() {
@@ -509,7 +549,6 @@ async function buildArmorSetLookup() {
       perks: Array.isArray(setDef?.setPerks) ? setDef.setPerks : []
     });
   }
-  _armorSetLookup = lookup;
   d2log("Built armor set lookup:", lookup.size, "sets", setDefs ? "(official names)" : "(names guessed)");
   return lookup;
 }

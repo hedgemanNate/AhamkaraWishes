@@ -99,6 +99,22 @@ const staleRowActions = async () => {
   out.editDuplicate = r.result === 'duplicate' && items()[hash].wishes[1].raw === '[[3]]';
   r = await editItemWish(hash, 0, '[[4]]', { perks: [[4]] }, 'pve', 'pve|weapon:gone');
   out.editMissing = r.result === 'missing' && items()[hash].wishes.length === 2;
+
+  // An armor wish with a Spark (e.g. imported) keeps it through an edit in the
+  // builder, which can't pick a Spark yet.
+  // (an armor wish with a Tertiary: the builder can only edit those)
+  const pickWithTertiary = () => Object.entries(items()).find(([, i]) => i.static.type === 'armor' && i.wishes[0]?.config?.tertiary);
+  [hash, item] = pickWithTertiary();
+  await AWStore.update((d) => { d.lists[d.activeId].items[hash].wishes[0].config.spark = 'Super'; });
+  item = items()[hash];
+  const before = item.wishes[0];
+  await loadWishIntoArmorCraft(hash, 0, item, before);
+  const flipped = before.tags[0] === 'pvp' ? 'pve' : 'pvp';
+  currentMode = flipped; // the edit: switch PvE/PvP (the builder's own state)
+  await handleEditWish();
+  const after = items()[hash].wishes[0];
+  out.armorEditDiag = JSON.stringify({ before: before.config, after: after.config, tags: after.tags, arch: currentArchetype && currentArchetype.name, tertiary: currentTertiary });
+  out.armorEditKeepsSpark = after.tags[0] === flipped && after.config.spark === 'Super';
   return out;
 };
 
@@ -203,6 +219,12 @@ async function checkGallery(browser, base, width) {
   await ev(() => document.getElementById('g-confirm').click()); await sleep(100);
   await ev(() => [...document.querySelectorAll('dialog.ui-dialog .ui-btn')].find((b) => b.textContent.trim() === 'Remove').click()); await sleep(100);
   check(`${tag}: confirming resolves true`, await ev(() => window.__gallery.log.includes('confirm:true')));
+  check(`${tag}: a confirm whose dialog is removed settles as "no" (never hangs)`, await ev(async () => {
+    const pending = AWUI.confirm({ title: 'Removed while open' });
+    await new Promise((r) => setTimeout(r, 50));
+    document.querySelector('dialog.ui-dialog').remove();
+    return (await Promise.race([pending, new Promise((r) => setTimeout(() => r('hung'), 500))])) === false;
+  }));
 
   // Toast with Undo, announced through one live region.
   await ev(() => document.getElementById('g-toast').click());
@@ -240,6 +262,7 @@ async function checkGallery(browser, base, width) {
         check('demo: Edit after the list shifted changes the right wish', s.editStale);
         check('demo: Edit into an existing roll is refused, nothing changes', s.editDuplicate);
         check('demo: Edit of a wish deleted elsewhere changes nothing', s.editMissing);
+        check('demo: editing an armor wish keeps its Spark', s.armorEditKeepsSpark, s.armorEditDiag);
         check('demo: no page errors after the edits', page.errors.length === 0, page.errors[0]);
         const g = await page.eval(guestSyncLoop);
         check('guest: re-showing the panel does not retry sync', g.afterShows === 0, `${g.afterShows} retries`);

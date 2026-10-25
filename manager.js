@@ -963,16 +963,30 @@ window.backfillPerkColIndex = backfillPerkColIndex;
  * never between a read and the write — matching a stale copy and writing it
  * back is what used to drop saves made in the meantime.
  *
- * `backfill` also fills in linked hashes / column indexes from the manifest
- * (local data only; no network).
+ * `backfill` also fills in linked hashes / column indexes from the manifest.
+ * The manifest is made ready BEFORE taking the lock (it can mean a download);
+ * inside the lock the backfill then reads memory and IndexedDB only, and is
+ * skipped when the manifest isn't available.
  * Resolves { beforeSnapshot, dimData, summary }: what the caller needs to lock,
  * vault and feed newly matched items, which are network calls made after the
  * lock is released.
  */
+/** Loads what the backfills read, outside any lock. Resolves false if unavailable. */
+async function warmManifestForBackfill() {
+  try {
+    const [defs, plugSets] = await Promise.all([loadInventoryItemDefsToMemory(), ensurePlugSetDefsReady()]);
+    return !!defs && plugSets === true;
+  } catch (e) {
+    console.warn('[Manager] manifest not ready; skipping wish backfill this pass', e);
+    return false;
+  }
+}
+
 async function matchWishlistPass(idx, { backfill = false } = {}) {
   if (!idx || !window.OwnedInventoryIndex || !window.OwnedInventoryIndex.matchWishlist) return null;
+  const canBackfill = backfill && await warmManifestForBackfill();
   return AWStore.update(async (dimData) => {
-    if (backfill) {
+    if (canBackfill) {
       await backfillLinkedHashes(dimData);
       await backfillPerkColIndex(dimData);
     }

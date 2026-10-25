@@ -39,6 +39,9 @@ const TABLES = {
   DestinyPlugSetDefinition: { 5: { reusablePlugItems: [] } }
 };
 
+// v2 of the game data adds a third Techsec piece, so a rebuilt lookup is visible.
+const VERSIONED = { v2: { DestinyInventoryItemDefinition: { ...TABLES.DestinyInventoryItemDefinition, 4: ARMOR(4, 'Techsec Command Gauntlets', 239346083) } } };
+
 /** A fresh copy of the module with its own fake network and database. */
 function load({ version = 'v1', offline = false, idb = new Map() } = {}) {
   const net = { version, offline, downloads: [], metaCalls: 0 };
@@ -46,6 +49,7 @@ function load({ version = 'v1', offline = false, idb = new Map() } = {}) {
     console: quiet, TextDecoder, Response, Blob, Map, Set, Promise, JSON, Date, Object, Array, String, Number, Error, Math, Uint8Array,
     indexedDB: null,
     fetch: async (url) => {
+      if (net.hang) return new Promise(() => {}); // Bungie never answers
       if (net.offline) throw new Error('offline');
       if (url.includes('/Platform/Destiny2/Manifest/')) {
         net.metaCalls++;
@@ -53,10 +57,11 @@ function load({ version = 'v1', offline = false, idb = new Map() } = {}) {
         for (const t of Object.keys(TABLES)) paths[t] = `/content/${net.version}/${t}.json`;
         return { ok: true, json: async () => ({ Response: { version: net.version, jsonWorldComponentContentPaths: { en: paths } } }) };
       }
-      const table = url.split('/').pop().replace('.json', '');
+      const [, , ver, file] = url.split('/').slice(-4);
+      const table = file.replace('.json', '');
       net.downloads.push(table);
       await new Promise((r) => setTimeout(r, 5)); // let concurrent callers overlap
-      const body = Buffer.from(JSON.stringify(TABLES[table]));
+      const body = Buffer.from(JSON.stringify((VERSIONED[ver] || {})[table] || TABLES[table]));
       return { ok: true, headers: { get: () => 'application/json' }, arrayBuffer: async () => body };
     }
   };
@@ -120,6 +125,45 @@ function load({ version = 'v1', offline = false, idb = new Map() } = {}) {
   ({ ctx, net } = load({ idb: old }));
   await ctx.ensureInventoryItemDefsReady();
   check('old shared version key is honoured once (no 200 MB re-download)', net.downloads.length === 0);
+
+  // --- a table confirmed this session needs no more network round trips
+  // (matching passes ask for perk columns while holding the dimData lock)
+  ({ ctx, net } = load({ idb }));
+  await ctx.ensurePlugSetDefsReady();
+  vm.runInContext('_metaPromise = null;', ctx); // the 5-minute manifest answer has expired
+  net.hang = true; // any network use now never finishes
+  const answer = await Promise.race([ctx.ensurePlugSetDefsReady(), new Promise((r) => setTimeout(() => r('hung'), 100))]);
+  check('confirmed table: answered without the network (no hang under the dimData lock)', answer === true);
+
+  // --- old shared key: trusted for the item table only
+  const legacyAll = new Map([['meta:manifestVersion', 'v1'],
+    ['blobs:DestinyInventoryItemDefinition', TABLES.DestinyInventoryItemDefinition],
+    ['blobs:DestinyPlugSetDefinition', TABLES.DestinyPlugSetDefinition]]);
+  ({ ctx, net } = load({ idb: legacyAll }));
+  await ctx.ensurePlugSetDefsReady();
+  check('old shared key: small tables re-check once (it may have been written by another table)', net.downloads.includes('DestinyPlugSetDefinition'));
+
+  // --- first open after an update, with no lookup built yet: the build that
+  // started on the old copy must still leave names (and a rebuild) behind
+  const firstOpen = new Map();
+  ({ ctx } = load({ idb: firstOpen }));
+  await ctx.ensureInventoryItemDefsReady(); // v1 cached, nothing in memory
+  ({ ctx, net } = load({ idb: firstOpen, version: 'v2' }));
+  await Promise.all([ctx.ensureInventoryItemDefsReady(), ctx.ensureEquippableItemSetDefsReady(), ctx.getArmorSetLookup()]);
+  check('first open after an update: set names available', ctx.getArmorSetName(239346083) === 'Techsec');
+  await new Promise((r) => setTimeout(r, 50));
+  check('first open after an update: rebuilt from the new table', (await ctx.getArmorSetLookup()).get('239346083').items.length === 3);
+
+  // --- a Bungie update during startup must not blank set names
+  const stale = new Map();
+  ({ ctx } = load({ idb: stale })); // cache everything at v1
+  await Promise.all([ctx.ensureInventoryItemDefsReady(), ctx.ensureEquippableItemSetDefsReady(), ctx.getArmorSetLookup()]);
+  ({ ctx, net } = load({ idb: stale, version: 'v2' })); // next open: Bungie has v2
+  await Promise.all([ctx.ensureInventoryItemDefsReady(), ctx.ensureEquippableItemSetDefsReady(), ctx.getArmorSetLookup()]);
+  check('update at startup: set names still answer (old copy kept while rebuilding)', ctx.getArmorSetName(239346083) === 'Techsec');
+  await new Promise((r) => setTimeout(r, 50));
+  const rebuilt = await ctx.getArmorSetLookup();
+  check('update at startup: the lookup is rebuilt from the new item table', rebuilt.get('239346083').items.length === 3 && ctx.getArmorSetName(239346083) === 'Techsec');
 
   // --- offline
   ({ ctx, net } = load({ idb, offline: true, version: 'v3' }));

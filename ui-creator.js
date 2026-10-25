@@ -14,7 +14,7 @@ let currentMode = 'pve';
 // Set only when the current craft session was loaded from an existing saved
 // wish via the list card's EDIT button. Drives whether EDIT WISH is shown,
 // and which wish it overwrites.
-let armorEditContext = null; // { hash, wishIndex, key } — key: the wish's WishlistSync.wishKey
+let armorEditContext = null; // { hash, wishIndex, key, spark } — key: the wish's WishlistSync.wishKey
 
 // --- FILTER STATE ---
 let filterMode = null; // 'archetype' or 'class'
@@ -955,7 +955,7 @@ async function handleEditWish() {
       ctx.hash,
       ctx.wishIndex,
       `armor-wish:${ctx.hash}`,
-      { archetype: currentArchetype.name, tertiary: currentTertiary, spark: null },
+      { archetype: currentArchetype.name, tertiary: currentTertiary, spark: ctx.spark || null },
       currentMode,
       ctx.key
     );
@@ -1051,7 +1051,9 @@ async function loadWishIntoArmorCraft(hash, wishIndex, entry, wish) {
   const modeToggle = document.getElementById('ui-mode-toggle');
   if (modeToggle) modeToggle.className = `toggle-container ${currentMode}`;
 
-  armorEditContext = { hash, wishIndex, key: window.WishlistSync.wishKey(wish) };
+  // The builder can't pick a Spark yet (D9), so an edit keeps the one the wish
+  // has (e.g. from an imported list) instead of silently dropping it.
+  armorEditContext = { hash, wishIndex, key: window.WishlistSync.wishKey(wish), spark: window.WishlistSync.armorFields(wish.config).spark };
   updatePrimaryBtn();
 }
 

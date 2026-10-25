@@ -60,6 +60,8 @@ async function capture(dir) {
   const { server, url } = await start(0);
   const browser = await launch();
   try {
+    // Chrome updates change text anti-aliasing, so compare notes the version.
+    fs.writeFileSync(path.join(dir, 'browser.txt'), `${await browser.version()}\n`);
     for (const [name, steps] of SCREENS) {
       const page = await browser.newPage({ width, height: 720 });
       await page.goto(`${url}/sidepanel.html?fixture=demo`);
@@ -78,6 +80,12 @@ async function capture(dir) {
 
 async function compare(a, b) {
   const names = fs.readdirSync(a).filter((f) => f.endsWith('.png'));
+  const ver = (d) => { try { return fs.readFileSync(path.join(d, 'browser.txt'), 'utf8').trim(); } catch (e) { return 'unknown'; } };
+  if (ver(a) !== ver(b)) {
+    console.log(`warning: captured with different browsers (${ver(a)} vs ${ver(b)}).`);
+    console.log('  Text anti-aliasing changes between Chrome versions, so every screen may differ.');
+    console.log('  Re-capture the baseline from the old commit with this browser before comparing.\n');
+  }
   const browser = await launch();
   let changed = 0;
   try {

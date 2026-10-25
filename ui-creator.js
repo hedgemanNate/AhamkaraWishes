@@ -14,7 +14,7 @@ let currentMode = 'pve';
 // Set only when the current craft session was loaded from an existing saved
 // wish via the list card's EDIT button. Drives whether EDIT WISH is shown,
 // and which wish it overwrites.
-let armorEditContext = null; // { hash, wishIndex }
+let armorEditContext = null; // { hash, wishIndex, key } — key: the wish's WishlistSync.wishKey
 
 // --- FILTER STATE ---
 let filterMode = null; // 'archetype' or 'class'
@@ -945,26 +945,35 @@ function handleSaveWish() {
  * Overwrites the single wish currently loaded via a list card's EDIT
  * button, instead of appending a new one.
  */
-function handleEditWish() {
+async function handleEditWish() {
   if (!armorEditContext || !currentArchetype || !currentTertiary) return;
+  const ctx = armorEditContext;
+
+  let outcome;
+  try {
+    outcome = await editItemWish(
+      ctx.hash,
+      ctx.wishIndex,
+      `armor-wish:${ctx.hash}`,
+      { archetype: currentArchetype.name, tertiary: currentTertiary, spark: null },
+      currentMode,
+      ctx.key
+    );
+  } catch (err) {
+    console.error("[EditWish] Error updating wish:", err);
+    return;
+  }
+  if (armorEditContext === ctx) ctx.key = outcome.key; // a second edit finds the wish by its new identity
 
   const btn = document.getElementById("btn-edit-armor");
   const original = btn.textContent;
-  btn.textContent = "WISH UPDATED!";
+  btn.textContent = { duplicate: "ALREADY SAVED", missing: "WISH WAS DELETED" }[outcome.result] || "WISH UPDATED!";
   btn.classList.add("success");
   setTimeout(() => {
     btn.classList.remove("success");
     btn.textContent = original;
     updatePrimaryBtn();
   }, 1500);
-
-  editItemWish(
-    armorEditContext.hash,
-    armorEditContext.wishIndex,
-    `armor-wish:${armorEditContext.hash}`,
-    { archetype: currentArchetype.name, tertiary: currentTertiary, spark: null },
-    currentMode
-  ).catch(err => console.error("[EditWish] Error updating wish:", err));
 }
 
 /**
@@ -1042,7 +1051,7 @@ async function loadWishIntoArmorCraft(hash, wishIndex, entry, wish) {
   const modeToggle = document.getElementById('ui-mode-toggle');
   if (modeToggle) modeToggle.className = `toggle-container ${currentMode}`;
 
-  armorEditContext = { hash, wishIndex };
+  armorEditContext = { hash, wishIndex, key: window.WishlistSync.wishKey(wish) };
   updatePrimaryBtn();
 }
 
@@ -1233,7 +1242,8 @@ function createArmorCard(item) {
         card.style.transform = "scale(0.9)";
         card.style.opacity = "0";
         card.style.transition = "0.3s ease";
-        setTimeout(() => { deleteArmorWish(item.hash, item.wishIndex); }, 300);
+        const key = window.WishlistSync.wishKey(item.wish);
+        setTimeout(() => { deleteArmorWish(item.hash, item.wishIndex, key); }, 300);
     };
 
     card.querySelector('.edit-btn').onclick = (e) => {
@@ -1309,27 +1319,28 @@ function createArmorCard(item) {
 }
 
 /**
- * Deletes a specific armor wish from local storage by index.
+ * Deletes one armor wish, found by `key` (its wishKey when the card was drawn)
+ * so a list that changed meanwhile can't lose a different wish.
  * Removes the entire item if no wishes remain.
  */
-function deleteArmorWish(hash, wishIndex) {
+function deleteArmorWish(hash, wishIndex, key) {
     return AWStore.update((data) => {
         const listId = AWStore.ensureActiveList(data);
         const activeList = data.lists[listId];
         const item = activeList.items[hash];
-        if (!item || !item.wishes || wishIndex >= item.wishes.length) return AWStore.SKIP;
+        const at = window.WishlistSync.locateWish(item && item.wishes, wishIndex, key);
+        if (at < 0) return AWStore.SKIP;
 
-        const [removed] = item.wishes.splice(wishIndex, 1);
+        const [removed] = item.wishes.splice(at, 1);
         // Record the deletion so cross-browser sync can't restore it from
         // a browser still holding the old copy — see wishlist-sync-core.js.
-        if (removed) window.WishlistSync?.recordWishTombstone(data, listId, hash, removed);
+        window.WishlistSync?.recordWishTombstone(data, listId, hash, removed);
 
         // Remove item entirely if no wishes remain
         if (item.wishes.length === 0) {
             delete activeList.items[hash];
         }
     }).then(() => {
-        console.log(`[Manager] Wish rescinded for hash: ${hash}, index: ${wishIndex}`);
         // Refresh the UI to reflect the removal
         refreshArmorList();
     });

@@ -150,6 +150,10 @@ async function launch({ profileDir, headless = true } = {}) {
   const base = `http://127.0.0.1:${port}`;
 
   return {
+    /** e.g. "HeadlessChrome/156.0.8078.48" — text rendering can change between versions. */
+    async version() {
+      return (await (await fetch(`${base}/json/version`)).json()).Browser;
+    },
     async newPage({ width = 360, height = 720 } = {}) {
       const target = await (await fetch(`${base}/json/new?about:blank`, { method: 'PUT' })).json();
       const ws = new WebSocket(target.webSocketDebuggerUrl);

@@ -76,6 +76,28 @@ check('unknown item: returns false', WS.replaceWish(empty, 'default', 999, 0, we
 check('unknown list: returns false', WS.replaceWish(empty, 'nope', 100, 0, weaponWish('[[2]]', T0)) === false);
 check('missing replacement: returns false', WS.replaceWish(empty, 'default', 100, 0, null) === false);
 
+// --- locateWish: rows find their wish by identity, not just position ---
+// A row drawn from [A, B, C] remembers (index 1, key of B). If C was deleted on
+// another browser and A arrived from sync in front, index 1 is now someone else.
+const A = weaponWish('[[1]]', T0), B = weaponWish('[[2]]', T0), C = weaponWish('[[3]]', T0);
+const keyB = WS.wishKey(B);
+check('locateWish: index still right -> that index', WS.locateWish([A, B, C], 1, keyB) === 1);
+check('locateWish: list shifted -> finds the wish where it moved', WS.locateWish([B, C], 1, keyB) === 0);
+check('locateWish: wish gone -> -1, never a neighbour', WS.locateWish([A, C], 1, keyB) === -1);
+check('locateWish: index past the end -> searches', WS.locateWish([C, B], 7, keyB) === 1);
+check('locateWish: no key -> trusts the index (old callers)', WS.locateWish([A, B], 1) === 1);
+check('locateWish: no key, index out of range -> -1', WS.locateWish([A], 3) === -1);
+check('locateWish: missing wishes array -> -1', WS.locateWish(undefined, 0, keyB) === -1);
+check('locateWish: same perks in the other mode is a different wish', (() => {
+  const pvpB = weaponWish('[[2]]', T0); pvpB.tags = ['pvp'];
+  return WS.locateWish([pvpB], 0, keyB) === -1;
+})());
+check('locateWish: armor wish found in either config shape', (() => {
+  const legacy = armorWish('GUNNER', 'Class', T0); // Tertiary still in `spark`
+  const key = WS.wishKey({ tags: ['pve'], config: { archetype: 'GUNNER', tertiary: 'Class', spark: null } });
+  return WS.locateWish([armorWish('GUNNER', 'Super', T0), legacy], 0, key) === 1;
+})());
+
 if (failures) {
   console.error(`\n${failures} wish-edit-sync check(s) failed`);
   process.exit(1);

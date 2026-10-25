@@ -5,7 +5,8 @@
 //
 // Starts the preview server and a private headless Chrome, then loads the real
 // side panel with each fixture and checks what a person would see:
-//   demo     lists render, no page errors, nothing wider than the panel
+//   demo     lists render, no page errors, nothing wider than the panel; Delete
+//            and Edit hit the right wish after the list shifted under them
 //   hostile  shared/imported junk renders as inert text: no script runs, no
 //            off-site image loads, the rest of each list still works
 //   empty    a fresh install shows its empty states
@@ -56,6 +57,48 @@ const readLists = async () => {
     evilInDom: /evil\.example/.test(html),
     wider: document.documentElement.scrollWidth > window.innerWidth + 1
   };
+};
+
+/**
+ * Delete and Edit after the list changed under them (sync, another tab): each
+ * must act on the wish its row was drawn from, never a neighbour at the same
+ * index. Runs the app's real deleteWish / deleteArmorWish / editItemWish.
+ */
+const staleRowActions = async () => {
+  const WS = window.WishlistSync;
+  const items = () => window.__awPreview.dump().dimData.lists[window.__awPreview.dump().dimData.activeId].items;
+  const pick = (type) => Object.entries(items()).find(([, i]) => i.static.type === type);
+  // Another browser's wish arrives at the front: every saved row's index is now off by one.
+  const pushFront = (hash, wish) => AWStore.update((d) => { d.lists[d.activeId].items[hash].wishes.unshift(wish); });
+  const out = {};
+
+  let [hash, item] = pick('weapon');
+  let target = item.wishes[0];
+  let intruder = { tags: ['pvp'], config: { perks: [[1]] }, raw: '[[1]]', added: Date.now() };
+  await pushFront(hash, intruder);
+  await deleteWish(hash, 0, WS.wishKey(target)); // the row was drawn when target was at 0
+  let left = items()[hash]?.wishes || [];
+  out.weaponDelete = left.length === 1 && left[0].raw === '[[1]]';
+
+  [hash, item] = pick('armor');
+  target = item.wishes[0];
+  intruder = { tags: ['pvp'], config: { archetype: 'GUNNER', tertiary: null, spark: null }, raw: `armor-wish:${hash}`, added: Date.now() };
+  await pushFront(hash, intruder);
+  await deleteArmorWish(hash, 0, WS.wishKey(target));
+  left = items()[hash]?.wishes || [];
+  out.armorDelete = left.length === 1 && WS.wishKey(left[0]) === WS.wishKey(intruder);
+
+  [hash, item] = pick('weapon');
+  target = item.wishes[0];
+  await pushFront(hash, { tags: ['pvp'], config: { perks: [[2]] }, raw: '[[2]]', added: Date.now() });
+  let r = await editItemWish(hash, 0, '[[3]]', { perks: [[3]] }, 'pve', WS.wishKey(target));
+  left = items()[hash].wishes;
+  out.editStale = r.result === 'updated' && left[0].raw === '[[2]]' && left[1].raw === '[[3]]';
+  r = await editItemWish(hash, 1, '[[2]]', { perks: [[2]] }, 'pvp', r.key);
+  out.editDuplicate = r.result === 'duplicate' && items()[hash].wishes[1].raw === '[[3]]';
+  r = await editItemWish(hash, 0, '[[4]]', { perks: [[4]] }, 'pve', 'pve|weapon:gone');
+  out.editMissing = r.result === 'missing' && items()[hash].wishes.length === 2;
+  return out;
 };
 
 /**
@@ -169,6 +212,15 @@ async function checkGallery(browser, base, width) {
       check(`[${width}] demo: nothing wider than the panel`, !r.wider);
       check(`[${width}] demo: no page errors`, page.errors.length === 0, page.errors[0]);
       await page.screenshot(path.join(OUT, `demo-armor-${width}.png`));
+      if (width === WIDTHS[0]) {
+        const s = await page.eval(staleRowActions);
+        check('demo: Delete after the list shifted removes the right weapon wish', s.weaponDelete);
+        check('demo: Delete after the list shifted removes the right armor wish', s.armorDelete);
+        check('demo: Edit after the list shifted changes the right wish', s.editStale);
+        check('demo: Edit into an existing roll is refused, nothing changes', s.editDuplicate);
+        check('demo: Edit of a wish deleted elsewhere changes nothing', s.editMissing);
+        check('demo: no page errors after the edits', page.errors.length === 0, page.errors[0]);
+      }
 
       // hostile
       page = await openPanel(browser, url, 'hostile', width);

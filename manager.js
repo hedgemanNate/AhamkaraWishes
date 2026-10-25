@@ -1335,7 +1335,7 @@ function createWeaponCard(hash, item) {
         delBtn.innerHTML = '&#x2715;';
         delBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            deleteWish(hash, index);
+            deleteWish(hash, index, window.WishlistSync.wishKey(wish));
         });
         row.appendChild(delBtn);
 
@@ -1371,30 +1371,46 @@ function createItemCard(hash, item) {
 
 // Overwrites a specific existing wish in place (used by the weapon craft page's
 // EDIT WISH button) instead of appending a new entry the way saveItem does.
-async function editItemWish(hash, index, rawString, config, mode = "pve") {
-  let wrote = false;
+/**
+ * Overwrites one saved wish. `key` is the wish's WishlistSync.wishKey from when
+ * it was loaded for editing, so an edit can't land on a different wish if the
+ * list changed meanwhile. Resolves { result, key }: result is 'updated',
+ * 'duplicate' (another saved wish already is exactly this roll, so nothing
+ * changed) or 'missing' (the wish was deleted elsewhere); key is the wish's
+ * key after the edit, for a follow-up edit.
+ */
+async function editItemWish(hash, index, rawString, config, mode = "pve", key) {
+  const next = { tags: [mode], config, raw: rawString };
+  const nextKey = window.WishlistSync.wishKey(next);
+  let result = 'missing';
   await AWStore.update((data) => {
     const listId = AWStore.ensureActiveList(data);
-    const old = data.lists[listId].items[hash]?.wishes?.[index];
-    if (!old) return AWStore.SKIP;
-
-    const next = { tags: [mode], config, raw: rawString, added: old.added || Date.now() };
+    const wishes = data.lists[listId].items[hash]?.wishes;
+    const at = window.WishlistSync.locateWish(wishes, index, key);
+    if (at < 0) { result = 'missing'; return AWStore.SKIP; }
+    if (wishes.some((w, i) => i !== at && window.WishlistSync.wishKey(w) === nextKey)) {
+      result = 'duplicate';
+      return AWStore.SKIP;
+    }
+    next.added = wishes[at].added || Date.now();
     // replaceWish tombstones the old wish if the edit changed its sync identity
     // (perks, or archetype + Tertiary), so cloud sync can't bring it back.
-    wrote = window.WishlistSync.replaceWish(data, listId, hash, index, next);
-    if (!wrote) return AWStore.SKIP;
+    result = window.WishlistSync.replaceWish(data, listId, hash, at, next) ? 'updated' : 'missing';
+    if (result !== 'updated') return AWStore.SKIP;
   });
-  if (wrote) matchWishlistAgainstCachedIndex();
+  if (result === 'updated') matchWishlistAgainstCachedIndex();
+  return { result, key: result === 'updated' ? nextKey : key };
 }
 
-function deleteWish(hash, index) {
+/** Deletes one saved wish, found by `key` (its wishKey when the row was drawn). */
+function deleteWish(hash, index, key) {
     return AWStore.update((data) => {
         const listId = AWStore.ensureActiveList(data);
         const activeList = data.lists[listId];
         const wishes = activeList.items[hash]?.wishes;
-        if (!wishes) return AWStore.SKIP;
-        const [removed] = wishes.splice(index, 1);
-        if (!removed) return AWStore.SKIP;
+        const at = window.WishlistSync.locateWish(wishes, index, key);
+        if (at < 0) return AWStore.SKIP; // already gone: never delete a different wish
+        const [removed] = wishes.splice(at, 1);
         // Record the deletion so cross-browser sync can't restore it from a
         // browser still holding the old copy — see wishlist-sync-core.js.
         window.WishlistSync?.recordWishTombstone(data, listId, hash, removed);

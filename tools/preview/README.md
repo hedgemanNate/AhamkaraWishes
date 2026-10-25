@@ -50,3 +50,5 @@ npm run visual -- compare /tmp/before /tmp/after
 ```
 
 Captures a fixed set of real screens (weapon craft, a loaded weapon, both lists, menu, Discover) from the `demo` fixture and compares them pixel by pixel, reporting where anything changed. Clocks, animations and the caret are frozen and Chrome renders in software, so two captures of the same code are identical. It was used to prove that moving `sidepanel.css` into the `legacy` cascade layer changed nothing on screen.
+
+Both captures must come from the same Chrome version: an update changes text anti-aliasing everywhere. Each capture writes `browser.txt`, and `compare` warns when the two differ. If Chrome updated since your baseline, re-capture the baseline from the old commit.

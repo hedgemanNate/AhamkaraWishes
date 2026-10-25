@@ -129,6 +129,21 @@
     return true;
   }
 
+  /**
+   * Finds the wish a list row was drawn from. Rows remember the index AND the
+   * wish's key when they render; by the time someone taps Delete or Save, the
+   * list may have changed (cross-browser sync, a godroll.tv add, another tab),
+   * so the index alone can point at a different wish. Returns the index of the
+   * wish with `key` (preferring `index` when it still matches), or -1 if that
+   * wish is gone. Without a key, trusts the index (old callers).
+   */
+  function locateWish(wishes, index, key) {
+    if (!Array.isArray(wishes)) return -1;
+    if (key == null) return wishes[index] ? index : -1;
+    if (wishes[index] && wishKey(wishes[index]) === key) return index;
+    return wishes.findIndex((w) => w && wishKey(w) === key);
+  }
+
   function mergeTombstones(a, b) {
     const out = { lists: {}, wishes: {} };
     const cutoff = Date.now() - TOMBSTONE_TTL_MS;
@@ -293,6 +308,7 @@
     recordListTombstone,
     recordWishTombstone,
     replaceWish,
+    locateWish,
     mergeDimData,
     stableStringify,
     emptyDimData,

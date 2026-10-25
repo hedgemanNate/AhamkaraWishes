@@ -18,7 +18,7 @@ let activeComboColor = null;
 // Set only when the current craft session was loaded from an existing saved
 // roll via double-click (loadWishIntoWeaponCraft). Drives whether EDIT WISH
 // is shown, and which wish it overwrites.
-let currentEditContext = null; // { hash, index }
+let currentEditContext = null; // { hash, index, key } — key: the wish's WishlistSync.wishKey
 
 // The four combos a single wish can express. A colour appearing in two or more
 // columns is a combo — a concrete perk tuple that an owned roll must satisfy in
@@ -340,7 +340,7 @@ async function loadWishIntoWeaponCraft(hash, index, item, wish) {
     const modeToggle = document.getElementById('weapon-mode-toggle');
     if (modeToggle) modeToggle.className = `toggle-container ${currentCraftMode}`;
 
-    currentEditContext = { hash, index };
+    currentEditContext = { hash, index, key: window.WishlistSync.wishKey(wish) };
     updateEditButtonVisibility();
 
     renderPerkPicker();
@@ -1035,6 +1035,8 @@ async function saveWeaponWish() {
     }
 }
 
+const EDIT_RESULT_LABEL = { updated: 'WISH UPDATED!', duplicate: 'ALREADY SAVED', missing: 'WISH WAS DELETED' };
+
 async function editWeaponWish() {
     if (!currentCraftWeapon || !currentEditContext) return;
 
@@ -1044,12 +1046,14 @@ async function editWeaponWish() {
         return;
     }
 
-    await editItemWish(currentEditContext.hash, currentEditContext.index, rawString, config, currentCraftMode);
+    const ctx = currentEditContext;
+    const { result, key } = await editItemWish(ctx.hash, ctx.index, rawString, config, currentCraftMode, ctx.key);
+    if (currentEditContext === ctx) ctx.key = key; // a second edit finds the wish by its new identity
 
     const editBtn = document.getElementById('weapon-edit-wish-btn');
     if (editBtn) {
         const original = editBtn.textContent;
-        editBtn.textContent = 'WISH UPDATED!';
+        editBtn.textContent = EDIT_RESULT_LABEL[result] || EDIT_RESULT_LABEL.updated;
         setTimeout(() => { editBtn.textContent = original; }, 1500);
     }
 }

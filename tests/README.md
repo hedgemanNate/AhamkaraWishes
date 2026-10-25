@@ -23,6 +23,7 @@ npm test
 | `weapon-wish-core-test.js` | Shared wish payload (raw identity string, combos) and add-to-list duplicate/backfill rules |
 | `safe-rendering-test.js` | `escapeHtml` / `safeImageUrl`, and `sanitizeList` against a hostile imported wishlist (keep this fixture: it is the standing check that shared lists can't inject markup or load off-site images) |
 | `aw-dom-test.js` | `html``, `h()`, `render()`, `isSafeUrl`: interpolations escaped, text stays text, no inline handlers, unsafe URLs refused (fake DOM, no browser needed) |
+| `aw-nav-test.js` | Navigation controller: one tab view shown, everything beneath the top layer inert, focus moves in and back, Escape, close guards, remembered tab |
 | `preview-server-test.js` | Preview server never serves outside the repo or `.git`, and injects the chrome stub before the first script |
 | `aw-store-test.js` | `AWStore.update` serialisation: slow and fast writers both land, no lost updates under contention, SKIP / unchanged data cause no write |
 | `wish-edit-sync-test.js` | Editing a wish tombstones its old identity so cross-browser sync can't resurrect it |

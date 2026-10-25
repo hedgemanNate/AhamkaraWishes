@@ -39,6 +39,26 @@ const LOCAL_REF = /['"`]((?:[\w.-]+\/)*[\w.-]+\.(?:js|mjs|css|html|json|csv|wasm
 const CSS_REF = /url\(\s*['"]?([^'")]+)['"]?\s*\)|@import\s+['"]([^'"]+)['"]/g;
 const HTML_REF = /\s(?:src|href)=["']([^"'#?]+)["']/g;
 
+/**
+ * Removes line and block comments while leaving string and template literals
+ * intact, so URLs and match patterns such as https://godroll.tv/<star> survive.
+ */
+function stripComments(js) {
+  let out = '', i = 0;
+  while (i < js.length) {
+    const c = js[i], n = js[i + 1];
+    if (c === '/' && n === '*') { const end = js.indexOf('*/', i + 2); i = end < 0 ? js.length : end + 2; continue; }
+    if (c === '/' && n === '/') { while (i < js.length && js[i] !== '\n') i++; continue; }
+    if (c === "'" || c === '"' || c === '`') {
+      let j = i + 1;
+      while (j < js.length && js[j] !== c) { if (js[j] === '\\') j++; j++; }
+      out += js.slice(i, j + 1); i = j + 1; continue;
+    }
+    out += c; i++;
+  }
+  return out;
+}
+
 let failures = 0;
 const fail = (msg) => { console.log('FAIL: ' + msg); failures++; };
 
@@ -87,10 +107,12 @@ for (const file of files) {
   } else if (ext === '.css') {
     for (const m of text.matchAll(CSS_REF)) { const u = m[1] || m[2]; if (u && !isRemote(u)) ref(resolveFrom(r, u), r); }
   } else {
+    // Comments aren't references (they often mention example paths).
+    const code = stripComments(text);
     // JS paths are usually relative to the extension root (chrome.runtime.getURL,
     // importScripts from the root service worker, content-script lists); ES
     // modules such as the WASM glue load files relative to themselves instead.
-    for (const m of text.matchAll(LOCAL_REF)) {
+    for (const m of code.matchAll(LOCAL_REF)) {
       if (NOT_FILES.has(m[1])) continue;
       const besideIt = resolveFrom(r, m[1]);
       ref(!shipped.has(m[1]) && shipped.has(besideIt) ? besideIt : m[1], r);

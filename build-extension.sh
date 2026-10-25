@@ -40,6 +40,7 @@ cp admin.js          "$DIST/"
 cp admin-sync.js     "$DIST/"
 cp aw-dom.js         "$DIST/"
 cp aw-store.js       "$DIST/"
+cp aw-nav.js         "$DIST/"
 cp wishlist-validate.js "$DIST/"
 
 # --- Assets ---

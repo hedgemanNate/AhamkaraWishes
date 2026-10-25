@@ -1,7 +1,7 @@
 // ===============================
 // Destiny 2 Manifest Loader & Utilities
 // DIM-style local manifest loader with gzip decompression support
-// Fetches & caches DestinyInventoryItemDefinition and DestinyEquippableItemSetDefinition
+// Fetches & caches manifest tables (item, armor set, plug set, stat, perk definitions)
 // ===============================
 
 // --- CONFIGURATION ---
@@ -111,257 +111,155 @@ async function bytesToTextMaybeGzip(buf, contentTypeHint = "") {
   return new TextDecoder("utf-8").decode(u8);
 }
 
-// Download DestinyInventoryItemDefinition component JSON and cache it.
-async function ensureInventoryItemDefsReady({ force = false } = {}) {
-  console.groupCollapsed("[D2MANIFEST] ensureInventoryItemDefsReady");
+// Bungie's table name really is "Equipable" (one p).
+const ARMOR_SET_TABLE = "DestinyEquipableItemSetDefinition";
 
+// How long one GetDestinyManifest answer is reused. Every table checks it at
+// startup; one request serves them all.
+const MANIFEST_META_TTL_MS = 5 * 60 * 1000;
+let _metaPromise = null;
+let _metaFetchedAt = 0;
+const _tableDownloads = new Map(); // tableName -> Promise<boolean> while one runs
+
+function getManifestMeta() {
+  if (!_metaPromise || Date.now() - _metaFetchedAt > MANIFEST_META_TTL_MS) {
+    _metaFetchedAt = Date.now();
+    _metaPromise = fetchManifestMeta().catch((e) => { _metaPromise = null; throw e; });
+  }
+  return _metaPromise;
+}
+
+// Each table remembers the manifest version it was downloaded from. They used
+// to share one "manifestVersion" key, so after a Bungie update the first table
+// to refresh marked every other table current and they stayed stale.
+function tableVersionKey(tableName) { return `version:${tableName}`; }
+
+async function cachedTableVersion(tableName) {
+  const own = await idbGet(tableVersionKey(tableName), STORE_META);
+  // Caches written before per-table versions: trust the old shared key once.
+  return own || idbGet("manifestVersion", STORE_META);
+}
+
+// What each table invalidates in memory when a new copy is stored.
+const TABLE_MEMORY = {
+  DestinyInventoryItemDefinition: () => { _invItemDefs = null; _invItemDefsLoading = null; _nameIndex = null; _armorSetLookup = null; _armorSetLookupLoading = null; },
+  [ARMOR_SET_TABLE]: () => { _armorSetDefs = null; _armorSetLookup = null; _armorSetLookupLoading = null; },
+  DestinyPlugSetDefinition: () => { _plugSetDefs = null; },
+};
+
+/**
+ * Makes sure one manifest table is cached in IndexedDB at the current
+ * manifest version. Resolves true when a usable copy is cached (including an
+ * older copy while Bungie is unreachable), false when none could be had.
+ * Concurrent callers share one download: the item table is ~200 MB, and
+ * startup used to fetch it twice when two modules asked at once.
+ */
+function ensureManifestTableReady(tableName, { force = false } = {}) {
+  const running = _tableDownloads.get(tableName);
+  if (running && !force) return running;
+  const job = downloadTableIfStale(tableName, force).finally(() => {
+    if (_tableDownloads.get(tableName) === job) _tableDownloads.delete(tableName);
+  });
+  _tableDownloads.set(tableName, job);
+  return job;
+}
+
+async function downloadTableIfStale(tableName, force) {
+  console.groupCollapsed(`[D2MANIFEST] ensure ${tableName}`);
   try {
-    // Check cache before touching the network. Since D2 is permanently frozen
-    // post-Monument of Triumph the manifest will never change; a cached copy is
-    // always valid even if Bungie's CDN is unreachable.
-    const cachedVersion = await idbGet("manifestVersion", STORE_META);
-    const haveCachedBlob = await idbGet("DestinyInventoryItemDefinition", STORE_BLOBS);
-
-    let meta = null;
-    if (!force && haveCachedBlob) {
-      try {
-        meta = await fetchManifestMeta();
-        _manifestVersion = meta.version;
-        if (meta.version === cachedVersion) {
-          d2log("Manifest cache is up-to-date. Skipping download.");
-          return true;
-        }
-        d2log("Manifest version changed, re-downloading:", cachedVersion, "->", meta.version);
-      } catch (e) {
-        d2warn("Cannot reach Bungie to verify manifest version; using cached copy:", e.message);
-        _manifestVersion = cachedVersion;
+    const haveCachedBlob = await idbGet(tableName, STORE_BLOBS);
+    let meta;
+    try {
+      meta = await getManifestMeta();
+    } catch (e) {
+      if (haveCachedBlob && !force) {
+        d2warn(`Cannot reach Bungie; using cached ${tableName}:`, e.message);
         return true;
       }
-    } else {
-      // No cache (or forced) — must fetch meta to get download URL
-      meta = await fetchManifestMeta();
-      _manifestVersion = meta.version;
+      throw e;
+    }
+    if (tableName === "DestinyInventoryItemDefinition") _manifestVersion = meta.version;
+    if (haveCachedBlob && !force && meta.version === await cachedTableVersion(tableName)) {
+      d2log(`${tableName} is up to date.`);
+      return true;
     }
 
-    const lang = "en";
-    const comp = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyInventoryItemDefinition;
-    const world = meta.jsonWorldContentPaths?.[lang];
-
-    let path = comp || world;
+    let path = meta.jsonWorldComponentContentPaths?.en?.[tableName];
     if (!path) {
-      d2warn("Manifest meta did not include expected JSON paths. Keys:", Object.keys(meta || {}));
-      throw new Error("No usable JSON manifest path found (jsonWorldComponentContentPaths / jsonWorldContentPaths).");
+      d2warn(`${tableName} is not in the manifest; skipping.`);
+      return !!haveCachedBlob;
     }
     if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
-    d2log("Downloading manifest content from:", path, "| component?", !!comp);
+    d2log(`Downloading ${tableName} (manifest ${meta.version}) from:`, path);
 
     const r = await fetch(path, { headers: { "Accept": "application/json" } });
     if (!r.ok) {
       const t = await r.text().catch(() => "");
-      throw new Error(`Manifest download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
+      throw new Error(`${tableName} download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
     }
     const buf = await r.arrayBuffer();
     d2log("Downloaded bytes:", buf.byteLength);
+    const parsed = JSON.parse(await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || ""));
+    if (!parsed || typeof parsed !== "object") throw new Error(`${tableName} download was not a table.`);
 
-    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
-    d2log("Decoded text length:", text.length);
-
-    const parsed = JSON.parse(text);
-
-    const itemDefs = comp ? parsed : parsed?.DestinyInventoryItemDefinition;
-    if (!itemDefs) {
-      const keys = Object.keys(parsed || {});
-      d2warn("Parsed manifest keys (sample):", keys.slice(0, 30));
-      throw new Error("Downloaded JSON did not contain DestinyInventoryItemDefinition data.");
-    }
-
-    await idbSet("DestinyInventoryItemDefinition", itemDefs, STORE_BLOBS);
-    await idbSet("manifestVersion", meta.version, STORE_META);
-
-    _invItemDefs = null;
-    _nameIndex = null;
-
-    d2log("Manifest cache updated successfully.");
+    await idbSet(tableName, parsed, STORE_BLOBS);
+    await idbSet(tableVersionKey(tableName), meta.version, STORE_META);
+    (TABLE_MEMORY[tableName] || (() => _smallTables.delete(tableName)))();
+    d2log(`${tableName} cache updated.`);
     return true;
   } catch (e) {
-    d2err("ensureInventoryItemDefsReady FAILED:", e);
+    d2err(`ensure ${tableName} FAILED:`, e);
     return false;
   } finally {
     console.groupEnd();
   }
 }
 
-// Download DestinyEquippableItemSetDefinition component JSON and cache it.
-async function ensureEquippableItemSetDefsReady({ force = false } = {}) {
-  console.groupCollapsed("[D2MANIFEST] ensureEquippableItemSetDefsReady");
-
-  try {
-    const cachedVersion = await idbGet("manifestVersion", STORE_META);
-    const haveCachedBlob = await idbGet("DestinyEquippableItemSetDefinition", STORE_BLOBS);
-
-    let meta = null;
-    if (!force && haveCachedBlob) {
-      try {
-        meta = await fetchManifestMeta();
-        if (meta.version === cachedVersion) {
-          d2log("Armor set defs cache is up-to-date. Skipping download.");
-          return true;
-        }
-      } catch (e) {
-        d2warn("Cannot reach Bungie; using cached armor set defs:", e.message);
-        return true;
-      }
-    } else {
-      meta = await fetchManifestMeta();
-    }
-
-    const lang = "en";
-    const setDefsPath = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyEquippableItemSetDefinition;
-
-    if (!setDefsPath) {
-      d2log("DestinyEquippableItemSetDefinition not available in manifest meta; skipping.");
-      return false;
-    }
-
-    let path = setDefsPath;
-    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
-    d2log("Downloading armor set definitions from:", path);
-
-    const r = await fetch(path, { headers: { "Accept": "application/json" } });
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      throw new Error(`Armor set defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
-    }
-    const buf = await r.arrayBuffer();
-    d2log("Downloaded bytes:", buf.byteLength);
-
-    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
-
-    const parsed = JSON.parse(text);
-    await idbSet("DestinyEquippableItemSetDefinition", parsed, STORE_BLOBS);
-    await idbSet("manifestVersion", meta.version, STORE_META);
-
-    _armorSetDefs = null;
-    _armorSetLookup = null;
-
-    d2log("Armor set defs cache updated successfully.");
-    return true;
-  } catch (e) {
-    d2err("ensureEquippableItemSetDefsReady FAILED:", e);
-    return false;
-  } finally {
-    console.groupEnd();
-  }
-}
-
-// Download DestinyPlugSetDefinition component JSON and cache it.
-// Needed to resolve a weapon socket's actual perk pool (reusablePlugSetHash /
-// randomizedPlugSetHash) into the list of selectable plug item hashes.
-async function ensurePlugSetDefsReady({ force = false } = {}) {
-  console.groupCollapsed("[D2MANIFEST] ensurePlugSetDefsReady");
-
-  try {
-    const cachedVersion = await idbGet("manifestVersion", STORE_META);
-    const haveCachedBlob = await idbGet("DestinyPlugSetDefinition", STORE_BLOBS);
-
-    let meta = null;
-    if (!force && haveCachedBlob) {
-      try {
-        meta = await fetchManifestMeta();
-        if (meta.version === cachedVersion) {
-          d2log("Plug set defs cache is up-to-date. Skipping download.");
-          return true;
-        }
-      } catch (e) {
-        d2warn("Cannot reach Bungie; using cached plug set defs:", e.message);
-        return true;
-      }
-    } else {
-      meta = await fetchManifestMeta();
-    }
-
-    const lang = "en";
-    const plugSetDefsPath = meta.jsonWorldComponentContentPaths?.[lang]?.DestinyPlugSetDefinition;
-
-    if (!plugSetDefsPath) {
-      d2log("DestinyPlugSetDefinition not available in manifest meta; skipping.");
-      return false;
-    }
-
-    let path = plugSetDefsPath;
-    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
-    d2log("Downloading plug set definitions from:", path);
-
-    const r = await fetch(path, { headers: { "Accept": "application/json" } });
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      throw new Error(`Plug set defs download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
-    }
-    const buf = await r.arrayBuffer();
-    d2log("Downloaded bytes:", buf.byteLength);
-
-    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
-    const parsed = JSON.parse(text);
-    await idbSet("DestinyPlugSetDefinition", parsed, STORE_BLOBS);
-    await idbSet("manifestVersion", meta.version, STORE_META);
-
-    _plugSetDefs = null;
-
-    d2log("Plug set defs cache updated successfully.");
-    return true;
-  } catch (e) {
-    d2err("ensurePlugSetDefsReady FAILED:", e);
-    return false;
-  } finally {
-    console.groupEnd();
-  }
-}
+// Named entry points kept for the modules that call them.
+function ensureInventoryItemDefsReady(opts) { return ensureManifestTableReady("DestinyInventoryItemDefinition", opts); }
+function ensureEquippableItemSetDefsReady(opts) { return ensureManifestTableReady(ARMOR_SET_TABLE, opts); }
+// Resolves a weapon socket's perk pool (reusablePlugSetHash / randomizedPlugSetHash).
+function ensurePlugSetDefsReady(opts) { return ensureManifestTableReady("DestinyPlugSetDefinition", opts); }
 
 // --- MEMORY LOADING ---
-async function loadInventoryItemDefsToMemory() {
-  if (_invItemDefs) return _invItemDefs;
-
-  console.groupCollapsed("[D2MANIFEST] loadInventoryItemDefsToMemory");
-  const blob = await idbGet("DestinyInventoryItemDefinition", STORE_BLOBS);
-  if (!blob) {
-    d2warn("No cached item defs found. Attempting download...");
-    const ok = await ensureInventoryItemDefsReady({ force: false });
-    if (!ok) throw new Error("Unable to download/cache manifest; see logs above.");
-  }
-  const defsObj = await idbGet("DestinyInventoryItemDefinition", STORE_BLOBS);
-  if (!defsObj) throw new Error("Item defs still missing after ensureInventoryItemDefsReady.");
-
+function tableToMap(blob) {
   const map = new Map();
-  let count = 0;
-  for (const [hashStr, def] of Object.entries(defsObj)) {
-    map.set(String(hashStr), def);
-    count++;
-  }
-  _invItemDefs = map;
-  d2log("Loaded defs into memory:", count);
-  console.groupEnd();
-  return _invItemDefs;
+  for (const [hashStr, def] of Object.entries(blob)) map.set(String(hashStr), def);
+  return map;
 }
 
+// Several modules ask for the item defs at startup; parse the ~200 MB table once.
+let _invItemDefsLoading = null;
+function loadInventoryItemDefsToMemory() {
+  if (_invItemDefs) return Promise.resolve(_invItemDefs);
+  if (!_invItemDefsLoading) {
+    _invItemDefsLoading = (async () => {
+      let blob = await idbGet("DestinyInventoryItemDefinition", STORE_BLOBS);
+      if (!blob) {
+        d2warn("No cached item defs found. Attempting download...");
+        if (!await ensureInventoryItemDefsReady()) throw new Error("Unable to download/cache manifest; see logs above.");
+        blob = await idbGet("DestinyInventoryItemDefinition", STORE_BLOBS);
+      }
+      if (!blob) throw new Error("Item defs still missing after ensureInventoryItemDefsReady.");
+      _invItemDefs = tableToMap(blob);
+      d2log("Loaded item defs into memory:", _invItemDefs.size);
+      return _invItemDefs;
+    })().finally(() => { _invItemDefsLoading = null; });
+  }
+  return _invItemDefsLoading;
+}
+
+/** Armor set definitions (name, pieces, 2-/4-piece perks), or null if unavailable. */
 async function loadArmorSetDefsToMemory() {
   if (_armorSetDefs) return _armorSetDefs;
-
-  console.groupCollapsed("[D2MANIFEST] loadArmorSetDefsToMemory");
-  const blob = await idbGet("DestinyEquippableItemSetDefinition", STORE_BLOBS);
+  let blob = await idbGet(ARMOR_SET_TABLE, STORE_BLOBS);
+  if (!blob && await ensureEquippableItemSetDefsReady()) blob = await idbGet(ARMOR_SET_TABLE, STORE_BLOBS);
   if (!blob) {
-    d2warn("No cached armor set defs found.");
+    d2warn("No armor set defs available.");
     return null;
   }
-
-  const map = new Map();
-  let count = 0;
-  for (const [hashStr, def] of Object.entries(blob)) {
-    map.set(String(hashStr), def);
-    count++;
-  }
-  _armorSetDefs = map;
-  d2log("Loaded armor set defs into memory:", count);
-  console.groupEnd();
+  _armorSetDefs = tableToMap(blob);
+  d2log("Loaded armor set defs into memory:", _armorSetDefs.size);
   return _armorSetDefs;
 }
 
@@ -392,64 +290,6 @@ async function getPlugSetDef(hash) {
   const defs = await loadPlugSetDefsToMemory();
   if (!defs) return null;
   return defs.get(String(hash)) || null;
-}
-
-// Generic downloader/loader for small manifest component tables
-// (DestinyStatDefinition ~2MB, DestinyStatGroupDefinition ~300KB).
-// Same version-gated IndexedDB caching as the big tables above.
-async function ensureManifestTableReady(tableName, { force = false } = {}) {
-  console.groupCollapsed(`[D2MANIFEST] ensureManifestTableReady:${tableName}`);
-  try {
-    const cachedVersion = await idbGet("manifestVersion", STORE_META);
-    const haveCachedBlob = await idbGet(tableName, STORE_BLOBS);
-
-    let meta = null;
-    if (!force && haveCachedBlob) {
-      try {
-        meta = await fetchManifestMeta();
-        if (meta.version === cachedVersion) {
-          d2log(`${tableName} cache is up-to-date. Skipping download.`);
-          return true;
-        }
-      } catch (e) {
-        d2warn(`Cannot reach Bungie; using cached ${tableName}:`, e.message);
-        return true;
-      }
-    } else {
-      meta = await fetchManifestMeta();
-    }
-
-    const tablePath = meta.jsonWorldComponentContentPaths?.["en"]?.[tableName];
-    if (!tablePath) {
-      d2log(`${tableName} not available in manifest meta; skipping.`);
-      return false;
-    }
-
-    let path = tablePath;
-    if (!path.startsWith("http")) path = `${BUNGIE_ROOT}${path}`;
-    d2log(`Downloading ${tableName} from:`, path);
-
-    const r = await fetch(path, { headers: { "Accept": "application/json" } });
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      throw new Error(`${tableName} download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
-    }
-    const buf = await r.arrayBuffer();
-    const text = await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || "");
-    const parsed = JSON.parse(text);
-    await idbSet(tableName, parsed, STORE_BLOBS);
-    await idbSet("manifestVersion", meta.version, STORE_META);
-
-    _smallTables.delete(tableName);
-
-    d2log(`${tableName} cache updated successfully.`);
-    return true;
-  } catch (e) {
-    d2err(`ensureManifestTableReady(${tableName}) FAILED:`, e);
-    return false;
-  } finally {
-    console.groupEnd();
-  }
 }
 
 async function loadManifestTableToMemory(tableName) {
@@ -627,58 +467,85 @@ async function getWeaponDisplayStats(def) {
 }
 
 // --- LOOKUP TABLES ---
-async function getArmorSetLookup() {
-  if (_armorSetLookup) return _armorSetLookup;
+// Map<setHash, { name, items, perks }>. Names come from Bungie's set table
+// ("Techsec", "AION Renewal"); guessing from the pieces' shared words is only
+// a fallback for when that table couldn't be loaded.
+let _armorSetLookupLoading = null;
+function getArmorSetLookup() {
+  if (_armorSetLookup) return Promise.resolve(_armorSetLookup);
+  if (!_armorSetLookupLoading) {
+    _armorSetLookupLoading = buildArmorSetLookup().finally(() => { _armorSetLookupLoading = null; });
+  }
+  return _armorSetLookupLoading;
+}
 
-  console.groupCollapsed("[D2MANIFEST] buildArmorSetLookup");
-
-  const defs = await loadInventoryItemDefsToMemory();
-  const lookup = new Map();
-  const setsByHash = new Map(); // Temporary: hash → array of item names
-  let itemCount = 0;
-
-  // First pass: collect all armor items grouped by set hash
+async function buildArmorSetLookup() {
+  const [defs, setDefs] = await Promise.all([
+    loadInventoryItemDefsToMemory(),
+    loadArmorSetDefsToMemory().catch((e) => { d2warn("Armor set names unavailable:", e); return null; })
+  ]);
+  const setsByHash = new Map(); // setHash -> pieces
   for (const [hash, def] of defs.entries()) {
     if (!isRealArmorDef(def)) continue;
-
     const setHash = def.equippingBlock?.equipableItemSetHash;
     if (!setHash) continue;
-
-    const setHashStr = String(setHash);
-    const itemName = def.displayProperties?.name || "";
-    const item = {
+    const key = String(setHash);
+    if (!setsByHash.has(key)) setsByHash.set(key, []);
+    setsByHash.get(key).push({
       hash,
-      name: itemName,
+      name: def.displayProperties?.name || "",
       icon: def.displayProperties?.icon || "",
       classType: def.classType,
       bucketHash: def.inventory?.bucketTypeHash
-    };
-
-    if (!setsByHash.has(setHashStr)) {
-      setsByHash.set(setHashStr, []);
-    }
-
-    setsByHash.get(setHashStr).push(item);
-    itemCount++;
-  }
-
-  // Second pass: extract set name from common words
-  for (const [setHashStr, items] of setsByHash.entries()) {
-    if (items.length === 0) continue;
-
-    // Get common words across all item names
-    const setName = extractCommonSetName(items.map(it => it.name));
-
-    lookup.set(setHashStr, {
-      name: setName,
-      items: items
     });
   }
 
+  const lookup = new Map();
+  for (const [key, items] of setsByHash.entries()) {
+    const setDef = setDefs?.get(key);
+    lookup.set(key, {
+      name: setDef?.displayProperties?.name || extractCommonSetName(items.map((it) => it.name)),
+      items,
+      perks: Array.isArray(setDef?.setPerks) ? setDef.setPerks : []
+    });
+  }
   _armorSetLookup = lookup;
-  d2log("Built armor set lookup:", lookup.size, "sets,", itemCount, "items");
-  console.groupEnd();
-  return _armorSetLookup;
+  d2log("Built armor set lookup:", lookup.size, "sets", setDefs ? "(official names)" : "(names guessed)");
+  return lookup;
+}
+
+/**
+ * The bonuses a set grants, smallest first: [{ count, name, description }]
+ * where count is how many pieces must be worn (2, 4). Pure, for tests.
+ */
+function describeSetBonuses(setPerks, perkDefs) {
+  if (!Array.isArray(setPerks) || !perkDefs) return [];
+  return setPerks
+    .map((sp) => {
+      const dp = perkDefs.get(String(sp?.sandboxPerkHash))?.displayProperties;
+      return dp?.name ? { count: Number(sp.requiredSetCount) || 0, name: dp.name, description: dp.description || "" } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.count - b.count);
+}
+
+/**
+ * Set bonuses for a piece's set (D15). Resolves [] when the piece has no set
+ * ("No set bonus") or the perk text can't be loaded. Loads the ~2.5 MB perk
+ * table on first use only.
+ */
+async function getArmorSetBonuses(setHash) {
+  if (!setHash) return [];
+  const sets = await loadArmorSetDefsToMemory();
+  const setPerks = sets?.get(String(setHash))?.setPerks;
+  if (!setPerks?.length) return [];
+  return describeSetBonuses(setPerks, await loadManifestTableToMemory("DestinySandboxPerkDefinition"));
+}
+
+/** The set an armor piece belongs to, from its item definition (null if none). */
+async function getArmorSetHashForItem(itemHash) {
+  const defs = await loadInventoryItemDefsToMemory();
+  return defs.get(String(itemHash))?.equippingBlock?.equipableItemSetHash || null;
 }
 
 // Extract common set name from array of item names
@@ -1269,3 +1136,5 @@ async function getWeaponPerkColumns(def) {
 // - getWeaponPerkColumns()
 // - getArmorSetLookup()
 // - getArmorSetName()
+// - getArmorSetBonuses() / describeSetBonuses()
+// - getArmorSetHashForItem()

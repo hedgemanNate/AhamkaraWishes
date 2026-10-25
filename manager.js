@@ -402,6 +402,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         // Now load and display the wishlist UI
         loadLists();
+        backfillArmorSets();
         // Attempt a background OwnedIndex update from any cached Bungie profile
         try {
           chrome.storage.local.get(['lastBungieProfile'], async (res) => {
@@ -1400,6 +1401,29 @@ async function editItemWish(hash, index, rawString, config, mode = "pve", key) {
   });
   if (result === 'updated') matchWishlistAgainstCachedIndex();
   return { result, key: result === 'updated' ? nextKey : key };
+}
+
+/**
+ * Gives saved armor that lacks it the set it belongs to (and the set's real
+ * name), from the item definitions, so the list groups whole sets and can show
+ * their bonuses. Writes only when something was missing.
+ */
+async function backfillArmorSets() {
+    try {
+        const defs = await loadInventoryItemDefsToMemory();
+        const setOf = (itemHash) => {
+            const hash = defs.get(String(itemHash))?.equippingBlock?.equipableItemSetHash;
+            return hash ? { hash, name: getArmorSetName(hash) } : null;
+        };
+        let changed = 0;
+        await AWStore.update((data) => {
+            changed = window.WeaponWish.fillArmorSets(data, setOf);
+            if (!changed) return AWStore.SKIP;
+        });
+        if (changed && typeof refreshArmorList === 'function') refreshArmorList();
+    } catch (e) {
+        console.warn('[MANAGER] armor set backfill skipped', e);
+    }
 }
 
 /** Deletes one saved wish, found by `key` (its wishKey when the row was drawn). */

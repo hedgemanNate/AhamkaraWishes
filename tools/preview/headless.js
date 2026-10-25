@@ -139,6 +139,11 @@ async function launch({ profileDir, headless = true } = {}) {
     '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--mute-audio', 'about:blank'
   ].filter(Boolean), { stdio: 'ignore' });
+  // Never leave Chrome holding the profile lock if node dies early (an
+  // exception, Ctrl-C, or `| head` closing the pipe), or the next launch fails.
+  const reap = () => { if (proc.exitCode === null) proc.kill('SIGKILL'); };
+  process.once('exit', reap);
+  for (const sig of ['SIGINT', 'SIGTERM', 'SIGPIPE', 'SIGHUP']) process.once(sig, () => { reap(); process.exit(1); });
   let port;
   try {
     port = (await waitForFile(portFile, 60000)).split('\n')[0].trim();
@@ -163,6 +168,7 @@ async function launch({ profileDir, headless = true } = {}) {
       return page;
     },
     async close() {
+      process.removeListener('exit', reap);
       proc.kill('SIGTERM');
       await sleep(300);
       if (proc.exitCode === null) proc.kill('SIGKILL');

@@ -70,5 +70,23 @@ const add = (config, mode = 'pve') => window.WeaponWish.addWishToList(d, 'a', { 
 add({ archetype: 'GUNNER', tertiary: 'Class', spark: null });
 check('legacy-shaped duplicate of a saved wish is refused', add({ archetype: 'GUNNER', spark: 'Class' }) === 'duplicate');
 
+// --- set backfill (armor saved without its set)
+const sets = { 11: { hash: 239346083, name: 'Techsec' }, 12: { hash: 239346083, name: 'Techsec' } };
+const setOf = (h) => sets[h] || null;
+const bf = { activeId: 'a', lists: {
+  a: { name: 'A', items: {
+    11: { static: { name: 'Techsec Helm', type: 'armor', setName: 'Techsec Helm', setHash: null }, wishes: [] },
+    13: { static: { name: 'Iron Forerunner Helm', type: 'armor', setHash: null }, wishes: [] },
+    14: { static: { name: 'Gun', type: 'weapon' }, wishes: [] }
+  } },
+  b: { name: 'B', items: { 12: { static: { name: 'Techsec Plate', type: 'armor', setHash: 5 }, wishes: [] } } }
+} };
+check('backfill: fills only the armor that was missing its set', window.WeaponWish.fillArmorSets(bf, setOf) === 1);
+check('backfill: set hash and real set name stored', bf.lists.a.items[11].static.setHash === 239346083 && bf.lists.a.items[11].static.setName === 'Techsec');
+check('backfill: armor with no set stays set-less', bf.lists.a.items[13].static.setHash === null);
+check('backfill: weapons untouched', !('setHash' in bf.lists.a.items[14].static));
+check('backfill: an existing set hash is never overwritten', bf.lists.b.items[12].static.setHash === 5);
+check('backfill: second run changes nothing', window.WeaponWish.fillArmorSets(bf, setOf) === 0);
+
 if (failures) { console.error(`\n${failures} armor-schema check(s) failed`); process.exit(1); }
 console.log('\nAll armor-schema checks passed');

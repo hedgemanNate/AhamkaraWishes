@@ -163,5 +163,28 @@
     return 'added';
   }
 
-  root.WeaponWish = { ACCEPTABLE_CAP, buildWeaponWishPayload, addWishToList };
+  /**
+   * Armor saved without its set (older builds, godroll.tv adds) can't be
+   * grouped with the rest of its set or show the set's bonuses. Fills in
+   * static.setHash (and the set's real name) from `setOf(itemHash)`, which
+   * returns { hash, name } or null for a piece that has no set. Mutates `data`;
+   * returns how many items changed.
+   */
+  function fillArmorSets(data, setOf) {
+    let changed = 0;
+    for (const list of Object.values((data && data.lists) || {})) {
+      for (const [itemHash, item] of Object.entries((list && list.items) || {})) {
+        const st = item && item.static;
+        if (!st || st.type !== 'armor' || st.setHash) continue;
+        const set = setOf(itemHash);
+        if (!set || !set.hash) continue; // genuinely no set (e.g. Iron Forerunner)
+        st.setHash = set.hash;
+        if (set.name) st.setName = set.name;
+        changed++;
+      }
+    }
+    return changed;
+  }
+
+  root.WeaponWish = { ACCEPTABLE_CAP, buildWeaponWishPayload, addWishToList, fillArmorSets };
 })(typeof window !== 'undefined' ? window : globalThis);

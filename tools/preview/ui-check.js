@@ -47,10 +47,11 @@ const readLists = async () => {
   const weapons = [...document.querySelectorAll('#weapon-list-items .wc-name')].map((e) => e.textContent);
   document.getElementById('tab-armor').click(); document.getElementById('nav-list').click(); await s(600);
   const armor = [...document.querySelectorAll('#armor-list-container .card-armor-name')].map((e) => e.textContent);
+  const sets = [...document.querySelectorAll('#armor-list-container .set-name-text')].map((e) => e.textContent.trim());
   document.querySelectorAll('.set-header').forEach((h) => h.click()); await s(200);
   const html = document.documentElement.outerHTML;
   return {
-    weapons, armor,
+    weapons, armor, sets,
     pwned: window.__pwned ?? null,
     handlers: document.querySelectorAll('[onerror],[onload],script:not([src])').length,
     offsite: [...document.images].map((i) => i.getAttribute('src') || '').filter((u) => /^https?:/.test(u) && !/^https:\/\/www\.bungie\.net\//.test(u)),
@@ -209,6 +210,8 @@ async function checkGallery(browser, base, width) {
       let r = await page.eval(readLists);
       check(`[${width}] demo: weapon list renders`, r.weapons.length === 3, JSON.stringify(r.weapons));
       check(`[${width}] demo: armor list renders`, r.armor.length === 3, JSON.stringify(r.armor));
+      // The demo's armor was saved without set hashes; startup backfills them.
+      check(`[${width}] demo: both Techsec pieces group under Bungie's set name`, r.sets.filter((n) => n === 'Techsec').length === 1 && r.sets.length === 2, JSON.stringify(r.sets));
       check(`[${width}] demo: nothing wider than the panel`, !r.wider);
       check(`[${width}] demo: no page errors`, page.errors.length === 0, page.errors[0]);
       await page.screenshot(path.join(OUT, `demo-armor-${width}.png`));

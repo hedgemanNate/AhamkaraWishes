@@ -5,9 +5,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const code = fs.readFileSync(path.resolve(__dirname, '..', 'weapon-wish-core.js'), 'utf8');
 global.window = global;
-eval(code);
+// Same load order as the panel and the service worker: the duplicate rule uses
+// WishlistSync.wishKey, so the two can never disagree about "the same wish".
+eval(fs.readFileSync(path.resolve(__dirname, '..', 'wishlist-sync-core.js'), 'utf8'));
+eval(fs.readFileSync(path.resolve(__dirname, '..', 'weapon-wish-core.js'), 'utf8'));
 const W = window.WeaponWish;
 
 let failures = 0;
@@ -79,12 +81,21 @@ check('same raw in the other mode is a new wish', W.addWishToList(d, 'b', spec({
 check('different raw is a new wish', W.addWishToList(d, 'b', spec({ rawString: '[[2]]' })) === 'added' && item.wishes.length === 3);
 check('same perks may live in another list', W.addWishToList(d, 'a', spec()) === 'added');
 
-// armor duplicate rule: archetype + spark + mode
+// armor duplicate rule: archetype + Tertiary (+ Spark) + mode
 d = freshData();
-const armor = (over) => spec(Object.assign({ hash: 5, type: 'armor', rawString: 'x', config: { archetype: 'PARAGON', spark: 'Super' } }, over || {}));
+const armor = (over) => spec(Object.assign({ hash: 5, type: 'armor', rawString: 'x', config: { archetype: 'PARAGON', tertiary: 'Super', spark: null } }, over || {}));
 check('adds armor', W.addWishToList(d, 'a', armor()) === 'added');
 check('armor duplicate ignores raw', W.addWishToList(d, 'a', armor({ rawString: 'different' })) === 'duplicate');
-check('armor with another spark is new', W.addWishToList(d, 'a', armor({ config: { archetype: 'PARAGON', spark: 'Melee' } })) === 'added');
+check('armor with another Tertiary is new', W.addWishToList(d, 'a', armor({ config: { archetype: 'PARAGON', tertiary: 'Melee', spark: null } })) === 'added');
+check('armor with any Tertiary is its own wish', W.addWishToList(d, 'a', armor({ config: { archetype: 'PARAGON', tertiary: null, spark: null } })) === 'added');
+check('the same archetype + Tertiary with a Spark is a different wish', W.addWishToList(d, 'a', armor({ config: { archetype: 'PARAGON', tertiary: 'Super', spark: 'Health' } })) === 'added');
+check('armor in the other mode is a new wish', W.addWishToList(d, 'a', armor({ mode: 'pvp' })) === 'added');
+// a legacy-shaped config is a duplicate of the same wish in the current shape, and is stored migrated
+check('legacy { spark } config duplicates the same current-shape wish', W.addWishToList(d, 'a', armor({ config: { archetype: 'PARAGON', spark: 'Super' } })) === 'duplicate');
+d = freshData();
+W.addWishToList(d, 'a', armor({ config: { archetype: 'GUNNER', spark: 'Class' } }));
+const saved = d.lists.a.items[5].wishes[0].config;
+check('armor is always stored in the current shape', saved.tertiary === 'Class' && saved.spark === null);
 
 // metadata backfill on an existing item
 d = freshData();

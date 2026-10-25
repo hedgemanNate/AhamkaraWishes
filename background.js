@@ -4,7 +4,7 @@ importScripts('supabase-network.js', 'bungie-auth-core.js');
 // here must never stop the service worker registering, or the token-refresh
 // alarm below would die with it.
 try {
-  importScripts('destiny-manifest.js', 'godroll-roll-core.js', 'weapon-wish-core.js', 'aw-store.js', 'godroll-add.js');
+  importScripts('destiny-manifest.js', 'godroll-roll-core.js', 'wishlist-sync-core.js', 'weapon-wish-core.js', 'aw-store.js', 'godroll-add.js');
 } catch (e) {
   console.error('[BG] godroll add support failed to load:', e);
 }

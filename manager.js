@@ -644,9 +644,9 @@ async function renderInventorySearch(query) {
                 wishMatches: matchLookup.get(String(iid)) || [],
                 // Pre-computed by owned-inventory-index.js from the piece's true
                 // base stat roll — lets the armor craft page open on the real
-                // archetype/spark instead of a guess.
+                // archetype/Tertiary instead of a guess.
                 armorArchetype: owned?.armorArchetype || null,
-                armorSpark: owned?.armorSpark || null
+                armorTertiary: owned?.armorTertiary || null
             };
         });
 
@@ -828,7 +828,7 @@ function startWishFromOwnedRoll(match, instance) {
             setName: getArmorSetName(match.setHash) || match.name,
             slotName: getBucketName(match.bucketHash),
             archetype: instance.armorArchetype,
-            spark: instance.armorSpark
+            tertiary: instance.armorTertiary
         });
     }
 }
@@ -1380,7 +1380,7 @@ async function editItemWish(hash, index, rawString, config, mode = "pve") {
 
     const next = { tags: [mode], config, raw: rawString, added: old.added || Date.now() };
     // replaceWish tombstones the old wish if the edit changed its sync identity
-    // (perks, or archetype+spark), so cloud sync can't bring it back.
+    // (perks, or archetype + Tertiary), so cloud sync can't bring it back.
     wrote = window.WishlistSync.replaceWish(data, listId, hash, index, next);
     if (!wrote) return AWStore.SKIP;
   });

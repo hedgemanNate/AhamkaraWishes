@@ -84,15 +84,27 @@
   }
 
   /**
-   * Derive an armor piece's true archetype and spark from its base roll by
+   * Derive an armor piece's true archetype and Tertiary from its base roll by
    * reading only the `armor_stats` socket plugs — the three sockets that hold
    * the item's actual rolled stat values, untouched by mods or masterwork.
    *
-   * Returns { archetype: string|null, spark: string|null } where archetype is
-   * the matching ARCHETYPES entry name (e.g. "GUNNER") and spark is the name
+   * Returns { archetype: string|null, tertiary: string|null } where archetype is
+   * the matching ARCHETYPES entry name (e.g. "GUNNER") and tertiary is the name
    * of the 3rd-highest base stat. Returns null when no armor_stats sockets are
    * found (non-armor item or missing item defs).
    */
+  /**
+   * A wish's Tertiary in either config shape. Mirrors WishlistSync.armorFields
+   * (wishlist-sync-core.js), inlined so this module still loads on its own in
+   * the Node tests: before the Tertiary/Spark split the Tertiary was saved as
+   * `spark`, and a config with a `tertiary` key is in the current shape.
+   */
+  function armorTertiaryOf(cfg) {
+    if (!cfg) return null;
+    const legacy = !Object.prototype.hasOwnProperty.call(cfg, 'tertiary');
+    return (legacy ? cfg.spark : cfg.tertiary) || null;
+  }
+
   function computeArmorRoll(perkSockets, itemDefs) {
     if (!_armorHashToStatName || !itemDefs || !perkSockets) return null;
 
@@ -112,7 +124,7 @@
 
     if (baseStats.size === 0) return null;
 
-    // Sort stats by base value descending: top 2 = archetype, 3rd = spark.
+    // Sort stats by base value descending: top 2 = archetype, 3rd = Tertiary.
     const sorted = [...baseStats.entries()].sort((a, b) => b[1] - a[1]);
 
     let archetype = null;
@@ -122,8 +134,8 @@
       if (match) archetype = match.name;
     }
 
-    const spark = sorted.length >= 3 ? sorted[2][0] : null;
-    return { archetype, spark };
+    const tertiary = sorted.length >= 3 ? sorted[2][0] : null;
+    return { archetype, tertiary };
   }
 
   /**
@@ -284,7 +296,7 @@
             const roll = computeArmorRoll(owned.perkSockets, itemDefs);
             if (roll) {
               owned.armorArchetype = roll.archetype;
-              owned.armorSpark = roll.spark;
+              owned.armorTertiary = roll.tertiary;
             }
           }
         }
@@ -353,14 +365,18 @@
           const matchingInstances = [];
 
           // --- Armor matching ---
-          // Armor wishes carry config.archetype (e.g. "GUNNER") and config.spark
-          // (e.g. "Health"). Each owned armor instance is pre-classified with
-          // armorArchetype (the name of the archetype whose stat pair are the top
-          // 2 base-roll stats) and armorSpark (the 3rd-highest base-roll stat).
-          // Stage 1 = archetype name matches; Stage 2 (full match) = both match.
+          // Armor wishes carry an archetype (e.g. "GUNNER") and, optionally, a
+          // Tertiary (e.g. "Health") and a Spark. Each owned armor instance is
+          // pre-classified with armorArchetype (the archetype whose stat pair are
+          // the top 2 base-roll stats) and armorTertiary (the 3rd-highest).
+          // Stage 1 = archetype matches; Stage 2 (full match) = Tertiary matches
+          // too, or the wish takes any Tertiary.
+          // Spark (the Tier 5 tuned stat) isn't matched yet: reading it from an
+          // owned piece still has to be verified on a live profile (D9), so a
+          // wish's Spark doesn't narrow the match for now.
           const archName = wish.config?.archetype;
           if (archName) {
-            const spark = wish.config?.spark || null;
+            const tertiary = armorTertiaryOf(wish.config);
             const stage1 = [], stage2 = [];
 
             for (const iid of instances) {
@@ -368,14 +384,14 @@
               if (!owned?.armorArchetype) continue;
               if (owned.armorArchetype !== archName) continue;
               stage1.push(iid);
-              if (!spark || owned.armorSpark === spark) stage2.push(iid);
+              if (!tertiary || owned.armorTertiary === tertiary) stage2.push(iid);
             }
 
             wish.receivedInstances = stage2;
             wish.received = stage2.length > 0;
             wish.matchScore = wish.received ? 1.0 : 0;
             wish.matchedPerkHashes = [];
-            // Stage 1: instances whose true archetype matches, regardless of spark
+            // Stage 1: instances whose true archetype matches, regardless of Tertiary
             wish.stage1Instances = stage1;
             wish.stage1Received = stage1.length > 0;
             if (wish.received) received++;
@@ -622,7 +638,7 @@
         const roll = computeArmorRoll(owned.perkSockets, _itemDefs);
         if (roll) {
           owned.armorArchetype = roll.archetype;
-          owned.armorSpark = roll.spark;
+          owned.armorTertiary = roll.tertiary;
         }
 
         ownedIndex.byInstanceId.set(iid, owned);

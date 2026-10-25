@@ -93,8 +93,8 @@
   /**
    * Adds one wish to `data.lists[listId]` in place (creating the item container,
    * or backfilling its metadata if it already exists). Does no storage I/O.
-   * Duplicate rule: armor = same archetype + spark + mode; weapon = same raw
-   * string + mode.
+   * Duplicate rule (WishlistSync.wishKey): armor = same archetype + Tertiary
+   * (+ Spark) + mode; weapon = same raw string + mode.
    * @param {object} data    dimData
    * @param {string} listId
    * @param {object} spec    { hash, name, type, rawString, config, mode, icon, classType,
@@ -145,19 +145,14 @@
     const existingWishes = activeList.items[hash].wishes || [];
     activeList.items[hash].wishes = existingWishes;
 
-    const isDuplicate = existingWishes.some((w) => {
-      if (!w) return false;
-      const sameMode = (w?.tags || []).includes(mode);
-      if (!sameMode) return false;
-      // Armor: same archetype + same spark + same mode = duplicate
-      if (config?.archetype && config?.spark) {
-        return w.config?.archetype === config.archetype &&
-               w.config?.spark === config.spark;
-      }
-      // Weapons: same raw string + same mode = duplicate
-      return w?.raw === rawString;
-    });
-    if (isDuplicate) return 'duplicate';
+    // "Same wish" is defined once, by WishlistSync.wishKey, so the duplicate
+    // check and cross-browser sync always agree: weapons by raw perks + mode,
+    // armor by archetype + Tertiary (+ Spark) + mode.
+    const sync = root.WishlistSync;
+    if (!sync) throw new Error('weapon-wish-core.js needs wishlist-sync-core.js loaded first');
+    if (config && config.archetype) sync.migrateArmorConfig(config); // store armor in the current shape
+    const key = sync.wishKey({ tags: [mode], config, raw: rawString });
+    if (existingWishes.some((w) => w && sync.wishKey(w) === key)) return 'duplicate';
 
     existingWishes.push({
       tags: [mode],          // ['pve'] or ['pvp']

@@ -1,4 +1,4 @@
-// Armor matching test: verifies the two-stage archetype+spark match works,
+// Armor matching test: verifies the two-stage archetype+Tertiary match works,
 // including finding owned copies stored under a sibling (reissue) hash via
 // linkedHashes — the same alias mechanism weapons use.
 const fs = require('fs');
@@ -31,26 +31,26 @@ function check(label, cond) {
 
 // Hand-built OwnedIndex: wish is saved under hash 100; the player's actual
 // drops live under sibling hash 200 (a season reissue of the same piece).
-// armorArchetype and armorSpark are pre-computed from the base roll (as
-// buildOwnedIndex now does via computeArmorRoll + armor_stats socket plugs).
-function makeOwned(instanceId, itemHash, archetype, spark) {
+// armorArchetype and armorTertiary are pre-computed from the base roll (as
+// buildOwnedIndex does via computeArmorRoll + armor_stats socket plugs).
+function makeOwned(instanceId, itemHash, archetype, tertiary) {
   return {
     instanceId, itemHash,
     rolledPerkSet: new Set(), perkSockets: [],
     location: 'inventory', characterId: null, isCrafted: false,
     armorArchetype: archetype,
-    armorSpark: spark
+    armorTertiary: tertiary
   };
 }
 
 const byInstanceId = new Map([
-  // full match under the SIBLING hash: archetype + spark both correct
+  // full match under the SIBLING hash: archetype + Tertiary both correct
   ['a1', makeOwned('a1', 200, 'PARAGON', 'Health')],
-  // stage-1-only under the sibling hash: right archetype, wrong spark
+  // stage-1-only under the sibling hash: right archetype, wrong Tertiary
   ['a2', makeOwned('a2', 200, 'PARAGON', 'Class')],
   // wrong archetype entirely
   ['a3', makeOwned('a3', 200, 'GUNNER', 'Health')],
-  // right archetype+spark but under an UNRELATED hash — must not match
+  // right archetype+Tertiary but under an UNRELATED hash — must not match
   ['a4', makeOwned('a4', 999, 'PARAGON', 'Health')]
 ]);
 const byItemHash = new Map([
@@ -63,6 +63,7 @@ function makeDim(linkedHashes) {
   return { lists: { default: { name: 'Main', items: {
     '100': {
       static: { name: 'Test Helm', type: 'armor', linkedHashes },
+      // Legacy config shape: the Tertiary was saved as `spark`.
       wishes: [{ tags: ['pve'], config: { archetype: 'PARAGON', spark: 'Health' } }]
     }
   } } } };
@@ -87,15 +88,40 @@ check('unrelated hash 999 never consulted', !w.receivedInstances.includes('a4') 
 check('summary counts the received wish', summary.receivedCount === 1 && summary.totalEntries === 1);
 check('matchScore is 1 on full match', w.matchScore === 1);
 
-// Case 3: archetype right everywhere but spark owned nowhere
+// Case 3: archetype right everywhere but the Tertiary owned nowhere (current config shape)
 const dimNoSpark = { lists: { default: { name: 'Main', items: {
   '100': {
     static: { name: 'Test Helm', type: 'armor', linkedHashes: [200] },
-    wishes: [{ tags: ['pve'], config: { archetype: 'PARAGON', spark: 'Weapons' } }]
+    wishes: [{ tags: ['pve'], config: { archetype: 'PARAGON', tertiary: 'Weapons', spark: null } }]
   }
 } } } };
 global.OwnedInventoryIndex.matchWishlist(dimNoSpark, idx);
 const w2 = dimNoSpark.lists.default.items['100'].wishes[0];
-check('spark not owned -> received false but stage1 true', w2.received === false && w2.stage1Received === true);
+check('Tertiary not owned -> received false but stage1 true', w2.received === false && w2.stage1Received === true);
+
+// Case 4: current shape, any Tertiary (D9: optional) -> every right-archetype piece matches
+const dimAny = { lists: { default: { name: 'Main', items: {
+  '100': { static: { name: 'Test Helm', type: 'armor', linkedHashes: [200] },
+    wishes: [{ tags: ['pve'], config: { archetype: 'PARAGON', tertiary: null, spark: null } }] }
+} } } };
+global.OwnedInventoryIndex.matchWishlist(dimAny, idx);
+const w3 = dimAny.lists.default.items['100'].wishes[0];
+check('any Tertiary -> both right-archetype pieces match', JSON.stringify(w3.receivedInstances) === '["a1","a2"]' && w3.received === true);
+
+// Case 5: current shape with a Tertiary behaves like the legacy shape
+const dimCurrent = { lists: { default: { name: 'Main', items: {
+  '100': { static: { name: 'Test Helm', type: 'armor', linkedHashes: [200] },
+    wishes: [{ tags: ['pve'], config: { archetype: 'PARAGON', tertiary: 'Health', spark: null } }] }
+} } } };
+global.OwnedInventoryIndex.matchWishlist(dimCurrent, idx);
+check('current shape matches the same piece as the legacy shape', JSON.stringify(dimCurrent.lists.default.items['100'].wishes[0].receivedInstances) === '["a1"]');
+
+// Case 6: a Spark doesn't narrow matching yet (reading it from a piece is unverified, D9)
+const dimSpark = { lists: { default: { name: 'Main', items: {
+  '100': { static: { name: 'Test Helm', type: 'armor', linkedHashes: [200] },
+    wishes: [{ tags: ['pve'], config: { archetype: 'PARAGON', tertiary: 'Health', spark: 'Super' } }] }
+} } } };
+global.OwnedInventoryIndex.matchWishlist(dimSpark, idx);
+check('Spark set -> still matched on archetype + Tertiary only', JSON.stringify(dimSpark.lists.default.items['100'].wishes[0].receivedInstances) === '["a1"]');
 
 process.exit(failures === 0 ? 0 : 1);

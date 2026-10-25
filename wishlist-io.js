@@ -17,7 +17,11 @@
 
 (function () {
   const MAGIC = 'wishes';
-  const FORMAT_VERSION = 1;
+  // v2: armor wishes store { archetype, tertiary, spark } (the Tier 5 Spark is
+  // separate from the Tertiary). v1 files (Tertiary saved as `spark`) still
+  // import: wishlist-validate.js converts them. Older builds refuse v2 files
+  // rather than misreading `spark`.
+  const FORMAT_VERSION = 2;
 
   // Wish fields that reflect ownership state — computed from inventory,
   // not part of the wish definition itself. Strip these on export.

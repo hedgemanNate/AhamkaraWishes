@@ -90,7 +90,9 @@
         icon: icon(p.icon),
         hash: hash(p.hash),
         enhancedHash: hash(p.enhancedHash),
-        color: COMBO_COLORS.includes(p.color) ? p.color : null
+        color: COMBO_COLORS.includes(p.color) ? p.color : null,
+        // A perk may wear several combo colours (planned); keep them if present.
+        ...(Array.isArray(p.colors) ? { colors: p.colors.filter((x, i, all) => COMBO_COLORS.includes(x) && all.indexOf(x) === i) } : {})
       }));
     }).filter((col) => col.length > 0);
   }
@@ -122,9 +124,13 @@
     if (type === 'armor') {
       const archetype = text(c.archetype, 40);
       if (!archetype) return null;
-      // Spark is optional in the game; absent stays absent rather than "".
-      const spark = text(c.spark, 20);
-      return { archetype, spark: spark || null };
+      // Files and Discover lists from before the Tertiary/Spark split stored
+      // the Tertiary as `spark`; a `tertiary` key marks the current shape.
+      // Both are optional (D9): absent stays null rather than "".
+      const current = Object.prototype.hasOwnProperty.call(c, 'tertiary');
+      const tertiary = text(current ? c.tertiary : c.spark, 20) || null;
+      const spark = current ? (text(c.spark, 20) || null) : null;
+      return { archetype, tertiary, spark };
     }
     const out = {};
     if (typeof c.perks === 'string') {

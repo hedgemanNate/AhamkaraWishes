@@ -31,6 +31,10 @@
     let mutated = false;
     if (!wish) return false;
 
+    // Armor wishes saved before the Tertiary/Spark split stored the Tertiary
+    // as `spark`; move it to `tertiary` once, here (wishKey is unchanged by it).
+    if (window.WishlistSync && window.WishlistSync.migrateArmorConfig(wish.config)) mutated = true;
+
     // Ensure desired is an array. For weapon wishes, derive from config.perks if not already set.
     if (!Array.isArray(wish.desired) || wish.desired.length === 0) {
       if (wish.desiredSet instanceof Set && wish.desiredSet.size > 0) {

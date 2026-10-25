@@ -25,17 +25,56 @@
     return { activeId: 'default', lists: { default: { name: 'Main Wishlist', items: {} } } };
   }
 
+  const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+
   /**
-   * Identity of a wish, matching saveItem()'s duplicate rule in manager.js:
-   * armor is identified by archetype + spark, weapons by their raw perk
-   * string, both scoped to the PvE/PvP tag. Keying on this (rather than the
-   * `added` timestamp) means two browsers independently creating the same
-   * wish collapse into one entry instead of duplicating it.
+   * An armor wish's fields, from either config shape:
+   *   current  { archetype, tertiary, spark }   tertiary = the piece's third
+   *            stat, spark = the Tier 5 tuned stat; both optional (D9)
+   *   legacy   { archetype, spark }             saved before the split, when
+   *            `spark` held what is really the Tertiary
+   * A config is current when it has a `tertiary` key (even if null).
+   * Read armor configs through this, never config.spark directly.
+   */
+  function armorFields(cfg) {
+    const c = cfg || {};
+    const legacy = !hasOwn(c, 'tertiary');
+    return {
+      archetype: c.archetype || null,
+      tertiary: (legacy ? c.spark : c.tertiary) || null,
+      spark: (legacy ? null : c.spark) || null
+    };
+  }
+
+  /**
+   * Rewrites a legacy armor config ({ archetype, spark }) to the current shape
+   * in place. Returns true if it changed anything. Weapon configs and configs
+   * already in the current shape are left alone.
+   */
+  function migrateArmorConfig(cfg) {
+    if (!cfg || typeof cfg !== 'object' || !cfg.archetype || hasOwn(cfg, 'tertiary')) return false;
+    cfg.tertiary = cfg.spark || null;
+    cfg.spark = null;
+    return true;
+  }
+
+  /**
+   * Identity of a wish: the duplicate rule (weapon-wish-core.js addWishToList)
+   * and cross-browser sync both use it, so they can't disagree about what
+   * "the same wish" means. Armor is identified by archetype + Tertiary (+ Spark
+   * when set), weapons by their raw perk string, both scoped to the PvE/PvP
+   * tag. Keying on this (rather than the `added` timestamp) means two browsers
+   * independently creating the same wish collapse into one entry.
+   * A migrated legacy armor wish keeps exactly its old key
+   * ("pve|armor:GUNNER+Class"), so existing tombstones still apply.
    */
   function wishKey(wish) {
     const mode = (wish && Array.isArray(wish.tags) && wish.tags[0]) || 'pve';
     const cfg = (wish && wish.config) || {};
-    if (cfg.archetype && cfg.spark) return `${mode}|armor:${cfg.archetype}+${cfg.spark}`;
+    if (cfg.archetype) {
+      const a = armorFields(cfg);
+      return `${mode}|armor:${a.archetype}+${a.tertiary || ''}${a.spark ? `~${a.spark}` : ''}`;
+    }
     return `${mode}|weapon:${(wish && wish.raw) || ''}`;
   }
 
@@ -67,7 +106,8 @@
 
   /**
    * Replaces wishes[index] with `next` (an edit). Editing can change which wish
-   * this is, because identity is the perks (weapons) or archetype+spark (armor).
+   * this is, because identity is the perks (weapons) or archetype + Tertiary
+   * (+ Spark) for armor.
    * When it does, the old identity is tombstoned — otherwise the next merge with
    * a browser still holding the old version would bring it back beside the
    * edited one — and `next` gets a fresh `added`, so that editing back to an
@@ -248,6 +288,8 @@
 
   global.WishlistSync = {
     wishKey,
+    armorFields,
+    migrateArmorConfig,
     recordListTombstone,
     recordWishTombstone,
     replaceWish,

@@ -24,6 +24,7 @@ npm test
 | `safe-rendering-test.js` | `escapeHtml` / `safeImageUrl`, and `sanitizeList` against a hostile imported wishlist (keep this fixture: it is the standing check that shared lists can't inject markup or load off-site images) |
 | `aw-dom-test.js` | `html``, `h()`, `render()`, `isSafeUrl`: interpolations escaped, text stays text, no inline handlers, unsafe URLs refused (fake DOM, no browser needed) |
 | `aw-nav-test.js` | Navigation controller: one tab view shown, everything beneath the top layer inert, focus moves in and back, Escape, close guards, remembered tab |
+| `armor-schema-test.js` | Armor Tertiary/Spark split (D9): both config shapes read correctly, migration is idempotent, migrated wishes keep their sync key, old tombstones still apply, merges dedupe |
 | `sync-status-test.js` | Sync status model (D11): every state's wording and action, priority order, signed-out users never auto-synced |
 | `preview-server-test.js` | Preview server never serves outside the repo or `.git`, and injects the chrome stub before the first script |
 | `aw-store-test.js` | `AWStore.update` serialisation: slow and fast writers both land, no lost updates under contention, SKIP / unchanged data cause no write |

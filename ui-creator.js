@@ -9,7 +9,7 @@ let searchTimeout = null;
 let selectedPieces = {}; // Track currently selected pieces by slot
 let loadedArmorPieces = {}; // Track loaded pieces by slot
 let currentArchetype = null;
-let currentSpark = null;
+let currentTertiary = null;
 let currentMode = 'pve';
 // Set only when the current craft session was loaded from an existing saved
 // wish via the list card's EDIT button. Drives whether EDIT WISH is shown,
@@ -499,7 +499,7 @@ function attachListeners() {
             selectedPieces = {};
             loadedArmorPieces = {};
             currentArchetype = null;
-            currentSpark = null;
+            currentTertiary = null;
             armorEditContext = null;
             const input = document.getElementById('armor-query');
             if (input) input.value = "";
@@ -639,7 +639,7 @@ async function doArmorSearch(query) {
 }
 
 /**
- * Builds buttons for Archetypes and Sparks using constants from manager.js.
+ * Builds buttons for Archetypes and Tertiary stats using constants from manager.js.
  */
 function populateStatGrids() {
     const archGrid = document.getElementById('archetype-grid');
@@ -659,7 +659,7 @@ function populateStatGrids() {
             document.querySelectorAll('#archetype-grid .stat-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             currentArchetype = arch;
-            syncSparkAvailability(arch.stats);
+            syncTertiaryAvailability(arch.stats);
             updatePrimaryBtn();
         };
         archGrid.appendChild(btn);
@@ -675,7 +675,7 @@ function populateStatGrids() {
             if (btn.classList.contains('unavailable')) return;
             document.querySelectorAll('#spark-grid .stat-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
-            currentSpark = stat;
+            currentTertiary = stat;
             updatePrimaryBtn();
         };
         sparkGrid.appendChild(btn);
@@ -802,15 +802,15 @@ function refreshArmorDisplay(buckets) {
 }
 
 /**
- * Prevents picking a spark stat already covered by the archetype.
+ * Prevents picking a Tertiary stat already covered by the archetype.
  */
-function syncSparkAvailability(usedStats) {
+function syncTertiaryAvailability(usedStats) {
     document.querySelectorAll('#spark-grid .stat-btn').forEach(btn => {
         const stat = btn.dataset.stat;
         if (usedStats.includes(stat)) {
             btn.classList.add('unavailable');
             btn.classList.remove('selected');
-            if (currentSpark === stat) currentSpark = null;
+            if (currentTertiary === stat) currentTertiary = null;
         } else {
             btn.classList.remove('unavailable');
         }
@@ -827,15 +827,15 @@ function updatePrimaryBtn() {
     if (selectedCount === 0) {
         btn.disabled = true;
         btn.textContent = "SELECT ARMOR PIECE FIRST";
-    } else if (!currentArchetype || !currentSpark) {
+    } else if (!currentArchetype || !currentTertiary) {
         btn.disabled = true;
         btn.textContent = "SELECT STATS ABOVE";
     } else {
         btn.disabled = false;
         if (selectedCount === 1) {
-            btn.textContent = `MAKE WISH: ${currentArchetype.name} + ${currentSpark.toUpperCase()}`;
+            btn.textContent = `MAKE WISH: ${currentArchetype.name} + ${currentTertiary.toUpperCase()}`;
         } else {
-            btn.textContent = `MAKE ${selectedCount} WISHES: ${currentArchetype.name} + ${currentSpark.toUpperCase()}`;
+            btn.textContent = `MAKE ${selectedCount} WISHES: ${currentArchetype.name} + ${currentTertiary.toUpperCase()}`;
         }
     }
 
@@ -858,7 +858,7 @@ function updateArmorEditButtonVisibility() {
     const selectedCount = Object.keys(selectedPieces).length;
     const editingSamePiece = selectedCount === 1 &&
         String(Object.values(selectedPieces)[0]?.hash) === String(armorEditContext.hash);
-    editBtn.disabled = !editingSamePiece || !currentArchetype || !currentSpark;
+    editBtn.disabled = !editingSamePiece || !currentArchetype || !currentTertiary;
 }
 
 /**
@@ -870,7 +870,7 @@ function handleSaveWish() {
   
   console.log("[SaveWish] Button clicked. Items to save:", itemsToSave.length);
   console.log("[SaveWish] currentArchetype:", currentArchetype);
-  console.log("[SaveWish] currentSpark:", currentSpark);
+  console.log("[SaveWish] currentTertiary:", currentTertiary);
   console.log("[SaveWish] currentMode:", currentMode);
   
   if (itemsToSave.length === 0) {
@@ -917,7 +917,7 @@ function handleSaveWish() {
         "armor",
         `armor-wish:${item.hash}`,
         `armor-wish:${item.hash}`,
-        { archetype: currentArchetype.name, spark: currentSpark },
+        { archetype: currentArchetype.name, tertiary: currentTertiary, spark: null },
         currentMode,
         item.icon,
         item.classType,
@@ -946,7 +946,7 @@ function handleSaveWish() {
  * button, instead of appending a new one.
  */
 function handleEditWish() {
-  if (!armorEditContext || !currentArchetype || !currentSpark) return;
+  if (!armorEditContext || !currentArchetype || !currentTertiary) return;
 
   const btn = document.getElementById("btn-edit-armor");
   const original = btn.textContent;
@@ -962,7 +962,7 @@ function handleEditWish() {
     armorEditContext.hash,
     armorEditContext.wishIndex,
     `armor-wish:${armorEditContext.hash}`,
-    { archetype: currentArchetype.name, spark: currentSpark },
+    { archetype: currentArchetype.name, tertiary: currentTertiary, spark: null },
     currentMode
   ).catch(err => console.error("[EditWish] Error updating wish:", err));
 }
@@ -972,7 +972,7 @@ function handleEditWish() {
  * list's EDIT button and by double-clicking an owned roll in inventory search,
  * so both land on exactly the same pre-filled state.
  */
-async function applyArmorCraftSelection({ hash, classType, setName, slotName, archetype, spark }) {
+async function applyArmorCraftSelection({ hash, classType, setName, slotName, archetype, tertiary }) {
   document.getElementById('nav-craft')?.click();
 
   if (classType !== undefined && classType !== null) {
@@ -1010,21 +1010,21 @@ async function applyArmorCraftSelection({ hash, classType, setName, slotName, ar
     document.querySelectorAll('#archetype-grid .stat-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector(`#archetype-grid .stat-btn[data-archetype="${arch.id}"]`)?.classList.add('selected');
     currentArchetype = arch;
-    // Must run before the spark is applied — it clears currentSpark for any
+    // Must run before the Tertiary is applied — it clears currentTertiary for any
     // stat the archetype already covers.
-    syncSparkAvailability(arch.stats);
+    syncTertiaryAvailability(arch.stats);
   }
 
-  if (spark) {
+  if (tertiary) {
     document.querySelectorAll('#spark-grid .stat-btn').forEach(b => b.classList.remove('selected'));
-    document.querySelector(`#spark-grid .stat-btn[data-stat="${spark}"]`)?.classList.add('selected');
-    currentSpark = spark;
+    document.querySelector(`#spark-grid .stat-btn[data-stat="${tertiary}"]`)?.classList.add('selected');
+    currentTertiary = tertiary;
   }
 }
 
 /**
  * Called from a list card's EDIT button (createArmorCard). Loads the exact
- * set/piece/archetype/spark/mode this wish was saved with into the craft
+ * set/piece/archetype/Tertiary/mode this wish was saved with into the craft
  * page and reveals EDIT WISH so it can be overwritten in place.
  */
 async function loadWishIntoArmorCraft(hash, wishIndex, entry, wish) {
@@ -1034,7 +1034,8 @@ async function loadWishIntoArmorCraft(hash, wishIndex, entry, wish) {
     setName: getArmorSetName(entry.static.setHash) || entry.static.setName || entry.static.name,
     slotName: entry.static.slotName,
     archetype: wish.config?.archetype,
-    spark: wish.config?.spark
+    // Either config shape (legacy wishes kept the Tertiary in `spark`).
+    tertiary: window.WishlistSync.armorFields(wish.config).tertiary
   });
 
   currentMode = (wish.tags && wish.tags[0]) || 'pve';
@@ -1047,13 +1048,13 @@ async function loadWishIntoArmorCraft(hash, wishIndex, entry, wish) {
 
 /**
  * Called on double-click of an owned roll in Menu > Utility inventory search.
- * Opens that piece in the craft pane with its real rolled archetype/spark
+ * Opens that piece in the craft pane with its real rolled archetype/Tertiary
  * (derived by owned-inventory-index.js) as a starting point for a new wish.
  */
-async function loadOwnedArmorIntoCraft({ hash, classType, setName, slotName, archetype, spark }) {
+async function loadOwnedArmorIntoCraft({ hash, classType, setName, slotName, archetype, tertiary }) {
   document.getElementById('tab-armor')?.click();
 
-  await applyArmorCraftSelection({ hash, classType, setName, slotName, archetype, spark });
+  await applyArmorCraftSelection({ hash, classType, setName, slotName, archetype, tertiary });
 
   // A new wish, not an edit of a saved one, so EDIT WISH stays hidden. PvE/PvP
   // is left where the user had it — an owned roll carries no mode of its own.
@@ -1136,13 +1137,17 @@ function createArmorCard(item) {
     if (!item.wish) return card;
 
     // Config can come from an import or an older/newer version, so nothing here
-    // may assume the archetype is one we know or that a spark is present — a
+    // may assume the archetype is one we know or that a Tertiary is present — a
     // throw here would take the card (and used to take the whole list) down.
     const wishConfig = item.wish.config || {};
     const archName = typeof wishConfig.archetype === 'string' ? wishConfig.archetype : '';
     const archetype = ARCHETYPES.find(a => a.name === archName);
-    // Only a real stat name is ever used, since it ends up in a CSS class name.
-    const sparkStat = STATS.find(s => s.toLowerCase() === String(wishConfig.spark || '').toLowerCase()) || null;
+    // Either config shape (legacy wishes kept the Tertiary in `spark`). Only a
+    // real stat name is ever used, since it ends up in a CSS class name.
+    const fields = window.WishlistSync.armorFields(wishConfig);
+    const asStat = (v) => STATS.find(s => s.toLowerCase() === String(v || '').toLowerCase()) || null;
+    const tertiaryStat = asStat(fields.tertiary);
+    const sparkStat = asStat(fields.spark);
 
     // 1. Assemble the stats we can show into a list for sorting
     const statsToDisplay = [];
@@ -1150,7 +1155,8 @@ function createArmorCard(item) {
         statsToDisplay.push({ name: archetype.stats[0], type: 'pri', weight: 85 });
         statsToDisplay.push({ name: archetype.stats[1], type: 'sec', weight: 60 });
     }
-    if (sparkStat) statsToDisplay.push({ name: sparkStat, type: 'spark', weight: 40 });
+    // The third bar keeps its old 'spark' style class; it shows the Tertiary.
+    if (tertiaryStat) statsToDisplay.push({ name: tertiaryStat, type: 'spark', weight: 40 });
 
     // 2. Sort stats by in-game Rank (Health at top, Weapons at bottom)
     statsToDisplay.sort((a, b) => STAT_RANK[a.name] - STAT_RANK[b.name]);
@@ -1182,7 +1188,8 @@ function createArmorCard(item) {
     // Names and icons are untrusted (shared lists): escape the text, and only
     // load Bungie-hosted art. See aw-dom.js.
     const iconSrc = escapeHtml(AWDom.safeImageUrl(item.static?.icon));
-    const archSub = escapeHtml(archName) + (sparkStat ? ` +${sparkStat.toLowerCase()}` : '');
+    const archSub = escapeHtml(archName) + (tertiaryStat ? ` +${tertiaryStat.toLowerCase()}` : '') +
+        (sparkStat ? ` · ✦ ${sparkStat.toLowerCase()}` : '');
 
     card.innerHTML = `
         <div class="card-img-side">

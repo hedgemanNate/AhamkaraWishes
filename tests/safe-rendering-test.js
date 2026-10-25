@@ -95,10 +95,12 @@ check('weapon mode, perks and combos are preserved', w.tags[0] === 'pvp' && JSON
   w.config.perkColumnsData[0].colors.red.join() === '1,11' && w.config.perkColumns[0][0].color === 'red');
 check('weapon static metadata is preserved', cleaned.items['1234567890'].static.linkedHashes.join() === '111,222' &&
   cleaned.items['1234567890'].static.itemTypeDisplayName === 'Hand Cannon');
-check('armor wish is preserved', cleaned.items['555'].wishes[0].config.archetype === 'GUNNER' && cleaned.items['555'].wishes[0].config.spark === 'Weapons');
-check('armor wish with no spark imports with spark null',
-  sanitizeList({ name: 'x', items: { 5: { static: { name: 'h', type: 'armor' }, wishes: [{ config: { archetype: 'GUNNER' }, raw: 'r' }] } } })
-    .items[5].wishes[0].config.spark === null);
+const armorCfg = cleaned.items['555'].wishes[0].config;
+check('legacy armor wish (v1: Tertiary saved as spark) imports as tertiary', armorCfg.archetype === 'GUNNER' && armorCfg.tertiary === 'Weapons' && armorCfg.spark === null);
+const armorOnly = (cfg) => sanitizeList({ name: 'x', items: { 5: { static: { name: 'h', type: 'armor' }, wishes: [{ config: cfg, raw: 'r' }] } } }).items[5].wishes[0].config;
+check('armor wish with only an archetype imports with both optional fields null', (() => { const c = armorOnly({ archetype: 'GUNNER' }); return c.tertiary === null && c.spark === null; })());
+check('current-shape armor wish keeps Tertiary and Spark apart', (() => { const c = armorOnly({ archetype: 'GUNNER', tertiary: 'Class', spark: 'Super' }); return c.tertiary === 'Class' && c.spark === 'Super'; })());
+check('current shape with a null Tertiary is not re-read as legacy', (() => { const c = armorOnly({ archetype: 'GUNNER', tertiary: null, spark: 'Super' }); return c.tertiary === null && c.spark === 'Super'; })());
 
 // --- sanitizeList: the hostile fixture ---
 const evilJs = '<img src=x onerror=alert(1)>';

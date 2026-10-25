@@ -691,24 +691,6 @@ header {
     text-transform: uppercase;
 }
 
-.set-badge-area {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    position: relative;
-    z-index: 2;
-}
-
-/* The Renegades/Lawless Badge */
-.expansion-badge {
-    width: 20px;
-    height: 20px;
-    background: #d4af37; /* Placeholder color for the 2026 badge */
-    mask: url('icons/renegades-badge.svg') no-repeat center; /* Future icon path */
-    -webkit-mask: url('icons/renegades-badge.svg') no-repeat center;
-    background-size: contain;
-    opacity: 0.8;
-}
 
 .set-content {
     display: none; /* Hidden by default */

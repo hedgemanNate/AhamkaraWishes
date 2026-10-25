@@ -255,9 +255,6 @@ function applyArmorFilters() {
                         <span class="set-name-text">${escapeHtml(displayName)}</span>
                         <span class="set-count-text">${armorSets[setId].length} WISHES</span>
                     </div>
-                    <div class="set-badge-area">
-                        <div class="expansion-badge" title="Renegades Expansion"></div>
-                    </div>
                 </div>
                 <div class="set-content" id="set-content-${escapeHtml(setId.replace(/[^\w]+/g, ''))}" style="display: none;">
                 </div>

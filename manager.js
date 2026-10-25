@@ -1572,6 +1572,8 @@ let _lastSyncAt = null;
 let _syncCooldownUntil = 0;
 let _syncTickTimer = null;
 let _syncInFlight = null;
+let _syncFailures = 0;      // failed syncs in a row
+let _syncErrorKind = null;  // AWSync.classifyError() of the last failure
 
 function setSyncBarState(state, message) {
   const statusEls = [
@@ -1600,7 +1602,8 @@ function getAutoRefreshIntervalMs() {
 }
 
 function updateSyncBarTime() {
-  if (!_lastSyncAt) return;
+  // After a failure the bar keeps saying why until a sync succeeds.
+  if (!_lastSyncAt || _syncFailures) return;
   const elapsed = Math.floor((Date.now() - _lastSyncAt) / 1000);
   let label;
   if (elapsed < 60) label = elapsed <= 5 ? 'Just synced' : `Synced ${elapsed}s ago`;
@@ -1612,12 +1615,25 @@ function updateSyncBarTime() {
 }
 
 // Schedules the next auto-sync relative to the last one, so the cadence
-// follows panel visibility instead of a fixed setInterval.
+// follows panel visibility instead of a fixed setInterval. After failures it
+// backs off, and a signed-out user isn't retried at all (AWSync.nextAutoSyncAt).
 function scheduleNextSync() {
   if (_autoRefreshTimer) clearTimeout(_autoRefreshTimer);
-  const due = (_lastSyncAt || 0) + getAutoRefreshIntervalMs();
+  _autoRefreshTimer = null;
+  const due = window.AWSync.nextAutoSyncAt({
+    lastAttemptAt: _lastSyncAt, intervalMs: getAutoRefreshIntervalMs(),
+    failures: _syncFailures, errorKind: _syncErrorKind
+  });
+  if (due === null) return; // resumes on sign-in or Sync now
   _autoRefreshTimer = setTimeout(() => runSync(false), Math.max(0, due - Date.now()));
 }
+
+const SYNC_FAILURE_MESSAGE = {
+  auth: 'Sign in to Bungie to sync',
+  network: "Can't reach Bungie — will retry",
+  maintenance: 'Bungie is down for maintenance — will retry',
+  other: 'Sync failed — will retry',
+};
 
 // Resolves to the error when the sync failed (null on success), so callers
 // that report failures can surface it without the loop ever rejecting.
@@ -1634,16 +1650,22 @@ function runSync(isManual = false) {
     try {
       await refreshProfileAndBuildIndex(SYNC_COMPONENTS);
       _lastSyncAt = Date.now();
-      _syncCooldownUntil = _lastSyncAt + MANUAL_REFRESH_COOLDOWN_MS;
+      _syncFailures = 0;
+      _syncErrorKind = null;
       updateSyncBarTime();
       return null;
     } catch (e) {
-      console.error('[AutoRefresh] sync failed:', e);
-      setSyncBarState('error', 'Sync failed — check sign-in');
-      // Retry on the normal cadence rather than hammering a failing endpoint.
+      _syncErrorKind = window.AWSync.classifyError(e);
+      _syncFailures++;
+      if (_syncErrorKind === 'auth') console.info('[AutoRefresh] not syncing until sign-in:', e?.message || e);
+      else console.error('[AutoRefresh] sync failed:', e);
+      setSyncBarState(_syncErrorKind === 'auth' ? 'idle' : 'error', SYNC_FAILURE_MESSAGE[_syncErrorKind]);
       _lastSyncAt = Date.now();
       return e;
     } finally {
+      // The 15s floor applies after failures too, or reopening the panel
+      // would retry a failing sync every time.
+      _syncCooldownUntil = Date.now() + MANUAL_REFRESH_COOLDOWN_MS;
       _syncInFlight = null;
       scheduleNextSync();
     }
@@ -1667,10 +1689,23 @@ function startAutoRefresh() {
     startAutoRefresh._wired = true;
     // Reopening the panel syncs straight away (subject to the 15s floor) and
     // switches to the fast cadence; hiding it drops back to the slow one.
+    // A failing sync keeps its backoff instead.
     document.addEventListener('visibilitychange', () => {
       if (_syncInFlight) return;
-      if (document.visibilityState === 'visible' && Date.now() >= _syncCooldownUntil) runSync(false);
+      if (document.visibilityState === 'visible' && !_syncFailures && Date.now() >= _syncCooldownUntil) runSync(false);
       else scheduleNextSync();
+    });
+    // Signing in syncs at once (signing out stops: the next sync finds no session).
+    // (It also fires once per load; a sync that's already fine is left alone.)
+    document.addEventListener('bungieAuthChanged', (e) => {
+      if (!e.detail?.auth || _syncInFlight || (_lastSyncAt && !_syncFailures)) return;
+      _syncFailures = 0;
+      _syncErrorKind = null;
+      runSync(false);
+    });
+    // Coming back online retries a sync that failed for lack of a connection.
+    window.addEventListener('online', () => {
+      if (_syncErrorKind === 'network' && !_syncInFlight) runSync(false);
     });
   }
 

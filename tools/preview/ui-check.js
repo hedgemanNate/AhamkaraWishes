@@ -103,6 +103,24 @@ const staleRowActions = async () => {
 };
 
 /**
+ * A guest (not signed in) must not retry Bungie in a loop: every panel re-show
+ * used to start another sync. Counts calls to the sync's profile fetch.
+ */
+const guestSyncLoop = async () => {
+  const s = (ms) => new Promise((r) => setTimeout(r, ms));
+  let calls = 0;
+  const real = window.refreshProfileAndBuildIndex;
+  window.refreshProfileAndBuildIndex = (...a) => { calls++; return real(...a); };
+  for (let i = 0; i < 3; i++) { document.dispatchEvent(new Event('visibilitychange')); await s(100); }
+  const afterShows = calls;
+  const bar = document.getElementById('weapon-sync-status')?.textContent || '';
+  document.dispatchEvent(new CustomEvent('bungieAuthChanged', { detail: { auth: { access_token: 'x' } } }));
+  await s(300);
+  window.refreshProfileAndBuildIndex = real;
+  return { afterShows, afterSignIn: calls - afterShows, bar };
+};
+
+/**
  * The AWUI building blocks in real Chrome (tools/preview/gallery.html): fonts,
  * overflow, target sizes, and keyboard/focus behaviour that a fake DOM can't show.
  */
@@ -223,6 +241,10 @@ async function checkGallery(browser, base, width) {
         check('demo: Edit into an existing roll is refused, nothing changes', s.editDuplicate);
         check('demo: Edit of a wish deleted elsewhere changes nothing', s.editMissing);
         check('demo: no page errors after the edits', page.errors.length === 0, page.errors[0]);
+        const g = await page.eval(guestSyncLoop);
+        check('guest: re-showing the panel does not retry sync', g.afterShows === 0, `${g.afterShows} retries`);
+        check('guest: the sync bar says to sign in', /sign in/i.test(g.bar), g.bar);
+        check('guest: signing in syncs once', g.afterSignIn === 1, `${g.afterSignIn} syncs`);
       }
 
       // hostile

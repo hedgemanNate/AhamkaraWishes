@@ -6,7 +6,7 @@ const path = require('path');
 
 global.window = global;
 eval(fs.readFileSync(path.resolve(__dirname, '..', 'sync-status.js'), 'utf8'));
-const { describe, shouldAutoSync, classifyError, formatAgo } = window.AWSync;
+const { describe, shouldAutoSync, nextAutoSyncAt, classifyError, formatAgo, AUTO_SYNC_MAX_BACKOFF_MS } = window.AWSync;
 
 let failures = 0;
 function check(label, cond) { console.log(`${cond ? 'PASS' : 'FAIL'}: ${label}`); if (!cond) failures++; }
@@ -63,6 +63,20 @@ check('ErrorCode 5 is maintenance', classifyError({ ErrorCode: 5 }) === 'mainten
 check('fetch TypeError is network', classifyError(new TypeError('Failed to fetch')) === 'network');
 check('anything else is other', classifyError(new Error('weird')) === 'other');
 check('nothing is other', classifyError(null) === 'other');
+check('AuthError NOT_SIGNED_IN is auth', classifyError({ name: 'AuthError', code: 'NOT_SIGNED_IN', message: 'Not signed in to Bungie.' }) === 'auth');
+check('AuthError SESSION_EXPIRED is auth', classifyError({ name: 'AuthError', code: 'SESSION_EXPIRED', message: 'x' }) === 'auth');
+check('AuthError TRANSIENT (sign-in server unreachable) is network', classifyError({ name: 'AuthError', code: 'TRANSIENT', message: 'Could not reach the sign-in server' }) === 'network');
+check('AuthError CONFIG is other', classifyError({ name: 'AuthError', code: 'CONFIG', message: 'x' }) === 'other');
+
+// --- auto-sync scheduling (manager.js runSync / scheduleNextSync)
+const I = 30000;
+check('healthy: next sync one interval after the last', nextAutoSyncAt({ lastAttemptAt: 1000, intervalMs: I }) === 1000 + I);
+check('never synced: due now', nextAutoSyncAt({ intervalMs: I }) === I);
+check('signed out: never retried automatically', nextAutoSyncAt({ lastAttemptAt: 1, intervalMs: I, failures: 1, errorKind: 'auth' }) === null);
+check('one failure: waits twice as long', nextAutoSyncAt({ lastAttemptAt: 0, intervalMs: I, failures: 1, errorKind: 'network' }) === 2 * I);
+check('three failures: waits eight times as long', nextAutoSyncAt({ lastAttemptAt: 0, intervalMs: I, failures: 3, errorKind: 'maintenance' }) === 8 * I);
+check('backoff caps at 15 minutes', nextAutoSyncAt({ lastAttemptAt: 0, intervalMs: I, failures: 20, errorKind: 'other' }) === AUTO_SYNC_MAX_BACKOFF_MS);
+check('a slow cadence is never shortened by the cap', nextAutoSyncAt({ lastAttemptAt: 0, intervalMs: 20 * 60000, failures: 1, errorKind: 'other' }) === 20 * 60000);
 
 // time
 check('formatAgo just now', formatAgo(3000) === 'Just now');

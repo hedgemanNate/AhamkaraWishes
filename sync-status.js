@@ -42,6 +42,10 @@
   function classifyError(err) {
     if (!err) return 'other';
     const name = err.name || '', msg = String(err.message || err), code = err.code || err.ErrorCode || err.errorCode;
+    // AuthError codes (bungie-auth-core.js): TRANSIENT means the sign-in server
+    // couldn't be reached, which is a network problem, not a signed-out user.
+    if (name === 'AuthError' && code === 'TRANSIENT') return 'network';
+    if (name === 'AuthError' && code === 'CONFIG') return 'other';
     if (name === 'AuthError' || code === 'invalid_grant' || /not signed in|session (has )?expired|sign in again/i.test(msg)) return 'auth';
     // Bungie ErrorCode 5 is SystemDisabled: the API is down for maintenance.
     if (code === 5 || code === 'SystemDisabled' || /maintenance|SystemDisabled|ErrorCode[: ]+5\b/i.test(msg)) return 'maintenance';
@@ -136,5 +140,24 @@
     return !!s.signedIn && !s.sessionExpired && s.online !== false && (s.manifest || 'ready') === 'ready';
   }
 
-  root.AWSync = { describe, shouldAutoSync, classifyError, formatAgo, AUTO_SYNC_VISIBLE_MS };
+  const AUTO_SYNC_MAX_BACKOFF_MS = 15 * 60 * 1000;
+
+  /**
+   * When the next automatic sync should run (ms timestamp), or null for "not
+   * until something changes" (signing in, Sync now).
+   *   lastAttemptAt  when the last sync finished, ok or not
+   *   intervalMs     the normal cadence (30s visible, 5m hidden)
+   *   failures       failed syncs in a row
+   *   errorKind      classifyError() of the last failure
+   * A signed-out or expired user is never retried: it can only fail. Other
+   * failures back off, doubling the wait each time up to 15 minutes, so a
+   * Bungie outage isn't hammered every 30 seconds.
+   */
+  function nextAutoSyncAt({ lastAttemptAt = 0, intervalMs, failures = 0, errorKind = null }) {
+    if (failures > 0 && errorKind === 'auth') return null;
+    const wait = failures > 0 ? Math.min(intervalMs * 2 ** failures, Math.max(intervalMs, AUTO_SYNC_MAX_BACKOFF_MS)) : intervalMs;
+    return (lastAttemptAt || 0) + wait;
+  }
+
+  root.AWSync = { describe, shouldAutoSync, nextAutoSyncAt, classifyError, formatAgo, AUTO_SYNC_VISIBLE_MS, AUTO_SYNC_MAX_BACKOFF_MS };
 })(typeof window !== 'undefined' ? window : globalThis);

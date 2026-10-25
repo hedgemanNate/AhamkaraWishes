@@ -20,3 +20,8 @@ jobs:
       # Build the store package and check every referenced file is in it and
       # nothing dev-only leaked in.
       - run: npm run check-build
+      # The UI building blocks in real headless Chrome (preinstalled on the
+      # runner): keyboard, focus, dialogs, toasts, target sizes. Needs no game data.
+      - run: npm run ui-gallery
+        env:
+          CHROME_PATH: /usr/bin/google-chrome

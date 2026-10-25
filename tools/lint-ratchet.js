@@ -64,6 +64,23 @@ function scanTemplate(text, start) {
   return [i, has];
 }
 
+/** Removes comments but keeps string and template literals intact. */
+function stripComments(js) {
+  let out = '', i = 0;
+  while (i < js.length) {
+    const c = js[i], n = js[i + 1];
+    if (c === '/' && n === '*') { const end = js.indexOf('*/', i + 2); i = end < 0 ? js.length : end + 2; continue; }
+    if (c === '/' && n === '/') { while (i < js.length && js[i] !== '\n') i++; continue; }
+    if (c === "'" || c === '"' || c === '`') {
+      let j = i + 1;
+      while (j < js.length && js[j] !== c) { if (js[j] === '\\') j++; j++; }
+      out += js.slice(i, j + 1); i = j + 1; continue;
+    }
+    out += c; i++;
+  }
+  return out;
+}
+
 function count(file) {
   const text = fs.readFileSync(file, 'utf8');
   const relPath = path.relative(ROOT, file).split(path.sep).join('/');
@@ -79,7 +96,9 @@ function count(file) {
     if (has) m.innerHTMLInterpolations++;
   }
   if (relPath !== 'aw-store.js') m.directDimDataWrites = (text.match(/\.set\(\s*\{\s*dimData\b/g) || []).length;
-  m.nativeDialogs = (text.match(/(?<![\w.])(?:window\.)?(?:alert|confirm|prompt)\s*\(/g) || []).length;
+  // Calls only: not comments, not `function confirm(` declarations, not AWUI.confirm(.
+  const code = stripComments(text);
+  m.nativeDialogs = (code.match(/(?<![\w.$])(?<!function\s+)(?:window\.)?(?:alert|confirm|prompt)\s*\(/g) || []).length;
   m.inlineStyleAttributes = (text.match(/style="[^"$]*"/g) || []).filter(Boolean).length;
   return m;
 }

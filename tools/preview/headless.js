@@ -103,6 +103,15 @@ class Page {
       await sleep(intervalMs);
     }
   }
+  /** Presses a real key (trusted event), e.g. 'Escape', 'Tab', 'Enter', 'ArrowRight'. */
+  async press(key, { shift = false } = {}) {
+    const codes = { Escape: 27, Tab: 9, Enter: 13, ' ': 32, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, Home: 36, End: 35 };
+    const vk = codes[key] || key.toUpperCase().charCodeAt(0);
+    const base = { key, code: key === ' ' ? 'Space' : key, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk, modifiers: shift ? 8 : 0 };
+    await this.s.send('Input.dispatchKeyEvent', Object.assign({ type: 'rawKeyDown' }, base));
+    if (key === 'Enter' || key === ' ') await this.s.send('Input.dispatchKeyEvent', Object.assign({ type: 'char', text: key === ' ' ? ' ' : '\r' }, base));
+    await this.s.send('Input.dispatchKeyEvent', Object.assign({ type: 'keyUp' }, base));
+  }
   async screenshot(file, { fullPage = false } = {}) {
     const params = { format: 'png', captureBeyondViewport: fullPage };
     const r = await this.s.send('Page.captureScreenshot', params);
@@ -125,6 +134,8 @@ async function launch({ profileDir, headless = true } = {}) {
     // Deterministic rendering, so two screenshots of the same code match pixel
     // for pixel (GPU raster and LCD text anti-aliasing vary between runs).
     '--disable-gpu', '--force-color-profile=srgb', '--disable-lcd-text', '--font-render-hinting=none',
+    // CI containers often can't use Chrome's sandbox; only relax it there.
+    process.env.CI ? '--no-sandbox' : '',
     '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--mute-audio', 'about:blank'
   ].filter(Boolean), { stdio: 'ignore' });

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ahamkara Wishes — UI gallery</title>
+  <!-- The real stylesheet, legacy layer included, so the blocks are seen in the
+       same cascade they'll live in. No inline scripts (same CSP rules as the panel). -->
+  <link rel="stylesheet" href="/styles/app.css">
+  <link rel="stylesheet" href="/__preview/gallery.css">
+</head>
+<body>
+  <header class="g-head">
+    <h1>UI building blocks</h1>
+    <p>Every <code>AWUI</code> block in its states, at <span id="g-width"></span> px. Add <code>?w=320</code> to change the width.</p>
+  </header>
+  <div class="g-frame ui-root" id="frame">
+    <div class="g-scroll" id="gallery"></div>
+  </div>
+  <script src="/aw-dom.js"></script>
+  <script src="/aw-nav.js"></script>
+  <script src="/aw-ui.js"></script>
+  <script src="/sync-status.js"></script>
+  <script src="/__preview/gallery.js"></script>
+</body>
+</html>

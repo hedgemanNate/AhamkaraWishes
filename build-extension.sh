@@ -41,6 +41,8 @@ cp admin-sync.js     "$DIST/"
 cp aw-dom.js         "$DIST/"
 cp aw-store.js       "$DIST/"
 cp aw-nav.js         "$DIST/"
+cp aw-ui.js          "$DIST/"
+cp sync-status.js    "$DIST/"
 cp wishlist-validate.js "$DIST/"
 
 # --- Styles (entry: styles/app.css; sidepanel.css is imported into its legacy layer) ---

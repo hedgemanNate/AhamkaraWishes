@@ -109,6 +109,15 @@ allowClose = true;
 nav.open('builder');
 check('switching tab closes open layers when they allow it', nav.show('wishes') === true && nav.state.stack.length === 0 && nav.state.tab === 'wishes');
 
+// explicit return focus, and no "return to <body>"
+const other = el('other-btn');
+nav.open('lists', {}, { returnFocus: other }); nav.close();
+check('explicit returnFocus wins', doc.activeElement === other);
+doc.body = el('body'); let bodyFocus = 0; doc.body.focus = () => { bodyFocus++; doc.activeElement = doc.body; };
+doc.activeElement = doc.body; nav.open('lists'); nav.close();
+check('when nothing had focus, closing does not focus <body> on purpose', bodyFocus === 0);
+delete doc.body;
+
 // restore
 const nav2 = AWNav.create({ base: el('b2'), document: { addEventListener() {} }, remember: 'aw.tab', bindKeys: false });
 nav2.addTab('wishes', { view: el('v1') }); nav2.addTab('drops', { view: el('v2') });

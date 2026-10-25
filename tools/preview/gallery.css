@@ -1,0 +1,11 @@
+/* Gallery page chrome only (not part of the product). Unlayered on purpose. */
+body { margin: 0; padding: 16px; background: #050506; color: #ddd; font: 14px/1.5 system-ui, sans-serif; }
+.g-head { max-width: 640px; margin: 0 auto 16px; }
+.g-head h1 { font-size: 22px; margin: 0 0 4px; }
+.g-head p { margin: 0; color: #999; }
+.g-frame { position: relative; margin: 0 auto; height: 760px; border: 1px solid #333; border-radius: 16px; overflow: hidden; }
+.g-scroll { height: 100%; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 16px; }
+.g-section { display: flex; flex-direction: column; gap: 8px; }
+.g-section > h2 { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #8a8890; font-family: var(--ui-font-body); }
+.g-wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.g-note { color: #8a8890; font-size: 12px; }

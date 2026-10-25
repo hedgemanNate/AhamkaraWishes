@@ -97,14 +97,20 @@
         return true;
       },
 
-      /** Opens a screen or sheet on top of the stack. Re-opening the top one just updates params. */
-      open(name, params = {}) {
+      /**
+       * Opens a screen or sheet on top of the stack. Re-opening the top one just
+       * updates params. Focus returns to `returnFocus` on close; by default that's
+       * whatever had focus when this was called (the button that opened it).
+       */
+      open(name, params = {}, { returnFocus } = {}) {
         const layer = layers.get(name);
         if (!layer) throw new Error(`AWNav: no layer "${name}"`);
         const top = stack[stack.length - 1];
         if (top && top.name === name) { top.params = params; emit(); return true; }
         if (stack.some((s) => s.name === name)) throw new Error(`AWNav: "${name}" is already open below the top`);
-        stack.push({ name, params, returnFocus: doc && doc.activeElement });
+        const active = doc && doc.activeElement;
+        const fallback = active && active !== doc.body ? active : null;
+        stack.push({ name, params, returnFocus: returnFocus || fallback });
         apply();
         if (layer.onOpen) layer.onOpen(params);
         focusInto(layer.el);

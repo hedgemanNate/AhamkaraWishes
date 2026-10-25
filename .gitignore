@@ -14,3 +14,7 @@ node_modules/
 
 # Playwright MCP screenshots/snapshots
 .playwright-mcp/
+
+# Headless Chrome profile used by tools/preview (keeps the downloaded game data)
+tools/preview/.chrome-profile/
+tools/preview/.out/

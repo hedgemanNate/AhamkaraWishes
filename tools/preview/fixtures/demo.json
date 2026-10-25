@@ -1,0 +1,747 @@
+{
+ "dimData": {
+  "activeId": "default",
+  "lists": {
+   "default": {
+    "name": "Main Wishlist",
+    "items": {
+     "59060498": {
+      "static": {
+       "name": "Service Revolver",
+       "type": "weapon",
+       "set": null,
+       "icon": "https://www.bungie.net/common/destiny2_content/icons/7f7f1635c957e64b7409197ae7ca013f.jpg",
+       "classType": null,
+       "bucketHash": null,
+       "slotName": null,
+       "setName": null,
+       "setHash": null,
+       "linkedHashes": [],
+       "ammoType": 1,
+       "itemTypeDisplayName": "Hand Cannon",
+       "damageTypeHash": 3373582085
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "config": {
+         "perks": [
+          [
+           4090651448,
+           111235976
+          ],
+          [
+           3177308360,
+           1002206008
+          ],
+          [
+           2846385770,
+           509594246
+          ],
+          [
+           2054520291,
+           4170193963
+          ],
+          []
+         ],
+         "perkColumns": [
+          [
+           {
+            "name": "Corkscrew Rifling",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/7730e1732ed7ef91afce50277639c493.png",
+            "hash": 4090651448,
+            "enhancedHash": 111235976,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Steady Rounds",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/6c6e1cc341487a8afd0b0c714a229255.png",
+            "hash": 3177308360,
+            "enhancedHash": 1002206008,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Rangefinder",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/74270d52bec24f1f5f4c987f5f37fce9.png",
+            "hash": 2846385770,
+            "enhancedHash": 509594246,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Lucky Shot",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/05ff3c3914a333ff12abdea5782ceed9.png",
+            "hash": 2054520291,
+            "enhancedHash": 4170193963,
+            "color": null
+           }
+          ]
+         ],
+         "perkColumnsData": [
+          {
+           "socketIndex": 1,
+           "colIndex": 0,
+           "hashes": [
+            4090651448,
+            111235976
+           ]
+          },
+          {
+           "socketIndex": 2,
+           "colIndex": 1,
+           "hashes": [
+            3177308360,
+            1002206008
+           ]
+          },
+          {
+           "socketIndex": 3,
+           "colIndex": 2,
+           "hashes": [
+            2846385770,
+            509594246
+           ]
+          },
+          {
+           "socketIndex": 4,
+           "colIndex": 3,
+           "hashes": [
+            2054520291,
+            4170193963
+           ]
+          }
+         ]
+        },
+        "raw": "[[4090651448,111235976],[3177308360,1002206008],[2846385770,509594246],[2054520291,4170193963],[]]",
+        "added": 1790000000004
+       }
+      ]
+     },
+     "235827225": {
+      "static": {
+       "name": "Eyasluna",
+       "type": "weapon",
+       "set": null,
+       "icon": "https://www.bungie.net/common/destiny2_content/icons/9385daf600d89dd759c3b3f690edbc03.jpg",
+       "classType": null,
+       "bucketHash": null,
+       "slotName": null,
+       "setName": null,
+       "setHash": null,
+       "linkedHashes": [],
+       "ammoType": 1,
+       "itemTypeDisplayName": "Hand Cannon",
+       "damageTypeHash": 151347233
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pvp"
+        ],
+        "config": {
+         "perks": [
+          [
+           1926090094
+          ],
+          [
+           1968497646,
+           2172195298
+          ],
+          [
+           3108830275,
+           247725512
+          ],
+          [
+           588594999
+          ]
+         ],
+         "perkColumns": [
+          [
+           {
+            "name": "Fastdraw HCS",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/388a2235cfe0a6d9449aec30f8e962cd.png",
+            "hash": 1926090094,
+            "enhancedHash": null,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Armor-Piercing Rounds",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/b311ef00478243e21e2a5eec3a59f9d8.png",
+            "hash": 1968497646,
+            "enhancedHash": 2172195298,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Unrelenting",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/1e5843177c71ae3f2a4770d01a2f3813.png",
+            "hash": 3108830275,
+            "enhancedHash": null,
+            "color": null
+           },
+           {
+            "name": "Rapid Hit",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/de22847fa94634a487758041887bcdaa.png",
+            "hash": 247725512,
+            "enhancedHash": null,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Moving Target",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/40b591eae7f122fdf1cfca21fc6f6c0f.png",
+            "hash": 588594999,
+            "enhancedHash": null,
+            "color": null
+           }
+          ]
+         ],
+         "perkColumnsData": [
+          {
+           "socketIndex": 1,
+           "colIndex": 0,
+           "hashes": [
+            1926090094
+           ]
+          },
+          {
+           "socketIndex": 2,
+           "colIndex": 1,
+           "hashes": [
+            1968497646,
+            2172195298
+           ]
+          },
+          {
+           "socketIndex": 3,
+           "colIndex": 2,
+           "hashes": [
+            3108830275,
+            247725512
+           ]
+          },
+          {
+           "socketIndex": 4,
+           "colIndex": 3,
+           "hashes": [
+            588594999
+           ]
+          }
+         ]
+        },
+        "raw": "[[1926090094],[1968497646,2172195298],[3108830275,247725512],[588594999]]",
+        "added": 1790000000003
+       }
+      ]
+     },
+     "517096395": {
+      "static": {
+       "name": "Techsec Helm",
+       "type": "armor",
+       "set": null,
+       "icon": "https://www.bungie.net/common/destiny2_content/icons/514be1a6a19e5f4b2e8e6aa4c8f3e58a.jpg",
+       "classType": 0,
+       "bucketHash": 3448274439,
+       "slotName": null,
+       "setName": "Techsec",
+       "setHash": null,
+       "linkedHashes": [],
+       "ammoType": null,
+       "itemTypeDisplayName": null,
+       "damageTypeHash": null
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pvp"
+        ],
+        "config": {
+         "archetype": "BULWARK",
+         "spark": "Weapons"
+        },
+        "raw": "armor-wish:517096395",
+        "added": 1790000000007
+       }
+      ]
+     },
+     "2401760398": {
+      "static": {
+       "name": "Techsec Plate",
+       "type": "armor",
+       "set": null,
+       "icon": "https://www.bungie.net/common/destiny2_content/icons/7b56d68a23f98c1838aa052a3da065f9.jpg",
+       "classType": 0,
+       "bucketHash": 14239492,
+       "slotName": null,
+       "setName": "Techsec",
+       "setHash": null,
+       "linkedHashes": [],
+       "ammoType": null,
+       "itemTypeDisplayName": null,
+       "damageTypeHash": null
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "config": {
+         "archetype": "GUNNER",
+         "spark": "Class"
+        },
+        "raw": "armor-wish:2401760398",
+        "added": 1790000000006
+       }
+      ]
+     },
+     "3106439832": {
+      "static": {
+       "name": "Iron Forerunner Helm",
+       "type": "armor",
+       "set": null,
+       "icon": "https://www.bungie.net/common/destiny2_content/icons/0e3cecdb7819c420c9f5b15123313cfd.jpg",
+       "classType": 0,
+       "bucketHash": 3448274439,
+       "slotName": null,
+       "setName": "Iron Forerunner",
+       "setHash": null,
+       "linkedHashes": [],
+       "ammoType": null,
+       "itemTypeDisplayName": null,
+       "damageTypeHash": null
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "config": {
+         "archetype": "BRAWLER",
+         "spark": "Class"
+        },
+        "raw": "armor-wish:3106439832",
+        "added": 1790000000008
+       }
+      ]
+     },
+     "4184168210": {
+      "static": {
+       "name": "Fatebringer",
+       "type": "weapon",
+       "set": null,
+       "icon": "https://www.bungie.net/common/destiny2_content/icons/7741689cbc1102aa9fc742b33a106f19.jpg",
+       "classType": null,
+       "bucketHash": null,
+       "slotName": null,
+       "setName": null,
+       "setHash": null,
+       "linkedHashes": [],
+       "ammoType": 1,
+       "itemTypeDisplayName": "Hand Cannon",
+       "damageTypeHash": 3373582085
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "config": {
+         "perks": [
+          [
+           3661387068,
+           3399528164
+          ],
+          [
+           106909392,
+           1783397184
+          ],
+          [
+           3038247973,
+           64866129
+          ],
+          [
+           3824105627,
+           1183436451
+          ]
+         ],
+         "perkColumns": [
+          [
+           {
+            "name": "Chambered Compensator",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/0b451cbccc7f11f6aec9c153e59474cb.png",
+            "hash": 3661387068,
+            "enhancedHash": 3399528164,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Tactical Mag",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/f0e309a267b25279a871d182f8910bcc.png",
+            "hash": 106909392,
+            "enhancedHash": 1783397184,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Explosive Payload",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/31f02e5f3bae68ecdfdd3f899cf931c7.png",
+            "hash": 3038247973,
+            "enhancedHash": 64866129,
+            "color": "red"
+           }
+          ],
+          [
+           {
+            "name": "Firefly",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/629e225e6f8214326bc1eb0a911a6f6d.png",
+            "hash": 3824105627,
+            "enhancedHash": 1183436451,
+            "color": "red"
+           }
+          ]
+         ],
+         "perkColumnsData": [
+          {
+           "socketIndex": 1,
+           "colIndex": 0,
+           "hashes": [
+            3661387068,
+            3399528164
+           ]
+          },
+          {
+           "socketIndex": 2,
+           "colIndex": 1,
+           "hashes": [
+            106909392,
+            1783397184
+           ]
+          },
+          {
+           "socketIndex": 3,
+           "colIndex": 2,
+           "hashes": [
+            3038247973,
+            64866129
+           ],
+           "colors": {
+            "red": [
+             3038247973,
+             64866129
+            ]
+           }
+          },
+          {
+           "socketIndex": 4,
+           "colIndex": 3,
+           "hashes": [
+            3824105627,
+            1183436451
+           ],
+           "colors": {
+            "red": [
+             3824105627,
+             1183436451
+            ]
+           }
+          }
+         ]
+        },
+        "raw": "[[3661387068,3399528164],[106909392,1783397184],[3038247973,64866129],[3824105627,1183436451]]|[[0,0,0,0],[0,0,0,0],[3038247973,0,0,0],[3824105627,0,0,0]]",
+        "added": 1790000000001
+       },
+       {
+        "tags": [
+         "pvp"
+        ],
+        "config": {
+         "perks": [
+          [
+           3250034553,
+           1147230557
+          ],
+          [
+           3142289711,
+           3267421167
+          ],
+          [
+           47981717,
+           1370847713
+          ],
+          [
+           699525795,
+           3719974635,
+           4104185692,
+           3007133316
+          ]
+         ],
+         "perkColumns": [
+          [
+           {
+            "name": "Hammer-Forged Rifling",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/2b9eb6d4489cffc18c10223279198bcc.png",
+            "hash": 3250034553,
+            "enhancedHash": 1147230557,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Accurized Rounds",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/d85024478504205359c7fb52dbc4f6b6.png",
+            "hash": 3142289711,
+            "enhancedHash": 3267421167,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Opening Shot",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/276e8ce23910c6ee2a6b88b076a2004c.png",
+            "hash": 47981717,
+            "enhancedHash": 1370847713,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Frenzy",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/23e06f4ced1b3e6476f342978ff5bb37.png",
+            "hash": 4104185692,
+            "enhancedHash": 3007133316,
+            "color": null
+           },
+           {
+            "name": "Eye of the Storm",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/8f4755f9068959b26b8829641e5725ad.png",
+            "hash": 699525795,
+            "enhancedHash": 3719974635,
+            "color": null
+           }
+          ]
+         ],
+         "perkColumnsData": [
+          {
+           "socketIndex": 1,
+           "colIndex": 0,
+           "hashes": [
+            3250034553,
+            1147230557
+           ]
+          },
+          {
+           "socketIndex": 2,
+           "colIndex": 1,
+           "hashes": [
+            3142289711,
+            3267421167
+           ]
+          },
+          {
+           "socketIndex": 3,
+           "colIndex": 2,
+           "hashes": [
+            47981717,
+            1370847713
+           ]
+          },
+          {
+           "socketIndex": 4,
+           "colIndex": 3,
+           "hashes": [
+            699525795,
+            3719974635,
+            4104185692,
+            3007133316
+           ]
+          }
+         ]
+        },
+        "raw": "[[3250034553,1147230557],[3142289711,3267421167],[47981717,1370847713],[699525795,3719974635,4104185692,3007133316]]",
+        "added": 1790000000002
+       }
+      ]
+     }
+    }
+   },
+   "raid": {
+    "name": "Raid & Dungeon",
+    "items": {
+     "568611922": {
+      "static": {
+       "name": "The Mountaintop",
+       "type": "weapon",
+       "set": null,
+       "icon": "https://www.bungie.net/common/destiny2_content/icons/0c9b678fd92974726f166d42cda1774c.jpg",
+       "classType": null,
+       "bucketHash": null,
+       "slotName": null,
+       "setName": null,
+       "setHash": null,
+       "linkedHashes": [],
+       "ammoType": 2,
+       "itemTypeDisplayName": "Grenade Launcher",
+       "damageTypeHash": 3373582085
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "config": {
+         "perks": [
+          [
+           1478423395,
+           373417387
+          ],
+          [
+           3301904089,
+           409713597
+          ],
+          [
+           3523296417,
+           1906147653
+          ],
+          [
+           3425386926,
+           288411554
+          ],
+          []
+         ],
+         "perkColumns": [
+          [
+           {
+            "name": "Volatile Launch",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/d255c9140cf640cfc820f995d1c1e96a.png",
+            "hash": 1478423395,
+            "enhancedHash": 373417387,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Spike Grenades",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/05302d5b12e5f68541622766f18d3797.png",
+            "hash": 3301904089,
+            "enhancedHash": 409713597,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Demolitionist",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/da009697110e06b65d6f827b3b6d5f70.png",
+            "hash": 3523296417,
+            "enhancedHash": 1906147653,
+            "color": null
+           }
+          ],
+          [
+           {
+            "name": "Rampage",
+            "icon": "https://www.bungie.net/common/destiny2_content/icons/8976ead57430e4f5f8af1b3005de4f83.png",
+            "hash": 3425386926,
+            "enhancedHash": 288411554,
+            "color": null
+           }
+          ]
+         ],
+         "perkColumnsData": [
+          {
+           "socketIndex": 1,
+           "colIndex": 0,
+           "hashes": [
+            1478423395,
+            373417387
+           ]
+          },
+          {
+           "socketIndex": 2,
+           "colIndex": 1,
+           "hashes": [
+            3301904089,
+            409713597
+           ]
+          },
+          {
+           "socketIndex": 3,
+           "colIndex": 2,
+           "hashes": [
+            3523296417,
+            1906147653
+           ]
+          },
+          {
+           "socketIndex": 4,
+           "colIndex": 3,
+           "hashes": [
+            3425386926,
+            288411554
+           ]
+          }
+         ]
+        },
+        "raw": "[[1478423395,373417387],[3301904089,409713597],[3523296417,1906147653],[3425386926,288411554],[]]",
+        "added": 1790000000005
+       }
+      ]
+     },
+     "1465235089": {
+      "static": {
+       "name": "Bushido Cowl",
+       "type": "armor",
+       "set": null,
+       "icon": "https://www.bungie.net/common/destiny2_content/icons/601034f9d9b77d8f67a6b15146c569a2.jpg",
+       "classType": 1,
+       "bucketHash": 3448274439,
+       "slotName": null,
+       "setName": "Bushido",
+       "setHash": null,
+       "linkedHashes": [],
+       "ammoType": null,
+       "itemTypeDisplayName": null,
+       "damageTypeHash": null
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "config": {
+         "archetype": "SPECIALIST",
+         "spark": "Grenade"
+        },
+        "raw": "armor-wish:1465235089",
+        "added": 1790000000009
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "feedEnabled": false,
+ "feedEntries": [
+  {
+   "listId": "default",
+   "itemHash": "4184168210",
+   "itemName": "Fatebringer",
+   "listName": "Main Wishlist",
+   "iconUrl": "https://www.bungie.net/common/destiny2_content/icons/7741689cbc1102aa9fc742b33a106f19.jpg",
+   "ts": 1790000000010
+  }
+ ]
+}

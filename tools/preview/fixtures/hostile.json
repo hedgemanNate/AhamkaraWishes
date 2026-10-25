@@ -1,0 +1,194 @@
+{
+ "dimData": {
+  "activeId": "default",
+  "lists": {
+   "default": {
+    "name": "Main Wishlist",
+    "items": {
+     "1001": {
+      "static": {
+       "name": "\"><img src=x onerror=\"window.__pwned=1\"> Evil Gun",
+       "type": "weapon",
+       "icon": "https://evil.example/track.gif",
+       "ammoType": 1,
+       "itemTypeDisplayName": "Hand Cannon"
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "raw": "[[1]]",
+        "added": 1,
+        "config": {
+         "perks": [
+          [
+           1
+          ]
+         ],
+         "perkColumns": [
+          [
+           {
+            "name": "<b>perk</b>",
+            "icon": "https://evil.example/perk.gif",
+            "hash": 1,
+            "color": null
+           }
+          ]
+         ],
+         "perkColumnsData": [
+          {
+           "socketIndex": 3,
+           "colIndex": 0,
+           "hashes": [
+            1
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     },
+     "1002": {
+      "static": {
+       "name": "Honest Gun",
+       "type": "weapon",
+       "icon": "/common/destiny2_content/icons/0e3cecdb7819c420c9f5b15123313cfd.jpg"
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pvp"
+        ],
+        "raw": "[[2]]",
+        "added": 2,
+        "config": {
+         "perks": [
+          [
+           2
+          ]
+         ],
+         "perkColumns": [
+          [
+           {
+            "name": "Fine Perk",
+            "icon": "/common/destiny2_content/icons/0e3cecdb7819c420c9f5b15123313cfd.jpg",
+            "hash": 2,
+            "color": null
+           }
+          ]
+         ],
+         "perkColumnsData": [
+          {
+           "socketIndex": 3,
+           "colIndex": 0,
+           "hashes": [
+            2
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     },
+     "2001": {
+      "static": {
+       "name": "Good Helm",
+       "type": "armor",
+       "icon": "/common/destiny2_content/icons/0e3cecdb7819c420c9f5b15123313cfd.jpg",
+       "classType": 0,
+       "setName": "Iron",
+       "setHash": 11
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "raw": "armor-wish:2001",
+        "added": 3,
+        "config": {
+         "archetype": "GUNNER",
+         "spark": "Weapons"
+        }
+       }
+      ]
+     },
+     "2002": {
+      "static": {
+       "name": "Unknown Archetype Helm",
+       "type": "armor",
+       "icon": "/common/destiny2_content/icons/0e3cecdb7819c420c9f5b15123313cfd.jpg",
+       "classType": 0,
+       "setName": "Iron",
+       "setHash": 11
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "raw": "armor-wish:2002",
+        "added": 4,
+        "config": {
+         "archetype": "NOT-A-REAL-ONE"
+        }
+       }
+      ]
+     },
+     "2003": {
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "raw": "x",
+        "added": 5,
+        "config": {
+         "archetype": "GUNNER",
+         "spark": "Super"
+        }
+       }
+      ]
+     },
+     "2004": {
+      "static": {
+       "name": "\"><img src=x onerror=\"window.__pwned=2\"> Evil Chest",
+       "type": "armor",
+       "icon": "https://evil.example/a.gif",
+       "classType": 1,
+       "setName": "<u>Evil Set</u>",
+       "setHash": 0
+      },
+      "wishes": [
+       {
+        "tags": [
+         "pve"
+        ],
+        "raw": "armor-wish:2004",
+        "added": 6,
+        "config": {
+         "archetype": "BRAWLER",
+         "spark": "<i>Super</i>"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "wl_evil": {
+    "name": "\"><img src=x onerror=\"window.__pwned=3\"> Sneaky List",
+    "items": {}
+   }
+  }
+ },
+ "feedEnabled": false,
+ "feedEntries": [
+  {
+   "itemName": "\"><img src=x onerror=\"window.__pwned=4\">",
+   "listName": "\"><img src=x onerror=\"window.__pwned=5\">",
+   "iconUrl": "https://evil.example/feed.gif",
+   "ts": 1
+  }
+ ]
+}

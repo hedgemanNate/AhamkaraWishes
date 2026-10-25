@@ -361,9 +361,12 @@
         refreshMine();
         refreshBrowseOrSearch();
       } catch (e) {
-        const msg = e.message === 'submission_cap_reached'
-          ? `Submission limit reached (${whoamiCache?.cap ?? 'max'}). Delete one to submit a new one.`
-          : ('Submit failed: ' + e.message);
+        const SUBMIT_ERRORS = {
+          submission_cap_reached: `Submission limit reached (${whoamiCache?.cap ?? 'max'}). Delete one to submit a new one.`,
+          no_valid_wishes: 'This list has no wishes that can be shared.',
+          payload_too_large: 'This list is too big to share. Split it into smaller lists.',
+        };
+        const msg = SUBMIT_ERRORS[e.message] || ('Submit failed: ' + e.message);
         window.awWishlistIO.showToast(msg, true);
       } finally {
         confirmBtn.disabled = false;

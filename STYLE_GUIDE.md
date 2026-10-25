@@ -1,258 +1,157 @@
 # Ahamkara Wishes — Style Guide
 
-This document captures the visual tokens, component rules, and conventions used across the app so future changes stay consistent and predictable.
+How the redesigned UI is built, so every screen looks and behaves the same. It covers the new system (`styles/`, `aw-ui.js`, `aw-nav.js`, `aw-dom.js`). The old screens still use `sidepanel.css`; see [Legacy screens](#legacy-screens) for the rules that apply while they are rebuilt.
 
-## Design Principles
-- **Minimal & Focused:** Dark, low-noise interface with clear accents for important controls.
-- **Sleek, high-contrast accents:** Use the accent gold sparingly for primary actions and states.
-- **Accessibility first:** Ensure readable sizes, sufficient contrast, and visible keyboard focus.
+See the components live: `npm run preview`, then open `http://127.0.0.1:8765/gallery`.
 
-## Tokens (CSS variables)
-- **Background (dark):** `--bg-dark: #1e1e24` — page background.
-- **Card / panel:** `--bg-card: #2b2b36` — used for panels / cards.
-- **Accent (gold):** `--accent-gold: #d4af37` — primary accent for active states.
-- **Primary text:** `--text-main: #ffffff` — main copy color.
-- **Subtext:** `--text-sub: #aaaaaa` — secondary copy, icons, hints.
-- Keep tokens in `:root` (see [sidepanel.css](sidepanel.css)).
+## Principles
 
-## Typography
-- **System UI stack:** `Segoe UI, Tahoma, Geneva, Verdana, sans-serif` (falling back to system sans).
-- **Scale:**
-  - **H1 / App title:** 18px, letter-spacing 2px, uppercase for the header (`.logo-area h1`).
-  - **Tab labels:** 11px, bold, uppercase (`.tab-btn`).
-  - **Body / control labels:** 11–12px for compact controls.
-- **Weight & transform:** Tabs and important labels are bold and uppercase. Body text may be normal.
+1. **Small screens first.** Everything must work from **320px** wide (D2). Wider panels add room, never features.
+2. **No hover.** A future mobile app must be possible, so nothing is reachable only by hover, and every action has a visible control. Tooltips may repeat a label but never carry the only copy of it.
+3. **Gold means "act here" or "you own this"** (D7). Use `--ui-accent` for the primary action, the current selection, and ownership. Never use it as decoration.
+4. **Dark only** (D7).
+5. **Untrusted text stays text.** Wishlists come from other people (files, Discover). Render with `AWDom.h` / `AWDom.html`, never by concatenating strings into `innerHTML`.
+6. **Say what happened, offer the next step.** Status copy has no jargon ("error", "failed to fetch"). Empty and error states name the next action.
 
-## Spacing & Layout
-- **Base spacing unit:** 4px. Use multiples of 4 for padding/margins.
-- **Header padding:** `15px` (keeps header roomy but compact).
-- **Tab spacing:** use `gap: 8px` between tabs; tab vertical padding is 8px.
-- **Select widths:** header dropdown uses ~140px width to stay centered and compact.
+## Files and cascade layers
 
-## Components
+`sidepanel.html` links one stylesheet, `styles/app.css`, which sets the layer order:
 
-- **Tabs (`.tab-btn`):**
-  - Full-width behavior: each `.tab-btn` uses `flex: 1` except icon-only center tab.
-  - Active state: `.tab-btn.active` → `background: var(--accent-gold)`, `color: #000`, border-color matches accent.
-  - Padding: `8px` (reduced for tighter header layout).
+```
+legacy < tokens < base < components < views < utilities
+```
 
-- **Center icon tab (`#tab-menu`):**
-  - Fixed width: `56px` (`flex: 0 0 56px`) and `display: inline-flex; align-items:center; justify-content:center`.
-  - Icon-only: use an inline SVG with `fill: currentColor` so colors follow text color rules.
+| Layer | File | What goes there |
+|---|---|---|
+| `legacy` | `sidepanel.css` (imported into the layer) | The old screens. Don't add to it. |
+| `tokens` | `styles/tokens.css` | All design tokens. **The only file where raw colours belong.** |
+| — | `styles/fonts.css` | IBM Plex `@font-face`; files are bundled in `vendor/fonts/ibm-plex` (SIL OFL) |
+| `base` | `styles/base.css` | Element defaults, scoped to `.ui-root` |
+| `components` | `styles/components.css` | `.ui-*` building blocks |
+| `views` | (per screen, Phase 3+) | Layout of one screen; compose components, don't restyle them |
+| `utilities` | `styles/utilities.css` | `.ui-sr-only`, `[hidden]`, and other single-purpose helpers |
 
-- **Dropdown (`#wishlist-select` inside `.select-wrap`):**
-  - Minimalist: no visible border; centered text; small height (24px).
-  - Custom caret via `.select-wrap::after` to match the UI tone.
-  # Ahamkara Wishes — Visual Style Guide (Comprehensive)
+Because the layers are ordered, a later layer wins without `!important` or extra specificity. **Don't add `!important`**: the lint ratchet counts it.
 
-  This is a professional front-end (visual) style guide for Ahamkara Wishes. It documents the color system, layout tokens, typography, component library, interaction states, accessibility requirements, and implementation snippets based on the current app CSS.
+New UI lives inside an element with class `.ui-root`. Base styles never reach outside it, so the legacy screens keep rendering exactly as before. `.ui-root` is the container query container (`container-name: panel`), so components adapt to the **panel's** width:
 
-  Purpose
-  - Provide a single source of truth for visual decisions.
-  - Make UI development predictable, accessible, and easy to maintain.
+```css
+@container panel (min-width: 540px) { .ui-sheet { /* centred dialog instead of a bottom sheet */ } }
+```
 
-  Scope
-  - Covers header, tabs, dropdowns, buttons, cards, armor views (craft & list), weapon cards, filters, inputs, scrollbars, and loading states.
+## Naming
 
-  ---
+- Tokens: `--ui-*`. Classes: `.ui-*`, with modifiers as `.ui-btn--primary`.
+- These prefixes were chosen because the legacy stylesheet already uses `--aw-`, `--text-`, `--accent-`, `--bg-`, `--stat-`, `--combo-`, `--space-` and `.aw-`. New names can't collide with old ones.
 
-  ## 1. Design Tokens
-  Put these in `:root` (top of `sidepanel.css` or a dedicated `design-tokens.css`).
+## Tokens
 
-  Color tokens
-  | Name | Token | Value | Usage |
-  |---|---:|:---|:---|
-  | Background (app) | `--bg-dark` | `#1e1e24` | Page background and deep panels |
-  | Card / panel | `--bg-card` | `#2b2b36` | Cards, panels, content surfaces |
-  | Accent (primary) | `--accent-gold` | `#d4af37` | Primary actions, selected states |
-  | Text main | `--text-main` | `#ffffff` | Primary copy |
-  | Text sub | `--text-sub` | `#aaaaaa` | Secondary copy, hints |
-  | Muted | `--muted` | `#777777` | Muted labels, icons |
+Three tiers. Use the **semantic** tier in components.
 
-  Armor stat tokens (semantic color accents)
-  | Token | Value | Meaning |
-  |---|---:|:---|
-  | `--stat-weapons` | `#4a6fa5` | Weapons / attack accent |
-  | `--stat-health`  | `#5d7a5d` | Health / defense accent |
-  | `--stat-class`   | `#9c7c4a` | Class/archetype accent |
-  | `--stat-grenade` | `#a35d41` | Grenade / utility accent |
-  | `--stat-super`   | `#6a4a8a` | Super / ultimate accent |
-  | `--stat-melee`   | `#8a3a3a` | Melee / physical accent |
+| Tier | Examples | Use |
+|---|---|---|
+| Palette | `--ui-palette-ink-0` … `-ink-5`, `--ui-palette-paper-*`, `--ui-palette-gold` | Raw values. Only `tokens.css` reads them. |
+| Semantic | `--ui-bg`, `--ui-surface-1/2/3`, `--ui-line`, `--ui-text`, `--ui-text-muted`, `--ui-text-dim`, `--ui-accent`, `--ui-on-accent`, `--ui-success`, `--ui-warning`, `--ui-danger`, `--ui-info`, `--ui-focus` | Everything. |
+| Game | `--ui-combo-1…4`, `--ui-element-*`, `--ui-stat-*`, `--ui-rarity-*`, `--ui-mode-pve/pvp` | Small markers only (a dot, a stripe, a badge), so they don't compete with gold. |
 
-  Layout & scale tokens
-  - `--space-xs: 4px`
-  - `--space-s: 8px`
-  - `--space-m: 12px`
-  - `--space-l: 16px`
-  - `--space-xl: 24px`
-  - `--radius-sm: 2px`
-  - `--radius-md: 4px`
-  - `--border-thin: 1px`
-  - `--border-default: 2px`
+**Surfaces:** `--ui-bg` is the page, `--ui-surface-1` is cards and sheets, `--ui-surface-2` is raised or selected rows, and `--ui-surface-3` is controls, chips and toasts.
 
-  Section spacing
-  - `--space-section`: 16px — vertical spacing used between grouped step sections (for example: between `.wishlist-section` and `.utility-section`). Use `var(--space-section, var(--space-l))` when spacing stacked sections.
+### Type
 
-  Implementation snippet (place near top of main CSS):
+- Body: **IBM Plex Sans** (`--ui-font-body`). Headings and labels in caps: **IBM Plex Sans Condensed** (`--ui-font-display`).
+- Sizes: `--ui-text-xs` 11px (**the floor; nothing smaller**), `sm` 12, `md` 13 (body), `lg` 15, `xl` 17, `2xl` 20, `3xl` 24.
+- Uppercase labels use `letter-spacing: var(--ui-tracking-caps)`.
 
-    :root {
-      --bg-dark: #1e1e24;
-      --bg-card: #2b2b36;
-      --accent-gold: #d4af37;
-      --text-main: #ffffff;
-      --text-sub: #aaaaaa;
-      --space-s: 8px;
-      --radius-sm: 2px;
-      --border-default: 2px;
-    }
+### Space and size
 
-  ---
+- 4px grid: `--ui-space-1` (4) … `--ui-space-8` (32). The panel's side padding is `--ui-gutter` (12px).
+- **Touch targets:** `--ui-tap` (44px) for anything tappable. Compact controls such as chips may use `--ui-control` (40px) height, but their hit area must not be smaller. `npm run ui-check` measures this.
+- Art: `--ui-item-icon` 44px, `--ui-perk` 28px.
 
-  ## 2. Typography
-  - Font stack: `Segoe UI, Tahoma, Geneva, Verdana, sans-serif`.
-  - Display/Brand: `Bellota` is used in the spinner label; reserve for special headings.
+### Shape, elevation, motion, stacking
 
-  Type scale (recommended):
-  - App title: 18px, uppercase, 700, letter-spacing 2px.
-  - Tabs: 11px, bold, uppercase.
-  - Body/controls: 11–13px.
+- Radii `--ui-radius-sm/md/lg/xl/pill`; borders `--ui-border`.
+- Shadows `--ui-shadow-1` (raised), `-2` (dialog), `-3` (bottom sheet).
+- Motion: `--ui-dur-fast`, `--ui-dur`, `--ui-ease`. Both durations drop to 0 under `prefers-reduced-motion`, so always use the tokens.
+- Stacking: `--ui-z-sticky` < `--ui-z-fab` < `--ui-z-sheet` < `--ui-z-dialog` < `--ui-z-toast`.
 
-  Accessibility: prefer >= 12px body text for dense UIs where feasible.
+## Building blocks (`aw-ui.js`)
 
-  ---
+Create UI through these factories rather than writing markup by hand. Each returns a DOM element (or a Promise for `confirm`) with the right roles, labels and keyboard behaviour built in.
 
-  ## 3. Layout Rules
-  - App container: `display:flex; flex-direction:column; height:100vh;`.
-  - Header: `padding: 15px; border-bottom: 2px solid var(--accent-gold); position: sticky; top:0;`.
-  - Tabs: `.tab-switcher` uses `display:flex; gap: var(--space-s)`; each `.tab-btn` is `flex:1` except the center icon tab which is fixed width.
-  - Internal sliders: use transform transitions for smoothness (`.armor-view-slider` width 200% and translateX states).
+| Factory | Notes |
+|---|---|
+| `AWUI.button({ label, variant, size, icon, block, disabled, onClick })` | Variants: `primary` (one per screen), `secondary`, `ghost`, `danger`. |
+| `AWUI.iconButton({ label, icon, title, onClick })` | `label` is required; it is the accessible name. 44px target. |
+| `AWUI.chip({ label, selected, count, icon, onClick, onRemove })`, `AWUI.chipRow(chips, { label })` | A toggle chip (`selected` → `aria-pressed`) or a removable one (`onRemove`). Rows scroll sideways on narrow panels. |
+| `AWUI.segmented({ label, options, value, onChange })` | A radiogroup with arrow-key support. `setValue` / `getValue`. |
+| `AWUI.searchField({ label, placeholder, value, onInput })` | Visible-to-screen-reader label plus a clear button. |
+| `AWUI.row({ title, subtitle, leading, trailing, onClick })`, `AWUI.card(...children)` | List rows (a button when `onClick` is set) and cards. |
+| `AWUI.badge(label, tone)` | Tones: `accent`, `muted`, `success`, `warning`, `danger`, `pve`, `pvp`. |
+| `AWUI.switchRow({ label, description, checked, onChange })` | `role="switch"`. |
+| `AWUI.banner({ tone, text, action })`, `AWUI.progress({ label, value, max })` | Status under the app bar; e.g. the manifest download (D13). |
+| `AWUI.emptyState({ icon, title, body, actions })` | Always offer the next step. |
+| `AWUI.sheet({ title, body, footer, onClose })` | Returns a `.ui-layer` to register with `AWNav`. A bottom sheet below 540px, a centred dialog above. |
+| `AWUI.confirm({ title, body, confirmLabel, cancelLabel, danger })` → `Promise<boolean>` | **Only for irreversible actions** (D6). Cancel is focused first; Escape cancels. |
+| `AWUI.toast(message, { undo, action, duration })` | Announced through one polite live region. Restorable deletes use Undo instead of a confirm (D6). |
+| `AWUI.filterSheetBody({ sections, selected, count, noun, onApply, onReset })` | The standard filter layout, with a live result count on Apply. |
+| `AWUI.ICON.{close, search, more, check, chevron, filter}` | Inline SVG that inherits `currentColor`. |
 
-  Spacing rules
-  - Use tokenized spacing: `var(--space-s)` for small gaps, `var(--space-l)` for internal padding.
+## Navigation (`aw-nav.js`)
 
-  ---
+One controller owns tabs, screens and stacked layers (sheets and dialogs):
 
-  ## 4. Component Library
+```js
+const nav = AWNav.create({ remember: 'aw-last-tab' }); // localStorage key for the last tab
+nav.addTab('wishes', { view, button });
+nav.addLayer('lists', { el: AWUI.sheet({ ... }), kind: 'sheet' });
+nav.open('lists', params, { returnFocus: triggerButton });
+```
 
-  Header & Brand
-  - `.logo-area h1` centered, color `var(--accent-gold)`.
-  - Wishlist select: `.select-wrap` + `#wishlist-select` — small, borderless, centered, 24px height by default.
+- Opening a layer makes everything behind it `inert` and moves focus in. Closing it returns focus to the trigger (never to `<body>`).
+- Escape closes the top layer only.
+- `nav.restore('wishes')` reopens the remembered tab (or the fallback) on start.
+- Don't toggle `hidden` or `.active` by hand on anything AWNav manages.
 
-  Tabs
-  - `.tab-btn`: `border: var(--border-default) solid #444; padding: 8px; font-size: 11px; text-transform:uppercase;`.
-  - `.tab-btn.active`: `background: var(--accent-gold); color:#000; border-color:var(--accent-gold);`.
-  - Center tab `#tab-menu`: `flex:0 0 56px; display:inline-flex; align-items:center; justify-content:center;`.
+## Rendering (`aw-dom.js`)
 
-  ### Step Labels
+```js
+AWDom.h('div', { class: 'card', data: { hash } }, name)   // text is always text
+AWDom.render(el, AWDom.html`<b>${name}</b>`)              // every ${} is escaped
+AWDom.raw(svgMarkup)                                      // only for markup we wrote
+```
 
-  Step labels are small, enumerated headers used to group compact form controls and step-based UI sections (for example: "1. Wishlist", "2. Choose Archetype"). They should be visually distinct using the accent token while remaining lightweight and compact.
+- Inline `on*` attributes throw. Use `on: { click }` or `AWDom.delegate()`.
+- URL attributes are checked. A remote `<img src>` must be on `www.bungie.net`, so a shared list can't make the panel fetch from someone's server.
 
-  Recommended CSS:
+## Data writes
 
-  ```css
-  .step-label {
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    color: var(--accent-gold);
-    text-transform: uppercase;
-    font-weight: 700;
-    border-bottom: 1px solid #333;
-    padding-top: 8px;
-    padding-bottom: 4px;
-  }
-  ```
+All writes to the wishlist go through `AWStore.update(mutator)`, which holds a Web Lock shared with the service worker. Never call `chrome.storage.local.set({ dimData })` directly; the ratchet counts that.
 
-  Usage notes:
-  - Keep step labels short (1–4 words) and place them above the related control block.
-  - Use `--accent-gold` to maintain visual consistency with other active/step indicators.
-  - Maintain the small font size to avoid overpowering main content; prefer this for labels and micro-headers only.
+## Accessibility checklist
 
-  Buttons
-  - `.btn-primary`: full-width, `padding:14px`, `background: var(--accent-gold)`, black text, bold, uppercase.
-  - `.btn-primary:disabled`: `background:#333; color:#666; cursor:not-allowed;`.
+- [ ] Works at 320px with no horizontal scroll.
+- [ ] Every tappable thing is at least 44px tall, or 40px for chips.
+- [ ] Every icon-only control has a label.
+- [ ] Visible focus (the global `:focus-visible` outline). Don't remove it.
+- [ ] State isn't shown by colour alone: pair it with text or an icon.
+- [ ] Sheets and dialogs: focus in, Escape out, focus back to the trigger.
+- [ ] Animations use the motion tokens, so reduced motion is respected.
 
-  Filters & Inputs
-  - `.filter-search`: compact row with `gap:8px`; inputs: background `#2b2e35`, `border:1px solid #444`, radius `--radius-md`.
-  - Filter toggle: `.filter-toggle-btn.active` uses `background: var(--accent-gold); color:#000;`.
+## Guard rails (run before committing)
 
-  Cards: weapon & armor
-  - Card background: `var(--bg-card)` with `border-left` or `border` accents.
-  - `.armor-box`: square aspect ratio, `background:#111`, `border:2px solid #333`, hover: `border-color:#555`, selected: `border-color:var(--accent-gold)` + inset glow.
+| Command | Checks |
+|---|---|
+| `npm test` | Unit tests plus the **lint ratchet** (`tools/lint-ratchet.js`): counts of `innerHTML` templates, raw hex colours outside `tokens.css`, `!important`, direct `dimData` writes, native dialogs and inline styles may only go **down**. |
+| `npm run check-build` | The packaged extension contains every file it references, and nothing from `tools/`, `tests/`, `docs/` or `supabase/`. |
+| `npm run ui-gallery` | Every building block in headless Chrome at 320/360/540: fonts, overflow, target sizes, keyboard, focus return. |
+| `npm run ui-check` | The real panel with the demo, hostile and empty fixtures. |
+| `npm run visual -- capture/compare` | Pixel diff of real screens before and after a change. Compare captures from the same Chrome version. |
 
-  Loading & Overlays
-  - `.loading-overlay`: semi-opaque black with centered spinner; spinner uses `border-top-color: var(--accent-gold)` and `Bellota` label.
+## Legacy screens
 
-  ---
+`sidepanel.css` still styles the screens that haven't been rebuilt. It sits in the lowest layer, so new styles always win over it.
 
-  ## 5. Armor Views (Craft & List) — Detailed
-
-  Craft View (`#pane-craft`)
-  - Editor-focused: forms, sliders, per-stat controls.
-  - Controls: compact (11–12px); use `--stat-*` tokens for stat chips/badges.
-  - Scrolling: `overflow-y:auto` with thin, subdued scrollbar.
-
-  List View (`#pane-list`)
-  - Filter header fixed; list below scrolls inside `#armor-list-container`.
-  - List rows use `.armor-grid` for layout and `.armor-box` for item cards.
-
-  Interaction rules
-  - Slide between craft/list using transform transitions; avoid layout reflows.
-  - Selecting an item marks it `.selected` and optionally applies `.dimmed` to others.
-
-  ---
-
-  ## 6. States & Motion
-  - Hover: subtle contrast increase (border to `#555` or slight background tint).
-  - Active/Selected: use `--accent-gold` for borders and interior inset glow.
-  - Disabled: reduce opacity and remove pointer interactions.
-  - Transitions: prefer short, smooth easing — `0.2s` for hovers, `0.4s` for larger transforms.
-
-  ---
-
-  ## 7. Accessibility & ARIA
-  - Provide `aria-label` for icon-only controls (e.g., `#tab-menu`).
-  - Ensure focus styles are visible: use subtle but visible box-shadow or outline.
-  - Keyboard: all interactive elements must be reachable and operable via keyboard.
-  - Alt text for images or `aria-hidden` if decorative.
-
-  ---
-
-  ## 8. Code Snippets & Examples
-
-  Token block (copy into CSS):
-
-    :root {
-      --bg-dark: #1e1e24;
-      --bg-card: #2b2b36;
-      --accent-gold: #d4af37;
-      --text-main: #ffffff;
-      --text-sub: #aaaaaa;
-      --space-s: 8px;
-      --radius-sm: 2px;
-    }
-
-  Tab active example:
-
-    .tab-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
-
-  Armor selected example:
-
-    .armor-box.selected {
-      border-color: var(--accent-gold);
-      box-shadow: inset 0 0 10px rgba(212,175,55,0.3);
-    }
-
-  ---
-
-  ## 9. Contribution Workflow
-  - When adding UIs, update tokens first if a new semantic value is needed.
-  - Add component CSS close to existing related modules and document new tokens/patterns in this guide.
-  - Run contrast checks and keyboard navigation tests before PR.
-
-  ---
-
-  Would you like me to:
-  - A) Insert the token block at the top of `sidepanel.css` for immediate usage, and add a `CONTRIBUTING_UI.md` with templates, or
-  - B) Create `design-tokens.css` and import it from `sidepanel.css` so tokens are centralized and portable?
-
-  Reply with `A` or `B` and I'll apply the change.
+- Don't add rules to it. When a screen is rebuilt, its legacy rules are deleted.
+- Its variables (`--bg-dark`, `--accent-gold`, `--stat-*`, …) remain only for those screens. New code uses `--ui-*`.
+- Moving it into the layer was proven pixel-identical on seven screens (`npm run visual`).

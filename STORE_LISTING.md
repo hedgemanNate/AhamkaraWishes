@@ -14,7 +14,7 @@ Ahamkara Wishes
 (132 characters max -- shown in search results)
 
 ```
-Build weapon and armor wishlists for Destiny 2. Track your best rolls, get notified when they drop, and share with the community.
+Build weapon and armor wishlists for Destiny 2. See which god rolls you own, catch new drops, and share lists with the community.
 ```
 
 ---
@@ -35,14 +35,15 @@ WEAPONS
 
 ARMOR
 - Search armor sets by name
-- Choose an archetype (stat pairing) and a spark (tertiary stat)
+- Choose an archetype (stat pairing) and its tertiary stat
+- Optionally add a Spark (the Tier 5 tuned stat) when you're hunting the rarest rolls
 - Save wishes for each class and slot
 - Owned rolls are highlighted automatically
 
 WHEN A WISH DROPS
+- While the side panel is open, it checks your inventory and shows each wishlisted roll as it lands
 - New matching rolls are locked in-game automatically so they can't be dismantled by accident
-- They're moved to your vault for you
-- Turn on the Feed to log every wishlisted roll the moment it lands in your inventory
+- Optionally have them moved to your vault for you (you choose right after signing in)
 
 WISHLISTS
 - Create and name as many wishlists as you want (PvE, PvP, season-specific, etc.)
@@ -137,7 +138,7 @@ Recommended shots to capture:
 
 1. **Weapon crafting view** -- weapon selected, perks picked, stat delta visible
 2. **Weapon list view** -- several wishes showing owned/not-owned state
-3. **Armor crafting view** -- archetype and spark selected
+3. **Armor crafting view** -- archetype and tertiary selected
 4. **Menu / Feed view** -- Feed log showing recent drops
 5. **Discover view** -- community wishlists browseable
 6. **godroll.tv integration** -- a godroll.tv weapon page with perks picked and the Ahamkara Wish dropdown open, the side panel's weapon list beside it

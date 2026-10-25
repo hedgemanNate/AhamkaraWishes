@@ -1,10 +1,10 @@
 # Ahamkara Wishes — Full Project Briefing
 
-_Last updated 2026-10-01 against branch `ColorCombos` (manifest v0.2.9). If this disagrees with the code, trust the code and fix this file._
+_Last updated 2026-10-25 against branch `phase2/foundations` (redesign Phase 2; manifest v0.2.9). If this disagrees with the code, trust the code and fix this file._
 
 ## What It Is
 
-Ahamkara Wishes is a Chrome/Chromium Manifest V3 extension: a wishlist manager for Destiny 2 players. A "wish" is a desired item roll — a perk selection on a weapon, or an archetype + spark on an armor piece. The extension matches wishes against the player's real inventory (via the Bungie API) and can notify them when a wished roll drops.
+Ahamkara Wishes is a Chrome/Chromium Manifest V3 extension: a wishlist manager for Destiny 2 players. A "wish" is a desired item roll: a perk selection on a weapon, or an archetype + Tertiary (and optionally a Spark) on an armor piece. The extension matches wishes against the player's real inventory (via the Bungie API) and can notify them when a wished roll drops.
 
 The name references the Ahamkara, the wish-granting dragons of Destiny lore.
 
@@ -23,8 +23,9 @@ Related external services: Bungie.net (API + OAuth), Destiny Item Manager (DIM �
 | Auth | Bungie OAuth 2.0 via `chrome.identity.launchWebAuthFlow`, with token exchange/refresh proxied through a Supabase Edge Function |
 | Backend | Supabase (Postgres + RLS, Deno Edge Functions in `supabase/functions/`) |
 | Computation | `oracle-engine/` — a Rust/WASM module ("D2Calc") for derived weapon numbers (falloff, reload, TTK) |
-| Tests | Plain Node scripts, no framework (`npm test`) |
-| CI | GitHub Actions, Node 18 (`.github/workflows/ci.yml`) |
+| UI | `styles/` (design tokens + cascade layers, bundled IBM Plex), `aw-ui.js` building blocks, `aw-nav.js` navigation, `aw-dom.js` escape-by-default rendering. See `STYLE_GUIDE.md` |
+| Tests | Plain Node scripts, no framework (`npm test`), plus headless-Chrome checks of the real panel (`npm run ui-check`, `ui-gallery`, `visual`) |
+| CI | GitHub Actions, Node 22 (`.github/workflows/ci.yml`): `npm test`, `check-build`, `ui-gallery` |
 
 Manifest permissions: `storage`, `sidePanel`, `identity`, `alarms`, `scripting`. Optional host permission: godroll.tv (asked on first click of the panel's Godroll.tv button, so the update adds no install warning). Host permissions: `https://www.bungie.net/*` and the Supabase project. Content scripts: `dim-wishlist-overlay.js/.css` on `https://app.destinyitemmanager.com/*` (manifest). The godroll.tv script (`godroll-roll-core.js` + `godroll-content.js/.css`) is registered at runtime by `godroll-access.js` only while godroll.tv access is granted; `chrome.permissions.onAdded/onRemoved` keep it in sync and newly granted access injects into already-open godroll.tv tabs. CSP: `script-src 'self' 'wasm-unsafe-eval'`, so **no inline scripts** (this is why debug code is its own file).
 
@@ -33,7 +34,16 @@ Manifest permissions: `storage`, `sidePanel`, `identity`, `alarms`, `scripting`.
 ```
 manifest.json               MV3 manifest
 background.js               Service worker: side panel behavior + proactive Bungie token refresh (chrome.alarms, every 45 min)
-sidepanel.html / .css       The whole UI shell and a single flat stylesheet (~100 KB)
+sidepanel.html              The UI shell. Links styles/app.css only
+sidepanel.css               Legacy stylesheet (~100 KB), imported into the lowest cascade layer; shrinks as screens are rebuilt
+styles/                     app.css (layer order + imports), tokens.css, fonts.css, base.css, components.css, utilities.css
+
+aw-dom.js                   AWDom: escapeHtml, safeImageUrl (Bungie-only), html`` template + render(), h() element builder, delegate(). Loaded first
+aw-store.js                 AWStore.update(mutator): the ONLY write path for dimData, under the `aw-dimdata` Web Lock shared with the service worker
+aw-nav.js                   AWNav.create(): tabs, screens and stacked sheets/dialogs; inert background, focus in/back, Escape, remembered tab
+aw-ui.js                    AWUI: button, chip, segmented, searchField, row, card, badge, switchRow, banner, progress, emptyState, sheet, confirm, toast, filterSheetBody
+sync-status.js              AWSync: describe() turns sync state into chip/sheet/banner copy (D11); nextAutoSyncAt() backoff; classifyError()
+wishlist-validate.js        WishlistValidate.sanitizeList(): rebuilds an untrusted list (file, Discover) from known fields. Also used server-side
 
 supabase-network.js         supabaseFetch(): wraps fetch to explain "Failed to fetch" (paused free-tier project). Also importScripts'd by background.js
 wishlist-sync-core.js       WishlistSync: pure merge + tombstone rules for cross-browser sync
@@ -62,14 +72,17 @@ supabase/functions/         bungie-oauth, wishlist-actions, admin-actions (+ _sh
 vendor/dim-watermarks/      DIM's watermark→season/event data (MIT, with LICENSE)
 tests/                      Node tests (see Testing)
 docs/                       wishlist-engine.md (matching + combos), lethality-perk-chart.md
-STYLE_GUIDE.md              Visual tokens/components
+tools/                      Dev only, never shipped: check-build.js, lint-ratchet.js (+ ratchet.json), sync-edge-shared.js, preview/ (server, Chrome stub, fixtures, headless checks, gallery)
+vendor/fonts/ibm-plex/      Bundled IBM Plex woff2 (SIL OFL, LICENSE.txt)
+STYLE_GUIDE.md              Design system: tokens, layers, components, rules
 PRIVACY_POLICY.md, STORE_LISTING.md   Chrome Web Store material
 ```
 
 **Script load order in `sidepanel.html` is significant:**
-`supabase-network` → `wishlist-sync-core` → `destiny-manifest` → `owned-inventory-index` → `manager` → `ui-creator` → `bungie-auth-core` → `bungie-auth` → `wishlist` → `wishlist-io` → `discover` → `admin` → `admin-sync` → `oracle-engine-bridge` → `weapon-craft`.
-`weapon-wish-core` loads right after `wishlist-sync-core` (manager.js `saveItem` and weapon-craft.js use it). The service worker `importScripts` `destiny-manifest.js`, `godroll-roll-core.js`, `weapon-wish-core.js`, `godroll-add.js` inside a try/catch so a failure can't stop token refresh.
-(`weapon-craft.js` reads `window.OwnedInventoryIndex.COMBO_COLORS` at load, so `owned-inventory-index.js` must precede it.)
+`aw-dom` → `supabase-network` → `wishlist-sync-core` → `weapon-wish-core` → `aw-store` → `aw-nav` → `aw-ui` → `sync-status` → `wishlist-validate` → `destiny-manifest` → `owned-inventory-index` → `manager` → `ui-creator` → `bungie-auth-core` → `bungie-auth` → `wishlist` → `wishlist-io` → `discover` → `admin` → `admin-sync` → `oracle-engine-bridge` → `godroll-access` → `weapon-craft`.
+`weapon-wish-core` needs `wishlist-sync-core` (it throws without it: the duplicate rule is `WishlistSync.wishKey`). `weapon-craft.js` reads `window.OwnedInventoryIndex.COMBO_COLORS` at load, so `owned-inventory-index.js` must precede it.
+The service worker `importScripts` `supabase-network.js` and `bungie-auth-core.js`, then (in a try/catch so a failure can't stop token refresh) `destiny-manifest.js`, `godroll-roll-core.js`, `wishlist-sync-core.js`, `weapon-wish-core.js`, `aw-store.js`, `godroll-add.js`, and `godroll-access.js`.
+`npm run check-build` packages the extension and fails if anything referenced is missing from it.
 
 ### Repo clutter to know about
 - `dist/` and `ahamkara-wishes/` (a stray copy of the build) and `ahamkara-wishes.zip` are **build outputs**, git-ignored and no longer tracked. Regenerate with `bash build-extension.sh`; the root files are the source of truth.
@@ -92,7 +105,7 @@ dimData = {
                     bucketHash, slotName, setName, setHash },
           wishes: [{
             tags: ["pve"|"pvp"],
-            config: { /* armor */ archetype, spark
+            config: { /* armor */ archetype, tertiary, spark   // spark optional (null)
                       /* weapon */ perks, perkColumns, perkColumnsData },
             raw: string,        // canonical string; includes combo colour signature (used for dedupe)
             added: number,
@@ -109,6 +122,14 @@ dimData = {
 ```
 
 Other storage keys: `bungie_auth` (`access_token`, `refresh_token`, `expires_at`, `refresh_expires_at`, `membership_id`, `user`, `destinyMemberships` — owned by bungie-auth-core.js), `bungie_session_expired`, `activeMembership`, `lastBungieProfile`, `ownedIndexSummary`, `feedEnabled`, `feedEntries` (max 20), `ahamkara_backup_synced_at`.
+
+**All writes go through `AWStore.update(mutator)`** (returning `AWStore.SKIP` writes nothing). The lint ratchet fails the build on a direct `chrome.storage.local.set({ dimData })`.
+
+**Wish identity** is `WishlistSync.wishKey(wish)`: mode + perks for weapons, or `mode|armor:<archetype>+<tertiary>[~<spark>]` for armor. Duplicates, tombstones and the cross-browser merge all use it. List rows remember the key as well as the index, so Delete and Edit find the right wish with `WishlistSync.locateWish` even if the list changed meanwhile; an edit into a roll that's already saved is refused.
+
+**Armor config:** `{ archetype, tertiary, spark }`. *Tertiary* is the archetype's third stat. *Spark* is the Tier 5 tuned stat (+5 moved from another stat); it is optional and stored as `null` until matching it is confirmed possible (D9). Wishes saved before this split stored the Tertiary as `spark`; `WishlistSync.migrateArmorConfig` converts them on load (identity unchanged), and `WishlistSync.armorFields(cfg)` reads either shape.
+
+**Armor sets:** `static.setHash` is Bungie's `equipableItemSetHash`. Saved armor that lacks it is backfilled at startup (`WeaponWish.fillArmorSets`). Set names and 2-/4-piece bonuses come from `DestinyEquipableItemSetDefinition` (Bungie spells it with one p) and `DestinySandboxPerkDefinition`: `getArmorSetName`, `getArmorSetBonuses(setHash)` → `[{count, name, description}]`, where `[]` means no set bonus.
 
 `normalizeWishlistEntry()` migrates old shapes on load and writes back if it mutated. `manager.js` also backfills `colIndex` onto older weapon `perkColumnsData` entries.
 
@@ -128,13 +149,13 @@ Header tabs: **WEAPONS**, **MENU** (icon, centre), **ARMOR**. Each of Weapons/Ar
 
 - **WEAPONS › CRAFT** (`weapon-craft.js`): weapon search → perk picker by column with combo colours → live stats panel (manifest stats plus oracle-engine numbers, with PvE/PvP toggle and per-perk hover deltas) → "MAKE A NEW WISH" / "EDIT WISH".
 - **WEAPONS › LIST**: saved weapon wishes as cards, with search + collapsible filters and an inventory sync bar. **Double-clicking a roll row loads that wish back into the craft view for editing**; owned-roll rows double-click to start a wish from that owned roll.
-- **ARMOR › CRAFT**: 3-step wizard (set → archetype → spark) with PvE/PvP toggle and "MAKE WISH". Sliding dual-pane via CSS `translateX`.
+- **ARMOR › CRAFT**: 3-step wizard (set → archetype → Tertiary) with PvE/PvP toggle and "MAKE WISH". Sliding dual-pane via CSS `translateX`.
 - **ARMOR › LIST**: wishes grouped by set, collapsible; filters by archetype/class/name; sync bar.
 - **MENU**: Bungie sign-in/out; Wishlists (create, duplicate, merge, delete, export, import); **Feed** (toggle; polls ~1/min while on; logs wishes that went not-received → received; "Clear all"); Utility (refresh profile & rebuild index, index summary); **DISCOVER** button opens the Discover slide sheet; an admin nav slot appears only for the admin.
 - **DISCOVER** sheet: search/filter chips, featured, community, "my submissions" (capped), save to local list, submit own list.
 
 ### Armor stats
-Armor uses six stats — Weapons, Health, Class, Grenade, Super, Melee — the post-Renegades armor system (Weapons replaces Mobility). There are **12 archetypes**, each covering two stats (SIEGEBREAKER, GRENADIER, COLOSSUS, BRAWLER, PARAGON, POWERHOUSE, SKIRMISHER, REAVER, SPECIALIST, GUNNER, DEMOLITIONIST, BULWARK); see `ARCHETYPES` in `manager.js`. The spark is a single bonus stat. (The previous briefing called these stats "fictional"; they are the game's current system as modelled by the code.)
+Armor uses six stats — Weapons, Health, Class, Grenade, Super, Melee — the post-Renegades armor system (Weapons replaces Mobility). There are **12 archetypes**, each covering two stats (SIEGEBREAKER, GRENADIER, COLOSSUS, BRAWLER, PARAGON, POWERHOUSE, SKIRMISHER, REAVER, SPECIALIST, GUNNER, DEMOLITIONIST, BULWARK); see `ARCHETYPES` in `manager.js`. The **Tertiary** is the archetype's third stat. The **Spark** is the Tier 5 tuned stat: the player can move 5 points from another stat into it, so a piece with the right Spark is rarer. It is an optional extra on a wish. (The previous briefing called these stats "fictional"; they are the game's current system as modelled by the code.)
 
 ## Main Flows
 
@@ -142,7 +163,7 @@ Armor uses six stats — Weapons, Health, Class, Grenade, Super, Melee — the p
 - **Feed + vault transfer**: after a refresh, `diffFeedEntries()` compares before/after; new matches are appended to `feedEntries`, and `transferNewlyMatchedToVault()` moves newly obtained matching items to the vault via `bungieAuth.transferItemToVault`.
 - **godroll.tv add-to-wishlist**: on a godroll.tv weapon page the content script injects a split button styled like the site's own Add to Compare pill (reusing its `.save-button-container.has-dropdown` / `.save-dropdown-*` classes). It reads `.socket-columns .socket-column .perk-item.selected[data-hash]` (real Bungie plug hashes; masterwork/mod picks excluded), the itemHash from the first URL segment, and PvE/PvP from `.stats-mode-toggle .stats-mode-btn.active`. The main button targets the active wishlist; the chevron lists every wishlist from `dimData` and adds to the one picked. It sends `ahamkara:add-godroll-roll` to the service worker, whose `GodrollAdd.addRoll` loads the Bungie manifest from the shared IndexedDB cache, maps godroll's columns onto the weapon's perk columns **by hash, not position**, builds the wish with `WeaponWish.buildWeaponWishPayload` (same code as the craft view, so the `raw` identity string matches) and writes through `WeaponWish.addWishToList` into the chosen list (adds are serialised; read-modify-write of `dimData`). Perks arrive as plain "any of" picks, not combos. It then sets `wishAddedExternally` so an open side panel runs `matchWishlistAgainstCachedIndex()` (the service worker has no owned index). The first add after the service worker has idled takes a few seconds (loading item defs into memory); later ones are fast. If the manifest has never been downloaded the user is told to open the extension once. godroll.tv's URL roll code is an obfuscated binary encoding and is deliberately not parsed. The selectors depend on godroll.tv's markup; if the perk columns vanish (or picks have no readable hash) `readRoll` sets `layoutChanged` and the button says the integration needs an update rather than failing silently.
 - **DIM overlay**: the content script reads `dimData` from storage and rings any DIM tile whose element id equals a matched `receivedInstances` entry (class `ahamkara-wish-match`).
-- **Import/export**: `.awwish` JSON (`{aw:"wishes", v:1, exportedAt, list}`). Ownership state is stripped on export. Discover's "save" reuses `importFromPayload`, so file import and community save share one validate/normalize/persist path.
+- **Import/export**: `.awwish` JSON (`{aw:"wishes", v:2, exportedAt, list}`; v2 = armor `{archetype, tertiary, spark}`, v1 files still import, older builds refuse v2). Every imported list goes through `WishlistValidate.sanitizeList`. Ownership state is stripped on export. Discover's "save" reuses `importFromPayload`, so file import and community save share one validate/normalize/persist path.
 - **Cross-browser sync (admin only)**: `admin-sync.js` mirrors `dimData` to the `wishlist_backups` table through `admin-actions` (`backup_get` / `backup_put`). Merging is an **additive union** of lists → items → wishes, filtered by tombstones; pushes are read-merge-write. All delete sites (`manager.js`, `ui-creator.js`, `wishlist.js`) must record tombstones using `wishlist-sync-core.js`'s identity for "which wish is this". Don't add a delete path that skips this.
 - **Auth**: PKCE via `launchWebAuthFlow` with the redirect URI derived from the running extension ID (`chrome.identity.getRedirectURL`) — that exact URI must be the Redirect URL registered at Bungie. Code exchange and refresh go through the `bungie-oauth` Edge Function (client secret server-side → 90-day refresh tokens). **All token reads/writes go through `bungie-auth-core.js`**: refresh runs under a Web Lock (`bungie-auth`) shared by the panel and service worker and re-reads storage inside it; writes are read-modify-write via `updateSession`; `invalid_grant` ends the session and sets `bungie_session_expired`; network/5xx keep tokens. The UI renders from `chrome.storage.onChanged`, and `bungieAuthChanged` fires only when the signed-in identity changes. Never write `bungie_auth` directly.
 
@@ -156,6 +177,8 @@ Project ref `tqgewrylrjqfqzqlmmag`. Client code reads public tables with the ano
 | `wishlist-actions` | `whoami`, `submit`, `delete` (identity verified against Bungie server-side) |
 | `admin-actions` | `check`, `list_creators`, `add/update/remove_creator`, `feature/unfeature_wishlist`, `delete_wishlist`, `backup_get`, `backup_put` (gated by `ADMIN_BUNGIE_MEMBERSHIP_ID` secret) |
 
+`wishlist-actions` `submit` cleans the list with the extension's own `WishlistValidate.sanitizeList` before storing it (`_shared/submission.js`; the client files are byte-identical copies in `_shared/client/`, kept in step by `node tools/sync-edge-shared.js` and checked by `npm test`). **This version is not deployed yet**: `supabase functions deploy wishlist-actions`.
+
 Tables referenced include `wishlists`, `creators`, `wishlist_backups`. The admin nav button is cosmetic; the real gate is the server-side re-check on every mutating call. Free-tier projects auto-pause after ~1 week idle, which surfaces as a bare "Failed to fetch" — hence `supabaseFetch`.
 
 ## Key Globals
@@ -166,7 +189,9 @@ Tables referenced include `wishlists`, `creators`, `wishlist_backups`. The admin
 | `ARCHETYPES`, `STATS` | manager.js | Armor definitions |
 | `BUNGIE_ROOT`, `BUCKET_HASHES` | destiny-manifest.js / manager.js | Constants |
 | `OwnedInventoryIndex` | owned-inventory-index.js | `buildOwnedIndex()`, `matchWishlist()`, `COMBO_COLORS`, delta updates |
-| `WishlistSync` | wishlist-sync-core.js | `mergeDimData`, tombstone helpers |
+| `WishlistSync` | wishlist-sync-core.js | `wishKey`, `locateWish`, `replaceWish`, `armorFields`, `migrateArmorConfig`, `mergeDimData`, tombstone helpers |
+| `WeaponWish` | weapon-wish-core.js | `buildWeaponWishPayload`, `addWishToList` (the one add/duplicate rule), `fillArmorSets` |
+| `AWStore`, `AWDom`, `AWNav`, `AWUI`, `AWSync`, `WishlistValidate` | see Project Structure | Foundations of the redesign |
 | `bungieAuth` / `window.bungieAuth` | bungie-auth.js | `signIn`, `signOut`, `getValidAuth`, `fetchProfileWithComponents`, `transferItemToVault`, `equipItem`, `setItemLockState` |
 | `supabaseFetch` | supabase-network.js | Fetch wrapper for Supabase calls |
 | `loadWishIntoWeaponCraft` | weapon-craft.js | Open an existing wish in the craft view for edit |
@@ -177,14 +202,21 @@ Custom DOM events: `ahamkara:adminStatusChanged`, `bungieAuthChanged`, `wishList
 
 ## Testing
 
-`npm test` runs, in order: `owned-index-test.js`, `owned-index-delta-test.js`, `owned-index-bg-update-test.js`, `normalize-wishlist-test.js`, `weapon-combo-match-test.js`, `bungie-auth-core-test.js` `bungie-auth-transfer-test.js`, `armor-linked-hash-match-test.js`, `weapon-wish-consistency-test.js` (all passing as of this update). Tests `eval()` browser modules inside Node with `global.window = global`.
+- `npm test`: every Node test in `tests/` (see `tests/README.md`), then the lint ratchet. Tests `eval()` browser modules in Node with `global.window = global`, or in a `vm` context with fakes (e.g. `manifest-cache-test.js` fakes Bungie and IndexedDB).
+- `npm run check-build`: builds the zip and checks every reference resolves inside it.
+- `npm run ui-gallery` (CI) / `npm run ui-check` (local; downloads game data on first run): the real panel and every building block in headless Chrome. Covers overflow at 320/360px, hostile lists, tap targets, keyboard and focus, delete/edit after the list shifted, the guest sync loop, and armor set grouping.
+- `npm run visual -- capture <dir>` / `compare <a> <b>`: pixel diff of seven real screens. Compare captures from the same Chrome version (each capture records it).
+- `wishlist-merge-test.html` is browser-only and not part of `npm test`.
 
-`wishlist-merge-test.html` is browser-only (sync merge/tombstone rules) and is not part of `npm test` or CI. Everything else in `tests/` runs under `npm test`; see `tests/README.md`.
+When adding a test, prove it can fail: break the code on purpose, watch the test fail, then restore the code **from a backup copy** (not `git checkout`, which also throws away uncommitted work).
 
 ## Conventions
 
 - Match existing style: no frameworks, no build step, JSDoc on key functions, comments explain *why*.
-- One flat stylesheet (`sidepanel.css`); tokens in `:root` per `STYLE_GUIDE.md` (dark UI, gold `#d4af37` accent, 4px spacing unit).
+- New UI uses `--ui-*` tokens and `.ui-*` components in cascade layers (`STYLE_GUIDE.md`). Don't add to `sidepanel.css`. Raw colours belong only in `styles/tokens.css`.
+- Render untrusted text with `AWDom.h` / `AWDom.html`, not string-built `innerHTML` (ratchet-counted).
+- Write `dimData` only through `AWStore.update`.
+- Every manifest table is cached through `ensureManifestTableReady(name)`: one download however many callers ask at once, and a manifest version per table.
 - `dimData` in `chrome.storage.local` is the source of truth; `chrome.storage.onChanged` listeners drive re-renders.
 - Runtime annotations (`received`, `matchScore`, …) are never canonical data — they're stripped on export and recomputed.
 - No inline scripts (CSP).
@@ -198,16 +230,15 @@ Custom DOM events: `ahamkara:adminStatusChanged`, `bungieAuthChanged`, `wishList
 
 ## Branches and Recent Work
 
-Current branch: **`ColorCombos`** (HEAD `a80addc`, working tree clean). Many other feature branches exist (e.g. `AdminsWIshlists`, `Armor`, `Armor-filter-order`, `Clarity-Tools`, `Craft-UI`, `DIMFeatures`, `Foundary`, `LethalityFeature`, `Menu*`, `Masterwork-Icons`) — check for overlap before starting something new; `main` is the PR target.
+UI/UX redesign before public launch (decisions D1–D15). Phase 1 (safety hotfixes) is on `hotfix/prelaunch-safety`, not yet merged to `main`. **Phase 2 (foundations)** is on `phase2/foundations`, built on top of it, and not pushed. Merging `phase2/foundations` brings both:
+- Preview harness and headless-Chrome checks, build checker, lint ratchet, CI.
+- `AWDom` rendering, `AWNav`, design tokens + layers + IBM Plex, `AWUI` building blocks + gallery, `AWSync` status model.
+- Armor Tertiary/Spark split (`.awwish` v2), delete/edit by wish identity.
+- Armor set data (real names, set bonuses, setHash backfill).
+- Manifest: one download per table (startup fetched the 200 MB item table twice), versions per table.
+- Sync: no retry loop for guests, backoff on failures.
+- Server-side validation of Discover submissions (not deployed).
 
-Recent commits, newest first:
-- Refactor/cleanup pass for readability.
-- Wishlist import/export (`.awwish`) and sync rules.
-- Feed "clear all" and max-entries adjustment.
-- Weapon combo matching and combo stats UI (the core of this branch).
-- Double-click on owned rolls to start a wish (armor and weapon).
-- Cross-browser wishlist sync with merge + tombstones.
-- Inventory search with filter chips; item transfer to vault; edit existing weapon wishes.
-- Admin-only wishlist backup via Supabase; pooled trait-perk matching.
+Phase 3 builds the new screens (bottom bar Wishes · Drops · Inventory · Discover, Me, Lists sheet, the perk-grid craft view) on these foundations. `main` is the PR target.
 
 Chrome Web Store submission material (`STORE_LISTING.md`, `PRIVACY_POLICY.md`, icons, `build-extension.sh`) is in progress.

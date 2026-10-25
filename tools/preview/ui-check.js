@@ -31,9 +31,9 @@ const check = (label, ok, detail) => {
   if (!ok) failures++;
 };
 
-async function openPanel(browser, base, fixture, width) {
+async function openPanel(browser, base, fixture, width, query = '') {
   const page = await browser.newPage({ width, height: 720 });
-  await page.goto(`${base}/sidepanel.html?fixture=${fixture}`);
+  await page.goto(`${base}/sidepanel.html?fixture=${fixture}${query ? `&${query}` : ''}`);
   // The loading overlay hides once Bungie's game data is ready.
   await page.waitFor(() => document.getElementById('loading-overlay')?.classList.contains('hidden'), { timeoutMs: 600000, intervalMs: 500 });
   await sleep(300);
@@ -117,6 +117,212 @@ const staleRowActions = async () => {
   out.armorEditKeepsSpark = after.tags[0] === flipped && after.config.spark === 'Super';
   return out;
 };
+
+/**
+ * The redesigned shell and Wishes screen (?ui=next) with real data: layout at
+ * this width, the sheets, delete + Undo, and what shared lists can't do to it.
+ */
+async function checkNext(browser, base, width) {
+  const tag = `[${width}] next`;
+  const sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
+  const page = await openPanel(browser, base, 'demo', width, 'ui=next');
+  const ev = (fn, ...a) => page.eval(fn, ...a);
+  await sleep2(1500); // the startup backfill gives saved armor its set
+
+  const layout = await ev(() => {
+    const vis = (e) => !!e && getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0;
+    const small = [...document.querySelectorAll('#ui-shell button, #ui-shell input')].filter(vis).map((e) => {
+      const r = e.getBoundingClientRect();
+      return { what: (e.getAttribute('aria-label') || e.textContent || e.className).trim().slice(0, 24), w: Math.round(r.width), h: Math.round(r.height) };
+    }).filter((b) => b.h < 40 || b.w < 24);
+    return {
+      shell: !!document.getElementById('ui-shell'),
+      classicHidden: !vis(document.querySelector('.app-container')),
+      tabs: [...document.querySelectorAll('.ui-tab')].map((t) => t.textContent.trim()),
+      current: document.querySelector('.ui-tab[aria-current="page"]')?.textContent.trim(),
+      wider: document.documentElement.scrollWidth > innerWidth + 1,
+      barOverflow: document.querySelector('.ui-appbar').scrollWidth > document.querySelector('.ui-appbar').clientWidth + 1,
+      list: document.querySelector('.ui-listname__text')?.textContent,
+      cards: [...document.querySelectorAll('.ui-wcard .ui-wcard__name')].map((e) => e.textContent),
+      rolls: document.querySelectorAll('.ui-roll').length,
+      small
+    };
+  });
+  check(`${tag}: the new shell is shown and the classic screens are hidden`, layout.shell && layout.classicHidden);
+  check(`${tag}: four tabs, Wishes current`, JSON.stringify(layout.tabs) === '["Wishes","Drops","Inventory","Discover"]' && layout.current === 'Wishes', JSON.stringify(layout.tabs));
+  check(`${tag}: nothing wider than the panel`, !layout.wider && !layout.barOverflow);
+  check(`${tag}: app bar shows the list name`, layout.list === 'Main Wishlist', layout.list);
+  check(`${tag}: weapon cards and every roll render`, layout.cards.length === 3 && layout.rolls === 4, JSON.stringify(layout.cards));
+  check(`${tag}: every control is at least 40px tall`, layout.small.length === 0, JSON.stringify(layout.small));
+
+  // armor: grouped under Bungie's set name, with the set bonus (D15)
+  await ev(() => document.querySelector('.ui-seg__opt[data-value=armor]').click());
+  await sleep2(1500);
+  const armor = await ev(() => ({
+    sets: [...document.querySelectorAll('.ui-set__name')].map((e) => e.textContent),
+    bonuses: [...document.querySelectorAll('.ui-set')].map((s) => ({
+      name: s.querySelector('.ui-set__name').textContent,
+      perks: [...s.querySelectorAll('.ui-bonus__name')].map((e) => e.textContent.trim()),
+      none: !!s.querySelector('.ui-bonus--none')
+    })),
+    archetypes: [...document.querySelectorAll('.ui-archetype')].map((e) => e.textContent),
+    wider: document.documentElement.scrollWidth > innerWidth + 1
+  }));
+  check(`${tag}: armor groups by set (Techsec once)`, armor.sets.filter((n) => n === 'Techsec').length === 1 && armor.sets.length === 2, JSON.stringify(armor.sets));
+  const techsec = armor.bonuses.find((b) => b.name === 'Techsec');
+  check(`${tag}: Techsec shows its 2-piece and 4-piece bonus by name`, !!techsec && techsec.perks.length === 2 && /Wrecker/.test(techsec.perks[0]) && /Concussive/.test(techsec.perks[1]), JSON.stringify(techsec));
+  check(`${tag}: armor with no set says "No set bonus"`, !!armor.bonuses.find((b) => b.name === 'Iron Forerunner' && b.none));
+  check(`${tag}: armor shows archetype names`, armor.archetypes.length === 3 && !armor.wider, JSON.stringify(armor.archetypes));
+  await ev(() => document.querySelector('.ui-seg__opt[data-value=weapon]').click());
+  await sleep2(300);
+
+  // search and filters
+  await ev(() => { const i = document.querySelector('.ui-search__input'); i.value = 'fate'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await sleep2(200);
+  check(`${tag}: search narrows the weapon list`, await ev(() => document.querySelectorAll('.ui-wcard').length === 1));
+  await ev(() => [...document.querySelectorAll('.ui-chip')].find((c) => c.textContent.trim() === 'PvP').click());
+  await sleep2(200);
+  check(`${tag}: PvP filter keeps only PvP rolls`, await ev(() => document.querySelectorAll('.ui-roll').length === 1 && /PVP/.test(document.querySelector('.ui-roll .ui-badge').textContent)));
+  await ev(() => { const i = document.querySelector('.ui-search__input'); i.value = 'zzzz'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await sleep2(200);
+  check(`${tag}: no matches says so and offers to clear`, await ev(() => /Nothing matches/.test(document.querySelector('.ui-cardlist').textContent) && !!document.querySelector('.ui-cardlist .ui-btn')));
+  await ev(() => document.querySelector('.ui-cardlist .ui-btn').click());
+  await sleep2(300);
+  check(`${tag}: Clear filters brings everything back`, await ev(() => document.querySelectorAll('.ui-wcard').length === 3 && document.querySelectorAll('.ui-chip.is-selected').length === 0));
+
+  // Lists sheet: opens, switches list, Escape closes and returns focus
+  await ev(() => document.querySelector('.ui-listname').click());
+  await sleep2(300);
+  check(`${tag}: Lists sheet opens with both lists, background inert`, await ev(() => {
+    const layer = [...document.querySelectorAll('.ui-layer')].find((l) => !l.hidden);
+    return !!layer && layer.querySelectorAll('.ui-row').length === 2 && document.querySelector('.ui-shell__base').inert === true;
+  }));
+  await page.press('Escape');
+  await sleep2(300);
+  check(`${tag}: Escape closes the sheet and focus returns to the list name`, await ev(() => ![...document.querySelectorAll('.ui-layer')].some((l) => !l.hidden) && document.activeElement === document.querySelector('.ui-listname')));
+  await ev(() => document.querySelector('.ui-listname').click());
+  await sleep2(300);
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((r) => /Raid/.test(r.textContent)).click());
+  await sleep2(800);
+  check(`${tag}: choosing another list switches to it`, await ev(() => document.querySelector('.ui-listname__text').textContent === 'Raid & Dungeon'));
+  await ev(() => document.querySelector('.ui-listname').click());
+  await sleep2(300);
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((r) => /Main/.test(r.textContent)).click());
+  await sleep2(800);
+
+  // Sync and Me sheets say what is going on in plain words
+  await ev(() => document.querySelector('.ui-syncchip').click());
+  await sleep2(300);
+  check(`${tag}: Sync sheet explains being signed out and offers sign-in`, await ev(() => {
+    const layer = [...document.querySelectorAll('.ui-layer')].find((l) => !l.hidden);
+    return !!layer && /Not signed in/.test(layer.textContent) && /Sign in with Bungie/.test(layer.textContent);
+  }));
+  await page.press('Escape');
+  await sleep2(200);
+
+  // delete a roll, then Undo it (D6)
+  const before = await ev(() => window.__awPreview.dump().dimData.lists.default.items);
+  const count = (items) => Object.values(items).reduce((n, it) => n + it.wishes.length, 0);
+  await ev(() => document.querySelector('.ui-roll .ui-icon-btn').click());
+  await sleep2(300);
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((r) => /Delete roll/.test(r.textContent)).click());
+  await sleep2(600);
+  const afterDelete = await ev(() => window.__awPreview.dump().dimData.lists.default.items);
+  check(`${tag}: Delete removes exactly one roll and shows Undo`, count(afterDelete) === count(before) - 1 && await ev(() => !!document.querySelector('.ui-toast .ui-btn')));
+  await ev(() => document.querySelector('.ui-toast .ui-btn').click());
+  await sleep2(600);
+  const afterUndo = await ev(() => window.__awPreview.dump().dimData.lists.default.items);
+  check(`${tag}: Undo puts the roll back exactly`, JSON.stringify(Object.keys(afterUndo).sort()) === JSON.stringify(Object.keys(before).sort())
+    && Object.keys(before).every((h) => afterUndo[h].wishes.map((w) => w.raw).join('|') === before[h].wishes.map((w) => w.raw).join('|')));
+
+  // Discover tab opens the Discover sheet; Drops and Inventory are honest stubs
+  await ev(() => document.querySelector('.ui-tab[data-tab=drops]').click());
+  await sleep2(200);
+  check(`${tag}: tabs that are not rebuilt yet say so and offer the classic design`, await ev(() => /Drops is coming/.test(document.querySelector('#ui-screen-drops').textContent) && !!document.querySelector('#ui-screen-drops .ui-btn')));
+  await ev(() => document.querySelector('.ui-tab[data-tab=wishes]').click()); // the open tab is remembered between panels
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+  if (width === WIDTHS[0]) await page.screenshot(path.join(OUT, `next-wishes-${width}.png`));
+  return page;
+}
+
+/** Owned rolls, combo colours (one perk in two combos) and per-combo counts. */
+async function checkNextOwned(browser, base, width) {
+  const tag = `[${width}] next owned`;
+  const page = await openPanel(browser, base, 'owned', width, 'ui=next');
+  const r = await page.eval(async () => {
+    await new Promise((x) => setTimeout(x, 1500));
+    const q = (sel) => [...document.querySelectorAll(sel)];
+    const multi = q('.ui-perk').find((p) => p.querySelectorAll('.ui-perk__combo').length === 2);
+    const out = {
+      ownedRolls: q('.ui-roll.is-owned').length,
+      headBadges: q('.ui-wcard__head .ui-badge').map((b) => b.textContent.trim()),
+      rollBadges: q('.ui-roll .ui-badge').map((b) => b.textContent.trim()),
+      chips: q('.ui-combochip').map((c) => c.textContent.trim()),
+      multiCombos: multi ? [...multi.querySelectorAll('.ui-perk__combo')].map((c) => c.textContent) : null,
+      hitPerks: q('.ui-perk.is-hit').length,
+      wider: document.documentElement.scrollWidth > innerWidth + 1
+    };
+    document.querySelector('.ui-seg__opt[data-value=armor]').click();
+    await new Promise((x) => setTimeout(x, 1200));
+    out.ownedArmor = q('.ui-armorroll.is-owned').length;
+    return out;
+  });
+  check(`${tag}: owned rolls are highlighted and counted`, r.ownedRolls === 2 && r.headBadges.includes('1 owned') && r.rollBadges.includes('Owned ×2'), JSON.stringify([r.ownedRolls, r.headBadges, r.rollBadges]));
+  check(`${tag}: combo chips show how many you own per combo`, r.chips.join(',') === '1×1,2×0', JSON.stringify(r.chips));
+  check(`${tag}: one perk can wear two combo numbers`, JSON.stringify(r.multiCombos) === '["1","2"]', JSON.stringify(r.multiCombos));
+  check(`${tag}: matched perks are ringed`, r.hitPerks === 2, String(r.hitPerks));
+  check(`${tag}: owned armor is highlighted`, r.ownedArmor === 1, String(r.ownedArmor));
+  check(`${tag}: nothing wider than the panel`, !r.wider);
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
+/** Lists from other people, shown in the new screens. */
+async function checkNextHostile(browser, base, width) {
+  const tag = `[${width}] next hostile`;
+  const page = await openPanel(browser, base, 'hostile', width, 'ui=next');
+  await page.eval(() => new Promise((r) => setTimeout(r, 1500)));
+  const r = await page.eval(async () => {
+    const s = (ms) => new Promise((x) => setTimeout(x, ms));
+    const grab = () => ({
+      names: [...document.querySelectorAll('.ui-wcard__name, .ui-set__name, .ui-archetype')].map((e) => e.textContent),
+      pwned: window.__pwned ?? null,
+      handlers: document.querySelectorAll('[onerror],[onload],script:not([src])').length,
+      offsite: [...document.images].map((i) => i.getAttribute('src') || '').filter((u) => /^https?:/.test(u) && !/^https:\/\/www\.bungie\.net\//.test(u)),
+      evilInDom: /evil\.example/.test(document.documentElement.outerHTML),
+      wider: document.documentElement.scrollWidth > innerWidth + 1
+    });
+    const weapons = grab();
+    document.querySelector('.ui-seg__opt[data-value=armor]').click(); await s(1200);
+    const armor = grab();
+    return { weapons, armor };
+  });
+  check(`${tag}: no injected script ran`, r.weapons.pwned === null && r.weapons.handlers === 0 && r.armor.handlers === 0, JSON.stringify([r.weapons.pwned, r.weapons.handlers]));
+  check(`${tag}: no off-site images`, r.weapons.offsite.length === 0 && r.armor.offsite.length === 0 && !r.weapons.evilInDom && !r.armor.evilInDom, JSON.stringify(r.weapons.offsite));
+  check(`${tag}: the honest wish still renders`, r.weapons.names.includes('Honest Gun'), JSON.stringify(r.weapons.names));
+  check(`${tag}: malicious names show as text`, r.weapons.names.some((n) => n.includes('onerror')));
+  check(`${tag}: malformed armor does not blank the list`, r.armor.names.length >= 3, JSON.stringify(r.armor.names));
+  check(`${tag}: nothing wider than the panel`, !r.weapons.wider && !r.armor.wider);
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
+/** A fresh install, and the way back to the classic design. */
+async function checkNextEmptyAndSwitch(browser, base, width) {
+  const tag = `[${width}] next empty`;
+  const page = await openPanel(browser, base, 'empty', width, 'ui=next');
+  await page.eval(() => new Promise((r) => setTimeout(r, 800)));
+  check(`${tag}: empty weapons and armor say what to do`, await page.eval(async () => {
+    const hasEmpty = () => /No (weapon|armor) wishes yet/.test(document.querySelector('.ui-cardlist').textContent) && !!document.querySelector('.ui-cardlist .ui-btn');
+    const a = hasEmpty();
+    document.querySelector('.ui-seg__opt[data-value=armor]').click(); await new Promise((r) => setTimeout(r, 400));
+    return a && hasEmpty();
+  }));
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+
+  // ?ui=classic wins over the remembered choice, and the classic Menu offers the switch
+  const classic = await openPanel(browser, base, 'empty', width, 'ui=classic');
+  check(`${tag}: ?ui=classic shows the classic screens`, await classic.eval(() => !document.getElementById('ui-shell') && getComputedStyle(document.querySelector('.app-container')).display !== 'none' && !!document.getElementById('try-new-design')));
+  await classic.eval(() => { try { localStorage.removeItem('aw-ui'); } catch (e) { /* none */ } });
+}
 
 /**
  * A guest (not signed in) must not retry Bungie in a loop: every panel re-show
@@ -255,6 +461,7 @@ async function checkGallery(browser, base, width) {
       check(`[${width}] demo: nothing wider than the panel`, !r.wider);
       check(`[${width}] demo: no page errors`, page.errors.length === 0, page.errors[0]);
       await page.screenshot(path.join(OUT, `demo-armor-${width}.png`));
+      await checkNext(browser, url, width);
       if (width === WIDTHS[0]) {
         const s = await page.eval(staleRowActions);
         check('demo: Delete after the list shifted removes the right weapon wish', s.weaponDelete);
@@ -281,12 +488,16 @@ async function checkGallery(browser, base, width) {
       check(`[${width}] hostile: no page errors`, page.errors.length === 0, page.errors[0]);
       await page.screenshot(path.join(OUT, `hostile-armor-${width}.png`));
 
+      await checkNextHostile(browser, url, width);
+      await checkNextOwned(browser, url, width);
+
       // empty
       page = await openPanel(browser, url, 'empty', width);
       r = await page.eval(readLists);
       check(`[${width}] empty: no wishes, no crash`, r.weapons.length === 0 && r.armor.length === 0);
       check(`[${width}] empty: empty states shown`, await page.eval(() => /No (Armor|weapon) Wishes yet/i.test(document.body.innerText)));
       check(`[${width}] empty: no page errors`, page.errors.length === 0, page.errors[0]);
+      await checkNextEmptyAndSwitch(browser, url, width);
     }
   } finally {
     await browser.close();

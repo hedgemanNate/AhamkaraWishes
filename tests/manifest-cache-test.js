@@ -33,7 +33,7 @@ const TABLES = {
       setPerks: [{ requiredSetCount: 4, sandboxPerkHash: 11 }, { requiredSetCount: 2, sandboxPerkHash: 10 }] }
   },
   DestinySandboxPerkDefinition: {
-    10: { displayProperties: { name: 'Wrecker', description: 'More Kinetic damage to shields.' } },
+    10: { displayProperties: { name: 'Wrecker', description: 'More Kinetic damage to shields.', hasIcon: true, icon: '/common/destiny2_content/icons/wrecker.png' } },
     11: { displayProperties: { name: 'Concussive Rounds', description: 'Breaking a shield releases a shockwave.' } }
   },
   DestinyPlugSetDefinition: { 5: { reusablePlugItems: [] } }
@@ -98,6 +98,7 @@ function load({ version = 'v1', offline = false, idb = new Map() } = {}) {
   const bonuses = await ctx.getArmorSetBonuses(239346083);
   check('set bonuses: 2-piece then 4-piece', bonuses.length === 2 && bonuses[0].count === 2 && bonuses[1].count === 4);
   check('set bonuses carry name and description', bonuses[0]?.name === 'Wrecker' && /shields/.test(bonuses[0]?.description));
+  check('set bonus carries the perk icon path (empty when none)', bonuses[0].icon === '/common/destiny2_content/icons/wrecker.png' && bonuses[1].icon === '');
   check('no set -> no set bonus', (await ctx.getArmorSetBonuses(null)).length === 0);
   check('unknown set -> no set bonus', (await ctx.getArmorSetBonuses(999)).length === 0);
   check('set hash looked up from the item definition', (await ctx.getArmorSetHashForItem(2)) === 239346083);

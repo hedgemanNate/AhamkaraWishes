@@ -68,6 +68,8 @@ check('AuthError SESSION_EXPIRED is auth', classifyError({ name: 'AuthError', co
 check('AuthError TRANSIENT (sign-in server unreachable) is network', classifyError({ name: 'AuthError', code: 'TRANSIENT', message: 'Could not reach the sign-in server' }) === 'network');
 check('AuthError CONFIG is other', classifyError({ name: 'AuthError', code: 'CONFIG', message: 'x' }) === 'other');
 
+check('downloading without a figure says so instead of 0%', (() => { const d = describe({ signedIn: false, manifest: 'downloading', now: 1 }); return d.chip.label === 'Loading' && !/%/.test(d.banner.text); })());
+check('downloading with a figure shows it', describe({ signedIn: false, manifest: 'downloading', manifestProgress: 41.6, now: 1 }).chip.label === '42%');
 // --- auto-sync scheduling (manager.js runSync / scheduleNextSync)
 const I = 30000;
 check('healthy: next sync one interval after the last', nextAutoSyncAt({ lastAttemptAt: 1000, intervalMs: I }) === 1000 + I);

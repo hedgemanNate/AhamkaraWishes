@@ -555,14 +555,18 @@ async function buildArmorSetLookup() {
 
 /**
  * The bonuses a set grants, smallest first: [{ count, name, description }]
- * where count is how many pieces must be worn (2, 4). Pure, for tests.
+ * where count is how many pieces must be worn (2, 4) and icon is a Bungie
+ * path ("" when the perk has none). Pure, for tests.
  */
 function describeSetBonuses(setPerks, perkDefs) {
   if (!Array.isArray(setPerks) || !perkDefs) return [];
   return setPerks
     .map((sp) => {
       const dp = perkDefs.get(String(sp?.sandboxPerkHash))?.displayProperties;
-      return dp?.name ? { count: Number(sp.requiredSetCount) || 0, name: dp.name, description: dp.description || "" } : null;
+      return dp?.name ? {
+        count: Number(sp.requiredSetCount) || 0, name: dp.name, description: dp.description || "",
+        icon: dp.hasIcon && dp.icon ? dp.icon : ""
+      } : null;
     })
     .filter(Boolean)
     .sort((a, b) => a.count - b.count);

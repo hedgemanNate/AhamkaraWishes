@@ -67,12 +67,15 @@
     const lastLine = s.lastSyncAt ? `Last synced ${ago === 'Just now' ? 'just now' : `${ago} ago`}.` : '';
 
     if (manifest === 'downloading') {
-      const pct = Math.max(0, Math.min(100, Math.round(s.manifestProgress || 0)));
-      return state('downloading', { label: `${pct}%`, tone: 'busy' },
+      // Without a progress figure (the download isn't measured yet) say so
+      // plainly instead of showing a misleading 0%.
+      const known = typeof s.manifestProgress === 'number';
+      const pct = known ? Math.max(0, Math.min(100, Math.round(s.manifestProgress))) : null;
+      return state('downloading', { label: known ? `${pct}%` : 'Loading', tone: 'busy' },
         'Getting game data…',
         'A one-time download of Bungie’s item data (about 200 MB). Your lists work now; search and the builders unlock when it’s done.',
         null,
-        { tone: 'info', text: `Getting game data · ${pct}%`, action: null });
+        { tone: 'info', text: known ? `Getting game data · ${pct}%` : 'Getting game data…', action: null });
     }
     if (manifest === 'missing') {
       return state('nodata', { label: 'No game data', tone: 'danger' },

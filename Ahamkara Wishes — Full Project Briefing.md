@@ -42,6 +42,8 @@ aw-dom.js                   AWDom: escapeHtml, safeImageUrl (Bungie-only), html`
 aw-store.js                 AWStore.update(mutator): the ONLY write path for dimData, under the `aw-dimdata` Web Lock shared with the service worker
 aw-nav.js                   AWNav.create(): tabs, screens and stacked sheets/dialogs; inert background, focus in/back, Escape, remembered tab
 aw-ui.js                    AWUI: button, chip, segmented, searchField, row, card, badge, switchRow, banner, progress, emptyState, sheet, confirm, toast, filterSheetBody
+screens/shell.js            AWShell: the redesigned app shell (app bar, tab bar, banner, Lists/Sync/Account sheets). Opt-in: `?ui=next` or Menu › "Try the new design"
+screens/wishes.js           AWWishes: the redesigned Wishes tab (weapon cards, armor sets with set bonus, filters, delete + Undo)
 sync-status.js              AWSync: describe() turns sync state into chip/sheet/banner copy (D11); nextAutoSyncAt() backoff; classifyError()
 wishlist-validate.js        WishlistValidate.sanitizeList(): rebuilds an untrusted list (file, Discover) from known fields. Also used server-side
 
@@ -79,6 +81,7 @@ PRIVACY_POLICY.md, STORE_LISTING.md   Chrome Web Store material
 ```
 
 **Script load order in `sidepanel.html` is significant:**
+(After `weapon-craft`, the redesigned screens: `screens/wishes.js` → `screens/shell.js`.)
 `aw-dom` → `supabase-network` → `wishlist-sync-core` → `weapon-wish-core` → `aw-store` → `aw-nav` → `aw-ui` → `sync-status` → `wishlist-validate` → `destiny-manifest` → `owned-inventory-index` → `manager` → `ui-creator` → `bungie-auth-core` → `bungie-auth` → `wishlist` → `wishlist-io` → `discover` → `admin` → `admin-sync` → `oracle-engine-bridge` → `godroll-access` → `weapon-craft`.
 `weapon-wish-core` needs `wishlist-sync-core` (it throws without it: the duplicate rule is `WishlistSync.wishKey`). `weapon-craft.js` reads `window.OwnedInventoryIndex.COMBO_COLORS` at load, so `owned-inventory-index.js` must precede it.
 The service worker `importScripts` `supabase-network.js` and `bungie-auth-core.js`, then (in a try/catch so a failure can't stop token refresh) `destiny-manifest.js`, `godroll-roll-core.js`, `wishlist-sync-core.js`, `weapon-wish-core.js`, `aw-store.js`, `godroll-add.js`, and `godroll-access.js`.
@@ -189,7 +192,7 @@ Tables referenced include `wishlists`, `creators`, `wishlist_backups`. The admin
 | `ARCHETYPES`, `STATS` | manager.js | Armor definitions |
 | `BUNGIE_ROOT`, `BUCKET_HASHES` | destiny-manifest.js / manager.js | Constants |
 | `OwnedInventoryIndex` | owned-inventory-index.js | `buildOwnedIndex()`, `matchWishlist()`, `COMBO_COLORS`, delta updates |
-| `WishlistSync` | wishlist-sync-core.js | `wishKey`, `locateWish`, `replaceWish`, `armorFields`, `migrateArmorConfig`, `mergeDimData`, tombstone helpers |
+| `WishlistSync` | wishlist-sync-core.js | `wishKey`, `locateWish`, `replaceWish`, `restoreWish` (Undo for a delete), `armorFields`, `migrateArmorConfig`, `mergeDimData`, tombstone helpers |
 | `WeaponWish` | weapon-wish-core.js | `buildWeaponWishPayload`, `addWishToList` (the one add/duplicate rule), `fillArmorSets` |
 | `AWStore`, `AWDom`, `AWNav`, `AWUI`, `AWSync`, `WishlistValidate` | see Project Structure | Foundations of the redesign |
 | `bungieAuth` / `window.bungieAuth` | bungie-auth.js | `signIn`, `signOut`, `getValidAuth`, `fetchProfileWithComponents`, `transferItemToVault`, `equipItem`, `setItemLockState` |

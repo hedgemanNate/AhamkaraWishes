@@ -24,6 +24,9 @@
   :where(.ui-root) :where(button) { background: none; border: 0; padding: 0; cursor: pointer; text-align: inherit; }
   :where(.ui-root) :where(img, svg) { display: block; max-width: 100%; }
   :where(.ui-root) :where(h1, h2, h3, h4, p, ul, ol, figure) { margin: 0; }
+  /* sidepanel.css styles every bare <header> (sticky, gold border, negative margins).
+     Headers inside the new UI start clean and are styled by their own classes. */
+  :where(.ui-root) header { margin: 0; padding: 0; position: static; z-index: auto; background: none; border: 0; }
   :where(.ui-root) :where(h1, h2, h3, h4) { font-family: var(--ui-font-display); line-height: var(--ui-leading-tight); text-wrap: balance; }
 
   /* One visible focus style everywhere (keyboard users, D2). */

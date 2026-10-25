@@ -15,12 +15,13 @@ The server listens on `127.0.0.1` only, and refuses paths outside the repo or in
 
 ### Fixtures
 
-Add `?fixture=<name>` to replace storage with `fixtures/<name>.json` on load:
+Add `?ui=next` to see the redesigned screens (see STYLE_GUIDE.md). Add `?fixture=<name>` to replace storage with `fixtures/<name>.json` on load:
 
 | Fixture | What it is |
 |---|---|
 | `demo` | Realistic lists: five real weapons (combo colours included) and armor across two lists. Generated with the app's own `WeaponWish` code, so it has exactly the shape the extension writes. |
 | `hostile` | Malicious and malformed stored data: injection strings in names, off-site icons, an unknown archetype, an item with no `static`. The panel must show it as inert text and keep working. |
+| `owned` | `demo` plus owned rolls: counts, per-combo counts, matched perks, and one perk wearing two combo colours. For the redesigned Wishes screen. |
 | `empty` | A fresh install. |
 
 Without `?fixture`, storage persists in `localStorage` between reloads. From the console, `__awPreview.seed(obj)` and `__awPreview.dump()` read and replace it.

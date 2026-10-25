@@ -130,6 +130,31 @@
   }
 
   /**
+   * Undoes a delete: puts `wish` back (an item that was removed with its last
+   * wish comes back with `staticInfo`) and withdraws the tombstone the delete
+   * recorded. The restored wish gets an `added` newer than that tombstone, so
+   * a merge with a browser that saw the delete can't remove it again.
+   * Returns false, changing nothing, if the same wish is already on the item.
+   */
+  function restoreWish(data, listId, itemHash, wish, staticInfo, index, now) {
+    const list = data && data.lists && data.lists[listId];
+    if (!list || !wish) return false;
+    if (!list.items) list.items = {};
+    const hash = String(itemHash);
+    if (!list.items[hash]) list.items[hash] = { static: staticInfo || {}, wishes: [] };
+    const wishes = list.items[hash].wishes;
+    const key = wishKey(wish);
+    if (wishes.some((w) => wishKey(w) === key)) return false;
+
+    const bucket = data.tombstones && data.tombstones.wishes && data.tombstones.wishes[listId] && data.tombstones.wishes[listId][hash];
+    const tombstonedAt = (bucket && bucket[key]) || 0;
+    if (bucket) delete bucket[key];
+    wish.added = Math.max(now || Date.now(), tombstonedAt + 1, wish.added || 0);
+    wishes.splice(Math.min(Math.max(index | 0, 0), wishes.length), 0, wish);
+    return true;
+  }
+
+  /**
    * Finds the wish a list row was drawn from. Rows remember the index AND the
    * wish's key when they render; by the time someone taps Delete or Save, the
    * list may have changed (cross-browser sync, a godroll.tv add, another tab),
@@ -308,6 +333,7 @@
     recordListTombstone,
     recordWishTombstone,
     replaceWish,
+    restoreWish,
     locateWish,
     mergeDimData,
     stableStringify,

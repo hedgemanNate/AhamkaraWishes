@@ -45,6 +45,10 @@ cp aw-ui.js          "$DIST/"
 cp sync-status.js    "$DIST/"
 cp wishlist-validate.js "$DIST/"
 
+# --- Redesigned screens ---
+mkdir -p "$DIST/screens"
+cp screens/*.js "$DIST/screens/"
+
 # --- Styles (entry: styles/app.css; sidepanel.css is imported into its legacy layer) ---
 mkdir -p "$DIST/styles"
 cp styles/*.css "$DIST/styles/"

@@ -400,6 +400,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (loadingOverlay) {
             loadingOverlay.classList.add('hidden');
         }
+        document.dispatchEvent(new CustomEvent('awManifestReady'));
         // Now load and display the wishlist UI
         loadLists();
         backfillArmorSets();
@@ -1588,6 +1589,20 @@ let _syncTickTimer = null;
 let _syncInFlight = null;
 let _syncFailures = 0;      // failed syncs in a row
 let _syncErrorKind = null;  // AWSync.classifyError() of the last failure
+let _lastSyncError = null;  // the error itself, for the sync status sheet
+let _lastSuccessAt = null;  // when a sync last worked (_lastSyncAt also moves on failures, to pace retries)
+
+// Screens that show sync state (the status chip) listen for this instead of
+// reaching into these variables.
+function announceSyncChange() { document.dispatchEvent(new CustomEvent('awSyncChanged')); }
+window.appManager = window.appManager || {};
+window.appManager.getSyncSnapshot = () => ({
+  syncing: !!_syncInFlight,
+  lastSyncAt: _lastSuccessAt,
+  lastError: _syncFailures ? _lastSyncError : null,
+  failures: _syncFailures
+});
+window.appManager.syncNow = (manual = true) => runSync(manual);
 
 function setSyncBarState(state, message) {
   const statusEls = [
@@ -1661,15 +1676,19 @@ function runSync(isManual = false) {
   }
   setSyncBarState('syncing', 'Syncing inventory...');
   _syncInFlight = (async () => {
+    announceSyncChange();
     try {
       await refreshProfileAndBuildIndex(SYNC_COMPONENTS);
       _lastSyncAt = Date.now();
       _syncFailures = 0;
       _syncErrorKind = null;
+      _lastSyncError = null;
+      _lastSuccessAt = _lastSyncAt;
       updateSyncBarTime();
       return null;
     } catch (e) {
       _syncErrorKind = window.AWSync.classifyError(e);
+      _lastSyncError = e;
       _syncFailures++;
       if (_syncErrorKind === 'auth') console.info('[AutoRefresh] not syncing until sign-in:', e?.message || e);
       else console.error('[AutoRefresh] sync failed:', e);
@@ -1682,6 +1701,7 @@ function runSync(isManual = false) {
       _syncCooldownUntil = Date.now() + MANUAL_REFRESH_COOLDOWN_MS;
       _syncInFlight = null;
       scheduleNextSync();
+      announceSyncChange();
     }
   })();
   return _syncInFlight;

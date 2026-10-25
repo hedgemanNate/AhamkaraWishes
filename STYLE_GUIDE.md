@@ -28,7 +28,7 @@ legacy < tokens < base < components < views < utilities
 | — | `styles/fonts.css` | IBM Plex `@font-face`; files are bundled in `vendor/fonts/ibm-plex` (SIL OFL) |
 | `base` | `styles/base.css` | Element defaults, scoped to `.ui-root` |
 | `components` | `styles/components.css` | `.ui-*` building blocks |
-| `views` | (per screen, Phase 3+) | Layout of one screen; compose components, don't restyle them |
+| `views` | `styles/views.css` | Layout of the redesigned screens (`screens/*.js`); compose components, don't restyle them |
 | `utilities` | `styles/utilities.css` | `.ui-sr-only`, `[hidden]`, and other single-purpose helpers |
 
 Because the layers are ordered, a later layer wins without `!important` or extra specificity. **Don't add `!important`**: the lint ratchet counts it.
@@ -38,6 +38,19 @@ New UI lives inside an element with class `.ui-root`. Base styles never reach ou
 ```css
 @container panel (min-width: 540px) { .ui-sheet { /* centred dialog instead of a bottom sheet */ } }
 ```
+
+## Screens (`screens/`)
+
+The redesigned screens live in `screens/` and are drawn with `AWDom` and `AWUI`. They are **opt-in** until the last one is rebuilt: add `?ui=next` to the panel URL, or use "Try the new design" in the classic Menu (the choice is remembered; `?ui=classic` turns it off). The classic screens keep running underneath as the engine (game data, sign-in, sync, matching); the new UI only draws.
+
+| File | Role |
+|---|---|
+| `screens/shell.js` (`AWShell`) | App bar (list name → Lists, sync chip → Sync sheet, **+ Wish**, avatar → Account), banner, tab bar, and the sheets |
+| `screens/wishes.js` (`AWWishes`) | The Wishes tab: weapon cards, armor sets with their set bonus, search, filters, delete with Undo |
+
+A screen is `create(ctx)` returning `{ el }`. `ctx` gives it `nav`, `toast`, `addSheet(name, title, onOpen)` (a sheet registered with AWNav, outside the inert region), `startWish()` and `goClassic()`. Screens read `chrome.storage.local` and re-render on `chrome.storage.onChanged`; writes go through `AWStore.update`.
+
+Two things the classic stylesheet does that new code has to know about: it styles every bare `<header>` (base.css resets headers inside `.ui-root`), and its `#feed-glow-ring` and loading overlay are hidden by `html.ui-next` rules.
 
 ## Naming
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Ahamkara Wishes — visual snapshots of the real side panel (dev tool).
 //
-//   node tools/preview/visual.js capture <dir> [--width 360]
+//   node tools/preview/visual.js capture <dir> [--width 360] [--only name,name]
 //   node tools/preview/visual.js compare <dirA> <dirB>
 //
 // capture: loads the panel (demo fixture) in headless Chrome, walks a fixed set
@@ -42,7 +42,14 @@ const SCREENS = [
   }],
   ['armor-list', async () => { document.getElementById('tab-armor').click(); document.getElementById('nav-list').click(); await new Promise((r) => setTimeout(r, 300)); document.querySelectorAll('.set-header').forEach((h) => h.click()); }],
   ['menu', async () => { document.getElementById('tab-menu').click(); }],
-  ['discover', async () => { document.getElementById('tab-menu').click(); document.getElementById('nav-discover').click(); await new Promise((r) => setTimeout(r, 900)); }]
+  ['discover', async () => { document.getElementById('tab-menu').click(); document.getElementById('nav-discover').click(); await new Promise((r) => setTimeout(r, 900)); }],
+
+  // The redesigned screens (?ui=next). A third entry is the extra query string.
+  ['next-wishes-weapons', async () => { await new Promise((r) => setTimeout(r, 400)); }, 'ui=next'],
+  ['next-wishes-armor', async () => { document.querySelector('.ui-seg__opt[data-value=armor]').click(); await new Promise((r) => setTimeout(r, 1200)); }, 'ui=next'],
+  ['next-wishes-owned', async () => { document.querySelectorAll('.ui-wcard')[1].scrollIntoView(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next&fixture=owned'],
+  ['next-lists-sheet', async () => { document.querySelector('.ui-listname').click(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next'],
+  ['next-roll-actions', async () => { document.querySelector('.ui-roll .ui-icon-btn').click(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next']
 ];
 
 /** Freezes everything that differs between two captures of identical code. */
@@ -62,9 +69,14 @@ async function capture(dir) {
   try {
     // Chrome updates change text anti-aliasing, so compare notes the version.
     fs.writeFileSync(path.join(dir, 'browser.txt'), `${await browser.version()}\n`);
-    for (const [name, steps] of SCREENS) {
+    const onlyArg = args.indexOf('--only');
+    const only = onlyArg >= 0 ? new Set(String(args[onlyArg + 1]).split(',')) : null;
+    for (const [name, steps, query] of SCREENS) {
+      if (only && !only.has(name)) continue;
       const page = await browser.newPage({ width, height: 720 });
-      await page.goto(`${url}/sidepanel.html?fixture=demo`);
+      // A screen's own query may pick a different fixture than the demo.
+      const q = query || '';
+      await page.goto(`${url}/sidepanel.html?${/(^|&)fixture=/.test(q) ? '' : 'fixture=demo&'}${q}`);
       await page.waitFor(() => document.getElementById('loading-overlay')?.classList.contains('hidden'), { timeoutMs: 600000, intervalMs: 500 });
       await sleep(500);
       await page.eval(steps);

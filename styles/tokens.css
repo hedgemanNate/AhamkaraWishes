@@ -53,6 +53,7 @@
     --ui-on-accent: var(--ui-palette-gold-ink);
     --ui-accent-soft: rgba(212, 175, 55, 0.14);
     --ui-accent-line: rgba(212, 175, 55, 0.35);
+    --ui-accent-faint: rgba(212, 175, 55, 0.06);
     --ui-success: var(--ui-palette-green);
     --ui-success-soft: rgba(124, 197, 138, 0.14);
     --ui-warning: var(--ui-palette-amber);

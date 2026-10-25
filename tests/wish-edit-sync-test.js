@@ -98,6 +98,35 @@ check('locateWish: armor wish found in either config shape', (() => {
   return WS.locateWish([armorWish('GUNNER', 'Super', T0), legacy], 0, key) === 1;
 })());
 
+// --- restoreWish: Undo for a delete
+{
+  const gone = weaponWish('[[7]]', T0);
+  const keep = weaponWish('[[8]]', T0);
+  const stat = { name: 'x', type: 'weapon' };
+  const mine = dataWith(100, [weaponWish('[[6]]', T0), gone, keep]);
+  const other = clone(mine);                        // another browser that hasn't seen the delete
+  const [removed] = wishesOf(mine, 100).splice(1, 1);
+  WS.recordWishTombstone(mine, 'default', 100, removed, T0 + 1000);
+  check('delete: other browser would remove it on merge', wishesOf(WS.mergeDimData(mine, other), 100).length === 2);
+  check('restore puts the wish back at its old position', WS.restoreWish(mine, 'default', 100, removed, stat, 1, T0 + 2000) === true && wishesOf(mine, 100)[1].raw === '[[7]]');
+  check('restore withdraws the tombstone', !mine.tombstones.wishes.default[100]['pve|weapon:[[7]]']);
+  check('restore stamps the wish newer than the delete', wishesOf(mine, 100)[1].added > T0 + 1000);
+  check('after Undo, a merge with a browser that saw neither keeps the wish', wishesOf(WS.mergeDimData(mine, other), 100).some((w) => w.raw === '[[7]]'));
+  const sawDelete = clone(mine); delete sawDelete.lists.default.items[100].wishes[1];
+  sawDelete.lists.default.items[100].wishes = sawDelete.lists.default.items[100].wishes.filter(Boolean);
+  WS.recordWishTombstone(sawDelete, 'default', 100, removed, T0 + 1000);
+  check('after Undo, a browser still holding the old tombstone does not delete it again', wishesOf(WS.mergeDimData(mine, sawDelete), 100).some((w) => w.raw === '[[7]]'));
+  check('restoring a wish that is already there is refused', WS.restoreWish(mine, 'default', 100, clone(removed), stat, 0, T0 + 3000) === false && wishesOf(mine, 100).length === 3);
+
+  // the last wish on an item: the item itself comes back
+  const solo = dataWith(200, [weaponWish('[[9]]', T0)]);
+  const [last] = wishesOf(solo, 200).splice(0, 1);
+  WS.recordWishTombstone(solo, 'default', 200, last, T0 + 500);
+  delete solo.lists.default.items[200];
+  check('restoring the last wish brings the item back with its details', WS.restoreWish(solo, 'default', 200, last, stat, 0, T0 + 900) === true && solo.lists.default.items[200].static.name === 'x' && wishesOf(solo, 200).length === 1);
+  check('restore into a missing list does nothing', WS.restoreWish(solo, 'nope', 200, clone(last), stat, 0) === false);
+}
+
 if (failures) {
   console.error(`\n${failures} wish-edit-sync check(s) failed`);
   process.exit(1);

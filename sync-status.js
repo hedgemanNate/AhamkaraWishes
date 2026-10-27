@@ -75,7 +75,7 @@
         'Getting game data…',
         'A one-time download of Bungie’s item data (about 200 MB). Your lists work now; search and the builders unlock when it’s done.',
         null,
-        { tone: 'info', text: known ? `Getting game data · ${pct}%` : 'Getting game data…', action: null });
+        { tone: 'info', text: known ? `Getting game data · ${pct}%` : 'Getting game data…', action: null, progress: pct });
     }
     if (manifest === 'missing') {
       return state('nodata', { label: 'No game data', tone: 'danger' },

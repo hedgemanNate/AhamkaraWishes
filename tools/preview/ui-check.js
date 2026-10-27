@@ -940,6 +940,34 @@ async function checkNextDiscover(browser, base, width) {
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
+/** First run: the app is usable at once, and a banner shows real download progress (D13). */
+async function checkNextFirstRun(browser, base, width) {
+  const tag = `[${width}] next first run`;
+  const page = await openPanel(browser, base, 'empty', width, 'ui=next');
+  const ev = (fn, ...args) => page.eval(fn, ...args);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  await wait(1200);
+  // pretend the game data is still arriving
+  await ev(() => { AWShell.instance.ctx.store.manifest = 'downloading'; document.dispatchEvent(new CustomEvent('awManifestProgress', { detail: { percent: 42 } })); });
+  await wait(300);
+  const b = await ev(() => ({
+    text: document.querySelector('.ui-banner-slot').textContent,
+    bar: (document.querySelector('.ui-banner-slot [role=progressbar]') || { getAttribute: () => null }).getAttribute('aria-valuenow'),
+    chip: document.querySelector('.ui-syncchip').textContent,
+    usable: !document.querySelector('.ui-shell__base').inert && !!document.querySelector('.ui-addwish') && !document.querySelector('#ui-screen-wishes').hidden,
+    wider: document.documentElement.scrollWidth > innerWidth + 1
+  }));
+  check(`${tag}: the app is usable while it downloads, with a banner and the real percentage`, /Getting game data · 42%/.test(b.text) && b.bar === '42' && /42%/.test(b.chip) && b.usable && !b.wider, JSON.stringify(b));
+  await page.screenshot(path.join(OUT, `next-firstrun-${width}.png`));
+  await ev(() => document.dispatchEvent(new CustomEvent('awManifestProgress', { detail: { percent: 88 } })));
+  await wait(200);
+  check(`${tag}: the bar moves`, await ev(() => document.querySelector('.ui-banner-slot [role=progressbar]').getAttribute('aria-valuenow') === '88'));
+  await ev(() => document.dispatchEvent(new CustomEvent('awManifestReady')));
+  await wait(300);
+  check(`${tag}: the banner goes away when the data is ready`, await ev(() => !/game data/i.test(document.querySelector('.ui-banner-slot').textContent) && !document.querySelector('.ui-banner-slot [role=progressbar]')));
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
 /** Lists from other people, shown in the new screens. */
 async function checkNextHostile(browser, base, width) {
   const tag = `[${width}] next hostile`;
@@ -1172,6 +1200,7 @@ async function checkGallery(browser, base, width) {
       await checkNextInventory(browser, url, width);
       await checkNextLists(browser, url, width);
       await checkNextDiscover(browser, url, width);
+      await checkNextFirstRun(browser, url, width);
 
       // empty
       page = await openPanel(browser, url, 'empty', width);

@@ -63,6 +63,7 @@
     auth: { signedIn: false, expired: false, name: '', avatar: '' },
     manifest: 'downloading',
     isAdmin: false,
+    manifestProgress: null,   // 0-100 while game data downloads, else null
     lists: [],           // [{ id, name, count }]
     activeId: 'default'
   };
@@ -97,6 +98,7 @@
       sessionExpired: store.auth.expired,
       online: root.navigator ? root.navigator.onLine : true,
       manifest: store.manifest,
+      manifestProgress: store.manifestProgress === null ? undefined : store.manifestProgress,
       syncing: !!snap.syncing,
       lastSyncAt: snap.lastSyncAt || undefined,
       lastError: snap.lastError || null,
@@ -321,6 +323,8 @@
           tone: s.banner.tone, text: s.banner.text,
           action: s.banner.action ? { label: s.banner.action.label, onClick: () => runAction(s.banner.action.kind) } : null
         }));
+        // First run: a real bar under the message, so the wait is visibly going somewhere.
+        if (typeof s.banner.progress === 'number') bannerSlot.appendChild(UI.progress({ value: s.banner.progress, max: 100, label: 'Downloading game data' }));
       }
       if (nav.isOpen('sync') || nav.isOpen('me')) fillSheet(nav.top);
     }
@@ -339,7 +343,8 @@
     // The owner's moderation tools stay in the classic Admin sheet; Me offers the way in once admin is confirmed.
     doc.addEventListener('ahamkara:adminStatusChanged', (e) => { store.isAdmin = !!(e.detail && e.detail.isAdmin); if (nav.isOpen('me')) fillSheet('me'); });
     doc.addEventListener('awSyncChanged', paint);
-    doc.addEventListener('awManifestReady', () => { store.manifest = 'ready'; paint(); });
+    doc.addEventListener('awManifestProgress', (e) => { store.manifestProgress = e.detail && typeof e.detail.percent === 'number' ? e.detail.percent : null; paint(); });
+    doc.addEventListener('awManifestReady', () => { store.manifest = 'ready'; store.manifestProgress = null; paint(); });
     const overlay = doc.getElementById('loading-overlay');
     store.manifest = !overlay || overlay.classList.contains('hidden') ? 'ready' : 'downloading';
     root.addEventListener('online', paint);

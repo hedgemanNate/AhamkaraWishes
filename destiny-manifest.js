@@ -217,7 +217,10 @@ async function downloadTableIfStale(tableName, force) {
       const t = await r.text().catch(() => "");
       throw new Error(`${tableName} download failed HTTP ${r.status}. Body: ${t.slice(0, 200)}`);
     }
-    const buf = await r.arrayBuffer();
+    // Streamed when the progress reader is loaded (the panel), so first run can show a real percentage.
+    const buf = typeof AWManifestProgress !== 'undefined'
+      ? await AWManifestProgress.readWithProgress(r, (got, total) => AWManifestProgress.report(tableName, got, total))
+      : await r.arrayBuffer();
     d2log("Downloaded bytes:", buf.byteLength);
     const parsed = JSON.parse(await bytesToTextMaybeGzip(buf, r.headers.get("content-type") || ""));
     if (!parsed || typeof parsed !== "object") throw new Error(`${tableName} download was not a table.`);

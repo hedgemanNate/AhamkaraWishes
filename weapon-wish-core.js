@@ -36,14 +36,17 @@
         for (const { base, enhanced } of col.pairs) {
             const isAcceptable = state.acceptable.has(base.hash) || (enhanced && state.acceptable.has(enhanced.hash));
             if (!isAcceptable) continue;
-            const color = perkColor(state, base.hash, comboColors);
+            // A perk may be in several combos; `colors` lists them all, `color` is
+            // the first (older cards and lists read just that one), null for a
+            // plain "any of this column" pick.
+            const worn = comboColors.filter((c) => state.colors.get(c) === base.hash);
             selected.push({
                 name: base.name,
                 icon: base.icon,
                 hash: base.hash,
                 enhancedHash: enhanced?.hash ?? null,
-                // Combo membership, or null for a plain "any of this column" pick.
-                color: color === 'plain' ? null : color
+                color: worn[0] ?? null,
+                colors: worn
             });
         }
         return selected;

@@ -141,14 +141,14 @@
     }
 
     /** A screen that opens over the tabs (weapon detail, builders) with a Back button. */
-    function addScreen(name, title, onOpen) {
+    function addScreen(name, title, onOpen, opts = {}) {
       const titleEl = h('h2', { class: 'ui-subscreen__title' }, title);
       const body = h('div', { class: 'ui-subscreen__body' });
       const el = h('section', { class: 'ui-subscreen', hidden: true, aria: { labelledby: `ui-sub-${name}` } },
         h('div', { class: 'ui-subscreen__head' },
           UI.iconButton({ label: 'Back', icon: UI.ICON.chevron, className: 'ui-subscreen__back', onClick: () => nav.close(name) }), titleEl), body);
       titleEl.id = `ui-sub-${name}`;
-      nav.addLayer(name, { el, kind: 'screen', onOpen });
+      nav.addLayer(name, { el, kind: 'screen', onOpen, canClose: opts.canClose, onClose: opts.onClose });
       sheetEls.push(el);
       if (shell) shell.appendChild(el);
       return { el, body, setTitle: (t) => { titleEl.textContent = t; } };
@@ -160,7 +160,7 @@
       nav, store, UI, AWDom: D, addSheet, addScreen,
       toast: UI.toast,
       openSheet,
-      startWish,
+      startWish, editWish,
       goClassic: () => setEnabled(false),
       signIn: () => runAction('signin'),
       /** Shows how many new things a tab has (0 hides it). */
@@ -179,6 +179,7 @@
       },
       syncNow: () => root.appManager && root.appManager.syncNow && root.appManager.syncNow(true)
     };
+    ctx.weaponBuilder = root.AWWeaponBuilderScreen ? root.AWWeaponBuilderScreen.create(ctx) : null;
     const wishes = root.AWWishes ? root.AWWishes.create(ctx) : null;
     views.wishes = h('section', { class: 'ui-screen', id: 'ui-screen-wishes', hidden: true }, wishes ? wishes.el : null);
     const drops = root.AWDropsScreen ? root.AWDropsScreen.create(ctx) : null;
@@ -212,6 +213,7 @@
     addSheet('lists', 'Wishlists', () => fillSheet('lists'));
     addSheet('sync', 'Sync', () => fillSheet('sync'));
     addSheet('me', 'Account', () => fillSheet('me'));
+    addSheet('newWish', 'New wish', () => fillSheet('newWish'));
 
     base.append(appbar, bannerSlot, main, tabbar);
     shell = h('div', { id: 'ui-shell', class: 'ui-root ui-shell' }, base, sheetEls);
@@ -221,8 +223,19 @@
     function sheetBody(name) { return sheets[name].querySelector('.ui-sheet__body'); }
     function setBody(name, ...nodes) { const b = sheetBody(name); b.replaceChildren(); nodes.flat().forEach((n) => n && b.appendChild(n)); }
 
-    function startWish() {
-      ctx.toast('The new wish builders are the next step.', { action: { label: 'Use classic', onClick: ctx.goClassic } });
+    const builderMissing = () => ctx.toast('The new wish builders are the next step.', { action: { label: 'Use classic', onClick: ctx.goClassic } });
+
+    /** Starts a new wish: a weapon or armor. Without a kind, asks which. */
+    function startWish(kind) {
+      if (kind === 'weapon') { if (ctx.weaponBuilder) ctx.weaponBuilder.start(); else builderMissing(); return; }
+      if (kind === 'armor') { builderMissing(); return; }
+      openSheet('newWish', addWish);
+    }
+
+    /** Edits one saved roll: { kind, hash, index, key, item, wish }. */
+    function editWish(p, trigger) {
+      if (p && p.kind === 'weapon' && ctx.weaponBuilder) ctx.weaponBuilder.edit(p, trigger);
+      else builderMissing();
     }
 
     function openDiscover() {
@@ -240,6 +253,10 @@
           label: `${l.name}, ${l.count} wishes${l.id === store.activeId ? ', current list' : ''}`,
           onClick: () => switchList(l.id)
         }))));
+      } else if (name === 'newWish') {
+        setBody('newWish', h('div', { class: 'ui-sheetlist' },
+          UI.row({ title: 'Weapon wish', subtitle: 'Choose a weapon and the perks you want', trailing: UI.ICON.chevron, onClick: () => { nav.close('newWish'); startWish('weapon'); } }),
+          UI.row({ title: 'Armor wish', subtitle: 'Choose an archetype for a set', trailing: UI.ICON.chevron, onClick: () => { nav.close('newWish'); startWish('armor'); } })));
       } else if (name === 'sync') {
         const s = syncState();
         const actions = [];

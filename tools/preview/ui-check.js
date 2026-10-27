@@ -359,6 +359,113 @@ async function checkNextDrops(browser, base, width) {
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
+/** The weapon builder: edit a saved roll, paint combos, discard prompt, and a new wish from search. */
+async function checkNextBuilder(browser, base, width) {
+  const tag = `[${width}] next builder`;
+  const page = await openPanel(browser, base, 'owned', width, 'ui=next');
+  const ev = (fn) => page.eval(fn);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const sub = '.ui-subscreen:not([hidden]) ';
+  const count = (items) => Object.values(items).reduce((n, it) => n + it.wishes.length, 0);
+  await wait(1500);
+  await ev(() => [...document.querySelectorAll('.ui-itemrow')].find((r) => /Fatebringer/.test(r.textContent)).click());
+  await wait(500);
+  await ev(() => document.querySelector('.ui-subscreen:not([hidden]) .ui-rollcard .ui-btn').click());
+  await page.waitFor(() => document.querySelectorAll('.ui-builder:not([hidden]) .ui-ptile').length > 0, { timeoutMs: 20000 });
+  await wait(600);
+  const r = await ev(() => {
+    const q = (sel) => [...document.querySelectorAll(sel)];
+    const b = '.ui-builder:not([hidden]) ';
+    const tile = q(`${b}.ui-ptile`)[0].getBoundingClientRect();
+    return {
+      title: document.querySelector(`${b}.ui-subscreen__title`).textContent,
+      cols: q(`${b}.ui-col`).length,
+      tileW: Math.round(tile.width), tileH: Math.round(tile.height),
+      picked: q(`${b}.ui-ptile.is-picked`).length,
+      multi: q(`${b}.ui-ptile`).some((t) => t.querySelectorAll('.ui-ptile__combo').length === 2),
+      brush: q(`${b}.ui-brush .ui-seg__opt`).map((o) => o.textContent.trim()),
+      actions: q(`${b}.ui-builder__actions .ui-btn`).map((o) => o.textContent.trim()),
+      statRows: q(`${b}.ui-stat`).length,
+      wider: document.documentElement.scrollWidth > innerWidth + 1
+    };
+  });
+  check(`${tag}: editing a roll opens it with all its columns`, r.title === 'Edit roll' && r.cols >= 4, JSON.stringify(r));
+  check(`${tag}: perk tiles are 48px and fit`, r.tileW === 48 && r.tileH === 48 && !r.wider, JSON.stringify([r.tileW, r.tileH, r.wider]));
+  check(`${tag}: the saved roll's picks are painted, one perk in two combos`, r.picked > 0 && r.multi, JSON.stringify([r.picked, r.multi]));
+  check(`${tag}: the toolbar offers Any and combos 1-4`, r.brush.join() === 'Any,1,2,3,4' || r.brush.join(',').startsWith('Any,1'), r.brush.join());
+  check(`${tag}: Update roll and Save as new are pinned`, r.actions.join() === 'Update roll,Save as new', r.actions.join());
+  check(`${tag}: stats are shown`, r.statRows >= 4, String(r.statRows));
+  await page.screenshot(path.join(OUT, `next-builder-${width}.png`));
+
+  // painting: pick an unpicked perk with combo 2, then tap it again to take it off
+  const painted = await ev(async () => {
+    const w = (ms) => new Promise((x) => setTimeout(x, ms));
+    const b = '.ui-builder:not([hidden]) ';
+    const opt = [...document.querySelectorAll(`${b}.ui-brush .ui-seg__opt`)].find((o) => o.dataset.value === 'blue');
+    opt.click(); await w(150);
+    const tile = [...document.querySelectorAll(`${b}.ui-ptile`)].find((t) => !t.classList.contains('is-picked'));
+    const name = tile.getAttribute('aria-label');
+    tile.click(); await w(250);
+    const after = [...document.querySelectorAll(`${b}.ui-ptile`)].find((t) => t.getAttribute('aria-label').startsWith(name));
+    const on = after.classList.contains('is-picked') && /2/.test(after.querySelector('.ui-ptile__combos').textContent) && after.getAttribute('aria-label').includes('combo 2');
+    const detail = document.querySelector(`${b}.ui-perkdetail`).textContent.length > 20;
+    after.click(); await w(250);
+    const off = ![...document.querySelectorAll(`${b}.ui-ptile`)].find((t) => t.getAttribute('aria-label').startsWith(name)).classList.contains('is-picked');
+    return { on, off, detail };
+  });
+  check(`${tag}: tapping paints the chosen combo, shows the perk's detail, and taps off again`, painted.on && painted.off && painted.detail, JSON.stringify(painted));
+
+  // Update roll saves in place
+  const before = await ev(() => window.__awPreview.dump().dimData.lists.default.items);
+  await ev(() => [...document.querySelectorAll('.ui-builder:not([hidden]) .ui-builder__actions .ui-btn')].find((b) => /Update roll/.test(b.textContent)).click());
+  await wait(800);
+  const after = await ev(() => window.__awPreview.dump().dimData.lists.default.items);
+  check(`${tag}: Update roll closes the builder and keeps the same number of rolls`, await ev(() => !document.querySelector('.ui-builder:not([hidden])')) && count(after) === count(before) && await ev(() => /Roll updated/.test(document.querySelector('.ui-toast') ? document.querySelector('.ui-toast').textContent : '')));
+
+  // leaving with unsaved changes asks first
+  await ev(() => document.querySelector('.ui-subscreen:not([hidden]) .ui-rollcard .ui-btn').click());
+  await page.waitFor(() => document.querySelectorAll('.ui-builder:not([hidden]) .ui-ptile').length > 0, { timeoutMs: 20000 });
+  await wait(500);
+  await ev(() => [...document.querySelectorAll('.ui-builder:not([hidden]) .ui-ptile')].find((t) => !t.classList.contains('is-picked')).click());
+  await wait(200);
+  await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-subscreen__back').click());
+  await wait(400);
+  check(`${tag}: leaving with unsaved picks asks first`, await ev(() => !!document.querySelector('dialog[open]') && !!document.querySelector('.ui-builder:not([hidden])')));
+  await ev(() => [...document.querySelectorAll('dialog[open] .ui-btn')].find((b) => /Keep editing/.test(b.textContent)).click());
+  await wait(300);
+  check(`${tag}: Keep editing stays in the builder`, await ev(() => !!document.querySelector('.ui-builder:not([hidden])') && !document.querySelector('dialog[open]')));
+  await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-subscreen__back').click());
+  await wait(300);
+  await ev(() => [...document.querySelectorAll('dialog[open] .ui-btn')].find((b) => /Discard/.test(b.textContent)).click());
+  await wait(500);
+  check(`${tag}: Discard leaves, and nothing was saved`, await ev(() => !document.querySelector('.ui-builder:not([hidden])')) && JSON.stringify(await ev(() => window.__awPreview.dump().dimData.lists.default.items)) === JSON.stringify(after));
+  await page.press('Escape'); await wait(300);
+
+  // a new wish: + Wish -> weapon -> search -> pick -> any-perk -> save
+  await ev(() => document.querySelector('.ui-addwish').click());
+  await wait(400);
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((x) => /Weapon wish/.test(x.textContent)).click());
+  await wait(500);
+  await ev(() => { const i = document.querySelector('.ui-subscreen:not([hidden]) input[type=search]'); i.value = 'eyasluna'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.waitFor(() => document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-itemrow').length > 0, { timeoutMs: 20000 });
+  check(`${tag}: search finds the weapon`, await ev(() => /Eyasluna/i.test(document.querySelector('.ui-subscreen:not([hidden]) .ui-itemrow').textContent)));
+  await ev(() => document.querySelector('.ui-subscreen:not([hidden]) .ui-itemrow').click());
+  await page.waitFor(() => document.querySelectorAll('.ui-builder:not([hidden]) .ui-ptile').length > 0, { timeoutMs: 20000 });
+  await wait(500);
+  check(`${tag}: a new wish starts empty with Save off`, await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-subscreen__title').textContent === 'New wish' && document.querySelectorAll('.ui-builder:not([hidden]) .ui-ptile.is-picked').length === 0 && document.querySelector('.ui-builder:not([hidden]) .ui-builder__actions .ui-btn').disabled));
+  await ev(() => {
+    document.querySelector('.ui-builder:not([hidden]) .ui-brush .ui-seg__opt[data-value=any]').click();
+    document.querySelectorAll('.ui-builder:not([hidden]) .ui-col')[2].querySelector('.ui-ptile').click();
+  });
+  await wait(300);
+  const countBefore = count(await ev(() => window.__awPreview.dump().dimData.lists.default.items));
+  await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-builder__actions .ui-btn').click());
+  await wait(900);
+  const countAfter = count(await ev(() => window.__awPreview.dump().dimData.lists.default.items));
+  check(`${tag}: Save adds exactly one wish and closes both screens`, countAfter === countBefore + 1 && await ev(() => !document.querySelector('.ui-builder:not([hidden])') && !document.querySelector('.ui-subscreen:not([hidden])')), `${countBefore} -> ${countAfter}`);
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
 /** Lists from other people, shown in the new screens. */
 async function checkNextHostile(browser, base, width) {
   const tag = `[${width}] next hostile`;
@@ -586,6 +693,7 @@ async function checkGallery(browser, base, width) {
       await checkNextHostile(browser, url, width);
       await checkNextOwned(browser, url, width);
       await checkNextDrops(browser, url, width);
+      await checkNextBuilder(browser, url, width);
 
       // empty
       page = await openPanel(browser, url, 'empty', width);

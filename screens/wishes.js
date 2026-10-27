@@ -98,7 +98,7 @@
       if (!p) return;
       actions.setTitle(p.title);
       actions.querySelector('.ui-sheet__body').replaceChildren(h('div', { class: 'ui-sheetlist' },
-        UI.row({ title: 'Edit roll', subtitle: 'Change the perks or stats', onClick: () => { ctx.nav.close('rollActions'); ctx.startWish(); } }),
+        UI.row({ title: 'Edit roll', subtitle: 'Change the perks or stats', onClick: () => { ctx.nav.close('rollActions'); ctx.editWish(p); } }),
         UI.row({ title: 'Delete roll', subtitle: 'You can undo this', className: 'is-danger', onClick: () => { ctx.nav.close('rollActions'); deleteRoll(p); } })));
     }
 
@@ -185,7 +185,7 @@
           body: state.kind === 'weapon'
             ? 'Add a roll from Godroll.tv, or build one here, and Ahamkara Wishes will tell you when it drops.'
             : 'Choose an archetype for a set and track the rolls you want.',
-          actions: [UI.button({ label: '+ Wish', variant: 'primary', onClick: () => ctx.startWish() })]
+          actions: [UI.button({ label: '+ Wish', variant: 'primary', onClick: () => ctx.startWish(state.kind) })]
         });
       }
       return UI.emptyState({
@@ -308,7 +308,7 @@
           ? h('span', { class: ['ui-combochip', hits.length === 0 && 'is-empty'], data: { combo: slot + 1 }, title: `Combo ${slot + 1}: ${hits.length} owned` }, `${slot + 1}×${hits.length}`)
           : null;
       }).filter(Boolean) : [];
-      const params = { hash, index, key: WS.wishKey(w), title: text(item.static.name, 'Roll') };
+      const params = { kind: 'weapon', hash, index, key: WS.wishKey(w), title: text(item.static.name, 'Roll'), item, wish: w };
       return h('article', { class: ['ui-rollcard', n && 'is-owned'], data: { index } },
         h('div', { class: 'ui-rollcard__head' },
           UI.badge(mode.toUpperCase(), mode),
@@ -316,7 +316,7 @@
           chips.length ? h('span', { class: 'ui-combochips' }, chips) : null,
           UI.iconButton({ label: `Roll actions, ${mode.toUpperCase()}`, icon: UI.ICON.more, onClick: (e) => openActions(params, e.currentTarget) })),
         h('div', { class: 'ui-perkgrid' }, columns.map((col) => h('div', { class: 'ui-perkgroup' }, (Array.isArray(col) ? col : []).map((p) => perkLarge(p, matched))))),
-        h('div', { class: 'ui-rollcard__foot' }, UI.button({ label: 'Edit roll', variant: 'secondary', onClick: () => ctx.startWish() })));
+        h('div', { class: 'ui-rollcard__foot' }, UI.button({ label: 'Edit roll', variant: 'secondary', onClick: (e) => ctx.editWish(params, e.currentTarget) })));
     }
 
     function perkLarge(p, matched) {
@@ -351,7 +351,7 @@
       const a = WS.armorFields(w.config);
       const mode = tagOf(w), n = ownedCount(w);
       const stats = archetypeStats(a.archetype);
-      const params = { hash, index, key: WS.wishKey(w), title: text(item.static.name, 'Roll') };
+      const params = { kind: 'armor', hash, index, key: WS.wishKey(w), title: text(item.static.name, 'Roll'), item, wish: w };
       return h('article', { class: ['ui-rollcard', n && 'is-owned'], data: { index } },
         h('div', { class: 'ui-rollcard__head' },
           UI.badge(mode.toUpperCase(), mode),
@@ -362,7 +362,7 @@
           stats.map((s) => h('span', { class: 'ui-stat', data: { stat: s.toLowerCase() } }, s)),
           a.tertiary ? h('span', { class: 'ui-stat', data: { stat: a.tertiary.toLowerCase() }, title: 'Tertiary' }, `+ ${a.tertiary}`) : null,
           a.spark ? h('span', { class: 'ui-spark', title: 'Spark' }, a.spark) : null),
-        h('div', { class: 'ui-rollcard__foot' }, UI.button({ label: 'Edit roll', variant: 'secondary', onClick: () => ctx.startWish() })));
+        h('div', { class: 'ui-rollcard__foot' }, UI.button({ label: 'Edit roll', variant: 'secondary', onClick: (e) => ctx.editWish(params, e.currentTarget) })));
     }
 
     // --- set bonus (D15): what wearing 2 and 4 pieces does

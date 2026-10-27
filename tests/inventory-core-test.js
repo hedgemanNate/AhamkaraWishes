@@ -69,6 +69,9 @@ check('the detail screen can ask for one item regardless of filters', run({ only
 const big = { byItemHash: new Map(), byInstanceId: new Map() }; const bigDefs = new Map();
 for (let n = 100; n < 160; n++) { big.byItemHash.set(n, new Set([`i${n}`])); big.byInstanceId.set(`i${n}`, {}); bigDefs.set(String(n), { displayProperties: dp(`Gun ${n}`), itemType: 3, inventory: { bucketTypeHash: 1498876634 } }); }
 const capped = I.search({ index: big, defs: bigDefs, slots: new Set(['kinetic']) });
+bigDefs.set('159', { displayProperties: dp('Zzz last'), itemType: 3, inventory: { bucketTypeHash: 1498876634 } });
+const withMatch = I.search({ index: big, defs: bigDefs, slots: new Set(['kinetic']), dimData: { lists: { l: { items: { 159: { wishes: [{ receivedInstances: ['i159'] }] } } } } } });
+check('a matching item past the cap is still listed, first', withMatch.items[0].name === 'Zzz last' && withMatch.items.length === I.RESULT_CAP);
 check('results are capped and say so', capped.items.length === I.RESULT_CAP && capped.capped === true && run({ slots: new Set(['kinetic']) }).capped === false);
 check('bad input never throws', I.search({}).items.length === 0 && I.search({ index: { byItemHash: new Map() }, defs }).items.length === 0 && I.matchLookup(null).size === 0);
 

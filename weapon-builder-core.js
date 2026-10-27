@@ -130,6 +130,21 @@
   }
 
   /**
+   * The same picks on another version of the weapon (a season reissue): whatever
+   * still exists in its columns carries over, by column and perk; the rest drops.
+   */
+  function carryPicks(columns, config) {
+    const state = fromWish(columns, { config });
+    state.forEach((st, c) => {
+      const known = new Set();
+      columns[c].pairs.forEach((p) => { known.add(p.base.hash); if (p.enhanced) known.add(p.enhanced.hash); });
+      st.acceptable = new Set([...st.acceptable].filter((h) => known.has(h)));
+      for (const [color, hash] of [...st.colors]) if (!pairOf(columns[c], hash)) st.colors.delete(color);
+    });
+    return state;
+  }
+
+  /**
    * An owned roll is one concrete perk per column, which is exactly a combo, so it
    * lands as combo 1. `activeBySocketIndex` maps a socket index to the equipped plug.
    */
@@ -156,6 +171,6 @@
 
   root.AWWeaponBuilder = {
     emptyState, pairOf, isPicked, coloursOf, pickedCount, paint, usedColours, comboSpan,
-    comboPlugs, statDeltas, isEmpty, fromWish, fromOwned, recoilWedgePath
+    comboPlugs, statDeltas, isEmpty, fromWish, carryPicks, fromOwned, recoilWedgePath
   };
 })(typeof window !== 'undefined' ? window : globalThis);

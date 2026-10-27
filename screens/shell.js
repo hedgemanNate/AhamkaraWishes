@@ -176,8 +176,10 @@
       /** Opens a wish's detail from elsewhere (a Drop). Says so if it's in another list. */
       openWish(hash, trigger, listName) {
         nav.show('wishes');
-        if (!(wishes && wishes.openItem(hash, tabButtons.wishes))) {
-          UI.toast(listName ? `That wish is in “${listName}”. Switch lists to see it.` : 'That wish is no longer in this list.');
+        if (!(wishes && wishes.openItem(hash, trigger || tabButtons.wishes))) {
+          const current = store.lists.find((l) => l.id === store.activeId);
+          const elsewhere = listName && !(current && current.name === listName);
+          UI.toast(elsewhere ? `That wish is in “${listName}”. Switch lists to see it.` : 'That wish is no longer in this list.');
         }
       },
       syncNow: () => root.appManager && root.appManager.syncNow && root.appManager.syncNow(true)

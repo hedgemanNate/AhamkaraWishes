@@ -101,9 +101,9 @@ async function vaultInstances(ids, ownedIndex) {
 }
 
 /**
- * Everything that follows a matching pass, once, in order: auto-lock and
- * auto-vault what just landed (per the Automation settings; D5), then log it as
- * a Drop. `logDrops` is false when the pass only re-matched what was already
+ * Everything that follows a matching pass, once, in order: auto-lock what just
+ * matched and auto-vault what just dropped (per the Automation settings; D5),
+ * then log it as a Drop. `logDrops` is false when the pass only re-matched what was already
  * owned (a wish was saved), because that is not a drop. The very first sync only
  * records the baseline: everything you already own would otherwise show up as
  * a flood of "drops".
@@ -122,9 +122,13 @@ async function processNewMatches(pass, ownedIndex, { logDrops = false } = {}) {
     const ids = [...AWDrops.instanceIdsOf(drops)];
     const results = {};
     const note = (map, field) => map.forEach((ok, id) => { (results[id] = results[id] || {})[field] = ok; });
+    // Locking a roll you now want is harmless, so any newly matched copy is locked.
+    // Moving it is not: only a real drop goes to the vault, never a copy you were
+    // already holding that matched because you saved a wish (or the first sync).
+    const isDrop = logDrops && !baseline;
     if (auto.autoLock && ids.length) note(await lockInstances(ids, ownedIndex), 'locked');
-    if (auto.autoVault && ids.length) note(await vaultInstances(ids, ownedIndex), 'vaulted');
-    if (!logDrops || baseline || !_feedEnabled) return;
+    if (auto.autoVault && isDrop && ids.length) note(await vaultInstances(ids, ownedIndex), 'vaulted');
+    if (!isDrop || !_feedEnabled) return;
     await appendFeedEntries(AWDrops.buildEntries(drops, results));
 }
 

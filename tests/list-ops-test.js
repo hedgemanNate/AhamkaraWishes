@@ -51,6 +51,9 @@ check('Undo twice does nothing the second time', W.restoreList(d, snap, T + 3000
 // a browser that saw the delete must not delete it again
 const stale = { activeId: 'default', lists: {}, tombstones: { lists: { pve: T }, wishes: {} } };
 check('after Undo, merging with a browser that saw the delete keeps the list', !!W.mergeDimData(d, stale).lists.pve);
+const empty = { activeId: 'default', lists: { default: { name: 'Main', items: {} }, e: { name: 'Empty', items: {} } } };
+const esnap = W.removeList(empty, 'e', T); W.restoreList(empty, esnap, T + 2000);
+check('an empty list brought back survives a browser that saw the delete', !!W.mergeDimData(empty, stale.lists ? { activeId: 'default', lists: {}, tombstones: { lists: { e: T }, wishes: {} } } : stale).lists.e);
 const gone = fresh(); W.removeList(gone, 'pve', T);
 check('without Undo the delete still wins everywhere', !W.mergeDimData(fresh(), gone).lists.pve);
 
@@ -61,7 +64,11 @@ const m = W.mergeLists(d, 'default', ['pve', 'pvp', 'default', 'default', 'nope'
 check('merge keeps every roll: the same roll once, different rolls on the same weapon both', wishCount(d.lists.default) === 4 && d.lists.default.items[1].wishes.map((w) => w.raw).sort().join() === 'a,b' && !!d.lists.default.items[2] && !!d.lists.default.items[3], JSON.stringify(Object.values(d.lists.default.items).map((i) => i.wishes.map((w) => w.raw))));
 check('merge removes the sources with tombstones, and reports how many rolls it added', Object.keys(d.lists).join() === 'default' && d.tombstones.lists.pve === MT && d.tombstones.lists.pvp === MT && m.added === 3 && m.removed.length === 2);
 check('the active list falls back when its list was merged away', d.activeId === 'default');
-check('Undo restores the destination exactly and both lists in place', W.undoMerge(d, m, MT + 1000) && Object.keys(d.lists).join() === 'default,pve,pvp' && wishCount(d.lists.default) === 1 && wishCount(d.lists.pve) === 3 && wishCount(d.lists.pvp) === 1 && d.activeId === 'pve');
+d.lists.default.items[9] = { static: { name: 'Added meanwhile' }, wishes: [wish('late', 900)] };
+check('Undo takes out only what the merge added and puts both lists back in place', W.undoMerge(d, m, MT + 1000) && Object.keys(d.lists).join() === 'default,pve,pvp' && wishCount(d.lists.default) === 2 && !!d.lists.default.items[9] && wishCount(d.lists.pve) === 3 && wishCount(d.lists.pvp) === 1 && d.activeId === 'pve');
+check('the rolls Undo took out are tombstoned, so a browser holding the merged list drops them', Object.keys(d.tombstones.wishes.default || {}).sort().join() === '1,2,3');
+const merged = fresh(); W.mergeLists(merged, 'default', ['pve', 'pvp'], MT);
+check('after Undo, a browser that saw the merge can’t put the rolls back', wishCount(W.mergeDimData(d, merged).lists.default) === 2);
 d = fresh();
 check('the default list is never merged away, and nothing to merge returns null', W.mergeLists(d, 'pve', ['default']) === null && !!d.lists.default && W.mergeLists(d, 'pve', []) === null && W.mergeLists(d, 'nope', ['pvp']) === null);
 d = fresh();

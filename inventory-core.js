@@ -74,7 +74,6 @@
     const matches = matchLookup(o.dimData);
     const root_ = o.iconRoot || '';
     const iconOf = (def) => (def && def.displayProperties && def.displayProperties.icon ? `${root_}${def.displayProperties.icon}` : '');
-    let capped = false;
 
     for (const [itemHash, instanceIds] of idx.byItemHash.entries()) {
       if (o.onlyHash !== undefined && String(itemHash) !== String(o.onlyHash)) continue;
@@ -118,12 +117,13 @@
         isArmor: ARMOR_BUCKETS.has(bucketHash), classType: def.classType ?? null,
         setHash: (def.equippingBlock && def.equippingBlock.equipableItemSetHash) ?? null, bucketHash, instances, matchCount
       });
-      if (out.length >= RESULT_CAP) { capped = true; break; }
     }
 
     // Items that match a wish first: "I already own the roll I wanted" must be impossible to scroll past.
+    // Sorted before the cap, so a matching item can never be the one cut off.
     out.sort((a, b) => ((b.matchCount > 0) - (a.matchCount > 0)) || b.matchCount - a.matchCount || a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
-    return { items: out, capped };
+    const capped = out.length > RESULT_CAP;
+    return { items: capped ? out.slice(0, RESULT_CAP) : out, capped };
   }
 
   /**

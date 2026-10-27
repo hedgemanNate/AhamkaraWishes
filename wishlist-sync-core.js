@@ -246,6 +246,8 @@
     }
     const entries = Object.entries(data.lists);
     entries.splice(Math.min(Math.max(snap.position | 0, 0), entries.length), 0, [snap.id, snap.list]);
+    // A list with no wishes has nothing to date, so the list itself carries when it came back.
+    snap.list.restoredAt = floor;
     data.lists = Object.fromEntries(entries);
     if (snap.wasActive) data.activeId = snap.id;
     return true;
@@ -254,32 +256,56 @@
   /**
    * Folds the `sourceIds` lists into `destId`: every roll of every list is kept
    * (the same roll in two lists once), then the sources are removed. The default
-   * list is never a source. Returns { before, removed, added } for undoMerge, or
-   * null when there was nothing to merge.
+   * list is never a source. Returns what undoMerge needs ({ destId, addedKeys,
+   * removed, added }), or null when there was nothing to merge.
    */
   function mergeLists(data, destId, sourceIds, now) {
     const dest = data.lists[destId];
     if (!dest) return null;
     const sources = [...new Set(sourceIds || [])].filter((id) => id !== destId && id !== DEFAULT_LIST_ID && data.lists[id]);
     if (!sources.length) return null;
-    const count = (items) => Object.values(items || {}).reduce((n, it) => n + ((it && it.wishes && it.wishes.length) || 0), 0);
-    const before = { items: JSON.parse(JSON.stringify(dest.items || {})), activeId: data.activeId };
-    const startCount = count(dest.items);
+    const keysOf = (items) => {
+      const out = {};
+      for (const [hash, item] of Object.entries(items || {})) out[hash] = new Set(((item && item.wishes) || []).map(wishKey));
+      return out;
+    };
+    const had = keysOf(dest.items);
     const removed = [];
     for (const id of sources) {
       dest.items = mergeItems(dest.items, data.lists[id].items, null);
       removed.push(removeList(data, id, now));
     }
-    return { destId, before, removed: removed.filter(Boolean), added: count(dest.items) - startCount };
+    // Exactly what the merge brought in, so Undo takes out only that and leaves
+    // anything else that changes on the list in the meantime alone.
+    const addedKeys = {};
+    let added = 0;
+    for (const [hash, keys] of Object.entries(keysOf(dest.items))) {
+      const fresh = [...keys].filter((k) => !(had[hash] && had[hash].has(k)));
+      if (fresh.length) { addedKeys[hash] = fresh; added += fresh.length; }
+    }
+    return { destId, addedKeys, removed: removed.filter(Boolean), added, activeId: data.activeId === destId ? destId : null };
   }
 
-  /** Undoes mergeLists: the destination as it was, and the source lists back. */
+  /**
+   * Undoes mergeLists: takes the merged-in rolls back out of the destination
+   * (tombstoned, so a browser that already has the merged list drops them too)
+   * and puts the source lists back where they were.
+   */
   function undoMerge(data, result, now) {
-    if (!result || !data.lists[result.destId]) return false;
-    data.lists[result.destId].items = result.before.items;
+    const dest = result && data.lists[result.destId];
+    if (!dest) return false;
+    for (const [hash, keys] of Object.entries(result.addedKeys || {})) {
+      const item = dest.items && dest.items[hash];
+      if (!item || !Array.isArray(item.wishes)) continue;
+      item.wishes = item.wishes.filter((w) => {
+        if (!keys.includes(wishKey(w))) return true;
+        recordWishTombstone(data, result.destId, hash, w, now);
+        return false;
+      });
+      if (!item.wishes.length) delete dest.items[hash];
+    }
     // Last removed first: each list was removed from the shape the previous one left, so this retraces it exactly.
     [...result.removed].reverse().forEach((snap) => restoreList(data, snap, now));
-    data.activeId = result.before.activeId in data.lists ? result.before.activeId : DEFAULT_LIST_ID;
     return true;
   }
 
@@ -418,7 +444,8 @@
       // A list deleted on one browser stays deleted — unless the other browser
       // has added a wish to it since, which means it is genuinely back in use.
       if (deletedAt) {
-        const newest = Math.max(newestWishAdded(localList), newestWishAdded(remoteList));
+        const newest = Math.max(newestWishAdded(localList), newestWishAdded(remoteList),
+          Number(localList && localList.restoredAt) || 0, Number(remoteList && remoteList.restoredAt) || 0);
         if (newest <= deletedAt) continue;
       }
 
@@ -430,6 +457,8 @@
           tombstones.wishes[listId]
         )
       };
+      const restoredAt = Math.max(Number(localList && localList.restoredAt) || 0, Number(remoteList && remoteList.restoredAt) || 0);
+      if (restoredAt) merged.lists[listId].restoredAt = restoredAt;
     }
 
     // 'default' is special-cased throughout the app (lookups fall back to

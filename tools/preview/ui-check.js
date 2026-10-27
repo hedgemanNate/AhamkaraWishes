@@ -843,7 +843,8 @@ async function checkNextDiscover(browser, base, width) {
       if (url.includes('ilike')) return r(200, S.search);
       return r(404, {});
     };
-    window.bungieAuth = { getValidAuth: async () => ({ access_token: 'tok' }), signIn: async () => {} };
+    // Like the real one: no token until signed in.
+    window.bungieAuth = { getValidAuth: async () => { if (!window.__signedIn) throw new Error('NOT_SIGNED_IN'); return { access_token: 'tok' }; }, signIn: async () => {} };
     return new Promise((res) => window.awWishlistIO.getActiveListPayload((p) => { window.__payload = p; res(); }));
   });
   const cards = () => ev(() => document.querySelectorAll('#ui-screen-discover .ui-wlcard').length);
@@ -896,7 +897,7 @@ async function checkNextDiscover(browser, base, width) {
   await wait(400);
   check(`${tag}: signed out, Submit asks you to sign in`, await ev(() => /Sign in to submit/.test(document.querySelector('.ui-layer:not([hidden])').textContent) && !!document.querySelector('.ui-layer:not([hidden]) .ui-sheet__foot .ui-btn--primary')));
   await page.press('Escape'); await wait(300);
-  await ev(() => chrome.storage.local.set({ bungie_auth: { access_token: 'x', user: { displayName: 'Tester' } } }));
+  await ev(() => { window.__signedIn = true; return chrome.storage.local.set({ bungie_auth: { access_token: 'x', user: { displayName: 'Tester' } } }); });
   await wait(400);
   await ev(() => document.dispatchEvent(new CustomEvent('bungieAuthChanged', { detail: { auth: { access_token: 'x' } } })));
   await wait(900);

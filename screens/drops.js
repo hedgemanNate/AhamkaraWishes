@@ -141,7 +141,7 @@
       const fresh = await A.load();
       if (!fresh.entries.length) return;
       await A.saveEntries([]);
-      ctx.toast('Drops cleared.', { undo: () => A.saveEntries(fresh.entries) });
+      ctx.toast('Drops cleared.', { undo: async () => A.saveEntries(A.unionEntries(fresh.entries, (await A.load()).entries)) });
     }
 
     // --- keeping in step

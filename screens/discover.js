@@ -77,8 +77,9 @@
       loadMine(mineSeq);
     }
 
+    // Asks Bungie directly rather than the shell's signed-in flag, which catches up
+    // a moment after a sign-in; signed out, client.mine() fails and this shows nothing.
     async function loadMine(forSeq) {
-      if (!ctx.store.auth.signedIn) { mine = null; paint(); return; }
       try {
         const m = await client.mine();
         if (forSeq !== undefined && forSeq !== seq) return;
@@ -208,9 +209,12 @@
         const modes = UI.segmented({ options: MODE_OPTIONS, value: mode, label: 'Mode', onChange: (v) => { mode = v; } });
         const note = [`${X.itemsText(count)} in “${payload.name}”.`, X.capNote(mine && mine.who)].filter(Boolean).join(' ');
         const btn = UI.button({ label: 'Submit', variant: 'primary', size: 'lg', block: true, onClick: () => submit() });
+        let sending = false; // Enter in the title can't send a second copy while one is on its way
         async function submit() {
+          if (sending) return;
           const title = field.input.value.trim();
           if (!title) { field.setError('Give your wishlist a title.'); field.input.focus(); return; }
+          sending = true;
           btn.disabled = true; btn.querySelector('.ui-btn__label').textContent = 'Submitting…';
           try {
             await client.submit({ title, mode, payload });
@@ -221,6 +225,7 @@
             if (e.code === 'not_signed_in') field.setError('Sign in first to submit a wishlist.');
             else field.setError(X.submitError(e.code || e.message, mine && mine.who && mine.who.cap));
           }
+          sending = false;
           btn.disabled = false; btn.querySelector('.ui-btn__label').textContent = 'Submit';
         }
         sBody().replaceChildren(h('div', { class: 'ui-field-gap' }, h('p', { class: 'ui-note' }, `${note} It shares the list you’re using now. Switch lists from the list name at the top.`), field,

@@ -347,7 +347,8 @@
     async function seasons(session) {
       const w = s.weapon;
       const all = [w.hash].concat(w.linkedHashes);
-      if (all.length < 2 || !root.ensureWatermarkLookupReady) return;
+      // Editing a saved roll is tied to that one item, so its version can't change here.
+      if (s.edit || all.length < 2 || !root.ensureWatermarkLookupReady) return;
       try {
         const [defs, marks] = await Promise.all([root.loadInventoryItemDefsToMemory(), root.ensureWatermarkLookupReady()]);
         if (session !== s.session) return;
@@ -363,7 +364,12 @@
         refs.seasons.hidden = false;
         refs.seasons.replaceChildren(...list.map((m) => UI.chip({
           label: m.label, selected: m.hash === w.hash,
-          onClick: () => { if (m.hash !== w.hash) load({ hash: m.hash, name: w.name, linked: all.filter((x) => x !== m.hash) }, null); }
+          onClick: () => {
+            if (m.hash === w.hash) return;
+            // Keep what was picked: the same perks on the other version, where they exist.
+            const picks = B.isEmpty(s.perks) ? null : payload().config;
+            load({ hash: m.hash, name: w.name, linked: all.filter((x) => x !== m.hash), start: picks ? (cols) => B.carryPicks(cols, picks) : null }, null);
+          }
         })));
       } catch (e) { console.warn('[WeaponBuilder] seasons unavailable', e); }
     }

@@ -127,6 +127,18 @@
     return list;
   }
 
+  /**
+   * Undo of "Clear all": the cleared entries back, plus anything logged since
+   * (in time order, capped), so a drop that landed meanwhile isn't lost.
+   */
+  function unionEntries(older, newer, max) {
+    const out = (Array.isArray(older) ? older : []).slice();
+    (Array.isArray(newer) ? newer : []).forEach((e) => { if (!out.some((o) => sameEntry(o, e))) out.push(e); });
+    out.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    const cap = max || MAX_ENTRIES;
+    return out.length > cap ? out.slice(out.length - cap) : out;
+  }
+
   function unseenCount(entries, seenAt) {
     return (Array.isArray(entries) ? entries : []).filter((e) => e && e.timestamp > (seenAt || 0)).length;
   }
@@ -159,7 +171,7 @@
   const api = {
     MAX_ENTRIES, DEFAULT_AUTOMATION, normalizeAutomation,
     snapshotReceivedState, newlyReceived, instanceIdsOf,
-    buildEntries, appendEntries, removeEntry, restoreEntry, unseenCount, dayLabel,
+    buildEntries, appendEntries, removeEntry, restoreEntry, unionEntries, unseenCount, dayLabel,
     load,
     saveEntries: (entries) => set({ feedEntries: entries }),
     setEnabled: (on) => set({ feedEnabled: !!on }),

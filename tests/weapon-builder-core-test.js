@@ -85,6 +85,14 @@ check('a plain pick is saved with no colours', (() => { const t = B.emptyState(c
 const data2 = twoPayload.config.perkColumnsData.find((c) => c.colIndex === 2);
 check('the matching data has the perk under both colours', JSON.stringify(data2.colors) === JSON.stringify({ red: [31, 131], blue: [31, 131] }), JSON.stringify(data2.colors));
 
+// --- switching to another version of the weapon keeps what still exists
+const reissue = [columns[0], columns[1], { socketIndex: 3, pairs: [pair(31, 'Rampage', 131), pair(34, 'Explosive')] }, columns[3]];
+const before2 = B.emptyState(columns);
+paint(before2, 0, 11, 'red'); paint(before2, 2, 31, 'red'); paint(before2, 2, 32, 'blue'); paint(before2, 3, 41, 'any');
+const carried = B.carryPicks(reissue, window.WeaponWish.buildWeaponWishPayload(columns, before2, COLORS).config);
+check('picks that exist on the other version carry over, with their combos', carried[0].colors.get('red') === 11 && carried[2].colors.get('red') === 31 && carried[2].acceptable.has(131) && carried[3].acceptable.has(41));
+check('a perk the other version can’t roll is dropped, colour and all', !carried[2].acceptable.has(32) && !carried[2].colors.has('blue'));
+
 // --- an owned roll lands as combo 1
 const owned = B.fromOwned(columns, { 1: 12, 2: 21, 3: 131, 4: 42 }, COLORS);
 check('an owned roll is one perk per column, all in combo 1', [0, 1, 2, 3].every((i) => owned[i].colors.get('red')) && owned[2].colors.get('red') === 31);

@@ -169,14 +169,9 @@
     let newId = null;
 
     return AWStore.update((data) => {
-      // Resolve name collision by appending a suffix
-      const existingNames = new Set(Object.values(data.lists).map((l) => l && l.name));
-      name = importedList.name;
-      if (existingNames.has(name)) {
-        let suffix = 2;
-        while (existingNames.has(name + ' (' + suffix + ')')) suffix++;
-        name = name + ' (' + suffix + ')';
-      }
+      // A free name by the same rules as creating and renaming a list ("PvE Meta" and
+      // "pve meta" are the same name), so imports never make a clash Rename refuses.
+      name = window.WishlistSync.uniqueListName(data, (importedList.name || '').trim() || 'Imported list');
 
       newId = 'wl_' + Math.random().toString(36).slice(2, 9);
       data.lists[newId] = { name, items: importedList.items };

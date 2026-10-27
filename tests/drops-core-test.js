@@ -53,6 +53,7 @@ check('Undo puts it back where it was', D.restoreEntry(r.entries, r.removed, r.i
 check('Undo twice does not duplicate', D.restoreEntry(D.restoreEntry(r.entries, r.removed, r.index), r.removed, r.index).length === 3);
 check('entries from before ids existed are matched by time and name', D.removeEntry([{ timestamp: 5, itemName: 'Old' }, { timestamp: 6, itemName: 'Old' }], { timestamp: 6, itemName: 'Old' }).entries.length === 1);
 check('removing something that is not there changes nothing', D.removeEntry(log, { id: 'zzz' }).entries.length === 3 && D.removeEntry(log, { id: 'zzz' }).removed === null);
+check('Undo of Clear all keeps a drop logged since, in time order', D.unionEntries(log, [{ id: 'z', timestamp: 2.5, itemName: 'Z' }, { id: 'b', timestamp: 2, itemName: 'B' }]).map((e) => e.id).join() === 'a,b,z,c');
 check('unseen entries are counted from the last visit', D.unseenCount(log, 1) === 2 && D.unseenCount(log, 0) === 3 && D.unseenCount(log, 99) === 0 && D.unseenCount(null, 0) === 0);
 
 // --- grouping the log by day

@@ -162,11 +162,27 @@
       openSheet,
       startWish,
       goClassic: () => setEnabled(false),
+      signIn: () => runAction('signin'),
+      /** Shows how many new things a tab has (0 hides it). */
+      setTabBadge(tab, n) {
+        const b = tabButtons[tab] && tabButtons[tab].querySelector('.ui-tab__badge');
+        if (!b) return;
+        b.hidden = !n; b.textContent = !n ? '' : n > 99 ? '99+' : String(n);
+        tabButtons[tab].setAttribute('aria-label', n ? `${TABS.find((t) => t.id === tab).label}, ${n} new` : TABS.find((t) => t.id === tab).label);
+      },
+      /** Opens a wish's detail from elsewhere (a Drop). Says so if it's in another list. */
+      openWish(hash, trigger, listName) {
+        nav.show('wishes');
+        if (!(wishes && wishes.openItem(hash, tabButtons.wishes))) {
+          UI.toast(listName ? `That wish is in “${listName}”. Switch lists to see it.` : 'That wish is no longer in this list.');
+        }
+      },
       syncNow: () => root.appManager && root.appManager.syncNow && root.appManager.syncNow(true)
     };
     const wishes = root.AWWishes ? root.AWWishes.create(ctx) : null;
     views.wishes = h('section', { class: 'ui-screen', id: 'ui-screen-wishes', hidden: true }, wishes ? wishes.el : null);
-    views.drops = comingSoon('Drops', 'Drops, your new matching rolls as they land, is the next screen to move over.');
+    const drops = root.AWDropsScreen ? root.AWDropsScreen.create(ctx) : null;
+    views.drops = h('section', { class: 'ui-screen', id: 'ui-screen-drops', hidden: true }, drops ? drops.el : null);
     views.inventory = comingSoon('Inventory', 'Inventory search is the next screen to move over.');
     views.discover = h('section', { class: 'ui-screen', id: 'ui-screen-discover', hidden: true },
       UI.emptyState({
@@ -187,7 +203,7 @@
     const tabbar = h('nav', { class: 'ui-tabbar', aria: { label: 'Sections' } },
       TABS.map((t) => {
         const b = h('button', { type: 'button', class: 'ui-tab', data: { tab: t.id }, on: { click: () => nav.show(t.id) } },
-          TAB_ICON[t.id], h('span', null, t.label));
+          TAB_ICON[t.id], h('span', null, t.label), h('span', { class: 'ui-tab__badge', hidden: true, aria: { hidden: true } }));
         tabButtons[t.id] = b;
         return b;
       }));

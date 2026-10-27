@@ -391,7 +391,24 @@
     });
     doc.addEventListener('awManifestReady', () => { bonusCache.clear(); schedule(); });
 
-    return { el, render };
+    /**
+     * Opens the detail for an item (from a Drop). Resolves false when it isn't in
+     * the active list, so the caller can say so.
+     */
+    function openItem(hash, trigger) {
+      const item = data && activeItems()[hash];
+      if (!item || !item.static) return false;
+      state.kind = item.static.type === 'armor' ? 'armor' : 'weapon';
+      seg.setValue(state.kind);
+      render();
+      if (state.kind === 'weapon') { openDetail({ kind: 'weapon', hash }, trigger); return true; }
+      const set = buildSets(() => true, '').find((x) => x.pieces.some((p) => p.hash === String(hash)));
+      if (!set) return false;
+      openDetail({ kind: 'armor', key: set.key }, trigger);
+      return true;
+    }
+
+    return { el, render, openItem };
   }
 
   root.AWWishes = { create };

@@ -42,154 +42,96 @@ const FEED_INTERVAL_MS = 60 * 1000; // 1 minute, only while Feed is toggled on
 
 let _feedEnabled = false;
 
-// Snapshots which (list, item, wish) triples are currently `received: true`,
-// taken right before a matchWishlist() pass so we can tell what NEWLY flipped
-// to true after the pass — i.e. what the user just obtained.
-function snapshotReceivedState(dimData) {
-    const map = new Map();
-    if (!dimData || !dimData.lists) return map;
-    for (const listId of Object.keys(dimData.lists)) {
-        const list = dimData.lists[listId];
-        if (!list || !list.items) continue;
-        for (const itemHash of Object.keys(list.items)) {
-            const item = list.items[itemHash];
-            if (!item || !Array.isArray(item.wishes)) continue;
-            item.wishes.forEach((wish, idx) => {
-                map.set(`${listId}|${itemHash}|${idx}`, !!wish.received);
-            });
-        }
-    }
-    return map;
-}
+// Which wishes just flipped to "received" (a drop) is decided in drops-core.js,
+// so locking, vaulting and the Drops log can't disagree about it.
+const snapshotReceivedState = (dimData) => AWDrops.snapshotReceivedState(dimData);
 
-// Compares a pre-match snapshot against the just-updated dimData and returns
-// feed entries for every wish that went from not-received to received.
-function diffFeedEntries(beforeMap, dimData) {
-    const newEntries = [];
-    if (!dimData || !dimData.lists) return newEntries;
-    for (const listId of Object.keys(dimData.lists)) {
-        const list = dimData.lists[listId];
-        if (!list || !list.items) continue;
-        for (const itemHash of Object.keys(list.items)) {
-            const item = list.items[itemHash];
-            if (!item || !Array.isArray(item.wishes)) continue;
-            item.wishes.forEach((wish, idx) => {
-                const key = `${listId}|${itemHash}|${idx}`;
-                const wasReceived = beforeMap.get(key) || false;
-                if (!wasReceived && wish.received) {
-                    newEntries.push({
-                        itemName: item.static?.name || 'Unknown Item',
-                        iconUrl: item.static?.icon || '',
-                        listName: list.name || listId,
-                        timestamp: Date.now()
-                    });
-                }
-            });
-        }
-    }
-    return newEntries;
-}
-
-// Locks every item instance that newly matched a wishlist wish since beforeSnapshot.
-// Reads activeMembership from chrome.storage for the API call; silently skips if
-// membership info is missing (e.g. not signed in) or if a lock call fails.
-async function autoLockNewlyMatched(beforeSnapshot, dimData, ownedIndex) {
-    if (!beforeSnapshot || !dimData?.lists || !ownedIndex) return;
-
-    const newInstanceIds = new Set();
-    for (const listId of Object.keys(dimData.lists)) {
-        const list = dimData.lists[listId];
-        if (!list?.items) continue;
-        for (const itemHash of Object.keys(list.items)) {
-            const item = list.items[itemHash];
-            if (!Array.isArray(item?.wishes)) continue;
-            item.wishes.forEach((wish, idx) => {
-                const key = `${listId}|${itemHash}|${idx}`;
-                if (!beforeSnapshot.get(key) && wish.received) {
-                    (wish.receivedInstances || []).forEach(iid => newInstanceIds.add(iid));
-                }
-            });
-        }
-    }
-    if (newInstanceIds.size === 0) return;
-
-    const res = await new Promise(r => chrome.storage.local.get(['activeMembership'], r));
+/** Cached Destiny membership, or null (with a warning) if it hasn't been fetched yet. */
+async function activeMembershipOrNull(what) {
+    const res = await new Promise((r) => chrome.storage.local.get(['activeMembership'], r));
     const mem = res?.activeMembership;
     if (!mem?.membershipType || !mem?.membershipId || !mem?.characterIds?.length) {
-        console.warn('[AutoLock] No membership info cached; skipping auto-lock');
-        return;
+        console.warn(`[${what}] No membership info cached; skipping`);
+        return null;
     }
-    const { membershipType, membershipId, characterIds } = mem;
-    const fallbackCharId = characterIds[0];
+    return mem;
+}
 
-    for (const iid of newInstanceIds) {
+/** Locks each instance in-game so it can't be dismantled by accident. Returns Map id -> true|false. */
+async function lockInstances(ids, ownedIndex) {
+    const done = new Map();
+    const mem = await activeMembershipOrNull('AutoLock');
+    if (!mem) return done;
+    const { membershipType, membershipId, characterIds } = mem;
+    for (const iid of ids) {
         const owned = ownedIndex.byInstanceId?.get(String(iid));
-        const characterId = owned?.characterId || fallbackCharId;
+        const characterId = owned?.characterId || characterIds[0];
         try {
             await window.bungieAuth.setItemLockState(iid, characterId, membershipType, membershipId, true);
-            console.log('[AutoLock] Locked', iid);
+            done.set(iid, true);
         } catch (e) {
             console.warn('[AutoLock] Failed to lock', iid, e.message);
+            done.set(iid, false);
         }
     }
+    return done;
 }
 
-async function transferNewlyMatchedToVault(beforeSnapshot, dimData, ownedIndex) {
-    if (!beforeSnapshot || !dimData?.lists || !ownedIndex) return;
-
-    const newInstanceIds = new Set();
-    for (const listId of Object.keys(dimData.lists)) {
-        const list = dimData.lists[listId];
-        if (!list?.items) continue;
-        for (const itemHash of Object.keys(list.items)) {
-            const item = list.items[itemHash];
-            if (!Array.isArray(item?.wishes)) continue;
-            item.wishes.forEach((wish, idx) => {
-                const key = `${listId}|${itemHash}|${idx}`;
-                if (!beforeSnapshot.get(key) && wish.received) {
-                    (wish.receivedInstances || []).forEach(iid => newInstanceIds.add(iid));
-                }
-            });
-        }
-    }
-    if (newInstanceIds.size === 0) return;
-
-    const res = await new Promise(r => chrome.storage.local.get(['activeMembership'], r));
-    const mem = res?.activeMembership;
-    if (!mem?.membershipType || !mem?.membershipId || !mem?.characterIds?.length) {
-        console.warn('[VaultTransfer] No membership info cached; skipping vault transfer');
-        return;
-    }
-
-    const { membershipType, membershipId, characterIds } = mem;
-    const fallbackCharId = characterIds[0];
-
-    for (const iid of newInstanceIds) {
+/** Moves each instance to the vault. Returns Map id -> true|false (already in the vault counts as done). */
+async function vaultInstances(ids, ownedIndex) {
+    const done = new Map();
+    const mem = await activeMembershipOrNull('VaultTransfer');
+    if (!mem) return done;
+    const { membershipType, membershipId } = mem;
+    for (const iid of ids) {
         const owned = ownedIndex.byInstanceId?.get(String(iid));
         if (!owned) continue;
-        // No characterId means it's already sitting in the vault (see
-        // buildOwnedIndex, which only assigns characterId for items on a
-        // character's inventory/equipment) — nothing to transfer.
-        if (!owned.characterId) {
-            console.log('[VaultTransfer] Already in vault, skipping', iid);
-            continue;
-        }
-        const characterId = owned.characterId || fallbackCharId;
+        // No characterId means it's already in the vault (buildOwnedIndex only
+        // assigns one to items on a character) - nothing to transfer.
+        if (!owned.characterId) { done.set(iid, true); continue; }
         try {
-            await window.bungieAuth.transferItemToVault(iid, owned.itemHash, characterId, membershipType, membershipId);
-            console.log('[VaultTransfer] Sent to vault', iid);
+            await window.bungieAuth.transferItemToVault(iid, owned.itemHash, owned.characterId, membershipType, membershipId);
+            done.set(iid, true);
         } catch (e) {
             console.warn('[VaultTransfer] Failed to transfer', iid, e.message);
+            done.set(iid, false);
         }
     }
+    return done;
+}
+
+/**
+ * Everything that follows a matching pass, once, in order: auto-lock and
+ * auto-vault what just landed (per the Automation settings; D5), then log it as
+ * a Drop. `logDrops` is false when the pass only re-matched what was already
+ * owned (a wish was saved), because that is not a drop. The very first sync only
+ * records the baseline: everything you already own would otherwise show up as
+ * a flood of "drops".
+ */
+async function processNewMatches(pass, ownedIndex, { logDrops = false } = {}) {
+    if (!pass || !ownedIndex) return;
+    // The first sync that can log drops only sets the baseline.
+    let baseline = false;
+    if (logDrops) {
+        const state = await AWDrops.load();
+        if (!state.baselineAt) { baseline = state.entries.length === 0; await AWDrops.setBaseline(); }
+    }
+    const drops = AWDrops.newlyReceived(pass.beforeSnapshot, pass.dimData);
+    if (!drops.length) return;
+    const auto = AWDrops.normalizeAutomation((await new Promise((r) => chrome.storage.local.get(['automation'], r))).automation);
+    const ids = [...AWDrops.instanceIdsOf(drops)];
+    const results = {};
+    const note = (map, field) => map.forEach((ok, id) => { (results[id] = results[id] || {})[field] = ok; });
+    if (auto.autoLock && ids.length) note(await lockInstances(ids, ownedIndex), 'locked');
+    if (auto.autoVault && ids.length) note(await vaultInstances(ids, ownedIndex), 'vaulted');
+    if (!logDrops || baseline || !_feedEnabled) return;
+    await appendFeedEntries(AWDrops.buildEntries(drops, results));
 }
 
 async function appendFeedEntries(newEntries) {
     if (!newEntries || newEntries.length === 0) return;
     const res = await new Promise((r) => chrome.storage.local.get(['feedEntries'], r));
-    let entries = Array.isArray(res?.feedEntries) ? res.feedEntries : [];
-    entries = entries.concat(newEntries);
-    if (entries.length > FEED_MAX_ENTRIES) entries = entries.slice(entries.length - FEED_MAX_ENTRIES);
+    const entries = AWDrops.appendEntries(res?.feedEntries, newEntries, FEED_MAX_ENTRIES);
     await new Promise((r) => chrome.storage.local.set({ feedEntries: entries }, r));
     renderFeedList(entries);
 }
@@ -278,6 +220,17 @@ async function loadFeedState() {
     renderFeedToggleUI();
     renderFeedList(res?.feedEntries || []);
 }
+
+// The Drops screen of the new design switches the log on and off from outside
+// this file; keep the engine (and the sync pace) in step with it.
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local' || !changes.feedEnabled) return;
+    const on = !!changes.feedEnabled.newValue;
+    if (on === _feedEnabled) return;
+    _feedEnabled = on;
+    renderFeedToggleUI();
+    startAutoRefresh();
+});
 
 function wireFeedToggle() {
     const btn = document.getElementById('feed-toggle-btn');
@@ -429,9 +382,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   try {
                     const pass = await matchWishlistPass(idx, { backfill: true });
                     if (pass) {
-                      await autoLockNewlyMatched(pass.beforeSnapshot, pass.dimData, idx);
-                      await transferNewlyMatchedToVault(pass.beforeSnapshot, pass.dimData, idx);
-                      if (_feedEnabled) await appendFeedEntries(diffFeedEntries(pass.beforeSnapshot, pass.dimData));
+                      await processNewMatches(pass, idx, { logDrops: true });
                     }
                     console.log('[Manager] Background OwnedIndex update & wishlist sync complete');
                   } catch (e) { console.warn('[Manager] background matchWishlist failed', e); }
@@ -1006,8 +957,7 @@ async function matchWishlistAgainstCachedIndex() {
     if (!idx) return;
     const pass = await matchWishlistPass(idx);
     if (!pass) return;
-    await autoLockNewlyMatched(pass.beforeSnapshot, pass.dimData, idx);
-    await transferNewlyMatchedToVault(pass.beforeSnapshot, pass.dimData, idx);
+    await processNewMatches(pass, idx); // re-matching what's already owned: not a drop
   } catch (e) { console.warn('[Manager] matchWishlistAgainstCachedIndex failed', e); }
 }
 
@@ -1557,9 +1507,7 @@ async function refreshProfileAndBuildIndex(components) {
   if (window.OwnedInventoryIndex.matchWishlist) {
     const pass = await matchWishlistPass(idx, { backfill: true });
     if (pass) {
-      await autoLockNewlyMatched(pass.beforeSnapshot, pass.dimData, idx);
-      await transferNewlyMatchedToVault(pass.beforeSnapshot, pass.dimData, idx);
-      if (_feedEnabled) await appendFeedEntries(diffFeedEntries(pass.beforeSnapshot, pass.dimData));
+      await processNewMatches(pass, idx, { logDrops: true });
       console.log('[Manager] Wishlist matching complete:', pass.summary);
     }
   }

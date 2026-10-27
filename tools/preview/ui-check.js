@@ -275,9 +275,9 @@ async function checkNext(browser, base, width) {
   await sleep2(300);
 
   // tabs that aren't rebuilt yet are honest stubs
-  await ev(() => document.querySelector('.ui-tab[data-tab=drops]').click());
+  await ev(() => document.querySelector('.ui-tab[data-tab=inventory]').click());
   await sleep2(200);
-  check(`${tag}: tabs that are not rebuilt yet say so and offer the classic design`, await ev(() => /Drops is coming/.test(document.querySelector('#ui-screen-drops').textContent) && !!document.querySelector('#ui-screen-drops .ui-btn')));
+  check(`${tag}: tabs that are not rebuilt yet say so and offer the classic design`, await ev(() => /Inventory is coming/.test(document.querySelector('#ui-screen-inventory').textContent) && !!document.querySelector('#ui-screen-inventory .ui-btn')));
   await ev(() => document.querySelector('.ui-tab[data-tab=wishes]').click()); // the open tab is remembered between panels
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
   if (width === WIDTHS[0]) await page.screenshot(path.join(OUT, `next-wishes-${width}.png`));
@@ -313,6 +313,49 @@ async function checkNextOwned(browser, base, width) {
   check(`${tag}: one perk can wear two combo numbers`, JSON.stringify(r.multiCombos) === '["1","2"]', JSON.stringify(r.multiCombos));
   check(`${tag}: matched perks are ringed`, r.hitPerks === 2, String(r.hitPerks));
   check(`${tag}: nothing wider than the panel`, !r.wider);
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
+/** The Drops screen: log, badge, Undo, Automation. */
+async function checkNextDrops(browser, base, width) {
+  const tag = `[${width}] next drops`;
+  const page = await openPanel(browser, base, 'drops', width, 'ui=next');
+  const s2 = (ms) => new Promise((r) => setTimeout(r, ms));
+  const ev = (fn) => page.eval(fn);
+  await sleep(1500);
+  check(`${tag}: the tab shows how many drops are new`, await ev(() => document.querySelector('.ui-tab[data-tab=drops] .ui-tab__badge').textContent === '2'));
+  await ev(() => document.querySelector('.ui-tab[data-tab=drops]').click());
+  await sleep(500);
+  const r = await ev(() => {
+    const q = (sel) => [...document.querySelectorAll(sel)];
+    return {
+      rows: q('#ui-screen-drops .ui-droprow').length,
+      newRows: q('#ui-screen-drops .ui-droprow.is-new').length,
+      chips: q('#ui-screen-drops .ui-droprow .ui-badge').map((b) => b.textContent.trim()),
+      badge: document.querySelector('.ui-tab[data-tab=drops] .ui-tab__badge').hidden,
+      auto: q('#ui-screen-drops .ui-row')[0].textContent,
+      wider: document.documentElement.scrollWidth > innerWidth + 1
+    };
+  });
+  check(`${tag}: both drops listed, newest first, marked new`, r.rows === 2 && r.newRows === 2, JSON.stringify(r));
+  check(`${tag}: each drop says what was done, failures honestly`, r.chips.join() === 'Locked,Couldn’t move,Locked', JSON.stringify(r.chips));
+  check(`${tag}: the badge clears once Drops is open`, r.badge === true);
+  check(`${tag}: Automation summary shows the settings`, /Lock on/.test(r.auto) && /Vault on/.test(r.auto), r.auto);
+  check(`${tag}: nothing wider than the panel`, !r.wider);
+  await ev(() => document.querySelector('#ui-screen-drops .ui-droprow .ui-icon-btn').click());
+  await sleep(500);
+  check(`${tag}: removing a drop shows Undo and removes one`, await ev(() => document.querySelectorAll('#ui-screen-drops .ui-droprow').length === 1 && !!document.querySelector('.ui-toast .ui-btn')));
+  await ev(() => document.querySelector('.ui-toast .ui-btn').click());
+  await sleep(500);
+  check(`${tag}: Undo puts it back`, await ev(() => document.querySelectorAll('#ui-screen-drops .ui-droprow').length === 2));
+  await ev(() => document.querySelector('#ui-screen-drops .ui-row').click());
+  await sleep(400);
+  check(`${tag}: Automation opens with three switches`, await ev(() => document.querySelectorAll('.ui-layer:not([hidden]) .ui-switch, .ui-layer:not([hidden]) [role=switch]').length === 3));
+  await page.press('Escape');
+  await sleep(300);
+  await ev(() => document.querySelector('#ui-screen-drops .ui-droprow__main').click());
+  await sleep(600);
+  check(`${tag}: tapping a drop opens its wish`, await ev(() => !!document.querySelector('.ui-subscreen:not([hidden])') && /Fatebringer/.test(document.querySelector('.ui-subscreen:not([hidden])').textContent)));
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
@@ -542,6 +585,7 @@ async function checkGallery(browser, base, width) {
 
       await checkNextHostile(browser, url, width);
       await checkNextOwned(browser, url, width);
+      await checkNextDrops(browser, url, width);
 
       // empty
       page = await openPanel(browser, url, 'empty', width);

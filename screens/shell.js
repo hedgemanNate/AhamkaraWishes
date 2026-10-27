@@ -179,8 +179,9 @@
       },
       syncNow: () => root.appManager && root.appManager.syncNow && root.appManager.syncNow(true)
     };
-    ctx.weaponBuilder = root.AWWeaponBuilderScreen ? root.AWWeaponBuilderScreen.create(ctx) : null;
     const wishes = root.AWWishes ? root.AWWishes.create(ctx) : null;
+    // After the Wishes screen: full-screen layers stack in page order, and a builder opened from a wish's detail must sit above it.
+    ctx.weaponBuilder = root.AWWeaponBuilderScreen ? root.AWWeaponBuilderScreen.create(ctx) : null;
     views.wishes = h('section', { class: 'ui-screen', id: 'ui-screen-wishes', hidden: true }, wishes ? wishes.el : null);
     const drops = root.AWDropsScreen ? root.AWDropsScreen.create(ctx) : null;
     views.drops = h('section', { class: 'ui-screen', id: 'ui-screen-drops', hidden: true }, drops ? drops.el : null);

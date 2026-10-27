@@ -386,10 +386,12 @@ async function checkNextBuilder(browser, base, width) {
       brush: q(`${b}.ui-brush .ui-seg__opt`).map((o) => o.textContent.trim()),
       actions: q(`${b}.ui-builder__actions .ui-btn`).map((o) => o.textContent.trim()),
       statRows: q(`${b}.ui-stat`).length,
+      onTop: (() => { const t = q(`${b}.ui-ptile`)[0].getBoundingClientRect(); const at = document.elementFromPoint(t.left + t.width / 2, t.top + t.height / 2); return !!(at && at.closest('.ui-builder')); })(),
       wider: document.documentElement.scrollWidth > innerWidth + 1
     };
   });
   check(`${tag}: editing a roll opens it with all its columns`, r.title === 'Edit roll' && r.cols >= 4, JSON.stringify(r));
+  check(`${tag}: the builder is what you see, not hidden under the detail screen`, r.onTop);
   check(`${tag}: perk tiles are 48px and fit`, r.tileW === 48 && r.tileH === 48 && !r.wider, JSON.stringify([r.tileW, r.tileH, r.wider]));
   check(`${tag}: the saved roll's picks are painted, one perk in two combos`, r.picked > 0 && r.multi, JSON.stringify([r.picked, r.multi]));
   check(`${tag}: the toolbar offers Any and combos 1-4`, r.brush.join() === 'Any,1,2,3,4' || r.brush.join(',').startsWith('Any,1'), r.brush.join());

@@ -252,7 +252,12 @@
   .ui-brush .ui-seg__opt[data-value="green"].is-selected { background: var(--ui-combo-3); color: var(--ui-on-accent); }
   .ui-brush .ui-seg__opt[data-value="orange"].is-selected { background: var(--ui-combo-4); color: var(--ui-on-accent); }
   .ui-brush .ui-seg__opt.is-selected .ui-seg__badge { color: inherit; }
-  .ui-brush__hint { margin: 0; min-height: 2.6em; }
+  .ui-brush__hint { margin: 0; }
+  .ui-brush .ui-seg__opt.is-used:not(.is-selected) { font-weight: var(--ui-weight-bold); }
+  .ui-brush .ui-seg__opt[data-value="red"].is-used:not(.is-selected) { color: var(--ui-combo-1); }
+  .ui-brush .ui-seg__opt[data-value="blue"].is-used:not(.is-selected) { color: var(--ui-combo-2); }
+  .ui-brush .ui-seg__opt[data-value="green"].is-used:not(.is-selected) { color: var(--ui-combo-3); }
+  .ui-brush .ui-seg__opt[data-value="orange"].is-used:not(.is-selected) { color: var(--ui-combo-4); }
 
   .ui-cols { display: grid; grid-template-columns: repeat(var(--ui-cols, 5), minmax(0, 1fr)); gap: var(--ui-space-1); }
   .ui-col { display: flex; flex-direction: column; align-items: center; gap: var(--ui-space-2); min-width: 0; }
@@ -308,10 +313,11 @@
   /* Save stays pinned to the bottom while everything above scrolls. */
   .ui-builder__foot {
     position: sticky; bottom: calc(var(--ui-space-8) * -1); z-index: var(--ui-z-sticky); background: var(--ui-bg);
-    margin: 0 calc(var(--ui-gutter) * -1) calc(var(--ui-space-8) * -1); padding: var(--ui-space-3) var(--ui-gutter) var(--ui-space-4);
-    border-top: var(--ui-border); display: flex; flex-direction: column; gap: var(--ui-space-2);
+    margin: 0 calc(var(--ui-gutter) * -1) calc(var(--ui-space-8) * -1); padding: var(--ui-space-2) var(--ui-gutter) var(--ui-space-3);
+    border-top: var(--ui-border); display: flex; flex-direction: column; gap: var(--ui-space-1);
   }
   .ui-builder__summary { color: var(--ui-text-muted); font-size: var(--ui-text-sm); text-align: center; }
-  .ui-builder__actions { display: flex; flex-direction: column; gap: var(--ui-space-2); }
-  .ui-builder__actions .ui-btn { width: 100%; }
+  .ui-builder__actions { display: flex; gap: var(--ui-space-2); }
+  .ui-builder__actions .ui-btn { flex: 1; min-width: 0; }
+  .ui-builder__actions .ui-btn--primary { flex: 2; }
 }

@@ -228,13 +228,14 @@
     }
 
     function paintToolbar() {
-      const opts = [{ value: 'any', label: 'Any' }].concat(COMBO.map((k) => ({ value: k, label: String(comboNo(k)), badge: B.comboSpan(s.perks, k) || undefined })));
+      const opts = [{ value: 'any', label: 'Any' }].concat(COMBO.map((k) => ({ value: k, label: String(comboNo(k)) })));
       const seg = UI.segmented({ options: opts, value: s.brush, label: 'What a tap does: add to', onChange: (v) => { s.brush = v; paintToolbar(); } });
       seg.classList.add('ui-brush__seg');
       seg.querySelectorAll('.ui-seg__opt').forEach((b) => {
         const k = b.dataset.value;
         if (k === 'any') { b.setAttribute('aria-label', 'Any of these: add a perk that is in no combo'); return; }
         const n = B.comboSpan(s.perks, k);
+        b.classList.toggle('is-used', n > 0);
         b.setAttribute('aria-label', `Combo ${comboNo(k)}${n ? `, ${plural(n, 'column', 'columns')}` : ', empty'}`);
       });
       const hadFocus = refs.toolbar.contains(doc.activeElement);
@@ -242,9 +243,9 @@
       if (hadFocus) { const on = seg.querySelector('.is-selected'); if (on) on.focus(); }
       const lone = COMBO.filter((k) => B.comboSpan(s.perks, k) === 1);
       refs.hint.textContent = (s.brush === 'any'
-        ? 'Tap a perk to accept it on its own. Tap again to remove it.'
-        : `Tap perks to put them in combo ${comboNo(s.brush)}: one per column. Tap again to take it out.`)
-        + (lone.length ? ` Combo ${lone.map(comboNo).join(' and ')} has only one perk so far.` : '');
+        ? 'Tap a perk to accept it on its own.'
+        : `Tap perks to add them to combo ${comboNo(s.brush)}. Tap again to remove.`)
+        + (lone.length ? ` Combo ${lone.map(comboNo).join(' and ')} has one perk so far.` : '');
     }
 
     function paintDetail() {
@@ -280,8 +281,8 @@
       const combos = B.usedColours(s.perks, COMBO).length;
       refs.summary.textContent = perks ? `${plural(perks, 'perk', 'perks')}${combos ? ` · ${plural(combos, 'combo', 'combos')}` : ''}` : 'Nothing picked yet';
       const nothing = B.isEmpty(s.perks);
-      const primary = UI.button({ label: s.edit ? 'Update roll' : 'Save wish', variant: 'primary', size: 'lg', disabled: nothing || s.saving, onClick: () => save(!!s.edit) });
-      refs.save.replaceChildren(primary, s.edit ? UI.button({ label: 'Save as new', variant: 'secondary', size: 'lg', disabled: nothing || s.saving, onClick: () => save(false) }) : null);
+      const primary = UI.button({ label: s.edit ? 'Update roll' : 'Save wish', variant: 'primary', disabled: nothing || s.saving, onClick: () => save(!!s.edit) });
+      refs.save.replaceChildren(primary, s.edit ? UI.button({ label: 'Save as new', variant: 'secondary', disabled: nothing || s.saving, onClick: () => save(false) }) : null);
     }
 
     // --- stats

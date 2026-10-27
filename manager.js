@@ -1,21 +1,17 @@
-// --- IMPORTS ---
-// All manifest loading, caching, and searching handled by destiny-manifest.js
-// This file uses: ensureInventoryItemDefsReady, ensureEquippableItemSetDefsReady, searchArmorLocally, getArmorSetLookup, buildNameIndexIfNeeded, ensureWatermarkLookupReady, BUCKET_HASHES, BUNGIE_ROOT
-
-// --- CONFIGURATION ---
-
-// --- INITIALIZATION ---
-// Reflects the last built OwnedIndex summary in the Menu > Utility section.
-function renderOwnedIndexSummary(summary) {
-    const el = document.getElementById('owned-index-summary');
-    if (!el) return;
-    if (!summary || typeof summary.totalInstances !== 'number') {
-        el.textContent = 'No inventory data yet.';
-        return;
-    }
-    const when = summary.fetchedAt ? new Date(summary.fetchedAt).toLocaleTimeString() : '';
-    el.textContent = when ? `Synced ${when}` : 'Synced';
-}
+// Ahamkara Wishes — the engine behind the screens.
+//
+// Nothing here draws. It loads the game data at startup, syncs the inventory
+// with Bungie on a schedule (visible: 30 s, hidden: 5 min, 1 min while the Drops
+// log is on), builds the OwnedIndex and matches it against the wishlists, then
+// looks after what just dropped (lock, vault, log it; see processNewMatches).
+// It also owns saving and editing wishes (saveItem, editItemWish) for the builders.
+// The screens (screens/*.js) read what it stores and listen for its events:
+//   awManifestReady / awManifestFailed   the game data is loaded / couldn't be
+//   awSyncChanged                        a sync started or finished
+// and call window.appManager (syncNow, getSyncSnapshot).
+//
+// Uses destiny-manifest.js (data), owned-inventory-index.js (matching),
+// bungie-auth.js (sign-in), drops-core.js, aw-store.js and wishlist-sync-core.js.
 
 // --- FEED (newly-obtained wishlist rolls) ---
 const FEED_MAX_ENTRIES = 20;
@@ -118,667 +114,93 @@ async function appendFeedEntries(newEntries) {
     const res = await new Promise((r) => chrome.storage.local.get(['feedEntries'], r));
     const entries = AWDrops.appendEntries(res?.feedEntries, newEntries, FEED_MAX_ENTRIES);
     await new Promise((r) => chrome.storage.local.set({ feedEntries: entries }, r));
-    renderFeedList(entries);
-}
-
-function formatFeedTime(ts) {
-    const diff = Date.now() - ts;
-    if (diff < 60_000) return 'Just now';
-    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-    return new Date(ts).toLocaleDateString();
-}
-
-function renderFeedList(entries) {
-    const listEl = document.getElementById('feed-list');
-    const emptyEl = document.getElementById('feed-empty');
-    const clearBtn = document.getElementById('feed-clear-btn');
-    if (!listEl) return;
-    if (!entries || entries.length === 0) {
-        listEl.innerHTML = '';
-        if (emptyEl) emptyEl.classList.remove('hidden');
-        if (clearBtn) clearBtn.classList.add('hidden');
-        return;
-    }
-    if (emptyEl) emptyEl.classList.add('hidden');
-    if (clearBtn) clearBtn.classList.remove('hidden');
-    // Displayed newest-first, but the delete button carries the entry's index
-    // in the underlying (oldest-first) stored array, so removeFeedEntry can
-    // splice the right one regardless of display order.
-    listEl.innerHTML = entries.slice().reverse().map((e, displayIdx) => {
-        const storedIndex = entries.length - 1 - displayIdx;
-        return `
-        <div class="mt-feed-item">
-            <img class="mt-feed-icon" src="${escapeHtml(AWDom.safeImageUrl(e.iconUrl) || 'icons/unnamed.jpg')}" alt="">
-            <div class="mt-feed-text">
-                <span class="mt-feed-name">${escapeHtml(e.itemName)}</span>
-                <span class="mt-feed-list-name">${escapeHtml(e.listName)}</span>
-            </div>
-            <span class="mt-feed-time">${formatFeedTime(e.timestamp)}</span>
-            <button class="mt-feed-del-btn" data-feed-index="${storedIndex}" title="Remove this entry" aria-label="Remove this entry">&#x2715;</button>
-        </div>
-    `;
-    }).join('');
-}
-
-async function removeFeedEntry(index) {
-    const res = await new Promise((r) => chrome.storage.local.get(['feedEntries'], r));
-    const entries = Array.isArray(res?.feedEntries) ? res.feedEntries : [];
-    if (index < 0 || index >= entries.length) return;
-    entries.splice(index, 1);
-    await new Promise((r) => chrome.storage.local.set({ feedEntries: entries }, r));
-    renderFeedList(entries);
-}
-
-async function clearAllFeedEntries() {
-    if (!confirm('Clear the entire Feed? This cannot be undone.')) return;
-    await new Promise((r) => chrome.storage.local.set({ feedEntries: [] }, r));
-    renderFeedList([]);
-}
-
-function wireFeedListActions() {
-    const listEl = document.getElementById('feed-list');
-    if (listEl) {
-        listEl.addEventListener('click', (e) => {
-            const btn = e.target.closest('.mt-feed-del-btn');
-            if (!btn) return;
-            removeFeedEntry(Number(btn.dataset.feedIndex));
-        });
-    }
-    const clearBtn = document.getElementById('feed-clear-btn');
-    if (clearBtn) clearBtn.addEventListener('click', clearAllFeedEntries);
-}
-
-function renderFeedToggleUI() {
-    document.body.classList.toggle('feed-on', _feedEnabled);
-    const btn = document.getElementById('feed-toggle-btn');
-    if (!btn) return;
-    const label = btn.querySelector('.btn-text') || btn;
-    label.textContent = _feedEnabled ? 'Turn Off Feed' : 'Turn On Feed';
-    btn.classList.toggle('active', _feedEnabled);
-    btn.setAttribute('aria-pressed', _feedEnabled ? 'true' : 'false');
 }
 
 async function loadFeedState() {
-    const res = await new Promise((r) => chrome.storage.local.get(['feedEnabled', 'feedEntries'], r));
+    const res = await new Promise((r) => chrome.storage.local.get(['feedEnabled'], r));
     _feedEnabled = !!res?.feedEnabled;
-    renderFeedToggleUI();
-    renderFeedList(res?.feedEntries || []);
 }
 
-// The Drops screen of the new design switches the log on and off from outside
-// this file; keep the engine (and the sync pace) in step with it.
+// The Drops screen switches the log on and off; keep the engine (and the sync
+// pace) in step with it.
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !changes.feedEnabled) return;
     const on = !!changes.feedEnabled.newValue;
     if (on === _feedEnabled) return;
     _feedEnabled = on;
-    renderFeedToggleUI();
     startAutoRefresh();
 });
 
-function wireFeedToggle() {
-    const btn = document.getElementById('feed-toggle-btn');
-    if (!btn) return;
-    btn.addEventListener('click', async () => {
-        _feedEnabled = !_feedEnabled;
-        await new Promise((r) => chrome.storage.local.set({ feedEnabled: _feedEnabled }, r));
-        renderFeedToggleUI();
-        // Re-pace the sync loop: while the panel is hidden, Feed polls every
-        // minute instead of every 5
-        startAutoRefresh();
+/**
+ * The cached Bungie profile, if any, becomes an OwnedIndex straight away, so
+ * ownership shows before the first live sync lands.
+ */
+function useCachedProfile() {
+    chrome.storage.local.get(['lastBungieProfile'], async (res) => {
+        const lastProfile = res?.lastBungieProfile;
+        // The live sync started on load may already have landed (or be
+        // building): a stale cached snapshot must not overwrite it.
+        if (_lastProfileMintedAt || _syncInFlight) return;
+        if (!lastProfile || !window.OwnedInventoryIndex || !window.OwnedInventoryIndex.updateFromProfile) return;
+        try {
+            const idx = await window.OwnedInventoryIndex.updateFromProfile(lastProfile);
+            if (_lastProfileMintedAt) return;
+            // A live fetch returning this same snapshot then has nothing to redo.
+            _lastProfileMintedAt = Date.parse(lastProfile.responseMintedTimestamp) || 0;
+            const ownedIndexSummary = {
+                totalInstances: idx.byInstanceId ? idx.byInstanceId.size : 0,
+                uniqueItems: idx.byItemHash ? idx.byItemHash.size : 0,
+                fetchedAt: Date.now()
+            };
+            await new Promise((r) => chrome.storage.local.set({ ownedIndexSummary }, r));
+            // The wishlist is read inside matchWishlistPass, after the index build
+            // above, so a wish saved while the index was building isn't overwritten.
+            if (window.OwnedInventoryIndex.matchWishlist) {
+                const pass = await matchWishlistPass(idx, { backfill: true });
+                if (pass) await processNewMatches(pass, idx, { logDrops: true });
+                console.log('[Manager] Background OwnedIndex update & wishlist sync complete');
+            }
+        } catch (e) { console.warn('[Manager] cached profile update failed', e); }
     });
 }
 
-// --- SECTION INFO POPUPS ---
-const MENU_SECTION_INFO = {
-    wishlists: {
-        title: 'Wishlists',
-        body: [
-            "Type a name and hit Create to start a new wishlist. Each wishlist is its own separate collection, so you can keep something like \"PvE Rolls\" and \"PvP Rolls\" totally apart from each other.",
-            "Tap any wishlist pill below to switch to it. Whichever one is highlighted gold is the one currently active, meaning that's where new wishes get saved when you craft a weapon or armor piece.",
-            "Duplicate makes a copy of the wishlist you're currently on, in case you want to branch off and try different combos without losing the original. Merge lets you fold other wishlists into the one you're on right now. Delete removes the active wishlist for good, so double check before you tap it."
-        ]
-    },
-    feed: {
-        title: 'Feed',
-        body: [
-            "Turn this on and the app will check your inventory every minute instead of the usual five. When something from one of your wishlists actually drops for you, it shows up right here with the item's name and which wishlist it matched.",
-            "This is meant for active grinding sessions, like farming a raid or a lost sector for a specific roll. Since it checks so often, it's best to switch it back off when you're done for the day so you're not syncing more than you need to.",
-            "Entries stick around here even after you turn Feed off, so you can always look back and see what you picked up."
-        ]
-    },
-    utility: {
-        title: 'Utility',
-        body: [
-            "This section pulls real data straight from your Bungie account. Hit Refresh anytime you want to force an update instead of waiting for the next scheduled sync. The timestamp next to it tells you how recent your data actually is.",
-            "Use the search bar to look up anything in your owned inventory by name, or tap the slot chips to just browse everything in a slot without typing. Tap any result to expand it and see the actual rolled perks on every copy you own.",
-            "Rolls that already satisfy one of your saved wishes get a green check with the wishlist's name on them, and those items float to the top of the results. It's a quick way to spot that you're already holding the roll you've been chasing."
-        ]
-    }
-};
-
-function showMenuSectionInfo(key) {
-    const info = MENU_SECTION_INFO[key];
-    if (!info) return;
-    const existing = document.getElementById('mt-info-overlay');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'mt-info-overlay';
-    overlay.className = 'mt-info-overlay';
-    overlay.innerHTML = `
-        <div class="mt-info-dialog" role="dialog" aria-modal="true">
-            <div class="mt-info-title">${escapeHtml(info.title)}</div>
-            <div class="mt-info-body">
-                ${info.body.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}
-            </div>
-            <button class="mt-info-close">Got it</button>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-
-    const close = () => overlay.remove();
-    overlay.querySelector('.mt-info-close').addEventListener('click', close);
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) close();
-    });
-    document.addEventListener('keydown', function escHandler(e) {
-        if (e.key === 'Escape') {
-            close();
-            document.removeEventListener('keydown', escHandler);
-        }
-    });
-}
-
-function wireMenuSectionInfo() {
-    document.querySelectorAll('.mt-info-icon[data-info]').forEach((btn) => {
-        btn.addEventListener('click', () => showMenuSectionInfo(btn.dataset.info));
-    });
+// The game data's state, for screens that start after it is known:
+// 'loading' -> 'ready' | 'failed'. The events say the same as it changes.
+window.AWManifestState = 'loading';
+function announceManifest(state) {
+    window.AWManifestState = state;
+    document.dispatchEvent(new CustomEvent(state === 'ready' ? 'awManifestReady' : 'awManifestFailed'));
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const loadingOverlay = document.getElementById('loading-overlay');
-
-    setupTabs();
-    initWeaponListSearch();
-    wireFeedToggle();
-    wireFeedListActions();
-    wireMenuSectionInfo();
     await loadFeedState();
-    chrome.storage.local.get(['ownedIndexSummary'], (res) => renderOwnedIndexSummary(res?.ownedIndexSummary));
-    // Ensure Menu is the default active view on startup
-    try {
-      const btnMenu = document.getElementById('tab-menu');
-      const btnWeapons = document.getElementById('tab-weapons');
-      const btnArmor = document.getElementById('tab-armor');
-      const viewMenu = document.getElementById('view-menu');
-      const viewWeapons = document.getElementById('view-weapons');
-      const viewArmor = document.getElementById('view-armor');
-      if (btnMenu) btnMenu.classList.add('active');
-      if (btnWeapons) btnWeapons.classList.remove('active');
-      if (btnArmor) btnArmor.classList.remove('active');
-      if (viewMenu) viewMenu.classList.add('active-view');
-      if (viewWeapons) viewWeapons.classList.remove('active-view');
-      if (viewArmor) viewArmor.classList.remove('active-view');
-    } catch (e) {
-      console.warn('[MANAGER] Unable to set default Menu view', e);
-    }
-    
-    // Load manifest data ONCE at startup
+
+    // Load the game data once at startup (the panel is usable while it downloads).
     Promise.all([
         ensureInventoryItemDefsReady({ force: false }),
         ensureEquippableItemSetDefsReady({ force: false }),
         getArmorSetLookup()
-    ]).then(() => {
+    ]).then(([itemsReady]) => {
+        // ensureInventoryItemDefsReady resolves false when it has nothing cached and couldn't download.
+        if (!itemsReady) { announceManifest('failed'); return; }
         // Pre-warm weapon search indexes so the first search is instant
         buildNameIndexIfNeeded();
         ensureWatermarkLookupReady();
-        // Hide loading overlay once all manifest data is ready (fade animation is 1.3s)
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
-        }
-        document.dispatchEvent(new CustomEvent('awManifestReady'));
-        // Now load and display the wishlist UI
-        loadLists();
+        announceManifest('ready');
         backfillArmorSets();
-        // Attempt a background OwnedIndex update from any cached Bungie profile
-        try {
-          chrome.storage.local.get(['lastBungieProfile'], async (res) => {
-            const lastProfile = res?.lastBungieProfile;
-            // The live sync started on load may already have landed (or be
-            // building) — a stale cached snapshot must not overwrite it.
-            if (_lastProfileMintedAt || _syncInFlight) return;
-            if (lastProfile && window.OwnedInventoryIndex && window.OwnedInventoryIndex.updateFromProfile) {
-              try {
-                const idx = await window.OwnedInventoryIndex.updateFromProfile(lastProfile);
-                if (_lastProfileMintedAt) return;
-                // A live fetch returning this same snapshot then has nothing to redo.
-                _lastProfileMintedAt = Date.parse(lastProfile.responseMintedTimestamp) || 0;
-                const totalInstances = idx.byInstanceId ? idx.byInstanceId.size : 0;
-                const uniqueItems = idx.byItemHash ? idx.byItemHash.size : 0;
-                const ownedIndexSummary = { totalInstances, uniqueItems, fetchedAt: Date.now() };
-                await new Promise((r) => chrome.storage.local.set({ ownedIndexSummary }, r));
-                renderOwnedIndexSummary(ownedIndexSummary);
-                // Run lightweight wishlist sync with updated index. The wishlist is
-                // read inside matchWishlistPass, after the index build above, so
-                // a wish saved while the index was building isn't overwritten.
-                if (window.OwnedInventoryIndex.matchWishlist) {
-                  try {
-                    const pass = await matchWishlistPass(idx, { backfill: true });
-                    if (pass) {
-                      await processNewMatches(pass, idx, { logDrops: true });
-                    }
-                    console.log('[Manager] Background OwnedIndex update & wishlist sync complete');
-                  } catch (e) { console.warn('[Manager] background matchWishlist failed', e); }
-                }
-              } catch (e) { console.warn('[Manager] updateFromProfile background update failed', e); }
-            }
-          });
-        } catch (e) { /* ignore */ }
-    }).catch(err => {
-        console.warn("[D2MANIFEST] Preflight failed:", err);
-        // Hide overlay even on error
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
-        }
-        // Try to load UI anyway
-        loadLists();
+        useCachedProfile();
+    }).catch((err) => {
+        console.warn('[D2MANIFEST] Preflight failed:', err);
+        announceManifest('failed');
     });
-
-    // Wire utility button for manual profile refresh
-    try {
-      const utilBtn = document.getElementById('utility-refresh-profile');
-      if (utilBtn) {
-        utilBtn.addEventListener('click', async () => {
-          const labelEl = utilBtn.querySelector('.btn-text') || utilBtn;
-          try {
-            utilBtn.disabled = true;
-            const prev = labelEl.textContent;
-            labelEl.textContent = 'Refreshing…';
-            const err = await runSync(true);
-            if (err) throw err;
-            labelEl.textContent = 'Done';
-            setTimeout(() => { labelEl.textContent = prev; }, 2000);
-          } catch (e) {
-            console.error('[Manager] utility refresh failed', e);
-            labelEl.textContent = 'Failed';
-            const summaryEl = document.getElementById('owned-index-summary');
-            if (summaryEl) summaryEl.textContent = 'Error: ' + (e?.message || String(e));
-            setTimeout(() => { labelEl.textContent = 'Refresh'; }, 2500);
-          } finally {
-            utilBtn.disabled = false;
-          }
-        });
-      }
-    } catch (e) { /* no-op */ }
-
-    // Wire inventory search (Utility section) — verifies the OwnedIndex actually
-    // reflects the signed-in account's real items.
-    try {
-      const invInput = document.getElementById('inventory-search-input');
-      if (invInput) {
-        let debounce = null;
-        invInput.addEventListener('input', (e) => {
-          clearTimeout(debounce);
-          const q = e.target.value;
-          debounce = setTimeout(() => renderInventorySearch(q), 250);
-        });
-      }
-      renderInventoryFilterChips();
-    } catch (e) { /* no-op */ }
 
     startAutoRefresh();
 });
 
-// --- INVENTORY SEARCH (Menu > Utility) ---
-
-// Slot chips, so the section can be browsed without typing a name at all.
-// The three weapon buckets are inlined because BUCKET_HASHES only covers
-// armor — armor search never needed the weapon ones.
-const INVENTORY_SLOT_FILTERS = [
-    { key: 'kinetic', label: 'Kinetic', bucket: 1498876634 },
-    { key: 'energy',  label: 'Energy',  bucket: 2465295065 },
-    { key: 'power',   label: 'Power',   bucket: 953998645 },
-    { key: 'helmet',  label: 'Helmet',  bucket: BUCKET_HASHES.HELMET },
-    { key: 'arms',    label: 'Arms',    bucket: BUCKET_HASHES.GAUNTLETS },
-    { key: 'chest',   label: 'Chest',   bucket: BUCKET_HASHES.CHEST },
-    { key: 'legs',    label: 'Legs',    bucket: BUCKET_HASHES.LEGS },
-    { key: 'class',   label: 'Class',   bucket: BUCKET_HASHES.CLASS_ITEM }
-];
-
-// Bucket-based armor detection: an owned instance carries no category info of
-// its own, and itemType alone doesn't separate armor from ornaments/mods.
-const ARMOR_BUCKET_HASHES = new Set(Object.values(BUCKET_HASHES));
-
-const inventorySlotFilters = new Set();
-let inventorySearchQuery = '';
-
-const INVENTORY_RESULT_CAP = 50;
-
-function renderInventoryFilterChips() {
-    const container = document.getElementById('inventory-filter-chips');
-    if (!container) return;
-    container.innerHTML = '';
-
-    INVENTORY_SLOT_FILTERS.forEach(({ key, label }) => {
-        const btn = document.createElement('button');
-        btn.className = `filter-btn inv-chip${inventorySlotFilters.has(key) ? ' selected' : ''}`;
-        btn.dataset.invslot = key;
-        btn.textContent = label;
-        btn.addEventListener('click', () => {
-            if (inventorySlotFilters.has(key)) inventorySlotFilters.delete(key);
-            else inventorySlotFilters.add(key);
-            btn.classList.toggle('selected', inventorySlotFilters.has(key));
-            renderInventorySearch(inventorySearchQuery);
-        });
-        container.appendChild(btn);
-    });
-}
-
-/**
- * Reverse view of the wishlist match pass: instanceId -> the wishes this exact
- * owned roll satisfies. Reads receivedInstances, already computed by
- * OwnedInventoryIndex.matchWishlist, so no matching logic is duplicated here.
- */
-function buildOwnedMatchLookup(dimData) {
-    const map = new Map();
-    for (const list of Object.values(dimData?.lists || {})) {
-        for (const item of Object.values(list?.items || {})) {
-            for (const wish of (item?.wishes || [])) {
-                for (const iid of (wish?.receivedInstances || [])) {
-                    const key = String(iid);
-                    if (!map.has(key)) map.set(key, []);
-                    map.get(key).push({
-                        listName: list?.name || 'Wishlist',
-                        mode: (wish?.tags && wish.tags[0]) || 'pve'
-                    });
-                }
-            }
-        }
-    }
-    return map;
-}
-
-// Searches the built OwnedIndex (real Bungie inventory) by name and/or slot,
-// showing each owned roll's actual perks and calling out which of them already
-// satisfy a saved wish.
-async function renderInventorySearch(query) {
-    const resultsEl = document.getElementById('inventory-search-results');
-    if (!resultsEl) return;
-
-    inventorySearchQuery = String(query || '');
-    const q = inventorySearchQuery.trim().toLowerCase();
-    const activeBuckets = new Set(
-        INVENTORY_SLOT_FILTERS.filter((f) => inventorySlotFilters.has(f.key)).map((f) => f.bucket)
-    );
-
-    // Slot chips alone are enough to browse; a name query still needs 2+ chars
-    // so a single keystroke doesn't scan the whole inventory.
-    if (q.length < 2 && activeBuckets.size === 0) { resultsEl.innerHTML = ''; return; }
-
-    const idx = window.OwnedInventoryIndex && window.OwnedInventoryIndex.getCachedIndex && window.OwnedInventoryIndex.getCachedIndex();
-    if (!idx || !idx.byItemHash || idx.byItemHash.size === 0) {
-        resultsEl.innerHTML = '<div class="empty-list-text">No inventory data yet. Hit Refresh above to sync.</div>';
-        return;
-    }
-
-    const defs = await loadInventoryItemDefsToMemory();
-    const stored = await new Promise((r) => chrome.storage.local.get(['dimData'], r));
-    const matchLookup = buildOwnedMatchLookup(stored?.dimData);
-
-    const matches = [];
-    for (const [itemHash, instanceIds] of idx.byItemHash.entries()) {
-        const def = defs.get(String(itemHash));
-        const name = def?.displayProperties?.name || '';
-        if (!name) continue;
-        if (q.length >= 2 && !name.toLowerCase().includes(q)) continue;
-        if (activeBuckets.size > 0 && !activeBuckets.has(def?.inventory?.bucketTypeHash)) continue;
-
-        // Weapon instances carry every socket (barrel/mag/traits, but also the
-        // weapon mod, shader, ornament, tracker sockets) with no category info
-        // of their own — restrict to the real perk columns the craft/list pages
-        // already show, same as getWeaponPerkColumns. Armor has no equivalent
-        // "perks category" in this app, so its sockets are left unfiltered.
-        const bucketHash = def?.inventory?.bucketTypeHash ?? null;
-        const isWeapon = def?.itemType === 3;
-        const perkSocketIndexes = isWeapon ? getWeaponPerkSocketIndexes(def) : null;
-
-        // Resolve each owned instance's rolled perks, grouped by socket column
-        // so multi-perk slots show every possible roll, not just the active one.
-        // socketIndex/activeHash ride along so a double-click can rebuild this
-        // exact roll on the craft page (see startWishFromOwnedRoll).
-        const instances = Array.from(instanceIds).map((iid) => {
-            const owned = idx.byInstanceId.get(iid);
-            const allSockets = Array.isArray(owned?.perkSockets) ? owned.perkSockets : [];
-            const perkSockets = perkSocketIndexes
-                ? allSockets.filter((s) => perkSocketIndexes.has(s.socketIndex))
-                : allSockets;
-            const columns = perkSockets
-                .map((socket) => ({
-                    socketIndex: socket.socketIndex,
-                    activeHash: socket.activeHash,
-                    perks: socket.options
-                        .map((h) => {
-                            const pd = defs.get(String(h));
-                            if (!pd || !pd.displayProperties?.name || pd.itemType !== 19) return null; // itemType 19 = Plug (perks/mods)
-                            return {
-                                hash: h,
-                                name: pd.displayProperties.name,
-                                icon: pd.displayProperties.icon ? `${BUNGIE_ROOT}${pd.displayProperties.icon}` : '',
-                                isActive: h === socket.activeHash
-                            };
-                        })
-                        .filter(Boolean)
-                }))
-                // Drop trinket columns (Kill Tracker etc.) — every option in them
-                // matches WEAPON_TRACKER_PLUG_NAME_PATTERN, same skip rule
-                // getWeaponPerkColumns applies on the craft page.
-                .filter((c) => c.perks.length > 0 && !c.perks.every((p) => WEAPON_TRACKER_PLUG_NAME_PATTERN.test(p.name)));
-            return {
-                instanceId: iid,
-                columns,
-                isCrafted: !!owned?.isCrafted,
-                wishMatches: matchLookup.get(String(iid)) || [],
-                // Pre-computed by owned-inventory-index.js from the piece's true
-                // base stat roll — lets the armor craft page open on the real
-                // archetype/Tertiary instead of a guess.
-                armorArchetype: owned?.armorArchetype || null,
-                armorTertiary: owned?.armorTertiary || null
-            };
-        });
-
-        matches.push({
-            hash: itemHash,
-            name,
-            subtitle: def?.itemTypeDisplayName || '',
-            icon: def?.displayProperties?.icon ? `${BUNGIE_ROOT}${def.displayProperties.icon}` : '',
-            isWeapon,
-            isArmor: ARMOR_BUCKET_HASHES.has(bucketHash),
-            classType: def?.classType ?? null,
-            setHash: def?.equippingBlock?.equipableItemSetHash ?? null,
-            bucketHash,
-            instances,
-            matchCount: instances.filter((i) => i.wishMatches.length > 0).length
-        });
-        if (matches.length >= INVENTORY_RESULT_CAP) break;
-    }
-
-    // Wishlist-matching items first — the whole point of the callout is to make
-    // "I already own the roll I wanted" impossible to scroll past.
-    matches.sort((a, b) => {
-        if ((b.matchCount > 0) !== (a.matchCount > 0)) return b.matchCount - a.matchCount;
-        return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
-    });
-
-    if (matches.length === 0) {
-        resultsEl.innerHTML = '<div class="empty-list-text">No matching items found in your inventory.</div>';
-        return;
-    }
-
-    resultsEl.innerHTML = '';
-    matches.forEach((m) => resultsEl.appendChild(createInventoryCard(m)));
-}
-
-// Mirrors createWeaponCard's markup so owned rolls read the same as wishlist
-// rolls — including the .wc-perk-icon-wrap[data-name] hover tooltips.
-function createInventoryCard(m) {
-    const card = document.createElement('div');
-    card.className = 'wc-card inv-card';
-
-    const header = document.createElement('div');
-    header.className = 'wc-header inv-card-header';
-
-    if (m.icon) {
-        const img = document.createElement('img');
-        img.className = 'wc-icon';
-        img.src = m.icon;
-        img.alt = '';
-        header.appendChild(img);
-    } else {
-        const ph = document.createElement('div');
-        ph.className = 'wc-icon wc-icon-placeholder';
-        header.appendChild(ph);
-    }
-
-    const info = document.createElement('div');
-    info.className = 'wc-header-info';
-    const nameEl = document.createElement('div');
-    nameEl.className = 'wc-name';
-    nameEl.textContent = m.name;
-    info.appendChild(nameEl);
-    const subEl = document.createElement('div');
-    subEl.className = 'wc-roll-count';
-    subEl.textContent = [m.subtitle, `${m.instances.length} OWNED`].filter(Boolean).join(' · ');
-    info.appendChild(subEl);
-    header.appendChild(info);
-
-    if (m.matchCount > 0) {
-        const badge = document.createElement('span');
-        badge.className = 'wc-badge wc-badge-owned';
-        badge.textContent = `★ ${m.matchCount}`;
-        badge.title = `${m.matchCount} owned roll${m.matchCount !== 1 ? 's' : ''} match a saved wish`;
-        header.appendChild(badge);
-    }
-
-    const caret = document.createElement('span');
-    caret.className = 'inv-caret';
-    caret.textContent = '▾';
-    header.appendChild(caret);
-
-    const rolls = document.createElement('div');
-    rolls.className = 'wc-rolls inv-rolls';
-
-    m.instances.forEach((inst, i) => {
-        const row = document.createElement('div');
-        row.className = `wc-roll-row${inst.wishMatches.length ? ' wc-roll-owned' : ''}`;
-
-        const label = document.createElement('span');
-        label.className = 'inv-roll-label';
-        label.textContent = `#${i + 1}${inst.isCrafted ? ' ✦' : ''}`;
-        if (inst.isCrafted) label.title = 'Crafted';
-        row.appendChild(label);
-
-        // One badge per wish this roll satisfies, tagged with its wishlist name.
-        inst.wishMatches.forEach(({ listName, mode }) => {
-            const badge = document.createElement('span');
-            badge.className = `wc-badge wc-badge-${mode}`;
-            badge.textContent = `✓ ${listName}`;
-            badge.title = `Matches a ${mode.toUpperCase()} wish in "${listName}"`;
-            row.appendChild(badge);
-        });
-
-        const groups = document.createElement('div');
-        groups.className = 'wc-perk-groups';
-
-        if (inst.columns.length > 0) {
-            inst.columns.forEach((col, colIdx) => {
-                if (colIdx > 0) {
-                    const div = document.createElement('span');
-                    div.className = 'wc-col-divider';
-                    groups.appendChild(div);
-                }
-                const colEl = document.createElement('div');
-                colEl.className = 'wc-perk-col';
-                col.perks.forEach((p) => {
-                    const wrap = document.createElement('span');
-                    wrap.className = 'wc-perk-icon-wrap';
-                    wrap.dataset.name = p.name;
-                    if (p.icon) {
-                        const pimg = document.createElement('img');
-                        pimg.src = p.icon;
-                        pimg.alt = p.name;
-                        pimg.className = `wc-perk-icon${p.isActive ? ' perk-active' : ''}`;
-                        wrap.appendChild(pimg);
-                    }
-                    colEl.appendChild(wrap);
-                });
-                groups.appendChild(colEl);
-            });
-        } else {
-            const none = document.createElement('span');
-            none.className = 'wc-roll-label';
-            none.textContent = 'No perk data';
-            groups.appendChild(none);
-        }
-
-        row.appendChild(groups);
-
-        row.title = 'Double-click to start a wish from this roll';
-        row.addEventListener('dblclick', () => startWishFromOwnedRoll(m, inst));
-
-        rolls.appendChild(row);
-    });
-
-    header.addEventListener('click', () => {
-        const open = card.classList.toggle('inv-open');
-        caret.textContent = open ? '▴' : '▾';
-    });
-
-    card.appendChild(header);
-    card.appendChild(rolls);
-    return card;
-}
-
-/**
- * Double-clicking an owned roll opens it in the matching craft page, pre-filled,
- * as the starting point for a NEW wish — nothing is saved until the user hits
- * MAKE A NEW WISH there, so this is always safe to trigger by accident.
- */
-function startWishFromOwnedRoll(match, instance) {
-    if (match.isWeapon) {
-        if (typeof loadOwnedRollIntoWeaponCraft !== 'function') return;
-        // socketIndex -> the plug actually equipped in it, which is what the
-        // craft page re-selects (not the full pool the column could roll).
-        const activeBySocketIndex = {};
-        for (const col of instance.columns) {
-            if (col.activeHash) activeBySocketIndex[col.socketIndex] = col.activeHash;
-        }
-        loadOwnedRollIntoWeaponCraft(match.hash, match.name, activeBySocketIndex);
-        return;
-    }
-
-    if (match.isArmor) {
-        if (typeof loadOwnedArmorIntoCraft !== 'function') return;
-        loadOwnedArmorIntoCraft({
-            hash: match.hash,
-            classType: match.classType,
-            setName: getArmorSetName(match.setHash) || match.name,
-            slotName: getBucketName(match.bucketHash),
-            archetype: instance.armorArchetype,
-            tertiary: instance.armorTertiary
-        });
-    }
-}
-
 // --- LIVE UPDATE LISTENER ---
-// Triggers whenever data changes (e.g. from Content Script or internal save)
+// The godroll.tv button adds wishes from the service worker, which has no
+// owned-inventory index — match them here so ownership shows up right away.
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local' && changes.dimData) {
-        loadLists();
-    }
-    // The godroll.tv button adds wishes from the service worker, which has no
-    // owned-inventory index — match them here so ownership shows up right away.
     if (namespace === 'local' && changes.wishAddedExternally) {
         matchWishlistAgainstCachedIndex();
     }
@@ -799,7 +221,7 @@ async function saveItem(hash, name, type, rawString, keyId, config, mode = "pve"
     });
     return status === 'duplicate' ? AWStore.SKIP : status;
   });
-  // Don't call loadLists here - onChanged listener will handle UI refresh.
+  // The screens refresh themselves from the storage change.
   // Immediately check the new wish against any already-fetched inventory,
   // so ownership shows up without requiring a full profile re-fetch.
   if (status === 'added') matchWishlistAgainstCachedIndex();
@@ -946,380 +368,6 @@ async function matchWishlistAgainstCachedIndex() {
   } catch (e) { console.warn('[Manager] matchWishlistAgainstCachedIndex failed', e); }
 }
 
-function setupTabs() {
-    const btnWeapons = document.getElementById('tab-weapons');
-    const btnArmor = document.getElementById('tab-armor');
-  const btnMenu = document.getElementById('tab-menu');
-    const viewWeapons = document.getElementById('view-weapons');
-    const viewArmor = document.getElementById('view-armor');
-  const viewMenu = document.getElementById('view-menu');
-
-    btnWeapons.addEventListener('click', () => {
-        btnWeapons.classList.add('active');
-        btnArmor.classList.remove('active');
-      if (btnMenu) btnMenu.classList.remove('active');
-        viewWeapons.classList.add('active-view');
-        viewArmor.classList.remove('active-view');
-      if (viewMenu) viewMenu.classList.remove('active-view');
-        loadLists();
-    });
-
-    btnArmor.addEventListener('click', () => {
-        btnArmor.classList.add('active');
-        btnWeapons.classList.remove('active');
-        if (btnMenu) btnMenu.classList.remove('active');
-        viewArmor.classList.add('active-view');
-        viewWeapons.classList.remove('active-view');
-        if (viewMenu) viewMenu.classList.remove('active-view');
-    });
-
-    if (btnMenu) {
-      btnMenu.addEventListener('click', () => {
-        btnMenu.classList.add('active');
-        btnWeapons.classList.remove('active');
-        btnArmor.classList.remove('active');
-        if (viewWeapons) viewWeapons.classList.remove('active-view');
-        if (viewArmor) viewArmor.classList.remove('active-view');
-        if (viewMenu) viewMenu.classList.add('active-view');
-      });
-    }
-}
-
-// --- WEAPON LIST SEARCH & FILTERS ---
-let weaponNameSearch = '';
-
-// weaponFilters[category] = Set of selected values
-const weaponFilters = { type: new Set(), ammo: new Set(), element: new Set() };
-let activeWeaponFilterCategory = 'type';
-
-const AMMO_TYPE_LABELS = { 1: 'Primary', 2: 'Special', 3: 'Heavy' };
-
-const DAMAGE_TYPE_LABELS = {
-    3373582085: 'Kinetic',
-    2303181850: 'Arc',
-    1847026933: 'Solar',
-    3454344768: 'Void',
-    151347233:  'Stasis',
-    3949783978: 'Strand'
-};
-
-const DAMAGE_TYPE_COLORS = {
-    3373582085: '#c8c8c8',
-    2303181850: '#79c7e8',
-    1847026933: '#f4a237',
-    3454344768: '#9a6dd4',
-    151347233:  '#6cb8d4',
-    3949783978: '#36c788'
-};
-
-function initWeaponListSearch() {
-    const input = document.getElementById('weapon-list-search');
-    if (input) {
-        let debounce = null;
-        input.addEventListener('input', (e) => {
-            clearTimeout(debounce);
-            weaponNameSearch = e.target.value.trim().toLowerCase();
-            debounce = setTimeout(loadLists, 250);
-        });
-    }
-
-    // Funnel toggle
-    const toggleBtn = document.getElementById('weapon-filter-toggle-btn');
-    const controls = document.getElementById('weapon-filter-controls');
-    if (toggleBtn && controls) {
-        toggleBtn.addEventListener('click', () => {
-            const collapsed = controls.classList.toggle('collapsed');
-            toggleBtn.classList.toggle('active', !collapsed);
-            toggleBtn.classList.toggle('collapsed', collapsed);
-            if (!collapsed) renderWeaponFilterChips();
-        });
-    }
-
-    // Category tab buttons
-    ['type', 'ammo', 'element'].forEach((cat) => {
-        const btn = document.getElementById(`wf-btn-${cat}`);
-        if (!btn) return;
-        btn.addEventListener('click', () => {
-            activeWeaponFilterCategory = cat;
-            document.querySelectorAll('#weapon-filter-controls .filter-toggle-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderWeaponFilterChips();
-        });
-    });
-
-    // Clear buttons
-    document.getElementById('weapon-filter-clear')?.addEventListener('click', () => {
-        weaponFilters[activeWeaponFilterCategory].clear();
-        renderWeaponFilterChips();
-        loadLists();
-    });
-    document.getElementById('weapon-filter-clear-all')?.addEventListener('click', () => {
-        Object.values(weaponFilters).forEach(s => s.clear());
-        renderWeaponFilterChips();
-        loadLists();
-    });
-}
-
-// D2 is frozen — all possible weapon types, ammo types, and elements are known.
-const WEAPON_TYPE_OPTIONS = [
-    'Auto Rifle', 'Bow', 'Combat Bow', 'Fusion Rifle', 'Glaive', 'Grenade Launcher',
-    'Hand Cannon', 'Linear Fusion Rifle', 'Machine Gun', 'Pulse Rifle',
-    'Rocket Launcher', 'Scout Rifle', 'Shotgun', 'Sidearm',
-    'Sniper Rifle', 'Submachine Gun', 'Sword', 'Trace Rifle'
-];
-const AMMO_TYPE_OPTIONS = [1, 2, 3]; // Primary, Special, Heavy
-const ELEMENT_OPTIONS = [3373582085, 2303181850, 1847026933, 3454344768, 151347233, 3949783978];
-
-function buildWeaponFilterOptions() {
-    return Promise.resolve({
-        types: WEAPON_TYPE_OPTIONS,
-        ammos: AMMO_TYPE_OPTIONS,
-        elements: ELEMENT_OPTIONS
-    });
-}
-
-async function renderWeaponFilterChips() {
-    const container = document.getElementById('weapon-filter-buttons-container');
-    if (!container) return;
-    container.innerHTML = '';
-
-    const { types, ammos, elements } = await buildWeaponFilterOptions();
-    const cat = activeWeaponFilterCategory;
-
-    // Slug helpers for CSS data-attribute targeting
-    const typeSlug = (t) => t.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const ammoSlug = (a) => ({ 1: 'primary', 2: 'special', 3: 'heavy' }[a] || `ammo${a}`);
-    const elementSlug = (e) => (DAMAGE_TYPE_LABELS[e] || `e${e}`).toLowerCase();
-
-    let entries = [];
-    if (cat === 'type')    entries = types.map(t => ({ value: t, label: t, attr: 'data-wtype', slug: typeSlug(t) }));
-    if (cat === 'ammo')    entries = ammos.map(a => ({ value: a, label: AMMO_TYPE_LABELS[a] || `Ammo ${a}`, attr: 'data-wammo', slug: ammoSlug(a) }));
-    if (cat === 'element') entries = elements.map(e => ({ value: e, label: DAMAGE_TYPE_LABELS[e] || `Element ${e}`, attr: 'data-welement', slug: elementSlug(e) }));
-
-    entries.forEach(({ value, label, attr, slug }) => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn filter-btn-weapon' + (weaponFilters[cat].has(value) ? ' selected' : '');
-        btn.textContent = label;
-        btn.setAttribute(attr, slug);
-        btn.addEventListener('click', () => {
-            if (weaponFilters[cat].has(value)) weaponFilters[cat].delete(value);
-            else weaponFilters[cat].add(value);
-            btn.classList.toggle('selected', weaponFilters[cat].has(value));
-            loadLists();
-        });
-        container.appendChild(btn);
-    });
-}
-
-// --- VIEWER LOGIC ---
-function loadLists() {
-    chrome.storage.local.get(['dimData'], (result) => {
-        const container = document.getElementById('weapon-list-items');
-        const emptyState = document.getElementById('empty-state');
-        if (!container) return;
-        container.innerHTML = '';
-
-        if (!result.dimData || !result.dimData.lists) {
-            if (emptyState) emptyState.classList.remove('hidden');
-            return;
-        } else {
-            if (emptyState) emptyState.classList.add('hidden');
-        }
-
-        const data = result.dimData;
-        const activeId = data.activeId || 'default';
-        const activeList = data.lists[activeId] || data.lists['default'];
-        if (!activeList || !activeList.items || Object.keys(activeList.items).length === 0) {
-            if (emptyState) emptyState.classList.remove('hidden');
-            return;
-        }
-
-        const weapons = Object.keys(activeList.items)
-            .filter(hash => {
-                const item = activeList.items[hash];
-                if (item?.static?.type !== 'weapon') return false;
-                if (weaponNameSearch) {
-                    const name = (item?.static?.name || '').toLowerCase();
-                    if (!name.includes(weaponNameSearch)) return false;
-                }
-                if (weaponFilters.type.size && !weaponFilters.type.has(item.static?.itemTypeDisplayName)) return false;
-                if (weaponFilters.ammo.size && !weaponFilters.ammo.has(item.static?.ammoType)) return false;
-                if (weaponFilters.element.size && !weaponFilters.element.has(item.static?.damageTypeHash)) return false;
-                return true;
-            })
-            .sort((a, b) => {
-                const nameA = (activeList.items[a]?.static?.name || '').toLowerCase();
-                const nameB = (activeList.items[b]?.static?.name || '').toLowerCase();
-                return nameA.localeCompare(nameB, 'en', { sensitivity: 'base' });
-            });
-
-        if (weapons.length === 0) {
-            container.innerHTML = '<div class="empty-list-text">No weapon wishes yet.</div>';
-            return;
-        }
-
-        weapons.forEach(hash => {
-            const item = activeList.items[hash];
-            const card = createWeaponCard(hash, item);
-            container.appendChild(card);
-        });
-    });
-}
-
-function createWeaponCard(hash, item) {
-    const COMBO_COLORS = window.OwnedInventoryIndex.COMBO_COLORS;
-    const card = document.createElement('div');
-    card.className = 'wc-card';
-
-    // Wishlists can come from other people (Discover, .awwish files), so the
-    // name is escaped and the icon must be Bungie-hosted art — see aw-dom.js.
-    const safeName = escapeHtml(item?.static?.name || '(unknown)');
-    const iconUrl = escapeHtml(AWDom.safeImageUrl(item?.static?.icon));
-
-    const wishes = Array.isArray(item?.wishes) ? item.wishes : [];
-
-    // Build roll rows
-    const rollsEl = document.createElement('div');
-    rollsEl.className = 'wc-rolls';
-
-    wishes.forEach((wish, index) => {
-        // Anything but a known mode falls back to PvE rather than reaching a class name.
-        const tag = (wish?.tags?.[0] === 'pvp') ? 'pvp' : 'pve';
-        const perkColumns = wish?.config?.perkColumns || [];
-
-        const row = document.createElement('div');
-        row.className = `wc-roll-row${wish?.received ? ' wc-roll-owned' : ''}`;
-
-        // Mode badge
-        const badge = document.createElement('span');
-        badge.className = `wc-badge wc-badge-${tag}`;
-        badge.textContent = tag.toUpperCase();
-        row.appendChild(badge);
-
-        // Owned badge — shows how many owned copies match this specific roll
-        if (wish?.received) {
-            const ownedCount = Array.isArray(wish.receivedInstances) ? wish.receivedInstances.length : 0;
-            const ownedBadge = document.createElement('span');
-            ownedBadge.className = 'wc-badge wc-badge-owned';
-            ownedBadge.textContent = `OWNED x${ownedCount}`;
-            row.appendChild(ownedBadge);
-        }
-
-        // Per-combo owned counts. Combos are matched independently — three
-        // combos can be covered by three different guns — so a single OWNED
-        // count can't say which of them you're still hunting.
-        const comboMatches = wish?.comboMatches;
-        if (comboMatches && Object.keys(comboMatches).length > 0) {
-            const chips = document.createElement('span');
-            chips.className = 'wc-combo-chips';
-            COMBO_COLORS.forEach((color, slot) => {
-                const hits = comboMatches[color];
-                if (!Array.isArray(hits)) return;
-                const chip = document.createElement('span');
-                chip.className = `wc-combo-chip wc-combo-${color}${hits.length === 0 ? ' wc-combo-empty' : ''}`;
-                chip.textContent = `${slot + 1}×${hits.length}`;
-                chip.title = `Combo ${slot + 1}: ${hits.length} owned`;
-                chips.appendChild(chip);
-            });
-            if (chips.childElementCount > 0) row.appendChild(chips);
-        }
-
-        // Perk column groups
-        const groupsEl = document.createElement('div');
-        groupsEl.className = 'wc-perk-groups';
-
-        const matchedPerkHashes = new Set(Array.isArray(wish?.matchedPerkHashes) ? wish.matchedPerkHashes : []);
-        const matchedCombos = new Set(Array.isArray(wish?.matchedCombos) ? wish.matchedCombos : []);
-
-        if (perkColumns.length > 0) {
-            perkColumns.forEach((col, colIdx) => {
-                if (colIdx > 0) {
-                    const div = document.createElement('span');
-                    div.className = 'wc-col-divider';
-                    groupsEl.appendChild(div);
-                }
-                const colEl = document.createElement('div');
-                colEl.className = 'wc-perk-col';
-                col.forEach(({ name, icon, isActive, hash, enhancedHash, color }) => {
-                    const wrap = document.createElement('span');
-                    wrap.className = 'wc-perk-icon-wrap';
-                    wrap.dataset.name = name;
-                    const slot = COMBO_COLORS.indexOf(color);
-                    // Combo number rides along with the colour so the grouping
-                    // survives for anyone who can't separate the four hues.
-                    if (slot >= 0) wrap.dataset.combo = String(slot + 1);
-                    const iconSrc = AWDom.safeImageUrl(icon);
-                    if (iconSrc) {
-                        const isMatched = matchedPerkHashes.has(hash) || (enhancedHash && matchedPerkHashes.has(enhancedHash));
-                        // A matched perk in a combo is bordered in that combo's
-                        // colour, not gold — one weapon often satisfies several
-                        // combos at once and the colours are what tell them apart.
-                        const matchClass = !isMatched ? ''
-                            : (slot >= 0 && matchedCombos.has(color)) ? ` wc-perk-icon-matched wc-perk-matched-${color}`
-                            : ' wc-perk-icon-matched';
-                        const img = document.createElement('img');
-                        img.src = iconSrc;
-                        img.alt = name;
-                        // isActive only exists on wishes saved before combos; it
-                        // marked the perk driving the old stats preview.
-                        img.className = `wc-perk-icon${isActive ? ' perk-active' : ''}${matchClass}`;
-                        wrap.appendChild(img);
-                    }
-                    colEl.appendChild(wrap);
-                });
-                groupsEl.appendChild(colEl);
-            });
-        } else {
-            // Legacy saved wishes without perkColumns
-            const label = document.createElement('span');
-            label.className = 'wc-roll-label';
-            label.textContent = `Roll #${index + 1}`;
-            groupsEl.appendChild(label);
-        }
-
-        row.appendChild(groupsEl);
-
-        // Delete button
-        const delBtn = document.createElement('button');
-        delBtn.className = 'wc-del-btn';
-        delBtn.title = 'Delete this roll';
-        delBtn.innerHTML = '&#x2715;';
-        delBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteWish(hash, index, window.WishlistSync.wishKey(wish));
-        });
-        row.appendChild(delBtn);
-
-        // Double-click loads this exact roll into the weapon craft page for editing.
-        row.title = 'Double-click to edit this roll';
-        row.addEventListener('dblclick', () => {
-            if (typeof loadWishIntoWeaponCraft === 'function') {
-                loadWishIntoWeaponCraft(hash, index, item, wish);
-            }
-        });
-
-        rollsEl.appendChild(row);
-    });
-
-    card.innerHTML = `
-        <div class="wc-header">
-            ${iconUrl ? `<img src="${iconUrl}" class="wc-icon" alt="">` : '<div class="wc-icon wc-icon-placeholder"></div>'}
-            <div class="wc-header-info">
-                <div class="wc-name">${safeName}</div>
-                <div class="wc-roll-count">${wishes.length} ${wishes.length === 1 ? 'ROLL' : 'ROLLS'}</div>
-            </div>
-        </div>
-    `;
-    card.appendChild(rollsEl);
-
-    return card;
-}
-
-// Legacy — kept for any non-weapon items that might slip through
-function createItemCard(hash, item) {
-    return createWeaponCard(hash, item);
-}
-
 // Overwrites a specific existing wish in place (used by the weapon craft page's
 // EDIT WISH button) instead of appending a new entry the way saveItem does.
 /**
@@ -1370,26 +418,9 @@ async function backfillArmorSets() {
             changed = window.WeaponWish.fillArmorSets(data, setOf);
             if (!changed) return AWStore.SKIP;
         });
-        if (changed && typeof refreshArmorList === 'function') refreshArmorList();
     } catch (e) {
         console.warn('[MANAGER] armor set backfill skipped', e);
     }
-}
-
-/** Deletes one saved wish, found by `key` (its wishKey when the row was drawn). */
-function deleteWish(hash, index, key) {
-    return AWStore.update((data) => {
-        const listId = AWStore.ensureActiveList(data);
-        const activeList = data.lists[listId];
-        const wishes = activeList.items[hash]?.wishes;
-        const at = window.WishlistSync.locateWish(wishes, index, key);
-        if (at < 0) return AWStore.SKIP; // already gone: never delete a different wish
-        const [removed] = wishes.splice(at, 1);
-        // Record the deletion so cross-browser sync can't restore it from a
-        // browser still holding the old copy — see wishlist-sync-core.js.
-        window.WishlistSync?.recordWishTombstone(data, listId, hash, removed);
-        if (wishes.length === 0) delete activeList.items[hash];
-    }).then(loadLists);
 }
 
 /**
@@ -1481,7 +512,6 @@ async function refreshProfileAndBuildIndex(components) {
   const characterIds = Object.keys(profile?.characters?.data || {});
   const activeMembership = { membershipType, membershipId, characterIds, bungieMembershipId: auth.membership_id || null };
   await new Promise((res) => chrome.storage.local.set({ ownedIndexSummary, activeMembership }, res));
-  renderOwnedIndexSummary(ownedIndexSummary);
   console.log('[Manager] OwnedIndex built:', totalInstances, 'instances,', uniqueItems, 'unique item hashes');
 
   // Run wishlist matching pass using the built index. Every dimData write
@@ -1518,7 +548,6 @@ const MANUAL_REFRESH_COOLDOWN_MS = 15 * 1000;   // 15s floor (Bungie's requested
 let _autoRefreshTimer = null;
 let _lastSyncAt = null;
 let _syncCooldownUntil = 0;
-let _syncTickTimer = null;
 let _syncInFlight = null;
 let _syncFailures = 0;      // failed syncs in a row
 let _syncErrorKind = null;  // AWSync.classifyError() of the last failure
@@ -1537,43 +566,9 @@ window.appManager.getSyncSnapshot = () => ({
 });
 window.appManager.syncNow = (manual = true) => runSync(manual);
 
-function setSyncBarState(state, message) {
-  const statusEls = [
-    document.getElementById('weapon-sync-status'),
-    document.getElementById('armor-sync-status'),
-  ];
-  const btnEls = [
-    document.getElementById('weapon-sync-btn'),
-    document.getElementById('armor-sync-btn'),
-  ];
-  statusEls.forEach(el => {
-    if (!el) return;
-    el.textContent = message;
-    el.className = 'sync-bar-status' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
-  });
-  btnEls.forEach(el => {
-    if (!el) return;
-    el.disabled = state === 'syncing';
-    el.classList.toggle('spinning', state === 'syncing');
-  });
-}
-
 function getAutoRefreshIntervalMs() {
   if (document.visibilityState === 'visible') return VISIBLE_REFRESH_INTERVAL_MS;
   return _feedEnabled ? FEED_INTERVAL_MS : AUTO_REFRESH_INTERVAL_MS;
-}
-
-function updateSyncBarTime() {
-  // After a failure the bar keeps saying why until a sync succeeds.
-  if (!_lastSyncAt || _syncFailures) return;
-  const elapsed = Math.floor((Date.now() - _lastSyncAt) / 1000);
-  let label;
-  if (elapsed < 60) label = elapsed <= 5 ? 'Just synced' : `Synced ${elapsed}s ago`;
-  else if (elapsed < 3600) label = `Synced ${Math.floor(elapsed / 60)}m ago`;
-  else label = `Synced ${Math.floor(elapsed / 3600)}h ago`;
-  const nextIn = Math.max(0, Math.ceil(((_lastSyncAt + getAutoRefreshIntervalMs()) - Date.now()) / 1000));
-  const nextLabel = nextIn > 60 ? `${Math.floor(nextIn / 60)}m` : `${nextIn}s`;
-  setSyncBarState('idle', `${label} · Auto-sync in ${nextLabel}`);
 }
 
 // Schedules the next auto-sync relative to the last one, so the cadence
@@ -1590,24 +585,13 @@ function scheduleNextSync() {
   _autoRefreshTimer = setTimeout(() => runSync(false), Math.max(0, due - Date.now()));
 }
 
-const SYNC_FAILURE_MESSAGE = {
-  auth: 'Sign in to Bungie to sync',
-  network: "Can't reach Bungie — will retry",
-  maintenance: 'Bungie is down for maintenance — will retry',
-  other: 'Sync failed — will retry',
-};
-
 // Resolves to the error when the sync failed (null on success), so callers
 // that report failures can surface it without the loop ever rejecting.
 function runSync(isManual = false) {
   // Auto and manual syncs share one request rather than racing each other.
   if (_syncInFlight) return _syncInFlight;
-  if (isManual && Date.now() < _syncCooldownUntil) {
-    const wait = Math.ceil((_syncCooldownUntil - Date.now()) / 1000);
-    setSyncBarState('idle', `Please wait ${wait}s before syncing again`);
-    return Promise.resolve(null);
-  }
-  setSyncBarState('syncing', 'Syncing inventory...');
+  // Bungie asks for a 15 s floor between manual refreshes; inside it, Sync now does nothing.
+  if (isManual && Date.now() < _syncCooldownUntil) return Promise.resolve(null);
   _syncInFlight = (async () => {
     announceSyncChange();
     try {
@@ -1617,7 +601,6 @@ function runSync(isManual = false) {
       _syncErrorKind = null;
       _lastSyncError = null;
       _lastSuccessAt = _lastSyncAt;
-      updateSyncBarTime();
       return null;
     } catch (e) {
       _syncErrorKind = window.AWSync.classifyError(e);
@@ -1625,7 +608,6 @@ function runSync(isManual = false) {
       _syncFailures++;
       if (_syncErrorKind === 'auth') console.info('[AutoRefresh] not syncing until sign-in:', e?.message || e);
       else console.error('[AutoRefresh] sync failed:', e);
-      setSyncBarState(_syncErrorKind === 'auth' ? 'idle' : 'error', SYNC_FAILURE_MESSAGE[_syncErrorKind]);
       _lastSyncAt = Date.now();
       return e;
     } finally {
@@ -1641,17 +623,6 @@ function runSync(isManual = false) {
 }
 
 function startAutoRefresh() {
-  if (_syncTickTimer) clearInterval(_syncTickTimer);
-
-  // Wire both manual buttons
-  ['weapon-sync-btn', 'armor-sync-btn'].forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) btn.onclick = () => runSync(true);
-  });
-
-  // Tick every 10s to keep the "X min ago / next in Ym" label fresh
-  _syncTickTimer = setInterval(updateSyncBarTime, 10_000);
-
   if (!startAutoRefresh._wired) {
     startAutoRefresh._wired = true;
     // Reopening the panel syncs straight away (subject to the 15s floor) and

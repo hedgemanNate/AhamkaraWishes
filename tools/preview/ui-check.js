@@ -4,9 +4,9 @@
 //   npm run ui-check
 //
 // Starts the preview server and a private headless Chrome, then loads the real
-// side panel with each fixture and checks what a person would see:
-//   demo     lists render, no page errors, nothing wider than the panel; Delete
-//            and Edit hit the right wish after the list shifted under them
+// side panel with each fixture and checks what a person would see, screen by screen
+// (Wishes, Drops, Inventory, Discover, both builders, Lists, Me, first run):
+//   demo     lists render, nothing wider than the panel; edits after the list shifted
 //   hostile  shared/imported junk renders as inert text: no script runs, no
 //            off-site image loads, the rest of each list still works
 //   empty    a fresh install shows its empty states
@@ -24,6 +24,7 @@ const { start } = require('./serve');
 const { launch, sleep } = require('./headless');
 
 const OUT = path.join(__dirname, '.out');
+const READY_FN = () => window.AWManifestState === 'ready' || window.AWManifestState === 'failed';
 const WIDTHS = [320, 360];
 let failures = 0;
 const check = (label, ok, detail) => {
@@ -33,90 +34,35 @@ const check = (label, ok, detail) => {
 
 async function openPanel(browser, base, fixture, width, query = '') {
   const page = await browser.newPage({ width, height: 720 });
-  // The new design is the default; the checks of the classic screens ask for them by name.
-  const ui = /(^|&)ui=/.test(query) ? query : `${query ? `${query}&` : ''}ui=classic`;
-  await page.goto(`${base}/sidepanel.html?fixture=${fixture}&${ui}`);
-  // The loading overlay hides once Bungie's game data is ready.
-  await page.waitFor(() => document.getElementById('loading-overlay')?.classList.contains('hidden'), { timeoutMs: 600000, intervalMs: 500 });
+  await page.goto(`${base}/sidepanel.html?fixture=${fixture}${query ? `&${query}` : ''}`);
+  // The game data is loaded (or has failed) once the engine says so.
+  await page.waitFor(READY_FN, { timeoutMs: 600000, intervalMs: 500 });
   await sleep(300);
   return page;
 }
 
-/** Opens a list view inside the page and returns what it shows. */
-const readLists = async () => {
-  const s = (ms) => new Promise((r) => setTimeout(r, ms));
-  document.getElementById('tab-weapons').click(); document.getElementById('weapons-nav-list').click(); await s(600);
-  const weapons = [...document.querySelectorAll('#weapon-list-items .wc-name')].map((e) => e.textContent);
-  document.getElementById('tab-armor').click(); document.getElementById('nav-list').click(); await s(600);
-  const armor = [...document.querySelectorAll('#armor-list-container .card-armor-name')].map((e) => e.textContent);
-  const sets = [...document.querySelectorAll('#armor-list-container .set-name-text')].map((e) => e.textContent.trim());
-  document.querySelectorAll('.set-header').forEach((h) => h.click()); await s(200);
-  const html = document.documentElement.outerHTML;
-  return {
-    weapons, armor, sets,
-    pwned: window.__pwned ?? null,
-    handlers: document.querySelectorAll('[onerror],[onload],script:not([src])').length,
-    offsite: [...document.images].map((i) => i.getAttribute('src') || '').filter((u) => /^https?:/.test(u) && !/^https:\/\/www\.bungie\.net\//.test(u)),
-    evilInDom: /evil\.example/.test(html),
-    wider: document.documentElement.scrollWidth > window.innerWidth + 1
-  };
-};
-
 /**
- * Delete and Edit after the list changed under them (sync, another tab): each
- * must act on the wish its row was drawn from, never a neighbour at the same
- * index. Runs the app's real deleteWish / deleteArmorWish / editItemWish.
+ * Editing a wish after the list changed under it (sync, another tab) must change
+ * the wish the row was drawn from, never a neighbour at the same index. Runs the
+ * engine's real editItemWish.
  */
-const staleRowActions = async () => {
+const engineEdits = async () => {
   const WS = window.WishlistSync;
   const items = () => window.__awPreview.dump().dimData.lists[window.__awPreview.dump().dimData.activeId].items;
   const pick = (type) => Object.entries(items()).find(([, i]) => i.static.type === type);
   // Another browser's wish arrives at the front: every saved row's index is now off by one.
   const pushFront = (hash, wish) => AWStore.update((d) => { d.lists[d.activeId].items[hash].wishes.unshift(wish); });
   const out = {};
-
-  let [hash, item] = pick('weapon');
-  let target = item.wishes[0];
-  let intruder = { tags: ['pvp'], config: { perks: [[1]] }, raw: '[[1]]', added: Date.now() };
-  await pushFront(hash, intruder);
-  await deleteWish(hash, 0, WS.wishKey(target)); // the row was drawn when target was at 0
-  let left = items()[hash]?.wishes || [];
-  out.weaponDelete = left.length === 1 && left[0].raw === '[[1]]';
-
-  [hash, item] = pick('armor');
-  target = item.wishes[0];
-  intruder = { tags: ['pvp'], config: { archetype: 'GUNNER', tertiary: null, spark: null }, raw: `armor-wish:${hash}`, added: Date.now() };
-  await pushFront(hash, intruder);
-  await deleteArmorWish(hash, 0, WS.wishKey(target));
-  left = items()[hash]?.wishes || [];
-  out.armorDelete = left.length === 1 && WS.wishKey(left[0]) === WS.wishKey(intruder);
-
-  [hash, item] = pick('weapon');
-  target = item.wishes[0];
+  const [hash, item] = pick('weapon');
+  const target = item.wishes[0];
   await pushFront(hash, { tags: ['pvp'], config: { perks: [[2]] }, raw: '[[2]]', added: Date.now() });
   let r = await editItemWish(hash, 0, '[[3]]', { perks: [[3]] }, 'pve', WS.wishKey(target));
-  left = items()[hash].wishes;
+  let left = items()[hash].wishes;
   out.editStale = r.result === 'updated' && left[0].raw === '[[2]]' && left[1].raw === '[[3]]';
   r = await editItemWish(hash, 1, '[[2]]', { perks: [[2]] }, 'pvp', r.key);
   out.editDuplicate = r.result === 'duplicate' && items()[hash].wishes[1].raw === '[[3]]';
   r = await editItemWish(hash, 0, '[[4]]', { perks: [[4]] }, 'pve', 'pve|weapon:gone');
   out.editMissing = r.result === 'missing' && items()[hash].wishes.length === 2;
-
-  // An armor wish with a Spark (e.g. imported) keeps it through an edit in the
-  // builder, which can't pick a Spark yet.
-  // (an armor wish with a Tertiary: the builder can only edit those)
-  const pickWithTertiary = () => Object.entries(items()).find(([, i]) => i.static.type === 'armor' && i.wishes[0]?.config?.tertiary);
-  [hash, item] = pickWithTertiary();
-  await AWStore.update((d) => { d.lists[d.activeId].items[hash].wishes[0].config.spark = 'Super'; });
-  item = items()[hash];
-  const before = item.wishes[0];
-  await loadWishIntoArmorCraft(hash, 0, item, before);
-  const flipped = before.tags[0] === 'pvp' ? 'pve' : 'pvp';
-  currentMode = flipped; // the edit: switch PvE/PvP (the builder's own state)
-  await handleEditWish();
-  const after = items()[hash].wishes[0];
-  out.armorEditDiag = JSON.stringify({ before: before.config, after: after.config, tags: after.tags, arch: currentArchetype && currentArchetype.name, tertiary: currentTertiary });
-  out.armorEditKeepsSpark = after.tags[0] === flipped && after.config.spark === 'Super';
   return out;
 };
 
@@ -140,7 +86,7 @@ async function checkNext(browser, base, width) {
     }).filter((b) => b.h < 40 || b.w < 24);
     return {
       shell: !!document.getElementById('ui-shell'),
-      classicHidden: !vis(document.querySelector('.app-container')),
+      noOldMarkup: !document.querySelector('.app-container, #view-menu, #loading-overlay'),
       tabs: [...document.querySelectorAll('.ui-tab')].map((t) => t.textContent.trim()),
       current: document.querySelector('.ui-tab[aria-current="page"]')?.textContent.trim(),
       wider: document.documentElement.scrollWidth > innerWidth + 1,
@@ -152,7 +98,7 @@ async function checkNext(browser, base, width) {
       small
     };
   });
-  check(`${tag}: the new shell is shown and the classic screens are hidden`, layout.shell && layout.classicHidden);
+  check(`${tag}: the shell is shown and none of the old page is left`, layout.shell && layout.noOldMarkup);
   check(`${tag}: four tabs, Wishes current`, JSON.stringify(layout.tabs) === '["Wishes","Drops","Inventory","Discover"]' && layout.current === 'Wishes', JSON.stringify(layout.tabs));
   check(`${tag}: nothing wider than the panel`, !layout.wider && !layout.barOverflow);
   check(`${tag}: app bar shows the list name`, layout.list === 'Main Wishlist', layout.list);
@@ -970,38 +916,6 @@ async function checkNextFirstRun(browser, base, width) {
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
-/** The new design is what you get; classic is a choice that is remembered until the old screens are removed. */
-async function checkDefaultDesign(browser, base, width) {
-  const tag = `[${width}] default design`;
-  const page = await browser.newPage({ width, height: 720 });
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const look = () => page.eval(() => ({ next: !!document.querySelector('#ui-shell') && document.documentElement.classList.contains('ui-next'), classic: !!document.getElementById('view-menu') && !document.documentElement.classList.contains('ui-next') }));
-  await page.goto(`${base}/sidepanel.html?fixture=demo`);
-  await page.waitFor(() => document.getElementById('loading-overlay')?.classList.contains('hidden'), { timeoutMs: 600000, intervalMs: 500 });
-  await wait(500);
-  const first = await look();
-  check(`${tag}: with no choice made you get the new design`, first.next && !first.classic, JSON.stringify(first));
-  await page.eval(() => { document.querySelector('.ui-avatar').click(); });
-  await wait(300);
-  await page.eval(() => { [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-btn')].find((b) => /classic design/.test(b.textContent)).click(); });
-  await wait(1500);
-  await page.waitFor(() => !!document.getElementById('view-menu'), { timeoutMs: 20000 });
-  const classic = await look();
-  check(`${tag}: "Back to the classic design" shows the old screens`, classic.classic && !classic.next, JSON.stringify(classic));
-  await page.goto(`${base}/sidepanel.html`);
-  await page.waitFor(() => !!document.getElementById('view-menu') || !!document.getElementById('ui-shell'), { timeoutMs: 30000 });
-  await wait(800);
-  const remembered = await look();
-  check(`${tag}: and that choice is remembered on the next open`, remembered.classic && !remembered.next, JSON.stringify(remembered));
-  await page.goto(`${base}/sidepanel.html?ui=next`);
-  await page.waitFor(() => !!document.getElementById('ui-shell'), { timeoutMs: 30000 });
-  await page.goto(`${base}/sidepanel.html`);
-  await page.waitFor(() => !!document.getElementById('ui-shell') || !!document.getElementById('view-menu'), { timeoutMs: 30000 });
-  await wait(800);
-  check(`${tag}: ?ui=next brings the new design back for good`, (await look()).next);
-  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
-}
-
 /** Godroll.tv and DIM: reached from + Wish (and the empty list), with the access explainer first. */
 async function checkNextSites(browser, base, width) {
   const tag = `[${width}] next sites`;
@@ -1093,11 +1007,6 @@ async function checkNextEmptyAndSwitch(browser, base, width) {
     return a && hasEmpty();
   }));
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
-
-  // ?ui=classic wins over the remembered choice, and the classic Menu offers the switch
-  const classic = await openPanel(browser, base, 'empty', width, 'ui=classic');
-  check(`${tag}: ?ui=classic shows the classic screens`, await classic.eval(() => !document.getElementById('ui-shell') && getComputedStyle(document.querySelector('.app-container')).display !== 'none' && !!document.getElementById('try-new-design')));
-  await classic.eval(() => { try { localStorage.removeItem('aw-ui'); } catch (e) { /* none */ } });
 }
 
 /**
@@ -1111,7 +1020,7 @@ const guestSyncLoop = async () => {
   window.refreshProfileAndBuildIndex = (...a) => { calls++; return real(...a); };
   for (let i = 0; i < 3; i++) { document.dispatchEvent(new Event('visibilitychange')); await s(100); }
   const afterShows = calls;
-  const bar = document.getElementById('weapon-sync-status')?.textContent || '';
+  const bar = (document.querySelector('.ui-banner-slot')?.textContent || '') + ' ' + (document.querySelector('.ui-syncchip')?.textContent || '');
   document.dispatchEvent(new CustomEvent('bungieAuthChanged', { detail: { auth: { access_token: 'x' } } }));
   await s(300);
   window.refreshProfileAndBuildIndex = real;
@@ -1229,40 +1138,19 @@ async function checkGallery(browser, base, width) {
     for (const width of process.argv.includes('--gallery-only') ? [] : WIDTHS) {
       // demo
       let page = await openPanel(browser, url, 'demo', width);
-      let r = await page.eval(readLists);
-      check(`[${width}] demo: weapon list renders`, r.weapons.length === 3, JSON.stringify(r.weapons));
-      check(`[${width}] demo: armor list renders`, r.armor.length === 3, JSON.stringify(r.armor));
-      // The demo's armor was saved without set hashes; startup backfills them.
-      check(`[${width}] demo: both Techsec pieces group under Bungie's set name`, r.sets.filter((n) => n === 'Techsec').length === 1 && r.sets.length === 2, JSON.stringify(r.sets));
-      check(`[${width}] demo: nothing wider than the panel`, !r.wider);
       check(`[${width}] demo: no page errors`, page.errors.length === 0, page.errors[0]);
-      await page.screenshot(path.join(OUT, `demo-armor-${width}.png`));
       await checkNext(browser, url, width);
       if (width === WIDTHS[0]) {
-        const s = await page.eval(staleRowActions);
-        check('demo: Delete after the list shifted removes the right weapon wish', s.weaponDelete);
-        check('demo: Delete after the list shifted removes the right armor wish', s.armorDelete);
+        const s = await page.eval(engineEdits);
         check('demo: Edit after the list shifted changes the right wish', s.editStale);
         check('demo: Edit into an existing roll is refused, nothing changes', s.editDuplicate);
         check('demo: Edit of a wish deleted elsewhere changes nothing', s.editMissing);
-        check('demo: editing an armor wish keeps its Spark', s.armorEditKeepsSpark, s.armorEditDiag);
         check('demo: no page errors after the edits', page.errors.length === 0, page.errors[0]);
         const g = await page.eval(guestSyncLoop);
         check('guest: re-showing the panel does not retry sync', g.afterShows === 0, `${g.afterShows} retries`);
-        check('guest: the sync bar says to sign in', /sign in/i.test(g.bar), g.bar);
+        check('guest: the app says to sign in', /sign in/i.test(g.bar), g.bar);
         check('guest: signing in syncs once', g.afterSignIn === 1, `${g.afterSignIn} syncs`);
       }
-
-      // hostile
-      page = await openPanel(browser, url, 'hostile', width);
-      r = await page.eval(readLists);
-      check(`[${width}] hostile: no injected script ran`, r.pwned === null && r.handlers === 0, `pwned=${r.pwned} handlers=${r.handlers}`);
-      check(`[${width}] hostile: no off-site images`, r.offsite.length === 0 && !r.evilInDom, JSON.stringify(r.offsite));
-      check(`[${width}] hostile: the honest wish still renders`, r.weapons.some((n) => n === 'Honest Gun'), JSON.stringify(r.weapons));
-      check(`[${width}] hostile: malformed armor doesn't blank the list`, r.armor.length >= 3, JSON.stringify(r.armor));
-      check(`[${width}] hostile: malicious names show as text`, r.weapons.some((n) => n.includes('onerror')));
-      check(`[${width}] hostile: no page errors`, page.errors.length === 0, page.errors[0]);
-      await page.screenshot(path.join(OUT, `hostile-armor-${width}.png`));
 
       await checkNextHostile(browser, url, width);
       await checkNextOwned(browser, url, width);
@@ -1273,15 +1161,9 @@ async function checkGallery(browser, base, width) {
       await checkNextLists(browser, url, width);
       await checkNextDiscover(browser, url, width);
       await checkNextFirstRun(browser, url, width);
-      await checkDefaultDesign(browser, url, width);
       await checkNextSites(browser, url, width);
 
       // empty
-      page = await openPanel(browser, url, 'empty', width);
-      r = await page.eval(readLists);
-      check(`[${width}] empty: no wishes, no crash`, r.weapons.length === 0 && r.armor.length === 0);
-      check(`[${width}] empty: empty states shown`, await page.eval(() => /No (Armor|weapon) Wishes yet/i.test(document.body.innerText)));
-      check(`[${width}] empty: no page errors`, page.errors.length === 0, page.errors[0]);
       await checkNextEmptyAndSwitch(browser, url, width);
     }
   } finally {

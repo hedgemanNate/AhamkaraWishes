@@ -8,8 +8,8 @@
 //   of screens and saves a PNG of each. Time-dependent text, animations and the
 //   text caret are frozen first so two captures of the same code match exactly.
 // compare: decodes each pair of PNGs in Chrome and counts differing pixels.
-//   Exits 1 if any screen changed. Used to prove a refactor (like moving the
-//   legacy stylesheet into a cascade layer) changed nothing you can see.
+//   Exits 1 if any screen changed. Used to prove a refactor (like removing the
+//   old stylesheet) changed nothing you can see.
 'use strict';
 
 const fs = require('fs');
@@ -23,34 +23,13 @@ const width = Number((args[args.indexOf('--width') + 1]) || 360) || 360;
 
 // Each step runs in the page. Keep them deterministic: no clocks, no random.
 const SCREENS = [
-  ['weapons-craft', async () => { document.getElementById('tab-weapons').click(); document.getElementById('weapons-nav-craft').click(); }],
-  ['weapons-craft-fatebringer', async () => {
-    const s = (ms) => new Promise((r) => setTimeout(r, ms));
-    document.getElementById('tab-weapons').click(); document.getElementById('weapons-nav-craft').click();
-    const q = document.getElementById('weapon-query'); q.value = 'Fatebringer'; q.dispatchEvent(new Event('input', { bubbles: true }));
-    for (let i = 0; i < 50 && document.querySelectorAll('#weapon-search-results > *').length < 2; i++) await s(100);
-    document.querySelectorAll('#weapon-search-results > *')[1].click();
-    for (let i = 0; i < 50 && !document.querySelector('#pp-grid > *'); i++) await s(100);
-    await s(2500); // stat bars animate in
-  }],
-  ['weapons-list', async () => { document.getElementById('tab-weapons').click(); document.getElementById('weapons-nav-list').click(); }],
-  ['armor-craft', async () => {
-    const s = (ms) => new Promise((r) => setTimeout(r, ms));
-    document.getElementById('tab-armor').click(); document.getElementById('nav-craft').click();
-    const q = document.getElementById('armor-query'); q.value = 'Techsec'; q.dispatchEvent(new Event('input', { bubbles: true }));
-    await s(1500);
-  }],
-  ['armor-list', async () => { document.getElementById('tab-armor').click(); document.getElementById('nav-list').click(); await new Promise((r) => setTimeout(r, 300)); document.querySelectorAll('.set-header').forEach((h) => h.click()); }],
-  ['menu', async () => { document.getElementById('tab-menu').click(); }],
-  ['discover', async () => { document.getElementById('tab-menu').click(); document.getElementById('nav-discover').click(); await new Promise((r) => setTimeout(r, 900)); }],
-
-  // The redesigned screens (?ui=next). A third entry is the extra query string.
-  ['next-wishes-weapons', async () => { await new Promise((r) => setTimeout(r, 400)); }, 'ui=next'],
-  ['next-wishes-armor', async () => { document.querySelector('.ui-seg__opt[data-value=armor]').click(); await new Promise((r) => setTimeout(r, 1200)); }, 'ui=next'],
-  ['next-weapon-detail', async () => { [...document.querySelectorAll('.ui-itemrow')].find((r) => /Fatebringer/.test(r.textContent)).click(); await new Promise((r) => setTimeout(r, 600)); }, 'ui=next&fixture=owned'],
-  ['next-armor-detail', async () => { document.querySelector('.ui-seg__opt[data-value=armor]').click(); await new Promise((r) => setTimeout(r, 1200)); [...document.querySelectorAll('.ui-itemrow')].find((r) => /Techsec/.test(r.textContent)).click(); await new Promise((r) => setTimeout(r, 1200)); }, 'ui=next'],
-  ['next-filters-sheet', async () => { document.querySelector('.ui-filterbtn').click(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next'],
-  ['next-lists-sheet', async () => { document.querySelector('.ui-listname').click(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next']
+  // A third entry is an extra query string.
+  ['next-wishes-weapons', async () => { await new Promise((r) => setTimeout(r, 400)); }, ''],
+  ['next-wishes-armor', async () => { document.querySelector('.ui-seg__opt[data-value=armor]').click(); await new Promise((r) => setTimeout(r, 1200)); }, ''],
+  ['next-weapon-detail', async () => { [...document.querySelectorAll('.ui-itemrow')].find((r) => /Fatebringer/.test(r.textContent)).click(); await new Promise((r) => setTimeout(r, 600)); }, 'fixture=owned'],
+  ['next-armor-detail', async () => { document.querySelector('.ui-seg__opt[data-value=armor]').click(); await new Promise((r) => setTimeout(r, 1200)); [...document.querySelectorAll('.ui-itemrow')].find((r) => /Techsec/.test(r.textContent)).click(); await new Promise((r) => setTimeout(r, 1200)); }, ''],
+  ['next-filters-sheet', async () => { document.querySelector('.ui-filterbtn').click(); await new Promise((r) => setTimeout(r, 400)); }, ''],
+  ['next-lists-sheet', async () => { document.querySelector('.ui-listname').click(); await new Promise((r) => setTimeout(r, 400)); }, '']
 ];
 
 /** Freezes everything that differs between two captures of identical code. */
@@ -58,7 +37,7 @@ const FREEZE = () => {
   const st = document.createElement('style');
   st.textContent = '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
   document.head.appendChild(st);
-  document.querySelectorAll('.sync-bar-status, #owned-index-summary').forEach((e) => { e.textContent = 'frozen'; });
+  document.querySelectorAll('.ui-syncchip__label').forEach((e) => { e.textContent = 'frozen'; });
   document.activeElement && document.activeElement.blur && document.activeElement.blur();
   return Promise.all([...document.images].map((img) => (img.complete ? null : new Promise((r) => { img.onload = img.onerror = r; }))));
 };
@@ -77,8 +56,8 @@ async function capture(dir) {
       const page = await browser.newPage({ width, height: 720 });
       // A screen's own query may pick a different fixture than the demo.
       const q = query || '';
-      await page.goto(`${url}/sidepanel.html?${/(^|&)fixture=/.test(q) ? '' : 'fixture=demo&'}${/(^|&)ui=/.test(q) ? q : `${q ? `${q}&` : ''}ui=classic`}`);
-      await page.waitFor(() => document.getElementById('loading-overlay')?.classList.contains('hidden'), { timeoutMs: 600000, intervalMs: 500 });
+      await page.goto(`${url}/sidepanel.html?${/(^|&)fixture=/.test(q) ? '' : 'fixture=demo&'}${q}`);
+      await page.waitFor(() => window.AWManifestState === 'ready' || window.AWManifestState === 'failed', { timeoutMs: 600000, intervalMs: 500 });
       await sleep(500);
       await page.eval(steps);
       await sleep(400);

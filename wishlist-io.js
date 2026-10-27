@@ -39,27 +39,9 @@
     'stage1Received',
   ]);
 
-  // --- Toast notification ---
+  // --- Toast notification (the panel's own) ---
 
-  function showToast(msg, isError) {
-    // The redesigned panel has its own toast.
-    if (document.documentElement.classList.contains('ui-next') && window.AWUI) { window.AWUI.toast(msg); return; }
-    const existing = document.getElementById('aw-io-toast');
-    if (existing) existing.remove();
-    const el = document.createElement('div');
-    el.id = 'aw-io-toast';
-    el.className = 'aw-io-toast' + (isError ? ' aw-io-toast-error' : '');
-    el.textContent = msg;
-    document.body.appendChild(el);
-    // Force reflow so the fade-in transition fires
-    void el.offsetWidth;
-    el.classList.add('aw-io-toast-visible');
-    const timer = setTimeout(() => {
-      el.classList.remove('aw-io-toast-visible');
-      setTimeout(() => el.remove(), 300);
-    }, 3000);
-    el.addEventListener('click', () => { clearTimeout(timer); el.remove(); });
-  }
+  function showToast(msg) { window.AWUI.toast(msg); }
 
   // --- Export ---
 
@@ -180,7 +162,6 @@
       // Normalise imported entries (fills in mustHave, desired, runtime Sets)
       if (window.WishlistNormalize) window.WishlistNormalize.normalizeWishlistData(data);
     }).then(() => {
-      if (window.awWishlist && window.awWishlist.render) window.awWishlist.render();
       document.dispatchEvent(new CustomEvent('wishListChanged', { detail: { id: newId } }));
       const itemCount = importedList.itemCount;
       const skipped = importedList.droppedItems + importedList.droppedWishes;
@@ -223,17 +204,6 @@
     document.body.appendChild(input);
     input.click();
   }
-
-  // --- Wire buttons ---
-
-  function attach() {
-    const exportBtn = document.getElementById('wl-export');
-    const importBtn = document.getElementById('wl-import');
-    if (exportBtn) exportBtn.addEventListener('click', exportActiveWishlist);
-    if (importBtn) importBtn.addEventListener('click', triggerImport);
-  }
-
-  document.addEventListener('DOMContentLoaded', attach);
 
   window.awWishlistIO = {
     exportActiveWishlist,

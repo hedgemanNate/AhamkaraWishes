@@ -159,46 +159,21 @@ function getValidAuth() {
   return BungieAuthCore.getValidSession();
 }
 
-// --- auth UI ---------------------------------------------------------------
-// Rendering is driven by chrome.storage.onChanged, so the UI follows the
-// session no matter which context changed it (sign-in here, refresh or
-// expiry in background.js). renderAuth never writes storage.
+// --- announcing who is signed in ---------------------------------------------
+// Driven by chrome.storage.onChanged, so it follows the session no matter which
+// context changed it (sign-in here, refresh or expiry in background.js). The
+// screens draw the signed-in state themselves; this announces it. It never
+// writes storage except through loadProfileInfo().
 
-let _lastAuthIdentity; // undefined until first render
+let _lastAuthIdentity; // undefined until first announcement
 
-function renderAuth(session, expired) {
-  const btn = document.getElementById('btn-signin');
-  const name = document.getElementById('user-name');
-  const avatar = document.getElementById('user-avatar');
-  const signout = document.getElementById('btn-signout');
-  const view = document.getElementById('view-menu');
-  if (!btn || !name || !avatar) return;
+function announceAuth(session) {
+  // Profile info can be missing if Bungie hiccuped during sign-in.
+  if (session && !session.user) loadProfileInfo();
 
-  const user = session && session.user ? session.user : null;
-  const profile = user ? (user.user || user) : null;
-
-  if (session) {
-    const displayName = profile && (profile.displayName || profile.uniqueName || profile.cachedBungieGlobalDisplayName || profile.bnetDisplayName) || 'Signed in';
-    const avatarPath = profile && (profile.profilePicturePath || profile.ProfilePicturePath);
-    name.textContent = displayName;
-    avatar.src = avatarPath ? `${BUNGIE_ROOT}${avatarPath}` : 'icons/unnamed.jpg';
-    btn.classList.add('hidden');
-    if (signout) signout.classList.remove('hidden');
-    if (view) view.classList.add('signed-in');
-    clearAuthMessage();
-    // Profile info can be missing if Bungie hiccuped during sign-in.
-    if (!user) loadProfileInfo();
-  } else {
-    name.textContent = 'Guest';
-    avatar.src = 'icons/unnamed.jpg';
-    btn.classList.remove('hidden');
-    if (signout) signout.classList.add('hidden');
-    if (view) view.classList.remove('signed-in');
-    if (expired) showAuthMessage('Your Bungie session expired. Please sign in again.', 'Signed out');
-  }
-
-  // Notify listeners (admin.js, discover.js) only when the signed-in identity
-  // changes, not on every token refresh.
+  // Tell listeners (sync, admin, Discover, Drops) only when the signed-in identity
+  // changes, not on every token refresh. The first call always announces, signed
+  // in or not: it is how they find out the state at startup.
   const identity = session ? (session.membership_id || 'signed-in') : null;
   if (identity !== _lastAuthIdentity) {
     _lastAuthIdentity = identity;
@@ -207,60 +182,16 @@ function renderAuth(session, expired) {
 }
 
 async function refreshAuthUI() {
-  const obj = await new Promise((res) => chrome.storage.local.get([BungieAuthCore.STORAGE_KEY, BungieAuthCore.EXPIRED_KEY], res));
+  const obj = await new Promise((res) => chrome.storage.local.get([BungieAuthCore.STORAGE_KEY], res));
   const session = obj[BungieAuthCore.STORAGE_KEY];
-  renderAuth(session && session.access_token ? session : null, !!obj[BungieAuthCore.EXPIRED_KEY]);
+  announceAuth(session && session.access_token ? session : null);
 }
-
-function showAuthMessage(text, title = 'Sign-in failed') {
-  const area = document.getElementById('menu-user-area');
-  if (!area) return;
-  clearAuthMessage();
-  const note = document.createElement('div');
-  note.className = 'auth-hint';
-  note.innerHTML = `
-    <div style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.02);border-radius:6px;">
-      <strong>${escapeHtml(title)}</strong>
-      <div style="margin-top:6px;word-break:break-word;">${escapeHtml(text)}</div>
-    </div>`;
-  area.parentNode.insertBefore(note, area.nextSibling);
-}
-
-function clearAuthMessage() {
-  const area = document.getElementById('menu-user-area');
-  const existing = area && area.parentNode.querySelector('.auth-hint');
-  if (existing) existing.remove();
-}
-
-// escapeHtml() comes from aw-dom.js, which loads before this file.
 
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('btn-signin');
-    if (btn) {
-      btn.addEventListener('click', async () => {
-        const prev = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = 'Signing in...';
-        clearAuthMessage();
-        try {
-          await signIn();
-        } catch (err) {
-          console.error('[BUNGIE-AUTH] signIn failed', err);
-          showAuthMessage(err?.message || String(err));
-        } finally {
-          btn.disabled = false;
-          btn.textContent = prev;
-        }
-      });
-    }
-
-    const signout = document.getElementById('btn-signout');
-    if (signout) signout.onclick = () => signOut();
-
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
-      if (changes[BungieAuthCore.STORAGE_KEY] || changes[BungieAuthCore.EXPIRED_KEY]) refreshAuthUI();
+      if (changes[BungieAuthCore.STORAGE_KEY]) refreshAuthUI();
     });
     refreshAuthUI();
   });

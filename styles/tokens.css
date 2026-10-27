@@ -2,8 +2,7 @@
  *
  * The only file where raw colour values belong (tools/lint-ratchet.js counts
  * hex colours everywhere else). Everything new is named --ui-* so it can never
- * collide with the legacy stylesheet's --aw-*, --text-*, --accent-*, --bg-*
- * variables, which keep styling the old screens until they are rebuilt.
+ * collide with names used elsewhere.
  *
  * Three tiers:
  *   palette   raw values. Don't use these in components.

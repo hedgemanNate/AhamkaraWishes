@@ -1,13 +1,7 @@
-/* Screen layout for the redesigned panel (screens/*.js). Composes the .ui-*
+/* Screen layout (screens/*.js). Composes the .ui-*
  * components; anything reusable belongs in components.css instead. Tokens only:
  * no raw colours and no !important. */
 @layer views {
-
-  /* While the new design is on, the old screens, loading overlay and feed ring
-   * stay in the page (their scripts are still the engine) but are not shown. */
-  html.ui-next .app-container,
-  html.ui-next #loading-overlay,
-  html.ui-next [id="feed-glow-ring"] { display: none; }
 
   /* ---------- shell ---------- */
   .ui-shell {
@@ -392,4 +386,20 @@
   .ui-wlcard__tags { display: flex; flex-wrap: wrap; gap: var(--ui-space-1); }
   .ui-wlcard__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-3); margin-top: var(--ui-space-1); }
   .ui-wlcard__saves { color: var(--ui-text-muted); font-size: var(--ui-text-sm); }
+
+  /* ---------- Admin ---------- */
+  .ui-adminrow { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-3); padding: var(--ui-space-3) var(--ui-space-4); }
+  .ui-adminrow__text { min-width: 0; flex: 1; }
+
+  /* ---------- A quiet ring while the Drops log is on ---------- */
+  /* The log is on by default, so this is what most people see: a hairline that
+     breathes slowly, not a border. */
+  .ui-watchring {
+    position: fixed; inset: 0; z-index: var(--ui-z-toast); pointer-events: none; opacity: 0; transition: opacity 0.4s ease;
+    border: 2px solid transparent;
+    border-image: conic-gradient(from 0deg, var(--ui-stat-melee), var(--ui-stat-grenade), var(--ui-stat-class), var(--ui-stat-health), var(--ui-stat-weapons), var(--ui-stat-super), var(--ui-stat-melee)) 1;
+  }
+  .ui-watchring.is-on { opacity: 0.3; animation: ui-watch-breathe 8s ease-in-out infinite; }
+  @keyframes ui-watch-breathe { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.38; } }
+  @media (prefers-reduced-motion: reduce) { .ui-watchring.is-on { animation: none; } }
 }

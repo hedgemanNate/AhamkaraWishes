@@ -5,10 +5,8 @@
 //   screens    Wishes · Drops · Inventory · Discover, switched by the tab bar
 //   sheets     Lists, Sync status, Me
 //
-// On by default. ?ui=classic (or Account > Back to the classic design) shows the
-// old screens instead, until they are removed. Their scripts keep running
-// underneath as the engine (game data, sign-in, sync, matching); this file only
-// draws.
+// Everything this draws reads what the engine (manager.js) stores and listens for its
+// events; it never calls Bungie itself.
 //
 // Needs aw-dom, aw-store, aw-nav, aw-ui, sync-status and wishlist-sync-core.
 
@@ -17,30 +15,6 @@
 
   const D = root.AWDom, UI = root.AWUI, doc = root.document;
   const { h, raw } = D;
-  const FLAG_KEY = 'aw-ui';
-
-  // ---- on/off ---------------------------------------------------------------
-
-  function param() { try { return new URLSearchParams(root.location.search).get('ui'); } catch (e) { return null; } }
-
-  /**
-   * The new design is the default. ?ui=classic (or "Back to the classic design" in
-   * Account, which remembers it) turns it off; ?ui=next turns it back on.
-   */
-  function enabled() {
-    const p = param();
-    // ?ui=next also clears a remembered "classic"; ?ui=classic is only for this visit.
-    if (p === 'next') { try { root.localStorage.setItem(FLAG_KEY, 'next'); } catch (e) { /* storage blocked */ } return true; }
-    if (p === 'classic') return false;
-    try { return root.localStorage.getItem(FLAG_KEY) !== 'classic'; } catch (e) { return true; }
-  }
-
-  function setEnabled(on) {
-    try { root.localStorage.setItem(FLAG_KEY, on ? 'next' : 'classic'); } catch (e) { /* storage blocked */ }
-    const url = new URL(root.location.href);
-    url.searchParams.set('ui', on ? 'next' : 'classic');
-    root.location.href = url.toString();
-  }
 
   // ---- icons (our own markup) ---------------------------------------------------
 
@@ -113,8 +87,7 @@
   // ---- building the shell ---------------------------------------------------------------
 
   function mount() {
-    if (!enabled() || doc.getElementById('ui-shell')) return null;
-    doc.documentElement.classList.add('ui-next');
+    if (doc.getElementById('ui-shell')) return null;
 
     // Everything except the sheets: made inert while a sheet is open.
     const base = h('div', { class: 'ui-shell__base' });
@@ -170,7 +143,6 @@
       openSheet,
       startWish, editWish, startFromOwned, openGodroll: () => openGodroll(),
       openAutomation: (trigger) => { if (drops) drops.openAutomation(trigger); },
-      goClassic: () => setEnabled(false),
       signIn: () => runAction('signin'),
       /** Shows how many new things a tab has (0 hides it). */
       setTabBadge(tab, n) {
@@ -200,17 +172,10 @@
     const drops = root.AWDropsScreen ? root.AWDropsScreen.create(ctx) : null;
     views.drops = h('section', { class: 'ui-screen', id: 'ui-screen-drops', hidden: true }, drops ? drops.el : null);
     views.inventory = h('section', { class: 'ui-screen', id: 'ui-screen-inventory', hidden: true }, inventory ? inventory.el : null);
+    const adminScreen = root.AWAdminScreen ? root.AWAdminScreen.create(ctx) : null;
     const discover = root.AWDiscoverScreen ? root.AWDiscoverScreen.create(ctx) : null;
     views.discover = h('section', { class: 'ui-screen', id: 'ui-screen-discover', hidden: true }, discover ? discover.el : null);
     TABS.forEach((t) => main.appendChild(views[t.id]));
-
-    function comingSoon(title, body) {
-      return h('section', { class: 'ui-screen', id: `ui-screen-${title.toLowerCase()}`, hidden: true },
-        h('div', { class: 'ui-stub' }, UI.emptyState({
-          title: `${title} is coming`, body,
-          actions: [UI.button({ label: 'Use the classic design for now', variant: 'secondary', onClick: ctx.goClassic })]
-        })));
-    }
 
     // --- tab bar
     const tabbar = h('nav', { class: 'ui-tabbar', aria: { label: 'Sections' } },
@@ -228,14 +193,16 @@
     addSheet('godrollAccess', 'Godroll.tv', () => fillSheet('godrollAccess'), { footer: true });
 
     base.append(appbar, bannerSlot, main, tabbar);
-    shell = h('div', { id: 'ui-shell', class: 'ui-root ui-shell' }, base, sheetEls);
+    // A quiet ring around the whole panel while the Drops log is on (it checks every 30 s while open).
+    const ring = h('div', { class: 'ui-watchring', aria: { hidden: 'true' } });
+    shell = h('div', { id: 'ui-shell', class: 'ui-root ui-shell' }, base, sheetEls, ring);
     doc.body.appendChild(shell);
 
     function openSheet(name, trigger) { nav.open(name, {}, { returnFocus: trigger }); }
     function sheetBody(name) { return sheets[name].querySelector('.ui-sheet__body'); }
     function setBody(name, ...nodes) { const b = sheetBody(name); b.replaceChildren(); nodes.flat().forEach((n) => n && b.appendChild(n)); }
 
-    const builderMissing = () => ctx.toast('The new wish builders are the next step.', { action: { label: 'Use classic', onClick: ctx.goClassic } });
+    const builderMissing = () => ctx.toast('Couldn’t open that.');
 
     // ---- Godroll.tv and DIM. Access to godroll.tv is optional (godroll-access.js): the first
     // visit without it explains first; once it is held the link just opens.
@@ -325,9 +292,8 @@
           h('div', { class: 'ui-sectiontitle' }, 'Settings'),
           h('div', { class: 'ui-sheetlist' },
             UI.row({ title: 'Automation', subtitle: 'Lock and vault new drops, and the drops log', trailing: UI.ICON.chevron, onClick: (e) => { nav.close('me'); ctx.openAutomation(e && e.currentTarget); } }),
-            store.isAdmin ? UI.row({ title: 'Admin', subtitle: 'Creators and moderation', trailing: UI.ICON.chevron, onClick: () => { nav.close('me'); const b = doc.getElementById('nav-admin'); if (b) b.click(); } }) : null,
+            store.isAdmin ? UI.row({ title: 'Admin', subtitle: 'Creators and moderation', trailing: UI.ICON.chevron, onClick: (e) => { nav.close('me'); if (adminScreen) adminScreen.open(e && e.currentTarget); } }) : null,
             UI.row({ title: 'Reset game data', subtitle: 'Download Destiny’s item data again if search or perks look wrong. Your wishlists aren’t affected.', className: 'is-danger', onClick: resetGameData })),
-          UI.button({ label: 'Back to the classic design', variant: 'ghost', block: true, onClick: ctx.goClassic }),
           version ? h('p', { class: 'ui-note ui-me__version' }, `Ahamkara Wishes ${version}`) : null));
       }
     }
@@ -374,6 +340,9 @@
     }
 
     // --- wiring
+    const paintRing = (on) => ring.classList.toggle('is-on', !!on);
+    chrome.storage.local.get(['feedEnabled'], (res) => paintRing(res && res.feedEnabled));
+    chrome.storage.onChanged.addListener((changes, area) => { if (area === 'local' && changes.feedEnabled) paintRing(changes.feedEnabled.newValue); });
     chrome.storage.local.get(['dimData', 'bungie_auth', 'bungie_session_expired'], (res) => {
       readAuth(res); readLists(res.dimData); paint();
     });
@@ -384,13 +353,15 @@
         chrome.storage.local.get(['bungie_auth', 'bungie_session_expired'], (res) => { readAuth(res); paint(); });
       }
     });
-    // The owner's moderation tools stay in the classic Admin sheet; Me offers the way in once admin is confirmed.
+    // Me offers the owner's moderation tools once admin is confirmed.
     doc.addEventListener('ahamkara:adminStatusChanged', (e) => { store.isAdmin = !!(e.detail && e.detail.isAdmin); if (nav.isOpen('me')) fillSheet('me'); });
     doc.addEventListener('awSyncChanged', paint);
     doc.addEventListener('awManifestProgress', (e) => { store.manifestProgress = e.detail && typeof e.detail.percent === 'number' ? e.detail.percent : null; paint(); });
     doc.addEventListener('awManifestReady', () => { store.manifest = 'ready'; store.manifestProgress = null; paint(); });
-    const overlay = doc.getElementById('loading-overlay');
-    store.manifest = !overlay || overlay.classList.contains('hidden') ? 'ready' : 'downloading';
+    // The data couldn't be loaded or downloaded: say so, with a way to try again (the banner's Download).
+    doc.addEventListener('awManifestFailed', () => { store.manifest = 'missing'; store.manifestProgress = null; paint(); });
+    // The engine may have finished before this screen started.
+    store.manifest = root.AWManifestState === 'ready' ? 'ready' : root.AWManifestState === 'failed' ? 'missing' : 'downloading';
     root.addEventListener('online', paint);
     root.addEventListener('offline', paint);
     // "Synced 2m ago" stays honest while nothing else changes.
@@ -402,12 +373,7 @@
     return { nav, ctx, paint, el: shell };
   }
 
-  root.AWShell = { mount, enabled, setEnabled };
+  root.AWShell = { mount };
 
-  doc.addEventListener('DOMContentLoaded', () => {
-    root.AWShell.instance = mount();
-    // The classic Menu's switch into the new design.
-    const tryIt = doc.getElementById('try-new-design');
-    if (tryIt) tryIt.addEventListener('click', () => setEnabled(true));
-  });
+  doc.addEventListener('DOMContentLoaded', () => { root.AWShell.instance = mount(); });
 })(typeof window !== 'undefined' ? window : globalThis);

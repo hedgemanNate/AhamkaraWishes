@@ -184,7 +184,7 @@
           body: state.kind === 'weapon'
             ? 'Add a roll from Godroll.tv, or build one here, and Ahamkara Wishes will tell you when it drops.'
             : 'Choose an archetype for a set and track the rolls you want.',
-          actions: [UI.button({ label: '+ Wish', variant: 'primary', onClick: () => ctx.startWish(state.kind) })]
+          actions: [UI.button({ label: '+ Wish', variant: 'primary', onClick: () => ctx.startWish(state.kind) })].concat(state.kind === 'weapon' ? [UI.button({ label: 'Get rolls from Godroll.tv', variant: 'secondary', onClick: () => ctx.openGodroll() })] : [])
         });
       }
       return UI.emptyState({

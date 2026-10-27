@@ -33,7 +33,9 @@ const check = (label, ok, detail) => {
 
 async function openPanel(browser, base, fixture, width, query = '') {
   const page = await browser.newPage({ width, height: 720 });
-  await page.goto(`${base}/sidepanel.html?fixture=${fixture}${query ? `&${query}` : ''}`);
+  // The new design is the default; the checks of the classic screens ask for them by name.
+  const ui = /(^|&)ui=/.test(query) ? query : `${query ? `${query}&` : ''}ui=classic`;
+  await page.goto(`${base}/sidepanel.html?fixture=${fixture}&${ui}`);
   // The loading overlay hides once Bungie's game data is ready.
   await page.waitFor(() => document.getElementById('loading-overlay')?.classList.contains('hidden'), { timeoutMs: 600000, intervalMs: 500 });
   await sleep(300);
@@ -968,6 +970,76 @@ async function checkNextFirstRun(browser, base, width) {
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
+/** The new design is what you get; classic is a choice that is remembered until the old screens are removed. */
+async function checkDefaultDesign(browser, base, width) {
+  const tag = `[${width}] default design`;
+  const page = await browser.newPage({ width, height: 720 });
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const look = () => page.eval(() => ({ next: !!document.querySelector('#ui-shell') && document.documentElement.classList.contains('ui-next'), classic: !!document.getElementById('view-menu') && !document.documentElement.classList.contains('ui-next') }));
+  await page.goto(`${base}/sidepanel.html?fixture=demo`);
+  await page.waitFor(() => document.getElementById('loading-overlay')?.classList.contains('hidden'), { timeoutMs: 600000, intervalMs: 500 });
+  await wait(500);
+  const first = await look();
+  check(`${tag}: with no choice made you get the new design`, first.next && !first.classic, JSON.stringify(first));
+  await page.eval(() => { document.querySelector('.ui-avatar').click(); });
+  await wait(300);
+  await page.eval(() => { [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-btn')].find((b) => /classic design/.test(b.textContent)).click(); });
+  await wait(1500);
+  await page.waitFor(() => !!document.getElementById('view-menu'), { timeoutMs: 20000 });
+  const classic = await look();
+  check(`${tag}: "Back to the classic design" shows the old screens`, classic.classic && !classic.next, JSON.stringify(classic));
+  await page.goto(`${base}/sidepanel.html`);
+  await page.waitFor(() => !!document.getElementById('view-menu') || !!document.getElementById('ui-shell'), { timeoutMs: 30000 });
+  await wait(800);
+  const remembered = await look();
+  check(`${tag}: and that choice is remembered on the next open`, remembered.classic && !remembered.next, JSON.stringify(remembered));
+  await page.goto(`${base}/sidepanel.html?ui=next`);
+  await page.waitFor(() => !!document.getElementById('ui-shell'), { timeoutMs: 30000 });
+  await page.goto(`${base}/sidepanel.html`);
+  await page.waitFor(() => !!document.getElementById('ui-shell') || !!document.getElementById('view-menu'), { timeoutMs: 30000 });
+  await wait(800);
+  check(`${tag}: ?ui=next brings the new design back for good`, (await look()).next);
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
+/** Godroll.tv and DIM: reached from + Wish (and the empty list), with the access explainer first. */
+async function checkNextSites(browser, base, width) {
+  const tag = `[${width}] next sites`;
+  const page = await openPanel(browser, base, 'empty', width, 'ui=next');
+  const ev = (fn, ...args) => page.eval(fn, ...args);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  await wait(1200);
+  await ev(() => { window.__tabs = []; chrome.tabs.create = (o) => { window.__tabs.push(o.url); return Promise.resolve({}); }; });
+  const layer = (title) => `[...document.querySelectorAll('.ui-layer:not([hidden])')].find((l) => /${title}/.test(l.querySelector('.ui-sheet__title').textContent))`;
+  await ev(() => document.querySelector('.ui-addwish').click());
+  await wait(300);
+  const rows = await ev(() => [...document.querySelector('.ui-layer:not([hidden])').querySelectorAll('.ui-row__title')].map((x) => x.textContent));
+  check(`${tag}: + Wish offers weapon, armor, Godroll.tv and DIM`, rows.join() === 'Weapon wish,Armor wish,Godroll.tv,Destiny Item Manager', rows.join());
+  await ev(() => [...document.querySelector('.ui-layer:not([hidden])').querySelectorAll('.ui-row')].find((r) => /Destiny Item Manager/.test(r.textContent)).click());
+  await wait(300);
+  check(`${tag}: DIM opens in a new tab`, (await ev(() => window.__tabs)).join() === 'https://app.destinyitemmanager.com/');
+  await ev(() => document.querySelector('.ui-addwish').click());
+  await wait(300);
+  await ev(() => [...document.querySelector('.ui-layer:not([hidden])').querySelectorAll('.ui-row')].find((r) => /Godroll\.tv/.test(r.textContent)).click());
+  await wait(400);
+  const ex = await ev(() => { const l = [...document.querySelectorAll('.ui-layer:not([hidden])')].find((x) => /Godroll\.tv/.test(x.querySelector('.ui-sheet__title').textContent)); return l ? { text: l.textContent, buttons: [...l.querySelectorAll('.ui-sheet__foot .ui-btn')].map((b) => b.textContent.trim()) } : null; });
+  check(`${tag}: without access, Godroll.tv explains first, and nothing opened yet`, !!ex && /Ahamkara Wish/.test(ex.text) && /read and change/.test(ex.text) && ex.buttons.join() === 'Allow access,Just open Godroll.tv' && (await ev(() => window.__tabs.length)) === 1, JSON.stringify(ex));
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-sheet__foot .ui-btn')].find((b) => /Just open/.test(b.textContent)).click());
+  await wait(300);
+  check(`${tag}: "Just open Godroll.tv" opens the site`, (await ev(() => window.__tabs)).pop() === 'https://godroll.tv/');
+  await ev(() => document.querySelector('.ui-addwish').click());
+  await wait(300);
+  await ev(() => [...document.querySelector('.ui-layer:not([hidden])').querySelectorAll('.ui-row')].find((r) => /Godroll\.tv/.test(r.textContent)).click());
+  await wait(400);
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-sheet__foot .ui-btn')].find((b) => /Allow access/.test(b.textContent)).click());
+  await wait(500);
+  check(`${tag}: if Chrome's permission isn't given, it still opens the site and says what's missing`, (await ev(() => window.__tabs)).pop() === 'https://godroll.tv/' && await ev(() => /without the Ahamkara Wish button/.test((document.querySelector('.ui-toast') || {}).textContent || '')));
+  await ev(() => { const b = [...document.querySelectorAll('#ui-screen-wishes .ui-btn')].find((x) => /Get rolls from Godroll/.test(x.textContent)); b && b.click(); });
+  await wait(400);
+  check(`${tag}: the empty list offers Godroll.tv too`, await ev(() => !![...document.querySelectorAll('.ui-layer:not([hidden])')].find((x) => /Godroll\.tv/.test(x.querySelector('.ui-sheet__title').textContent))));
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
 /** Lists from other people, shown in the new screens. */
 async function checkNextHostile(browser, base, width) {
   const tag = `[${width}] next hostile`;
@@ -1201,6 +1273,8 @@ async function checkGallery(browser, base, width) {
       await checkNextLists(browser, url, width);
       await checkNextDiscover(browser, url, width);
       await checkNextFirstRun(browser, url, width);
+      await checkDefaultDesign(browser, url, width);
+      await checkNextSites(browser, url, width);
 
       // empty
       page = await openPanel(browser, url, 'empty', width);

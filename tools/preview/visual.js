@@ -77,7 +77,7 @@ async function capture(dir) {
       const page = await browser.newPage({ width, height: 720 });
       // A screen's own query may pick a different fixture than the demo.
       const q = query || '';
-      await page.goto(`${url}/sidepanel.html?${/(^|&)fixture=/.test(q) ? '' : 'fixture=demo&'}${q}`);
+      await page.goto(`${url}/sidepanel.html?${/(^|&)fixture=/.test(q) ? '' : 'fixture=demo&'}${/(^|&)ui=/.test(q) ? q : `${q ? `${q}&` : ''}ui=classic`}`);
       await page.waitFor(() => document.getElementById('loading-overlay')?.classList.contains('hidden'), { timeoutMs: 600000, intervalMs: 500 });
       await sleep(500);
       await page.eval(steps);

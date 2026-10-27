@@ -5,10 +5,10 @@
 //   screens    Wishes · Drops · Inventory · Discover, switched by the tab bar
 //   sheets     Lists, Sync status, Me
 //
-// Opt-in while the screens are built one at a time: add ?ui=next to the panel
-// URL, or use "Try the new design" in the old Menu. Nothing about the old
-// screens changes unless it's on. Their scripts keep running underneath as the
-// engine (game data, sign-in, sync, matching); this file only draws.
+// On by default. ?ui=classic (or Account > Back to the classic design) shows the
+// old screens instead, until they are removed. Their scripts keep running
+// underneath as the engine (game data, sign-in, sync, matching); this file only
+// draws.
 //
 // Needs aw-dom, aw-store, aw-nav, aw-ui, sync-status and wishlist-sync-core.
 
@@ -23,16 +23,20 @@
 
   function param() { try { return new URLSearchParams(root.location.search).get('ui'); } catch (e) { return null; } }
 
-  /** ?ui=next turns it on, ?ui=classic turns it off; otherwise the remembered choice. */
+  /**
+   * The new design is the default. ?ui=classic (or "Back to the classic design" in
+   * Account, which remembers it) turns it off; ?ui=next turns it back on.
+   */
   function enabled() {
     const p = param();
-    if (p === 'next') return true;
+    // ?ui=next also clears a remembered "classic"; ?ui=classic is only for this visit.
+    if (p === 'next') { try { root.localStorage.setItem(FLAG_KEY, 'next'); } catch (e) { /* storage blocked */ } return true; }
     if (p === 'classic') return false;
-    try { return root.localStorage.getItem(FLAG_KEY) === 'next'; } catch (e) { return false; }
+    try { return root.localStorage.getItem(FLAG_KEY) !== 'classic'; } catch (e) { return true; }
   }
 
   function setEnabled(on) {
-    try { if (on) root.localStorage.setItem(FLAG_KEY, 'next'); else root.localStorage.removeItem(FLAG_KEY); } catch (e) { /* storage blocked */ }
+    try { root.localStorage.setItem(FLAG_KEY, on ? 'next' : 'classic'); } catch (e) { /* storage blocked */ }
     const url = new URL(root.location.href);
     url.searchParams.set('ui', on ? 'next' : 'classic');
     root.location.href = url.toString();
@@ -164,7 +168,7 @@
       nav, store, UI, AWDom: D, addSheet, addScreen,
       toast: UI.toast,
       openSheet,
-      startWish, editWish, startFromOwned,
+      startWish, editWish, startFromOwned, openGodroll: () => openGodroll(),
       openAutomation: (trigger) => { if (drops) drops.openAutomation(trigger); },
       goClassic: () => setEnabled(false),
       signIn: () => runAction('signin'),
@@ -221,6 +225,7 @@
     addSheet('sync', 'Sync', () => fillSheet('sync'));
     addSheet('me', 'Account', () => fillSheet('me'));
     addSheet('newWish', 'New wish', () => fillSheet('newWish'));
+    addSheet('godrollAccess', 'Godroll.tv', () => fillSheet('godrollAccess'), { footer: true });
 
     base.append(appbar, bannerSlot, main, tabbar);
     shell = h('div', { id: 'ui-shell', class: 'ui-root ui-shell' }, base, sheetEls);
@@ -231,6 +236,32 @@
     function setBody(name, ...nodes) { const b = sheetBody(name); b.replaceChildren(); nodes.flat().forEach((n) => n && b.appendChild(n)); }
 
     const builderMissing = () => ctx.toast('The new wish builders are the next step.', { action: { label: 'Use classic', onClick: ctx.goClassic } });
+
+    // ---- Godroll.tv and DIM. Access to godroll.tv is optional (godroll-access.js): the first
+    // visit without it explains first; once it is held the link just opens.
+    const GODROLL_URL = 'https://godroll.tv/';
+    let godrollGranted = false; // cached: chrome.permissions.request() must run synchronously inside the click
+    if (root.GodrollAccess && root.chrome && root.chrome.permissions) {
+      const refreshGranted = () => root.GodrollAccess.has().then((v) => { godrollGranted = v; }, () => {});
+      refreshGranted();
+      root.chrome.permissions.onAdded.addListener(refreshGranted);
+      root.chrome.permissions.onRemoved.addListener(refreshGranted);
+    }
+    function openSite(url) { try { root.chrome.tabs.create({ url }); } catch (e) { root.open(url, '_blank', 'noopener'); } }
+    function openGodroll() {
+      if (godrollGranted || !root.GodrollAccess || !root.chrome.permissions) { openSite(GODROLL_URL); return; }
+      nav.open('godrollAccess', {}, { returnFocus: addWish });
+    }
+    function allowGodroll() {
+      nav.close('godrollAccess');
+      root.GodrollAccess.request()
+        .then((ok) => (ok ? root.chrome.runtime.sendMessage({ type: 'ahamkara:sync-godroll-access' }).then(() => ok) : ok))
+        .catch(() => false)
+        .then((ok) => {
+          openSite(GODROLL_URL);
+          if (!ok) ctx.toast('Opened Godroll.tv without the Ahamkara Wish button. You can allow access next time.');
+        });
+    }
 
     /** Starts a new wish: a weapon or armor. Without a kind, asks which. */
     function startWish(kind) {
@@ -256,9 +287,22 @@
     // --- sheet content
     function fillSheet(name) {
       if (name === 'newWish') {
-        setBody('newWish', h('div', { class: 'ui-sheetlist' },
+        setBody('newWish', h('div', { class: 'ui-field-gap' }, h('div', { class: 'ui-sheetlist' },
           UI.row({ title: 'Weapon wish', subtitle: 'Choose a weapon and the perks you want', trailing: UI.ICON.chevron, onClick: () => { nav.close('newWish'); startWish('weapon'); } }),
-          UI.row({ title: 'Armor wish', subtitle: 'Choose an archetype for a set', trailing: UI.ICON.chevron, onClick: () => { nav.close('newWish'); startWish('armor'); } })));
+          UI.row({ title: 'Armor wish', subtitle: 'Choose an archetype for a set', trailing: UI.ICON.chevron, onClick: () => { nav.close('newWish'); startWish('armor'); } })),
+          h('div', { class: 'ui-sectiontitle' }, 'Pick rolls on another site'),
+          h('div', { class: 'ui-sheetlist' },
+            UI.row({ title: 'Godroll.tv', subtitle: 'Pick perks on a weapon page, then press Ahamkara Wish', trailing: UI.ICON.chevron, onClick: () => { nav.close('newWish'); openGodroll(); } }),
+            UI.row({ title: 'Destiny Item Manager', subtitle: 'Opens DIM in a new tab', trailing: UI.ICON.chevron, onClick: () => { nav.close('newWish'); openSite('https://app.destinyitemmanager.com/'); } }))));
+      } else if (name === 'godrollAccess') {
+        // Chrome's own permission prompt can't be reworded, so say what it is first. "Allow access"
+        // is the click Chrome needs to show that prompt, so it asks synchronously.
+        setBody('godrollAccess', h('div', { class: 'ui-field-gap' },
+          h('p', { class: 'ui-note' }, 'Pick perks on any Godroll.tv weapon page, then press ', h('strong', null, 'Ahamkara Wish'), ' to save that roll to one of your lists. No rebuilding it here.'),
+          h('p', { class: 'ui-note' }, 'Chrome will ask to let Ahamkara Wishes “read and change” godroll.tv. That’s only so it can add the button and read the perks you select. Nothing is sent anywhere, and you can turn it off any time in Chrome’s extension settings.')));
+        sheets.godrollAccess.querySelector('.ui-sheet__footslot').replaceChildren(h('div', { class: 'ui-field-gap' },
+          UI.button({ label: 'Allow access', variant: 'primary', size: 'lg', block: true, onClick: allowGodroll }),
+          UI.button({ label: 'Just open Godroll.tv', variant: 'ghost', block: true, onClick: () => { nav.close('godrollAccess'); openSite(GODROLL_URL); } })));
       } else if (name === 'sync') {
         const s = syncState();
         const actions = [];

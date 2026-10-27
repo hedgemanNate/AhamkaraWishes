@@ -3,8 +3,8 @@
 // chrome.storage.local is per-browser-install, so the same admin account can
 // end up with divergent copies of dimData in different browsers. admin-sync.js
 // reconciles them through Supabase; the rules live here rather than in
-// admin-sync.js because the delete paths (manager.js, ui-creator.js,
-// wishlist.js) must record tombstones using the exact same notion of "which
+// admin-sync.js because the delete paths (screens/lists.js, screens/wishes.js,
+// screens/discover.js) must record tombstones using the exact same notion of "which
 // wish is this", and duplicating that definition would silently break merging.
 //
 // Merge model: additive union of lists -> items -> wishes, filtered by

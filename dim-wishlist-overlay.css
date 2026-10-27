@@ -2,7 +2,7 @@
    Draws a 2px rainbow ring around DIM item tiles whose instance ID is a
    receivedInstances match for a saved wish in ANY of the user's wishlists.
    Uses fully-saturated rainbow hues rather than the app's own muted stat-color
-   ring (sidepanel.css .mt-feed-toggle.active / .feed-glow-ring) — this needs
+   ring (the panel's Drops ring) — this needs
    to grab attention against DIM's busy tile grid, where the muted palette
    didn't stand out enough.
    Ring is drawn with the mask-composite double-layer trick so it sits as a

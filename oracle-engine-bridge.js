@@ -14,7 +14,7 @@ function loadOracleEngine() {
     return _oracleEnginePromise;
 }
 
-// Exposed globally so other scripts (e.g. weapon-craft.js) can await the
+// Exposed globally so other scripts (e.g. screens/weapon-builder.js) can await the
 // initialized D2Calc module without duplicating the loader.
 window.oracleEngineReady = loadOracleEngine();
 

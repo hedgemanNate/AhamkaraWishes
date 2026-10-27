@@ -28,7 +28,7 @@
   };
 
   // Combo colours a weapon wish can carry, in slot order. Mirrors COMBO_COLORS
-  // in weapon-craft.js, which is what writes them.
+  // in the weapon builder, which is what writes them.
   const COMBO_COLORS = ['red', 'blue', 'green', 'orange'];
 
   // A combo needs members in at least two columns to mean anything — a colour
@@ -704,7 +704,7 @@
 
   // Export
   global.OwnedInventoryIndex = {
-    // Single source of truth for the combo slots — weapon-craft.js authors them
+    // Single source of truth for the combo slots — the weapon builder authors them
     // and manager.js renders them, and a mismatch would silently misfile perks.
     COMBO_COLORS,
     buildCombos,

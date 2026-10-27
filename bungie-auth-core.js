@@ -6,7 +6,7 @@
 //
 // Why this exists — the previous design had several independent writers:
 // the alarm in background.js, getValidAuth() in the panel (called in parallel
-// by admin.js, admin-sync.js, discover.js and the profile refresh), and
+// by admin.js, admin-sync.js, the Discover screen and the profile refresh), and
 // updateAuthUI() writing back a stale copy of the whole object. Bungie rotates
 // the refresh token on every refresh, so two concurrent refreshes, or a stale
 // write-back, could leave a dead refresh token in storage. The UI then showed

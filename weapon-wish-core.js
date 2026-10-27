@@ -1,4 +1,4 @@
-// Shared by the side panel (weapon-craft.js, manager.js saveItem) and the
+// Shared by the side panel (screens/weapon-builder.js, manager.js saveItem) and the
 // service worker (godroll-add.js): turning a set of picked perks into a weapon
 // wish, and adding a wish to a list with the duplicate rules. Pure functions
 // over plain data, so both contexts produce byte-identical wishes — the `raw`

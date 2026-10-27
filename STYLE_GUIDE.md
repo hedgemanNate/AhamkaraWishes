@@ -1,6 +1,6 @@
 # Ahamkara Wishes — Style Guide
 
-How the redesigned UI is built, so every screen looks and behaves the same. It covers the new system (`styles/`, `aw-ui.js`, `aw-nav.js`, `aw-dom.js`). The old screens still use `sidepanel.css`; see [Legacy screens](#legacy-screens) for the rules that apply while they are rebuilt.
+How the redesigned UI is built, so every screen looks and behaves the same. It covers the design system (`styles/`, `aw-ui.js`, `aw-nav.js`, `aw-dom.js`) and the screens built on it (`screens/`).
 
 See the components live: `npm run preview`, then open `http://127.0.0.1:8765/gallery`.
 
@@ -18,12 +18,11 @@ See the components live: `npm run preview`, then open `http://127.0.0.1:8765/gal
 `sidepanel.html` links one stylesheet, `styles/app.css`, which sets the layer order:
 
 ```
-legacy < tokens < base < components < views < utilities
+tokens < base < components < views < utilities
 ```
 
 | Layer | File | What goes there |
 |---|---|---|
-| `legacy` | `sidepanel.css` (imported into the layer) | The old screens. Don't add to it. |
 | `tokens` | `styles/tokens.css` | All design tokens. **The only file where raw colours belong.** |
 | — | `styles/fonts.css` | IBM Plex `@font-face`; files are bundled in `vendor/fonts/ibm-plex` (SIL OFL) |
 | `base` | `styles/base.css` | Element defaults, scoped to `.ui-root` |
@@ -33,7 +32,7 @@ legacy < tokens < base < components < views < utilities
 
 Because the layers are ordered, a later layer wins without `!important` or extra specificity. **Don't add `!important`**: the lint ratchet counts it.
 
-New UI lives inside an element with class `.ui-root`. Base styles never reach outside it, so the legacy screens keep rendering exactly as before. `.ui-root` is the container query container (`container-name: panel`), so components adapt to the **panel's** width:
+New UI lives inside an element with class `.ui-root`. Base styles never reach outside it. `.ui-root` is the container query container (`container-name: panel`), so components adapt to the **panel's** width:
 
 ```css
 @container panel (min-width: 540px) { .ui-sheet { /* centred dialog instead of a bottom sheet */ } }
@@ -41,23 +40,24 @@ New UI lives inside an element with class `.ui-root`. Base styles never reach ou
 
 ## Screens (`screens/`)
 
-The redesigned screens live in `screens/` and are drawn with `AWDom` and `AWUI`. They are **opt-in** until the last one is rebuilt: add `?ui=next` to the panel URL, or use "Try the new design" in the classic Menu (the choice is remembered; `?ui=classic` turns it off). The classic screens keep running underneath as the engine (game data, sign-in, sync, matching); the new UI only draws.
+The screens live in `screens/` and are drawn with `AWDom` and `AWUI`. They read what the engine stores and listen for its events; none of them calls Bungie. The engine is `manager.js` (game data, sync, matching, lock/vault/log, saving and editing wishes), `bungie-auth.js` (who is signed in), `admin.js` (the owner check) and the `*-core.js` files (pure rules, each with a test).
 
 | File | Role |
 |---|---|
 | `screens/shell.js` (`AWShell`) | App bar (list name → Lists, sync chip → Sync sheet, **+ Wish**, avatar → Account), banner, tab bar, and the sheets |
 | `screens/wishes.js` (`AWWishes`) | The Wishes tab. The list is calm: one row per weapon or armor set, search, one filter button. Tapping a row opens the detail screen: a weapon's rolls with large, named perks, or an armor set's bonus and pieces. Delete with Undo |
 
-A screen is `create(ctx)` returning `{ el }`. `ctx` gives it `nav`, `toast`, `addSheet(name, title, onOpen, { footer })` (a bottom sheet registered with AWNav, outside the inert region), `addScreen(name, title, onOpen)` (a full screen with a Back button that opens over the tabs), `startWish()` and `goClassic()`.
+A screen is `create(ctx)` returning `{ el }`. `ctx` gives it `nav`, `toast`, `addSheet(name, title, onOpen, { footer })` (a bottom sheet registered with AWNav, outside the inert region), `addScreen(name, title, onOpen, { canClose, onClose })` (a full screen with a Back button that opens over the tabs), `startWish(kind)`, `editWish(params)` and `startFromOwned(input)`.
+
+**Register a full-screen layer after the screen it opens from.** Layers stack in page order, so a builder created before the Wishes screen would open underneath its detail screen. Class names are global: prefix them per screen (a `.ui-stat` in the weapon builder once broke the armor chips on another screen).
 
 **Product shape:** this is a companion to Godroll.tv and DIM. Rolls are mostly chosen there and refined here, so the list stays quiet and the detail screen gives perks room. Design for a comfortable 360 to 480px panel (16px side padding, 44px perk icons, 76px rows); 320px must still work but never sets the density. Screens read `chrome.storage.local` and re-render on `chrome.storage.onChanged`; writes go through `AWStore.update`.
 
-Two things the classic stylesheet does that new code has to know about: it styles every bare `<header>` (base.css resets headers inside `.ui-root`), and its `#feed-glow-ring` and loading overlay are hidden by `html.ui-next` rules.
+One pitfall: `el.replaceChildren(null)` writes the text "null". Filter empty values first (the checks fail on stray "null" text).
 
 ## Naming
 
 - Tokens: `--ui-*`. Classes: `.ui-*`, with modifiers as `.ui-btn--primary`.
-- These prefixes were chosen because the legacy stylesheet already uses `--aw-`, `--text-`, `--accent-`, `--bg-`, `--stat-`, `--combo-`, `--space-` and `.aw-`. New names can't collide with old ones.
 
 ## Tokens
 
@@ -162,11 +162,3 @@ All writes to the wishlist go through `AWStore.update(mutator)`, which holds a W
 | `npm run ui-gallery` | Every building block in headless Chrome at 320/360/540: fonts, overflow, target sizes, keyboard, focus return. |
 | `npm run ui-check` | The real panel with the demo, hostile and empty fixtures. |
 | `npm run visual -- capture/compare` | Pixel diff of real screens before and after a change. Compare captures from the same Chrome version. |
-
-## Legacy screens
-
-`sidepanel.css` still styles the screens that haven't been rebuilt. It sits in the lowest layer, so new styles always win over it.
-
-- Don't add rules to it. When a screen is rebuilt, its legacy rules are deleted.
-- Its variables (`--bg-dark`, `--accent-gold`, `--stat-*`, …) remain only for those screens. New code uses `--ui-*`.
-- Moving it into the layer was proven pixel-identical on seven screens (`npm run visual`).

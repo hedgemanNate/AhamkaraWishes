@@ -210,7 +210,7 @@
     exportList,
     importWishlistFile,
     triggerImport,
-    // Exposed for discover.js — importing a browsed wishlist reuses the same
+    // Exposed for the Discover screen — importing a browsed wishlist reuses the same
     // validate/normalize/persist path as importing a downloaded .awwish file.
     importFromPayload,
     getActiveListPayload,

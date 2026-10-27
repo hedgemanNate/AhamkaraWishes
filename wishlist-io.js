@@ -42,6 +42,8 @@
   // --- Toast notification ---
 
   function showToast(msg, isError) {
+    // The redesigned panel has its own toast.
+    if (document.documentElement.classList.contains('ui-next') && window.AWUI) { window.AWUI.toast(msg); return; }
     const existing = document.getElementById('aw-io-toast');
     if (existing) existing.remove();
     const el = document.createElement('div');
@@ -88,14 +90,15 @@
     };
   }
 
-  function exportActiveWishlist() {
+  /** Downloads one list as a .awwish file (the active list when no id is given). */
+  function exportList(listId) {
     chrome.storage.local.get(['dimData'], (res) => {
       const data = res.dimData;
       if (!data || !data.lists) {
         showToast('No wishlist data found.', true);
         return;
       }
-      const activeId = data.activeId || 'default';
+      const activeId = listId || data.activeId || 'default';
       const list = data.lists[activeId];
       if (!list) {
         showToast('No active wishlist to export.', true);
@@ -116,6 +119,8 @@
       showToast('Exported "' + list.name + '"');
     });
   }
+
+  const exportActiveWishlist = () => exportList();
 
   // Returns the active wishlist as a `{ name, items }` payload (the same
   // shape stored in the `wishlists.payload` column), for Discover's submit
@@ -236,6 +241,7 @@
 
   window.awWishlistIO = {
     exportActiveWishlist,
+    exportList,
     importWishlistFile,
     triggerImport,
     // Exposed for discover.js — importing a browsed wishlist reuses the same

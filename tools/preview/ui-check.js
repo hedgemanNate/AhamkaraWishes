@@ -230,19 +230,19 @@ async function checkNext(browser, base, width) {
   await sleep2(300);
   check(`${tag}: Lists sheet opens with both lists, background inert`, await ev(() => {
     const layer = [...document.querySelectorAll('.ui-layer')].find((l) => !l.hidden);
-    return !!layer && layer.querySelectorAll('.ui-row').length === 2 && document.querySelector('.ui-shell__base').inert === true;
+    return !!layer && layer.querySelectorAll('.ui-listrow').length === 2 && document.querySelector('.ui-shell__base').inert === true;
   }));
   await page.press('Escape');
   await sleep2(300);
   check(`${tag}: Escape closes the sheet and focus returns to the list name`, await ev(() => ![...document.querySelectorAll('.ui-layer')].some((l) => !l.hidden) && document.activeElement === document.querySelector('.ui-listname')));
   await ev(() => document.querySelector('.ui-listname').click());
   await sleep2(300);
-  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((r) => /Raid/.test(r.textContent)).click());
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-listrow__main')].find((r) => /Raid/.test(r.textContent)).click());
   await sleep2(800);
   check(`${tag}: choosing another list switches to it`, await ev(() => document.querySelector('.ui-listname__text').textContent === 'Raid & Dungeon'));
   await ev(() => document.querySelector('.ui-listname').click());
   await sleep2(300);
-  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((r) => /Main/.test(r.textContent)).click());
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-listrow__main')].find((r) => /Main/.test(r.textContent)).click());
   await sleep2(800);
 
   // Sync sheet says what is going on in plain words
@@ -685,6 +685,123 @@ async function checkNextInventory(browser, base, width) {
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
+/** Wishlists: create, rename, duplicate, delete and merge (each undoable where it should be), import, and the Me sheet. */
+async function checkNextLists(browser, base, width) {
+  const tag = `[${width}] next lists`;
+  const page = await openPanel(browser, base, 'demo', width, 'ui=next');
+  const ev = (fn, ...args) => page.eval(fn, ...args);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const lists = async () => Object.values((await ev(() => window.__awPreview.dump().dimData)).lists).map((l) => l.name);
+  const dim = () => ev(() => window.__awPreview.dump().dimData);
+  const wishCount = (l) => Object.values(l.items).reduce((n, it) => n + it.wishes.length, 0);
+  await wait(1500);
+  await ev(() => {
+    window.__t = {
+      layer: (title) => [...document.querySelectorAll('.ui-layer:not([hidden])')].find((l) => new RegExp(title).test(l.querySelector('.ui-sheet__title').textContent)),
+      press: (title, text) => [...window.__t.layer(title).querySelectorAll('button')].find((b) => new RegExp(text).test(b.textContent || b.getAttribute('aria-label'))).click(),
+      row: (title, text) => [...window.__t.layer(title).querySelectorAll('.ui-row, .ui-listrow__main')].find((b) => new RegExp(text).test(b.textContent)).click(),
+      actions: (name) => [...window.__t.layer('Wishlists').querySelectorAll('.ui-listrow')].find((r) => r.querySelector('.ui-row__title').textContent === name).querySelector('.ui-icon-btn').click(),
+      toast: () => (document.querySelector('.ui-toast') || {}).textContent || ''
+    };
+  });
+  const open = async () => { await ev(() => document.querySelector('.ui-listname').click()); await wait(300); };
+
+  await open();
+  const sheet = await ev(() => ({ rows: window.__t.layer('Wishlists').querySelectorAll('.ui-listrow').length, foot: [...window.__t.layer('Wishlists').querySelectorAll('.ui-sheet__foot .ui-btn')].map((b) => b.textContent.trim()), menus: window.__t.layer('Wishlists').querySelectorAll('.ui-listrow .ui-icon-btn').length, wider: document.documentElement.scrollWidth > innerWidth + 1 }));
+  check(`${tag}: each list has an actions button, and New list and Import are in the footer`, sheet.rows === 2 && sheet.menus === 2 && sheet.foot.join() === 'New list,Import' && !sheet.wider, JSON.stringify(sheet));
+
+  // create
+  await ev(() => window.__t.press('Wishlists', '^New list$'));
+  await wait(400);
+  await ev(() => window.__t.press('New list', '^Create list$'));
+  await wait(300);
+  check(`${tag}: an empty name is refused in words`, await ev(() => /Give the list a name/.test(window.__t.layer('New list').textContent) && window.__t.layer('New list').querySelector('input').getAttribute('aria-invalid') === 'true'));
+  await ev(() => { const i = window.__t.layer('New list').querySelector('input'); i.value = 'Main wishlist'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await ev(() => window.__t.press('New list', '^Create list$'));
+  await wait(300);
+  check(`${tag}: a name another list has is refused`, await ev(() => /already have a list/.test(window.__t.layer('New list').textContent)));
+  await ev(() => { const i = window.__t.layer('New list').querySelector('input'); i.value = '  Crucible  '; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
+  await wait(900);
+  const made = await dim();
+  check(`${tag}: Enter creates the list, makes it current, and closes the sheets`, (await lists()).join() === 'Main Wishlist,Raid & Dungeon,Crucible' && made.lists[made.activeId].name === 'Crucible'
+    && await ev(() => document.querySelector('.ui-listname__text').textContent === 'Crucible' && ![...document.querySelectorAll('.ui-layer')].some((l) => !l.hidden) && /Created/.test(window.__t.toast())));
+
+  // rename
+  await open();
+  await ev(() => window.__t.actions('Crucible'));
+  await wait(300);
+  await ev(() => window.__t.row('Crucible', '^Rename'));
+  await wait(400);
+  await ev(() => { const i = window.__t.layer('Rename list').querySelector('input'); i.value = 'PvP'; i.dispatchEvent(new Event('input', { bubbles: true })); window.__t.press('Rename list', '^Save name$'); });
+  await wait(800);
+  check(`${tag}: Rename changes the name in place`, (await lists()).join() === 'Main Wishlist,Raid & Dungeon,PvP' && await ev(() => document.querySelector('.ui-listname__text').textContent === 'PvP'));
+
+  // duplicate
+  await open();
+  await ev(() => window.__t.actions('Raid & Dungeon'));
+  await wait(300);
+  await ev(() => window.__t.row('Raid & Dungeon', '^Duplicate'));
+  await wait(800);
+  const dup = await dim();
+  const raid = Object.values(dup.lists).find((l) => l.name === 'Raid & Dungeon'), copy = Object.values(dup.lists).find((l) => l.name === 'Raid & Dungeon (copy)');
+  check(`${tag}: Duplicate makes an independent copy with every wish`, !!copy && wishCount(copy) === wishCount(raid) && copy.items !== raid.items && await ev(() => /Copied as/.test(window.__t.toast())));
+
+  // delete + undo
+  await open();
+  await ev(() => window.__t.actions('PvP'));
+  await wait(300);
+  await ev(() => window.__t.row('PvP', '^Delete'));
+  await wait(800);
+  check(`${tag}: Delete removes the list and offers Undo, no confirm`, !(await lists()).includes('PvP') && await ev(() => !!document.querySelector('.ui-toast .ui-btn') && !document.querySelector('dialog[open]')));
+  await ev(() => document.querySelector('.ui-toast .ui-btn').click());
+  await wait(800);
+  check(`${tag}: Undo brings the list back where it was`, (await lists()).join() === 'Main Wishlist,Raid & Dungeon,PvP,Raid & Dungeon (copy)', (await lists()).join());
+  await open();
+  await ev(() => window.__t.actions('Main Wishlist'));
+  await wait(300);
+  check(`${tag}: the default list can't be deleted`, await ev(() => !/Delete/.test(window.__t.layer('Main Wishlist').textContent) && /Merge other lists/.test(window.__t.layer('Main Wishlist').textContent)));
+
+  // merge + undo
+  const beforeMerge = await dim();
+  const mainBefore = wishCount(Object.values(beforeMerge.lists).find((l) => l.name === 'Main Wishlist'));
+  await ev(() => window.__t.row('Main Wishlist', '^Merge other lists'));
+  await wait(400);
+  check(`${tag}: Merge starts with nothing chosen`, await ev(() => window.__t.layer('Merge into').querySelector('.ui-btn--primary').disabled && window.__t.layer('Merge into').querySelectorAll('[role=switch]').length === 3));
+  await ev(() => { const sw = [...window.__t.layer('Merge into').querySelectorAll('[role=switch]')]; sw[1].click(); sw[2].click(); });
+  await wait(200);
+  check(`${tag}: it says what will happen`, await ev(() => /Merge 2 lists/.test(window.__t.layer('Merge into').querySelector('.ui-btn--primary').textContent) && /folded into/.test(window.__t.layer('Merge into').textContent)));
+  await ev(() => window.__t.layer('Merge into').querySelector('.ui-btn--primary').click());
+  await wait(900);
+  const merged = await dim();
+  check(`${tag}: Merge folds the chosen lists in and removes them`, (await lists()).join() === 'Main Wishlist,Raid & Dungeon' && wishCount(Object.values(merged.lists).find((l) => l.name === 'Main Wishlist')) > mainBefore && await ev(() => /Merged 2 lists/.test(window.__t.toast())), (await lists()).join());
+  await ev(() => document.querySelector('.ui-toast .ui-btn').click());
+  await wait(900);
+  const undone = await dim();
+  check(`${tag}: Undo restores every list and the target exactly`, (await lists()).join() === 'Main Wishlist,Raid & Dungeon,PvP,Raid & Dungeon (copy)' && wishCount(Object.values(undone.lists).find((l) => l.name === 'Main Wishlist')) === mainBefore);
+
+  // import opens the file picker
+  await open();
+  await ev(() => window.__t.press('Wishlists', '^Import$'));
+  await wait(200);
+  check(`${tag}: Import opens the file picker for .awwish files`, await ev(() => !!document.querySelector('input[type=file][accept=".awwish"]')));
+  await page.press('Escape'); await wait(300);
+
+  // Me
+  await ev(() => document.querySelector('.ui-avatar').click());
+  await wait(300);
+  const me = await ev(() => ({ text: window.__t.layer('Account').textContent, wider: document.documentElement.scrollWidth > innerWidth + 1 }));
+  check(`${tag}: Me offers sign-in, Automation, Reset game data and the version`, /Sign in with Bungie/.test(me.text) && /Automation/.test(me.text) && /Reset game data/.test(me.text) && /Ahamkara Wishes \S+/.test(me.text) && !me.wider, me.text.slice(0, 200));
+  await ev(() => window.__t.row('Account', 'Reset game data'));
+  await wait(400);
+  check(`${tag}: Reset game data asks first, and Cancel changes nothing`, await ev(() => !!document.querySelector('dialog[open]')));
+  await ev(() => [...document.querySelectorAll('dialog[open] .ui-btn')].find((b) => /Cancel/.test(b.textContent)).click());
+  await wait(300);
+  await ev(() => window.__t.row('Account', 'Automation'));
+  await wait(400);
+  check(`${tag}: Automation opens from Me`, await ev(() => !!window.__t.layer('Automation')));
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
 /** Lists from other people, shown in the new screens. */
 async function checkNextHostile(browser, base, width) {
   const tag = `[${width}] next hostile`;
@@ -915,6 +1032,7 @@ async function checkGallery(browser, base, width) {
       await checkNextBuilder(browser, url, width);
       await checkNextArmorBuilder(browser, url, width);
       await checkNextInventory(browser, url, width);
+      await checkNextLists(browser, url, width);
 
       // empty
       page = await openPanel(browser, url, 'empty', width);

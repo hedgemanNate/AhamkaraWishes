@@ -372,4 +372,12 @@
   .ui-invperk.is-active { border-color: var(--ui-accent); }
   .ui-invperk.is-active .ui-invperk__img { opacity: 1; }
   .ui-invequipped { margin: 0; }
+
+  /* ---------- Lists and Me ---------- */
+  .ui-listlist { display: flex; flex-direction: column; gap: var(--ui-space-2); }
+  .ui-listrow { display: flex; align-items: center; gap: var(--ui-space-1); background: var(--ui-surface-1); border: var(--ui-border); border-radius: var(--ui-radius-lg); padding-right: var(--ui-space-1); }
+  .ui-listrow.is-current { border-color: var(--ui-accent-line); background: var(--ui-accent-faint); }
+  .ui-listrow__main { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--ui-space-3); min-height: 60px; padding: var(--ui-space-2) var(--ui-space-3); text-align: left; }
+  .ui-listrow__main .ui-row__text { flex: 1; min-width: 0; }
+  .ui-me__version { text-align: center; margin: 0; }
 }

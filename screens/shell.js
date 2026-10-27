@@ -60,7 +60,7 @@
   // ---- state the shell shows -----------------------------------------------------------
 
   const store = {
-    auth: { signedIn: false, expired: false, name: '' },
+    auth: { signedIn: false, expired: false, name: '', avatar: '' },
     manifest: 'downloading',
     lists: [],           // [{ id, name, count }]
     activeId: 'default'
@@ -73,7 +73,8 @@
     store.auth = {
       signedIn,
       expired: !!(res && res.bungie_session_expired),
-      name: (user && (user.cachedBungieGlobalDisplayName || user.displayName || user.uniqueName || user.bnetDisplayName)) || ''
+      name: (user && (user.cachedBungieGlobalDisplayName || user.displayName || user.uniqueName || user.bnetDisplayName)) || '',
+      avatar: user && (user.profilePicturePath || user.ProfilePicturePath) ? `https://www.bungie.net${user.profilePicturePath || user.ProfilePicturePath}` : ''
     };
   }
 
@@ -161,6 +162,7 @@
       toast: UI.toast,
       openSheet,
       startWish, editWish, startFromOwned,
+      openAutomation: (trigger) => { if (drops) drops.openAutomation(trigger); },
       goClassic: () => setEnabled(false),
       signIn: () => runAction('signin'),
       /** Shows how many new things a tab has (0 hides it). */
@@ -181,6 +183,7 @@
     };
     const wishes = root.AWWishes ? root.AWWishes.create(ctx) : null;
     const inventory = root.AWInventoryScreen ? root.AWInventoryScreen.create(ctx) : null;
+    if (root.AWListsScreen) root.AWListsScreen.create(ctx);
     // After the Wishes and Inventory screens: full-screen layers stack in page order, and a builder opened from a detail screen must sit above it.
     ctx.weaponBuilder = root.AWWeaponBuilderScreen ? root.AWWeaponBuilderScreen.create(ctx) : null;
     ctx.armorBuilder = root.AWArmorBuilderScreen ? root.AWArmorBuilderScreen.create(ctx) : null;
@@ -213,7 +216,6 @@
       }));
     TABS.forEach((t) => nav.addTab(t.id, { view: views[t.id], button: tabButtons[t.id] }));
 
-    addSheet('lists', 'Wishlists', () => fillSheet('lists'));
     addSheet('sync', 'Sync', () => fillSheet('sync'));
     addSheet('me', 'Account', () => fillSheet('me'));
     addSheet('newWish', 'New wish', () => fillSheet('newWish'));
@@ -256,15 +258,7 @@
 
     // --- sheet content
     function fillSheet(name) {
-      if (name === 'lists') {
-        setBody('lists', h('div', { class: 'ui-sheetlist' }, store.lists.map((l) => UI.row({
-          title: l.name, subtitle: `${l.count} ${l.count === 1 ? 'wish' : 'wishes'}`,
-          className: l.id === store.activeId ? 'is-current' : undefined,
-          trailing: l.id === store.activeId ? UI.ICON.check : null,
-          label: `${l.name}, ${l.count} wishes${l.id === store.activeId ? ', current list' : ''}`,
-          onClick: () => switchList(l.id)
-        }))));
-      } else if (name === 'newWish') {
+      if (name === 'newWish') {
         setBody('newWish', h('div', { class: 'ui-sheetlist' },
           UI.row({ title: 'Weapon wish', subtitle: 'Choose a weapon and the perks you want', trailing: UI.ICON.chevron, onClick: () => { nav.close('newWish'); startWish('weapon'); } }),
           UI.row({ title: 'Armor wish', subtitle: 'Choose an archetype for a set', trailing: UI.ICON.chevron, onClick: () => { nav.close('newWish'); startWish('armor'); } })));
@@ -276,16 +270,35 @@
         sheets.sync.setTitle(s.title);
       } else if (name === 'me') {
         const a = store.auth;
+        const avatar = D.safeImageUrl(a.avatar);
+        const version = (() => { try { return root.chrome.runtime.getManifest().version; } catch (e) { return ''; } })();
         setBody('me', h('div', { class: 'ui-field-gap' },
           UI.row({
+            leading: avatar ? h('img', { class: 'ui-itemicon', src: avatar, alt: '' }) : null,
             title: a.signedIn ? (a.name || 'Signed in') : 'Not signed in',
-            subtitle: a.signedIn ? 'Bungie account' : 'Sign in to see which wishes you already own.'
+            subtitle: a.signedIn ? 'Signed in with Bungie' : a.expired ? 'Your Bungie session expired. Sign in again.' : 'Sign in to see which wishes you already own.'
           }),
           a.signedIn
             ? UI.button({ label: 'Sign out', variant: 'secondary', block: true, onClick: () => { nav.close('me'); if (root.bungieAuth) root.bungieAuth.signOut(); } })
             : UI.button({ label: 'Sign in with Bungie', variant: 'primary', block: true, onClick: () => { nav.close('me'); runAction('signin'); } }),
-          UI.button({ label: 'Back to the classic design', variant: 'ghost', block: true, onClick: ctx.goClassic })));
+          h('div', { class: 'ui-sectiontitle' }, 'Settings'),
+          h('div', { class: 'ui-sheetlist' },
+            UI.row({ title: 'Automation', subtitle: 'Lock and vault new drops, and the drops log', trailing: UI.ICON.chevron, onClick: (e) => { nav.close('me'); ctx.openAutomation(e && e.currentTarget); } }),
+            UI.row({ title: 'Reset game data', subtitle: 'Download Destiny’s item data again if search or perks look wrong. Your wishlists aren’t affected.', className: 'is-danger', onClick: resetGameData })),
+          UI.button({ label: 'Back to the classic design', variant: 'ghost', block: true, onClick: ctx.goClassic }),
+          version ? h('p', { class: 'ui-note ui-me__version' }, `Ahamkara Wishes ${version}`) : null));
       }
+    }
+
+    /** Clears the downloaded manifest, then reloads so it downloads again (about 200 MB). */
+    async function resetGameData() {
+      const ok = await UI.confirm({
+        title: 'Reset game data?', body: 'The downloaded Destiny data is cleared and downloaded again when the panel reloads (about 200 MB). Your wishlists are not affected.',
+        confirmLabel: 'Reset and reload', danger: true
+      });
+      if (!ok) return;
+      try { await root.clearD2ManifestCache(); root.location.reload(); }
+      catch (e) { console.warn('[Shell] reset game data failed', e); ctx.toast('Couldn’t clear the game data. Please try again.'); }
     }
 
     function runAction(kind) {
@@ -293,16 +306,6 @@
       else if (kind === 'download') { if (root.ensureInventoryItemDefsReady) root.ensureInventoryItemDefsReady({ force: true }).then(() => root.location.reload()); }
       else ctx.syncNow();
       if (nav.isOpen('sync')) nav.close('sync');
-    }
-
-    function switchList(id) {
-      AWStore.update((data) => {
-        if (!data.lists || !data.lists[id]) return AWStore.SKIP;
-        data.activeId = id;
-      }).then(() => {
-        doc.dispatchEvent(new CustomEvent('wishListChanged', { detail: { id } }));
-        nav.close('lists');
-      });
     }
 
     // --- repaint
@@ -323,7 +326,7 @@
           action: s.banner.action ? { label: s.banner.action.label, onClick: () => runAction(s.banner.action.kind) } : null
         }));
       }
-      if (nav.isOpen('sync') || nav.isOpen('lists') || nav.isOpen('me')) fillSheet(nav.top);
+      if (nav.isOpen('sync') || nav.isOpen('me')) fillSheet(nav.top);
     }
 
     // --- wiring

@@ -138,6 +138,35 @@
       h('span', { class: 'ui-search__icon', aria: { hidden: true } }, ICON.search), input, clear);
   }
 
+  // ---- text field ------------------------------------------------------------------
+
+  /**
+   * One-line text input with a visible label and a message line that says what
+   * is wrong (never colour alone). Enter calls onSubmit.
+   * @param {{label:string, value?:string, placeholder?:string, maxLength?:number, hint?:string,
+   *          onInput?:Function, onSubmit?:Function}} o
+   * @returns {HTMLElement} with .input and .setError(message|'')
+   */
+  function textField(o) {
+    const id = nextId('ui-text');
+    const msg = h('p', { id: `${id}-msg`, class: 'ui-textfield__msg', role: 'status' }, o.hint || '');
+    const input = h('input', {
+      id, type: 'text', class: 'ui-textfield__input', value: o.value || '', placeholder: o.placeholder || '',
+      maxlength: o.maxLength ? String(o.maxLength) : undefined, autocomplete: 'off', spellcheck: 'false', aria: { describedby: msg.id }
+    });
+    input.addEventListener('input', () => { setError(''); if (o.onInput) o.onInput(input.value); });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && o.onSubmit) { e.preventDefault(); o.onSubmit(input.value); } });
+    function setError(text) {
+      el.classList.toggle('has-error', !!text);
+      input.setAttribute('aria-invalid', text ? 'true' : 'false');
+      msg.textContent = text || o.hint || '';
+    }
+    const el = h('div', { class: 'ui-textfield' }, h('label', { for: id, class: 'ui-textfield__label' }, o.label), input, msg);
+    el.input = input;
+    el.setError = setError;
+    return el;
+  }
+
   // ---- rows, cards, badges ---------------------------------------------------------
 
   /**
@@ -347,7 +376,7 @@
   }
 
   root.AWUI = {
-    ICON, button, iconButton, chip, chipRow, segmented, searchField, row, card, badge,
+    ICON, button, iconButton, chip, chipRow, segmented, searchField, textField, row, card, badge,
     switchRow, banner, progress, emptyState, sheet, confirm, toast, dismissToast: dismiss, filterSheetBody
   };
 })(typeof window !== 'undefined' ? window : globalThis);

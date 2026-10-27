@@ -154,6 +154,135 @@
     return true;
   }
 
+  // ---- list operations (the Lists screen) -------------------------------------------
+  // Pure edits of `data`, callers persist it under the AWStore lock. Anything that
+  // removes a list records a tombstone so a browser still holding the old copy
+  // can't bring it back; the matching restore withdraws it.
+
+  const DEFAULT_LIST_ID = 'default';
+  const LIST_NAME_MAX = 60;
+
+  const makeListId = () => 'wl_' + Math.random().toString(36).slice(2, 9);
+  const cleanListName = (name) => String(name == null ? '' : name).replace(/\s+/g, ' ').trim().slice(0, LIST_NAME_MAX);
+  const sameName = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+
+  function nameTaken(data, name, exceptId) {
+    return Object.entries((data && data.lists) || {}).some(([id, l]) => id !== exceptId && sameName(l && l.name, name));
+  }
+
+  /** `name`, or `name (2)`, `name (3)` ... when another list already has it. */
+  function uniqueListName(data, name, exceptId) {
+    if (!nameTaken(data, name, exceptId)) return name;
+    let n = 2;
+    while (nameTaken(data, `${name} (${n})`, exceptId)) n++;
+    return `${name} (${n})`;
+  }
+
+  /** New empty list, made the active one. Returns { id } or { error: 'empty' | 'taken' }. */
+  function createList(data, name) {
+    const clean = cleanListName(name);
+    if (!clean) return { error: 'empty' };
+    if (nameTaken(data, clean)) return { error: 'taken' };
+    const id = makeListId();
+    data.lists[id] = { name: clean, items: {} };
+    data.activeId = id;
+    return { id };
+  }
+
+  /** Returns 'ok' | 'empty' | 'taken' | 'missing'. */
+  function renameList(data, id, name) {
+    if (!data.lists[id]) return 'missing';
+    const clean = cleanListName(name);
+    if (!clean) return 'empty';
+    if (nameTaken(data, clean, id)) return 'taken';
+    data.lists[id].name = clean;
+    return 'ok';
+  }
+
+  /** A copy named "<name> (copy)", made the active list. Returns its id, or null. */
+  function duplicateList(data, id) {
+    const src = data.lists[id];
+    if (!src) return null;
+    const copy = makeListId();
+    data.lists[copy] = { name: uniqueListName(data, cleanListName(`${src.name} (copy)`)), items: JSON.parse(JSON.stringify(src.items || {})) };
+    data.activeId = copy;
+    return copy;
+  }
+
+  const listPosition = (data, id) => Object.keys(data.lists).indexOf(id);
+
+  /**
+   * Deletes a list (never the default). Returns what restoreList needs, or null.
+   * The active list falls back to the default.
+   */
+  function removeList(data, id, now) {
+    if (!id || id === DEFAULT_LIST_ID || !data.lists[id]) return null;
+    const snap = { id, list: data.lists[id], position: listPosition(data, id), wasActive: data.activeId === id };
+    delete data.lists[id];
+    recordListTombstone(data, id, now);
+    if (snap.wasActive) data.activeId = DEFAULT_LIST_ID;
+    return snap;
+  }
+
+  /**
+   * Undoes removeList: puts the list back where it was and withdraws its tombstone.
+   * Its wishes get an `added` newer than that tombstone (in their old order), so a
+   * merge with a browser that saw the delete can't remove them again.
+   * Returns false, changing nothing, if a list with that id exists.
+   */
+  function restoreList(data, snap, now) {
+    if (!data || !snap || !snap.list || data.lists[snap.id]) return false;
+    const tombs = data.tombstones && data.tombstones.lists;
+    const deletedAt = (tombs && tombs[snap.id]) || 0;
+    if (tombs) delete tombs[snap.id];
+    const floor = Math.max(now || Date.now(), deletedAt + 1);
+    for (const item of Object.values(snap.list.items || {})) {
+      let prev = floor - 1;
+      for (const w of (item && item.wishes) || []) {
+        if (!w) continue;
+        w.added = Math.max(Number(w.added) || 0, prev + 1, floor);
+        prev = w.added;
+      }
+    }
+    const entries = Object.entries(data.lists);
+    entries.splice(Math.min(Math.max(snap.position | 0, 0), entries.length), 0, [snap.id, snap.list]);
+    data.lists = Object.fromEntries(entries);
+    if (snap.wasActive) data.activeId = snap.id;
+    return true;
+  }
+
+  /**
+   * Folds the `sourceIds` lists into `destId`: every roll of every list is kept
+   * (the same roll in two lists once), then the sources are removed. The default
+   * list is never a source. Returns { before, removed, added } for undoMerge, or
+   * null when there was nothing to merge.
+   */
+  function mergeLists(data, destId, sourceIds, now) {
+    const dest = data.lists[destId];
+    if (!dest) return null;
+    const sources = [...new Set(sourceIds || [])].filter((id) => id !== destId && id !== DEFAULT_LIST_ID && data.lists[id]);
+    if (!sources.length) return null;
+    const count = (items) => Object.values(items || {}).reduce((n, it) => n + ((it && it.wishes && it.wishes.length) || 0), 0);
+    const before = { items: JSON.parse(JSON.stringify(dest.items || {})), activeId: data.activeId };
+    const startCount = count(dest.items);
+    const removed = [];
+    for (const id of sources) {
+      dest.items = mergeItems(dest.items, data.lists[id].items, null);
+      removed.push(removeList(data, id, now));
+    }
+    return { destId, before, removed: removed.filter(Boolean), added: count(dest.items) - startCount };
+  }
+
+  /** Undoes mergeLists: the destination as it was, and the source lists back. */
+  function undoMerge(data, result, now) {
+    if (!result || !data.lists[result.destId]) return false;
+    data.lists[result.destId].items = result.before.items;
+    // Last removed first: each list was removed from the shape the previous one left, so this retraces it exactly.
+    [...result.removed].reverse().forEach((snap) => restoreList(data, snap, now));
+    data.activeId = result.before.activeId in data.lists ? result.before.activeId : DEFAULT_LIST_ID;
+    return true;
+  }
+
   /**
    * Finds the wish a list row was drawn from. Rows remember the index AND the
    * wish's key when they render; by the time someone taps Delete or Save, the
@@ -332,6 +461,15 @@
     migrateArmorConfig,
     recordListTombstone,
     recordWishTombstone,
+    createList,
+    renameList,
+    duplicateList,
+    removeList,
+    restoreList,
+    mergeLists,
+    undoMerge,
+    uniqueListName,
+    LIST_NAME_MAX,
     replaceWish,
     restoreWish,
     locateWish,

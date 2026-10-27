@@ -82,6 +82,18 @@
   .ui-search__input::-webkit-search-cancel-button { display: none; }
   .ui-search:has(.ui-search__input:focus-visible) { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
 
+  /* ---------- text field ---------- */
+  .ui-textfield { display: flex; flex-direction: column; gap: var(--ui-space-1); }
+  .ui-textfield__label { font-size: var(--ui-text-sm); color: var(--ui-text-muted); font-weight: var(--ui-weight-semibold); }
+  .ui-textfield__input {
+    height: var(--ui-tap); padding: 0 var(--ui-space-3); background: var(--ui-surface-1); color: var(--ui-text);
+    border: var(--ui-border); border-radius: var(--ui-radius-lg); min-width: 0;
+  }
+  .ui-textfield__input:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; border-color: var(--ui-accent-line); }
+  .ui-textfield__msg { margin: 0; min-height: 1.4em; font-size: var(--ui-text-sm); color: var(--ui-text-muted); }
+  .ui-textfield.has-error .ui-textfield__input { border-color: var(--ui-danger); }
+  .ui-textfield.has-error .ui-textfield__msg { color: var(--ui-danger); }
+
   /* ---------- rows, cards, badges ---------- */
   .ui-card { background: var(--ui-surface-1); border: var(--ui-border); border-radius: var(--ui-radius-lg); overflow: hidden; }
   .ui-row {

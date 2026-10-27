@@ -46,6 +46,7 @@ cp sync-status.js    "$DIST/"
 cp wishlist-validate.js "$DIST/"
 cp drops-core.js     "$DIST/"
 cp weapon-builder-core.js "$DIST/"
+cp armor-builder-core.js "$DIST/"
 
 # --- Redesigned screens ---
 mkdir -p "$DIST/screens"

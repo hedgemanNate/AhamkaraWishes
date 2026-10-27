@@ -253,14 +253,14 @@
       if (!f) { refs.detail.replaceChildren(h('p', { class: 'ui-note' }, 'Tap a perk to add it. Its details show here.')); return; }
       const plug = f.pair.enhanced || f.pair.base;
       const rows = (plug.stats || []).filter((x) => s.weapon.statNames.has(x.hash));
-      refs.detail.replaceChildren(
+      refs.detail.replaceChildren(...[
         h('div', { class: 'ui-perkdetail__head' }, icon(f.pair.base.icon, 'ui-ptile__img ui-perkdetail__icon'),
           h('div', { class: 'ui-perkdetail__name' }, text(f.pair.base.name, 'Perk'), f.pair.enhanced ? h('span', { class: 'ui-badge ui-badge--accent' }, 'Enhanced available') : null)),
         plug.description ? h('p', { class: 'ui-perkdetail__desc' }, plug.description) : null,
         rows.length
           ? h('div', { class: 'ui-perkdetail__stats' }, rows.map((x) => h('span', { class: ['ui-delta', x.value > 0 ? 'is-pos' : 'is-neg'] },
             `${s.weapon.statNames.get(x.hash)} ${x.value > 0 ? '+' : ''}${x.value}`)))
-          : h('p', { class: 'ui-note' }, 'No stat changes.'));
+          : h('p', { class: 'ui-note' }, 'No stat changes.')].filter(Boolean));
     }
 
     function paintPreviewBar() {
@@ -282,18 +282,18 @@
       refs.summary.textContent = perks ? `${plural(perks, 'perk', 'perks')}${combos ? ` · ${plural(combos, 'combo', 'combos')}` : ''}` : 'Nothing picked yet';
       const nothing = B.isEmpty(s.perks);
       const primary = UI.button({ label: s.edit ? 'Update roll' : 'Save wish', variant: 'primary', disabled: nothing || s.saving, onClick: () => save(!!s.edit) });
-      refs.save.replaceChildren(primary, s.edit ? UI.button({ label: 'Save as new', variant: 'secondary', disabled: nothing || s.saving, onClick: () => save(false) }) : null);
+      refs.save.replaceChildren(...[primary, s.edit ? UI.button({ label: 'Save as new', variant: 'secondary', disabled: nothing || s.saving, onClick: () => save(false) }) : null].filter(Boolean));
     }
 
     // --- stats
     function buildStatRows() {
       refs.rows = new Map();
       refs.stats.replaceChildren(...s.weapon.displayStats.map((stat) => {
-        const num = h('span', { class: 'ui-stat__num' }, '0');
+        const num = h('span', { class: 'ui-statrow__num' }, '0');
         let mid = null;
-        if (stat.isRecoil) mid = h('span', { class: 'ui-stat__recoil' }, raw(RECOIL_SVG));
-        else if (stat.isBar) mid = h('span', { class: 'ui-stat__track' }, h('span', { class: 'ui-stat__base' }), h('span', { class: 'ui-stat__delta' }));
-        const row = h('div', { class: 'ui-stat' }, h('span', { class: 'ui-stat__label' }, text(stat.name, '')), mid, num);
+        if (stat.isRecoil) mid = h('span', { class: 'ui-statrow__recoil' }, raw(RECOIL_SVG));
+        else if (stat.isBar) mid = h('span', { class: 'ui-statrow__track' }, h('span', { class: 'ui-statrow__base' }), h('span', { class: 'ui-statrow__delta' }));
+        const row = h('div', { class: 'ui-statrow' }, h('span', { class: 'ui-statrow__label' }, text(stat.name, '')), mid, num);
         refs.rows.set(stat.statHash, { stat, row, num, mid });
         return row;
       }));
@@ -309,7 +309,7 @@
         if (!stat.isBar) return;
         const baseShown = root.interpolateStatValue(stat.base, stat.interpolation);
         const basePct = clamp(baseShown / stat.displayMaximum * 100), totalPct = clamp(shown / stat.displayMaximum * 100);
-        const baseEl = mid.querySelector('.ui-stat__base'), deltaEl = mid.querySelector('.ui-stat__delta');
+        const baseEl = mid.querySelector('.ui-statrow__base'), deltaEl = mid.querySelector('.ui-statrow__delta');
         const low = Math.min(basePct, totalPct);
         baseEl.style.width = `${low}%`;
         deltaEl.style.left = `${low}%`;

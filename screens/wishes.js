@@ -58,7 +58,6 @@
     let data = null;              // dimData, kept current from storage
     let queued = false;
     let detail = null;            // { kind: 'weapon', hash } | { kind: 'armor', key }
-    const bonusCache = new Map(); // setHash -> bonuses | 'loading'
 
     // --- list controls
     const seg = UI.segmented({
@@ -366,30 +365,14 @@
     }
 
     // --- set bonus (D15): what wearing 2 and 4 pieces does
-    function bonusBlock(set) {
-      const none = () => h('div', { class: 'ui-bonus ui-bonus--none' }, 'No set bonus');
-      if (!set.setHash || typeof getArmorSetBonuses !== 'function') return none();
-      const cached = bonusCache.get(set.setHash);
-      if (cached === undefined) {
-        bonusCache.set(set.setHash, 'loading');
-        getArmorSetBonuses(set.setHash).then((b) => bonusCache.set(set.setHash, b), () => bonusCache.set(set.setHash, [])).then(schedule);
-      }
-      if (Array.isArray(cached) && cached.length === 0) return none();
-      return h('div', { class: 'ui-bonus' }, h('div', { class: 'ui-bonus__title' }, 'Set bonus'),
-        Array.isArray(cached)
-          ? cached.map((b) => h('div', { class: 'ui-bonus__item' }, b.icon ? icon(b.icon) : null,
-            h('div', null,
-              h('div', { class: 'ui-bonus__name' }, `${b.name} `, h('span', { class: 'ui-bonus__count' }, `${b.count} pieces`)),
-              h('div', { class: 'ui-bonus__desc' }, b.description))))
-          : h('div', { class: 'ui-bonus__desc' }, 'Loading…'));
-    }
+    function bonusBlock(set) { return root.AWSetBonus.block(set.setHash); }
 
     // --- wiring
     chrome.storage.local.get(['dimData'], (res) => { data = res.dimData || {}; render(); }); // a fresh install has no data yet
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === 'local' && changes.dimData) { data = changes.dimData.newValue || {}; schedule(); }
     });
-    doc.addEventListener('awManifestReady', () => { bonusCache.clear(); schedule(); });
+    doc.addEventListener('awManifestReady', schedule);
 
     /**
      * Opens the detail for an item (from a Drop). Resolves false when it isn't in

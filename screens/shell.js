@@ -182,6 +182,7 @@
     const wishes = root.AWWishes ? root.AWWishes.create(ctx) : null;
     // After the Wishes screen: full-screen layers stack in page order, and a builder opened from a wish's detail must sit above it.
     ctx.weaponBuilder = root.AWWeaponBuilderScreen ? root.AWWeaponBuilderScreen.create(ctx) : null;
+    ctx.armorBuilder = root.AWArmorBuilderScreen ? root.AWArmorBuilderScreen.create(ctx) : null;
     views.wishes = h('section', { class: 'ui-screen', id: 'ui-screen-wishes', hidden: true }, wishes ? wishes.el : null);
     const drops = root.AWDropsScreen ? root.AWDropsScreen.create(ctx) : null;
     views.drops = h('section', { class: 'ui-screen', id: 'ui-screen-drops', hidden: true }, drops ? drops.el : null);
@@ -229,13 +230,14 @@
     /** Starts a new wish: a weapon or armor. Without a kind, asks which. */
     function startWish(kind) {
       if (kind === 'weapon') { if (ctx.weaponBuilder) ctx.weaponBuilder.start(); else builderMissing(); return; }
-      if (kind === 'armor') { builderMissing(); return; }
+      if (kind === 'armor') { if (ctx.armorBuilder) ctx.armorBuilder.start(); else builderMissing(); return; }
       openSheet('newWish', addWish);
     }
 
     /** Edits one saved roll: { kind, hash, index, key, item, wish }. */
     function editWish(p, trigger) {
       if (p && p.kind === 'weapon' && ctx.weaponBuilder) ctx.weaponBuilder.edit(p, trigger);
+      else if (p && p.kind === 'armor' && ctx.armorBuilder) ctx.armorBuilder.edit(p, trigger);
       else builderMissing();
     }
 

@@ -385,7 +385,7 @@ async function checkNextBuilder(browser, base, width) {
       multi: q(`${b}.ui-ptile`).some((t) => t.querySelectorAll('.ui-ptile__combo').length === 2),
       brush: q(`${b}.ui-brush .ui-seg__opt`).map((o) => o.textContent.trim()),
       actions: q(`${b}.ui-builder__actions .ui-btn`).map((o) => o.textContent.trim()),
-      statRows: q(`${b}.ui-stat`).length,
+      statRows: q(`${b}.ui-statrow`).length,
       onTop: (() => { const t = q(`${b}.ui-ptile`)[0].getBoundingClientRect(); const at = document.elementFromPoint(t.left + t.width / 2, t.top + t.height / 2); return !!(at && at.closest('.ui-builder')); })(),
       wider: document.documentElement.scrollWidth > innerWidth + 1
     };
@@ -397,6 +397,7 @@ async function checkNextBuilder(browser, base, width) {
   check(`${tag}: the toolbar offers Any and combos 1-4`, r.brush.join() === 'Any,1,2,3,4' || r.brush.join(',').startsWith('Any,1'), r.brush.join());
   check(`${tag}: Update roll and Save as new are pinned`, r.actions.join() === 'Update roll,Save as new', r.actions.join());
   check(`${tag}: stats are shown`, r.statRows >= 4, String(r.statRows));
+  check(`${tag}: no stray "null" or "[object" text`, await ev(() => !/\[object|\bnull\b/.test(document.querySelector('.ui-builder:not([hidden])').textContent)));
   await page.screenshot(path.join(OUT, `next-builder-${width}.png`));
 
   // painting: pick an unpicked perk with combo 2, then tap it again to take it off
@@ -465,6 +466,119 @@ async function checkNextBuilder(browser, base, width) {
   await wait(900);
   const countAfter = count(await ev(() => window.__awPreview.dump().dimData.lists.default.items));
   check(`${tag}: Save adds exactly one wish and closes both screens`, countAfter === countBefore + 1 && await ev(() => !document.querySelector('.ui-builder:not([hidden])') && !document.querySelector('.ui-subscreen:not([hidden])')), `${countBefore} -> ${countAfter}`);
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
+/** The armor builder: edit a saved roll, optional Tertiary/Spark, discard prompt, and a new set wish. */
+async function checkNextArmorBuilder(browser, base, width) {
+  const tag = `[${width}] next armor builder`;
+  const page = await openPanel(browser, base, 'owned', width, 'ui=next');
+  const ev = (fn) => page.eval(fn);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const B = '.ui-builder:not([hidden]) ';
+  const items = () => ev(() => window.__awPreview.dump().dimData.lists.default.items);
+  const count = (it) => Object.values(it).reduce((n, x) => n + x.wishes.length, 0);
+  await wait(1500);
+  await ev(() => document.querySelector('.ui-seg__opt[data-value=armor]').click());
+  await wait(800);
+  await ev(() => [...document.querySelectorAll('.ui-itemrow')].find((r) => /Techsec/.test(r.textContent)).click());
+  await wait(600);
+  await ev(() => document.querySelector('.ui-subscreen:not([hidden]) .ui-rollcard .ui-btn').click());
+  await page.waitFor(() => document.querySelectorAll('.ui-builder:not([hidden]) .ui-arch').length > 0, { timeoutMs: 20000 });
+  await wait(500);
+  const r = await ev(() => {
+    const q = (sel) => [...document.querySelectorAll(sel)];
+    const b = '.ui-builder:not([hidden]) ';
+    const a = document.querySelector(`${b}.ui-detailhead`).getBoundingClientRect();
+    const at = document.elementFromPoint(a.left + 20, a.top + a.height / 2);
+    return {
+      title: document.querySelector(`${b}.ui-subscreen__title`).textContent,
+      onTop: !!(at && at.closest('.ui-builder')),
+      archetypes: q(`${b}.ui-arch`).length,
+      arch: q(`${b}.ui-arch[aria-pressed=true]`).map((x) => x.dataset.arch),
+      tert: q(`${b}[aria-label="Tertiary stat"] [aria-pressed=true]`).map((x) => x.dataset.stat),
+      blocked: q(`${b}[aria-label="Tertiary stat"] [aria-disabled=true]`).map((x) => x.dataset.stat),
+      slots: q(`${b}.ui-slot`).length, slotsDisabled: q(`${b}.ui-slot:disabled`).length,
+      bonus: !!document.querySelector(`${b}.ui-bonus`),
+      actions: q(`${b}.ui-builder__actions .ui-btn`).map((x) => x.textContent.trim()),
+      wider: document.documentElement.scrollWidth > innerWidth + 1
+    };
+  });
+  check(`${tag}: Edit roll opens it, on top, with the saved archetype`, r.title === 'Edit roll' && r.onTop && r.archetypes === 12 && r.arch.join() === 'BULWARK', JSON.stringify(r));
+  check(`${tag}: an older roll's stat shows as the Tertiary, and the archetype's stats can't be`, r.tert.join() === 'weapons' && r.blocked.join() === 'health,class', JSON.stringify([r.tert, r.blocked]));
+  check(`${tag}: editing fixes the piece and shows the set bonus block`, r.slots === 1 && r.slotsDisabled === 1 && r.bonus && r.actions.join() === 'Update roll,Save as new', JSON.stringify([r.slots, r.bonus, r.actions]));
+  check(`${tag}: nothing wider than the panel`, !r.wider);
+  check(`${tag}: no stray "null" or "[object" text`, await ev(() => !/\[object|\bnull\b/.test(document.querySelector('.ui-builder:not([hidden])').textContent)));
+  await page.screenshot(path.join(OUT, `next-armor-builder-${width}.png`));
+
+  // Tertiary and Spark are optional, and tapping the chosen one clears it
+  const opt = await ev(async () => {
+    const w = (ms) => new Promise((x) => setTimeout(x, ms));
+    const b = '.ui-builder:not([hidden]) ';
+    const chip = (group, stat) => document.querySelector(`${b}[aria-label="${group}"] .ui-statchip[data-stat=${stat}]`);
+    chip('Tertiary stat', 'weapons').click(); await w(150);
+    const cleared = chip('Tertiary stat', 'weapons').getAttribute('aria-pressed') === 'false';
+    chip('Spark stat', 'super').click(); await w(150);
+    const set = chip('Spark stat', 'super').getAttribute('aria-pressed') === 'true';
+    chip('Spark stat', 'super').click(); await w(150);
+    const off = chip('Spark stat', 'super').getAttribute('aria-pressed') === 'false';
+    chip('Tertiary stat', 'melee').click(); await w(150);
+    return { cleared, set, off, melee: chip('Tertiary stat', 'melee').getAttribute('aria-pressed') === 'true' };
+  });
+  check(`${tag}: Tertiary and Spark can be cleared and set`, opt.cleared && opt.set && opt.off && opt.melee, JSON.stringify(opt));
+  await ev(() => [...document.querySelectorAll('.ui-builder:not([hidden]) .ui-builder__actions .ui-btn')].find((b) => /Update roll/.test(b.textContent)).click());
+  await wait(900);
+  const cfg = (await items())[517096395].wishes[0].config;
+  check(`${tag}: Update roll saves the new roll in the current shape`, cfg.archetype === 'BULWARK' && cfg.tertiary === 'Melee' && cfg.spark === null && 'tertiary' in cfg, JSON.stringify(cfg));
+  check(`${tag}: it closes with a confirmation`, await ev(() => !document.querySelector('.ui-builder:not([hidden])') && /Roll updated/.test((document.querySelector('.ui-toast') || {}).textContent || '')));
+
+  // leaving with unsaved changes asks first
+  await ev(() => document.querySelector('.ui-subscreen:not([hidden]) .ui-rollcard .ui-btn').click());
+  await page.waitFor(() => document.querySelectorAll('.ui-builder:not([hidden]) .ui-arch').length > 0, { timeoutMs: 20000 });
+  await wait(400);
+  await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-arch[data-arch=GUNNER]').click());
+  await wait(200);
+  await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-subscreen__back').click());
+  await wait(400);
+  check(`${tag}: leaving with unsaved changes asks first`, await ev(() => !!document.querySelector('dialog[open]') && !!document.querySelector('.ui-builder:not([hidden])')));
+  await ev(() => [...document.querySelectorAll('dialog[open] .ui-btn')].find((b) => /Discard/.test(b.textContent)).click());
+  await wait(500);
+  check(`${tag}: Discard leaves, and nothing was saved`, (await items())[517096395].wishes[0].config.archetype === 'BULWARK' && await ev(() => !document.querySelector('.ui-builder:not([hidden])')));
+  await page.press('Escape'); await wait(300);
+
+  // a new wish for a whole set: + Wish -> Armor -> search -> set -> archetype -> save
+  await ev(() => document.querySelector('.ui-addwish').click());
+  await wait(400);
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((x) => /Armor wish/.test(x.textContent)).click());
+  await wait(500);
+  await ev(() => { const i = document.querySelector('.ui-subscreen:not([hidden]) input[type=search]'); i.value = 'techsec'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.waitFor(() => document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-itemrow').length > 0, { timeoutMs: 30000 });
+  check(`${tag}: search finds the set`, await ev(() => /Techsec/i.test(document.querySelector('.ui-subscreen:not([hidden]) .ui-itemrow').textContent)));
+  await ev(() => document.querySelector('.ui-subscreen:not([hidden]) .ui-itemrow').click());
+  await page.waitFor(() => document.querySelectorAll('.ui-builder:not([hidden]) .ui-arch').length > 0, { timeoutMs: 20000 });
+  await wait(600);
+  const n = await ev(() => document.querySelectorAll('.ui-builder:not([hidden]) .ui-slot.is-picked').length);
+  const fresh = await ev(() => ({
+    title: document.querySelector('.ui-builder:not([hidden]) .ui-subscreen__title').textContent,
+    save: document.querySelector('.ui-builder:not([hidden]) .ui-builder__actions .ui-btn').disabled,
+    why: document.querySelector('.ui-builder:not([hidden]) .ui-builder__summary').textContent
+  }));
+  check(`${tag}: a new wish starts with every piece chosen and asks for an archetype`, n >= 2 && fresh.title === 'New wish' && fresh.save && /archetype/i.test(fresh.why), JSON.stringify([n, fresh]));
+  await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-arch[data-arch=DEMOLITIONIST]').click());
+  await wait(200);
+  const dem = await ev(() => ({
+    blocked: [...document.querySelectorAll('.ui-builder:not([hidden]) [aria-label="Tertiary stat"] [aria-disabled=true]')].map((x) => x.dataset.stat).join(),
+    label: document.querySelector('.ui-builder:not([hidden]) .ui-builder__actions .ui-btn').textContent.trim(),
+    on: !document.querySelector('.ui-builder:not([hidden]) .ui-builder__actions .ui-btn').disabled
+  }));
+  check(`${tag}: Save names how many wishes it makes, and the archetype's stats can't be the Tertiary`, dem.on && dem.label === `Save ${n} wishes` && dem.blocked === 'class,grenade', JSON.stringify(dem));
+  const before = count(await items());
+  await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-builder__actions .ui-btn').click());
+  await wait(1500);
+  const afterItems = await items();
+  check(`${tag}: Save adds one wish per piece and closes both screens`, count(afterItems) === before + n && await ev(() => !document.querySelector('.ui-builder:not([hidden])') && !document.querySelector('.ui-subscreen:not([hidden])')), `${before} -> ${count(afterItems)}, expected +${n}`);
+  const added = Object.values(afterItems).flatMap((it) => it.wishes).filter((w) => w.config && w.config.archetype === 'DEMOLITIONIST');
+  check(`${tag}: the new wishes have the chosen roll and no Tertiary or Spark`, added.length === n && added.every((w) => w.config.tertiary === null && w.config.spark === null), JSON.stringify(added.map((w) => w.config)));
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
@@ -696,6 +810,7 @@ async function checkGallery(browser, base, width) {
       await checkNextOwned(browser, url, width);
       await checkNextDrops(browser, url, width);
       await checkNextBuilder(browser, url, width);
+      await checkNextArmorBuilder(browser, url, width);
 
       // empty
       page = await openPanel(browser, url, 'empty', width);

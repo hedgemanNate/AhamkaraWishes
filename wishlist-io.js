@@ -178,9 +178,7 @@
       data.activeId = newId;
 
       // Normalise imported entries (fills in mustHave, desired, runtime Sets)
-      if (window.awWishlist && window.awWishlist.normalizeWishlistData) {
-        window.awWishlist.normalizeWishlistData(data);
-      }
+      if (window.WishlistNormalize) window.WishlistNormalize.normalizeWishlistData(data);
     }).then(() => {
       if (window.awWishlist && window.awWishlist.render) window.awWishlist.render();
       document.dispatchEvent(new CustomEvent('wishListChanged', { detail: { id: newId } }));

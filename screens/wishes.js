@@ -336,7 +336,7 @@
         bonusBlock(set)
       ];
       set.pieces.forEach(({ hash, item, rolls }) => {
-        const slot = typeof getBucketName === 'function' && item.static.bucketHash ? getBucketName(item.static.bucketHash) : '';
+        const slot = root.AWArmorBuilder && typeof BUCKET_HASHES !== 'undefined' && item.static.bucketHash ? (root.AWArmorBuilder.slotOf(item.static.bucketHash, BUCKET_HASHES) || '') : '';
         const cls = CLASS_NAMES[item.static.classType] || '';
         out.push(h('section', { class: 'ui-piece' },
           h('div', { class: 'ui-piece__head' }, icon(item.static.icon, 'ui-itemicon ui-itemicon--lg'),

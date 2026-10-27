@@ -8,7 +8,7 @@ const assert = require('assert');
 
 global.window = global;
 
-// In-memory mock storage + minimal DOM so wishlist.js evaluates in Node
+// In-memory mock storage + minimal DOM so the modules evaluate in Node
 const store = {};
 global.chrome = { storage: { local: {
   get: (keys, cb) => {
@@ -29,12 +29,12 @@ global.document = {
   body: { classList: { add: () => {}, remove: () => {} }, appendChild: () => {} }
 };
 
-for (const f of ['wishlist.js', 'owned-inventory-index.js']) {
+for (const f of ['wishlist-normalize.js', 'owned-inventory-index.js']) {
   const code = fs.readFileSync(path.resolve(__dirname, '..', f), 'utf8');
   try { eval(code); } catch (e) { console.error(`Failed to eval ${f}:`, e); process.exit(2); }
 }
 
-const normalize = global.awWishlist.normalizeWishlistData;
+const normalize = global.WishlistNormalize.normalizeWishlistData;
 
 // --- Part 1: normalization of a content-script (DIM) style wish ---
 // Exactly what content.js used to persist: perks as the raw URL param string.

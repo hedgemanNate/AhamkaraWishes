@@ -8,7 +8,7 @@ const path = require('path');
 global.window = global;
 global.document = { addEventListener() {}, getElementById: () => null, querySelectorAll: () => [] };
 global.chrome = { storage: { local: { get: (k, cb) => cb({}), set: (o, cb) => cb && cb() }, onChanged: { addListener() {} } } };
-for (const f of ['wishlist-sync-core.js', 'weapon-wish-core.js', 'wishlist.js']) {
+for (const f of ['wishlist-sync-core.js', 'weapon-wish-core.js', 'wishlist-normalize.js']) {
   eval(fs.readFileSync(path.resolve(__dirname, '..', f), 'utf8'));
 }
 const WS = window.WishlistSync;
@@ -56,12 +56,12 @@ WS.recordWishTombstone(deletedOld, 'default', 1, legacyWish, T + 1000);
 merged = WS.mergeDimData(browserNew, deletedOld);
 check('a tombstone recorded before migration still deletes the migrated wish', !merged.lists.default.items[1]);
 
-// --- migration on load is persisted once (wishlist.js normalizer)
+// --- migration on load is persisted once (wishlist-normalize.js)
 const data = { activeId: 'default', lists: { default: { name: 'M', items: { 1: item({ tags: ['pve'], config: { archetype: 'GUNNER', spark: 'Class' }, raw: 'x', added: T }) } } } };
-check('normalizer reports the migration so it gets saved', window.awWishlist.normalizeWishlistData(data) === true);
+check('normalizer reports the migration so it gets saved', window.WishlistNormalize.normalizeWishlistData(data) === true);
 const stored = data.lists.default.items[1].wishes[0].config;
 check('normalizer migrated the stored config', stored.tertiary === 'Class' && stored.spark === null);
-window.awWishlist.normalizeWishlistData(data);
+window.WishlistNormalize.normalizeWishlistData(data);
 check('normalizing again leaves the config as it is', stored.tertiary === 'Class' && stored.spark === null);
 
 // --- adding through the shared rule

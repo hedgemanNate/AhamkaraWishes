@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-// Load wishlist.js into Node environment and mock chrome.storage
-const modulePath = path.resolve(__dirname, '..', 'wishlist.js');
+// Load wishlist-normalize.js into Node and mock chrome.storage
+const modulePath = path.resolve(__dirname, '..', 'wishlist-normalize.js');
 const code = fs.readFileSync(modulePath, 'utf8');
 global.window = global;
 
@@ -21,7 +21,7 @@ global.chrome = { storage: { local: {
   set: (obj, cb) => { Object.assign(store, obj); if (cb) cb(); }
 } } };
 
-// Minimal DOM mock so wishlist.js can evaluate in Node
+// Minimal DOM mock so the module can evaluate in Node
 global.document = {
   addEventListener: (ev, fn) => { if (ev === 'DOMContentLoaded') try { fn(); } catch (e) {} },
   getElementById: () => null,
@@ -30,9 +30,9 @@ global.document = {
   body: { classList: { add: () => {}, remove: () => {} }, appendChild: () => {} }
 };
 
-try { eval(code); } catch (e) { console.error('Failed to eval wishlist.js:', e); process.exit(2); }
+try { eval(code); } catch (e) { console.error('Failed to eval wishlist-normalize.js:', e); process.exit(2); }
 
-if (!global.awWishlist || !global.awWishlist.normalizeWishlistEntry) {
+if (!global.WishlistNormalize || !global.WishlistNormalize.normalizeWishlistEntry) {
   console.error('normalizeWishlistEntry not exposed');
   process.exit(2);
 }
@@ -42,7 +42,7 @@ const dimData = { lists: { default: { name: 'Main', items: {
   '500': { static: { name: 'Test Weapon' }, wishes: [ { itemHash: 500, desired: [1001,3001] } ] }
 } } } };
 
-const changed = global.awWishlist.normalizeWishlistData(dimData);
+const changed = global.WishlistNormalize.normalizeWishlistData(dimData);
 assert.strictEqual(changed, true, 'Normalization should flag persisted change (mustHave added)');
 
 const wish = dimData.lists.default.items['500'].wishes[0];

@@ -62,6 +62,7 @@
   const store = {
     auth: { signedIn: false, expired: false, name: '', avatar: '' },
     manifest: 'downloading',
+    isAdmin: false,
     lists: [],           // [{ id, name, count }]
     activeId: 'default'
   };
@@ -191,11 +192,8 @@
     const drops = root.AWDropsScreen ? root.AWDropsScreen.create(ctx) : null;
     views.drops = h('section', { class: 'ui-screen', id: 'ui-screen-drops', hidden: true }, drops ? drops.el : null);
     views.inventory = h('section', { class: 'ui-screen', id: 'ui-screen-inventory', hidden: true }, inventory ? inventory.el : null);
-    views.discover = h('section', { class: 'ui-screen', id: 'ui-screen-discover', hidden: true },
-      UI.emptyState({
-        title: 'Discover', body: 'Community and creator wishlists.',
-        actions: [UI.button({ label: 'Open Discover', variant: 'primary', onClick: openDiscover })]
-      }));
+    const discover = root.AWDiscoverScreen ? root.AWDiscoverScreen.create(ctx) : null;
+    views.discover = h('section', { class: 'ui-screen', id: 'ui-screen-discover', hidden: true }, discover ? discover.el : null);
     TABS.forEach((t) => main.appendChild(views[t.id]));
 
     function comingSoon(title, body) {
@@ -251,11 +249,6 @@
       else builderMissing();
     }
 
-    function openDiscover() {
-      const btn = doc.getElementById('nav-discover');
-      if (btn) btn.click();
-    }
-
     // --- sheet content
     function fillSheet(name) {
       if (name === 'newWish') {
@@ -284,6 +277,7 @@
           h('div', { class: 'ui-sectiontitle' }, 'Settings'),
           h('div', { class: 'ui-sheetlist' },
             UI.row({ title: 'Automation', subtitle: 'Lock and vault new drops, and the drops log', trailing: UI.ICON.chevron, onClick: (e) => { nav.close('me'); ctx.openAutomation(e && e.currentTarget); } }),
+            store.isAdmin ? UI.row({ title: 'Admin', subtitle: 'Creators and moderation', trailing: UI.ICON.chevron, onClick: () => { nav.close('me'); const b = doc.getElementById('nav-admin'); if (b) b.click(); } }) : null,
             UI.row({ title: 'Reset game data', subtitle: 'Download Destiny’s item data again if search or perks look wrong. Your wishlists aren’t affected.', className: 'is-danger', onClick: resetGameData })),
           UI.button({ label: 'Back to the classic design', variant: 'ghost', block: true, onClick: ctx.goClassic }),
           version ? h('p', { class: 'ui-note ui-me__version' }, `Ahamkara Wishes ${version}`) : null));
@@ -340,6 +334,8 @@
         chrome.storage.local.get(['bungie_auth', 'bungie_session_expired'], (res) => { readAuth(res); paint(); });
       }
     });
+    // The owner's moderation tools stay in the classic Admin sheet; Me offers the way in once admin is confirmed.
+    doc.addEventListener('ahamkara:adminStatusChanged', (e) => { store.isAdmin = !!(e.detail && e.detail.isAdmin); if (nav.isOpen('me')) fillSheet('me'); });
     doc.addEventListener('awSyncChanged', paint);
     doc.addEventListener('awManifestReady', () => { store.manifest = 'ready'; paint(); });
     const overlay = doc.getElementById('loading-overlay');
@@ -349,14 +345,7 @@
     // "Synced 2m ago" stays honest while nothing else changes.
     root.setInterval(() => { if (!doc.hidden) paint(); }, 30000);
 
-    // Opening the Discover tab opens the Discover sheet (the old one, until it is rebuilt).
-    let lastTab = null, started = false;
-    nav.onChange((s) => {
-      if (started && s.tab === 'discover' && lastTab !== 'discover') openDiscover();
-      lastTab = s.tab;
-    });
     nav.restore('wishes');
-    started = true;
     paint();
 
     return { nav, ctx, paint, el: shell };

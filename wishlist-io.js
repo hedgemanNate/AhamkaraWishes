@@ -138,18 +138,19 @@
 
   // --- Import ---
 
+  /** Imports a list. Resolves true when it was added, false when it was refused (the reason is toasted). */
   function importFromPayload(payload) {
     if (payload.aw !== MAGIC) {
       showToast('Not a valid Ahamkara Wishes file.', true);
-      return;
+      return Promise.resolve(false);
     }
     if (typeof payload.v !== 'number' || payload.v > FORMAT_VERSION) {
       showToast('Unrecognised file version. Update the extension and try again.', true);
-      return;
+      return Promise.resolve(false);
     }
     if (!payload.list || typeof payload.list !== 'object') {
       showToast('Wishlist file is missing list data.', true);
-      return;
+      return Promise.resolve(false);
     }
 
     // The list came from a file or from someone else's Discover submission, so
@@ -157,17 +158,17 @@
     const importedList = window.WishlistValidate && window.WishlistValidate.sanitizeList(payload.list);
     if (!importedList) {
       showToast('Wishlist file is missing list data.', true);
-      return;
+      return Promise.resolve(false);
     }
     if (importedList.itemCount === 0 && (importedList.droppedItems > 0 || importedList.droppedWishes > 0)) {
       showToast('No valid wishes found in this file.', true);
-      return;
+      return Promise.resolve(false);
     }
 
     let name = importedList.name;
     let newId = null;
 
-    AWStore.update((data) => {
+    return AWStore.update((data) => {
       // Resolve name collision by appending a suffix
       const existingNames = new Set(Object.values(data.lists).map((l) => l && l.name));
       name = importedList.name;
@@ -192,9 +193,11 @@
       const skipped = importedList.droppedItems + importedList.droppedWishes;
       showToast('Imported "' + name + '" — ' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') +
         (skipped ? ' (' + skipped + ' skipped)' : ''));
+      return true;
     }).catch((e) => {
       console.warn('[Import] failed', e);
       showToast('Could not import this wishlist.', true);
+      return false;
     });
   }
 

@@ -802,6 +802,143 @@ async function checkNextLists(browser, base, width) {
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
+/** Discover: browse, search, filters, save, submit (with the cap error), delete your own, and failing gracefully. */
+async function checkNextDiscover(browser, base, width) {
+  const tag = `[${width}] next discover`;
+  const page = await openPanel(browser, base, 'demo', width, 'ui=next');
+  const ev = (fn, ...args) => page.eval(fn, ...args);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const dim = () => ev(() => window.__awPreview.dump().dimData);
+  await wait(1500);
+
+  // a pretend server, so the check needs no network and can make it fail on purpose
+  await ev(() => {
+    const row = (id, extra) => Object.assign({ id, title: `List ${id}`, game_mode: 'pve', has_weapons: true, has_armor: false, item_count: 3, save_count: 2, featured: false, submitter_bungie_name: `Guardian#${id}` }, extra);
+    const evil = row(100, { title: '<img src=x onerror="window.__pwned=1">', game_mode: 'x" onclick="window.__pwned=1' });
+    window.__srv = {
+      fail: false, capReached: false, calls: [],
+      creators: [{ bungie_name: 'Datto#1', display_name: 'Datto', verified: true }],
+      featured: [row(1, { title: 'Datto PvE meta', featured: true, submitter_bungie_name: 'Datto#1', save_count: 9 })],
+      page1: [evil].concat(Array.from({ length: 19 }, (_, i) => row(200 + i))),
+      page2: [row(300), row(301), row(302)],
+      search: [row(400, { title: 'Datto’s picks', submitter_bungie_name: 'Datto#1' })],
+      mine: [row(500, { title: 'My PvP list', game_mode: 'pvp', submitter_bungie_name: 'Me#1' })]
+    };
+    window.supabaseFetch = async (url, init) => {
+      const S = window.__srv, body = init && init.body ? JSON.parse(init.body) : null;
+      S.calls.push({ url, body });
+      const r = (status, json) => ({ ok: status < 400, status, json: async () => json });
+      if (S.fail) throw new Error('offline');
+      if (url.includes('/creators')) return r(200, S.creators);
+      if (url.includes('wishlist-actions')) {
+        if (body.action === 'whoami') return r(200, { membershipId: 'm1', submittedCount: S.mine.length, cap: 5 });
+        if (body.action === 'submit') return S.capReached ? r(400, { error: 'submission_cap_reached' }) : r(200, { ok: true });
+        if (body.action === 'delete') { S.mine = S.mine.filter((x) => String(x.id) !== String(body.wishlist_id)); return r(200, { ok: true }); }
+      }
+      if (url.includes('select=payload')) return r(200, [{ payload: window.__payload }]);
+      if (url.includes('increment_wishlist_save_count')) return r(200, {});
+      if (url.includes('submitter_membership_id=eq.m1')) return r(200, S.mine);
+      if (url.includes('featured=eq.true')) return r(200, S.featured);
+      if (url.includes('featured=eq.false')) return r(200, url.includes('offset=0') ? S.page1 : S.page2);
+      if (url.includes('ilike')) return r(200, S.search);
+      return r(404, {});
+    };
+    window.bungieAuth = { getValidAuth: async () => ({ access_token: 'tok' }), signIn: async () => {} };
+    return new Promise((res) => window.awWishlistIO.getActiveListPayload((p) => { window.__payload = p; res(); }));
+  });
+  const cards = () => ev(() => document.querySelectorAll('#ui-screen-discover .ui-wlcard').length);
+  const titles = () => ev(() => [...document.querySelectorAll('#ui-screen-discover .ui-sectiontitle')].map((x) => x.textContent));
+  const calls = () => ev(() => window.__srv.calls.map((c) => c.url));
+
+  await ev(() => document.querySelector('.ui-tab[data-tab=discover]').click());
+  await page.waitFor(() => document.querySelectorAll('#ui-screen-discover .ui-wlcard').length > 0, { timeoutMs: 20000 });
+  await wait(300);
+  const b = await ev(() => ({
+    titles: [...document.querySelectorAll('#ui-screen-discover .ui-sectiontitle')].map((x) => x.textContent),
+    first: document.querySelector('#ui-screen-discover .ui-wlcard').textContent,
+    verified: !!document.querySelector('#ui-screen-discover .ui-wlcard__verified'),
+    evil: document.querySelectorAll('#ui-screen-discover img').length, pwned: window.__pwned || null,
+    evilCard: [...document.querySelectorAll('#ui-screen-discover .ui-wlcard__title')].find((x) => /onerror/.test(x.textContent)) ? true : false,
+    more: [...document.querySelectorAll('#ui-screen-discover .ui-btn')].some((x) => /Load more/.test(x.textContent)),
+    wider: document.documentElement.scrollWidth > innerWidth + 1
+  }));
+  if (width === WIDTHS[0]) await page.screenshot(path.join(OUT, `next-discover-${width}.png`));
+  check(`${tag}: Featured then Community, the creator's own name and a verified tick`, b.titles.join() === 'Featured,Community' && /Datto PvE meta/.test(b.first) && /Datto/.test(b.first) && /Featured/.test(b.first) && b.verified, JSON.stringify(b));
+  check(`${tag}: someone else's markup shows as text and nothing runs`, b.evilCard && b.evil === 0 && !b.pwned && !b.wider);
+  check(`${tag}: a full page offers Load more`, b.more);
+  await ev(() => [...document.querySelectorAll('#ui-screen-discover .ui-btn')].find((x) => /Load more/.test(x.textContent)).click());
+  await wait(500);
+  check(`${tag}: Load more adds the next page and then goes away`, (await cards()) === 1 + 20 + 3 && await ev(() => ![...document.querySelectorAll('#ui-screen-discover .ui-btn')].some((x) => /Load more/.test(x.textContent))));
+
+  // filter and search
+  await ev(() => [...document.querySelectorAll('#ui-screen-discover .ui-chip')].find((c) => c.textContent === 'PvP').click());
+  await wait(700);
+  check(`${tag}: a filter chip asks the server for that mode`, (await calls()).some((u) => u.includes('game_mode=eq.pvp')) && await ev(() => document.querySelector('#ui-screen-discover .ui-chip.is-selected').textContent === 'PvP'));
+  await ev(() => [...document.querySelectorAll('#ui-screen-discover .ui-chip')].find((c) => c.textContent === 'All').click());
+  await wait(500);
+  await ev(() => { const i = document.querySelector('#ui-screen-discover input[type=search]'); i.value = 'datto'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.waitFor(() => /Results/.test(document.querySelector('#ui-screen-discover').textContent), { timeoutMs: 10000 });
+  await wait(300);
+  check(`${tag}: searching shows Results, with title and creator matches`, (await titles()).includes('Results') && !(await titles()).includes('Community') && (await calls()).some((u) => u.includes('ilike.*datto*')) && (await cards()) === 1);
+
+  // save
+  const listsBefore = Object.keys((await dim()).lists).length;
+  await ev(() => [...document.querySelectorAll('#ui-screen-discover .ui-wlcard .ui-btn')].find((x) => /Save to my lists/.test(x.textContent)).click());
+  await wait(1200);
+  const after = await dim();
+  const saved = await ev(() => ({ btn: document.querySelector('#ui-screen-discover .ui-wlcard .ui-btn').textContent.trim(), disabled: document.querySelector('#ui-screen-discover .ui-wlcard .ui-btn').disabled, saves: document.querySelector('#ui-screen-discover .ui-wlcard__saves').textContent, toast: (document.querySelector('.ui-toast') || {}).textContent || '' }));
+  check(`${tag}: Save adds the list as a new list of yours, says Saved, and counts the save`, Object.keys(after.lists).length === listsBefore + 1 && saved.btn === 'Saved' && saved.disabled && saved.saves === '3 saved' && /Imported/.test(saved.toast) && (await calls()).some((u) => u.includes('increment_wishlist_save_count')), JSON.stringify(saved));
+  await ev(() => { const i = document.querySelector('#ui-screen-discover input[type=search]'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await wait(900);
+
+  // submit, signed out then signed in
+  await ev(() => document.querySelector('.ui-discover__submit').click());
+  await wait(400);
+  check(`${tag}: signed out, Submit asks you to sign in`, await ev(() => /Sign in to submit/.test(document.querySelector('.ui-layer:not([hidden])').textContent) && !!document.querySelector('.ui-layer:not([hidden]) .ui-sheet__foot .ui-btn--primary')));
+  await page.press('Escape'); await wait(300);
+  await ev(() => chrome.storage.local.set({ bungie_auth: { access_token: 'x', user: { displayName: 'Tester' } } }));
+  await wait(400);
+  await ev(() => document.dispatchEvent(new CustomEvent('bungieAuthChanged', { detail: { auth: { access_token: 'x' } } })));
+  await wait(900);
+  check(`${tag}: signing in offers the Automation choice (D5)`, await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-sheet__title')].some((t) => /Automation/.test(t.textContent))));
+  await page.press('Escape'); await wait(300);
+  check(`${tag}: signed in, My submissions shows your list with Delete and your limit`, await ev(() => { const t = document.querySelector('#ui-screen-discover').textContent; return /My submissions/.test(t) && /1 of 5 used/.test(t) && /My PvP list/.test(t) && [...document.querySelectorAll('#ui-screen-discover .ui-btn')].some((x) => x.textContent === 'Delete'); }));
+  await ev(() => document.querySelector('.ui-discover__submit').click());
+  await wait(900);
+  const sub = await ev(() => { const l = document.querySelector('.ui-layer:not([hidden])'); return { title: (l.querySelector('input') || {}).value || '', mode: (l.querySelector('.ui-seg__opt.is-selected') || {}).textContent || '', text: l.textContent }; });
+  check(`${tag}: Submit shows your current list, its suggested mode and your limit`, sub.title.length > 0 && /PvE|PvP|Mixed/.test(sub.mode) && /items? in/.test(sub.text) && /1 of 5 submissions used/.test(sub.text), JSON.stringify(sub));
+  await ev(() => { const l = document.querySelector('.ui-layer:not([hidden])'); const i = l.querySelector('input'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); l.querySelector('.ui-sheet__foot .ui-btn').click(); });
+  await wait(300);
+  check(`${tag}: a missing title is refused in words`, await ev(() => /Give your wishlist a title/.test(document.querySelector('.ui-layer:not([hidden])').textContent)));
+  await ev(() => { window.__srv.capReached = true; const l = document.querySelector('.ui-layer:not([hidden])'); const i = l.querySelector('input'); i.value = 'Test list'; i.dispatchEvent(new Event('input', { bubbles: true })); l.querySelector('.ui-sheet__foot .ui-btn').click(); });
+  await wait(600);
+  check(`${tag}: the server's limit error is explained and the sheet stays`, await ev(() => /limit of 5/.test(document.querySelector('.ui-layer:not([hidden])').textContent)));
+  await ev(() => { window.__srv.capReached = false; document.querySelector('.ui-layer:not([hidden]) .ui-sheet__foot .ui-btn').click(); });
+  await wait(900);
+  const sent = await ev(() => window.__srv.calls.filter((c) => c.body && c.body.action === 'submit').pop().body);
+  check(`${tag}: Submit sends title, mode and the list, then closes with a thank-you`, sent.title === 'Test list' && ['pve', 'pvp', 'mixed'].includes(sent.game_mode) && sent.payload && sent.payload.items && await ev(() => ![...document.querySelectorAll('.ui-layer')].some((l) => !l.hidden) && /submitted/.test((document.querySelector('.ui-toast') || {}).textContent || '')));
+
+  // delete your own: asks first
+  await ev(() => [...document.querySelectorAll('#ui-screen-discover .ui-btn')].find((x) => x.textContent === 'Delete').click());
+  await wait(400);
+  check(`${tag}: deleting your own submission asks first, and Keep it changes nothing`, await ev(() => !!document.querySelector('dialog[open]')) && (await ev(() => { [...document.querySelectorAll('dialog[open] .ui-btn')].find((x) => /Keep it/.test(x.textContent)).click(); return true; })) && (await wait(300), await ev(() => /My PvP list/.test(document.querySelector('#ui-screen-discover').textContent))));
+  await ev(() => [...document.querySelectorAll('#ui-screen-discover .ui-btn')].find((x) => x.textContent === 'Delete').click());
+  await wait(400);
+  await ev(() => [...document.querySelectorAll('dialog[open] .ui-btn')].find((x) => x.textContent === 'Delete').click());
+  await wait(900);
+  check(`${tag}: confirming deletes it from the server and the screen`, await ev(() => window.__srv.calls.some((c) => c.body && c.body.action === 'delete' && c.body.wishlist_id === 500) && !/My PvP list/.test(document.querySelector('#ui-screen-discover').textContent)));
+
+  // an unreachable server is said plainly, with a way to retry
+  await ev(() => { window.__srv.fail = true; [...document.querySelectorAll('#ui-screen-discover .ui-chip')].find((c) => c.textContent === 'PvE').click(); });
+  await wait(900);
+  check(`${tag}: if Discover can't be reached it says so and offers Try again`, await ev(() => /Couldn.t reach Discover/.test(document.querySelector('#ui-screen-discover').textContent) && [...document.querySelectorAll('#ui-screen-discover .ui-btn')].some((x) => /Try again/.test(x.textContent))));
+  await ev(() => { window.__srv.fail = false; [...document.querySelectorAll('#ui-screen-discover .ui-btn')].find((x) => /Try again/.test(x.textContent)).click(); });
+  await wait(900);
+  check(`${tag}: Try again brings it back`, (await cards()) > 0);
+  await ev(() => document.querySelector('.ui-tab[data-tab=wishes]').click()); // the open tab is remembered between panels
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
 /** Lists from other people, shown in the new screens. */
 async function checkNextHostile(browser, base, width) {
   const tag = `[${width}] next hostile`;
@@ -1033,6 +1170,7 @@ async function checkGallery(browser, base, width) {
       await checkNextArmorBuilder(browser, url, width);
       await checkNextInventory(browser, url, width);
       await checkNextLists(browser, url, width);
+      await checkNextDiscover(browser, url, width);
 
       // empty
       page = await openPanel(browser, url, 'empty', width);

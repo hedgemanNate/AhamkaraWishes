@@ -48,6 +48,7 @@ cp drops-core.js     "$DIST/"
 cp weapon-builder-core.js "$DIST/"
 cp armor-builder-core.js "$DIST/"
 cp inventory-core.js "$DIST/"
+cp discover-core.js "$DIST/"
 
 # --- Redesigned screens ---
 mkdir -p "$DIST/screens"

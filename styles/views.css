@@ -380,4 +380,16 @@
   .ui-listrow__main { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--ui-space-3); min-height: 60px; padding: var(--ui-space-2) var(--ui-space-3); text-align: left; }
   .ui-listrow__main .ui-row__text { flex: 1; min-width: 0; }
   .ui-me__version { text-align: center; margin: 0; }
+
+  /* ---------- Discover ---------- */
+  .ui-discover__submit { flex: none; }
+  .ui-wlcard { display: flex; flex-direction: column; gap: var(--ui-space-2); padding: var(--ui-space-4); }
+  .ui-wlcard.is-featured { border-color: var(--ui-accent-line); background: var(--ui-accent-faint); }
+  .ui-wlcard__title { font-family: var(--ui-font-display); font-weight: var(--ui-weight-semibold); font-size: var(--ui-text-xl); overflow-wrap: anywhere; line-height: var(--ui-leading-tight); }
+  .ui-wlcard__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-2); color: var(--ui-text-muted); font-size: var(--ui-text-md); }
+  .ui-wlcard__author { color: var(--ui-text); overflow-wrap: anywhere; }
+  .ui-wlcard__verified { color: var(--ui-accent); font-weight: var(--ui-weight-bold); }
+  .ui-wlcard__tags { display: flex; flex-wrap: wrap; gap: var(--ui-space-1); }
+  .ui-wlcard__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-3); margin-top: var(--ui-space-1); }
+  .ui-wlcard__saves { color: var(--ui-text-muted); font-size: var(--ui-text-sm); }
 }

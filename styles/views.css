@@ -359,4 +359,17 @@
   .ui-statchip[data-stat="super"] .ui-statchip__dot { background: var(--ui-stat-super); }
   .ui-statchip[data-stat="melee"] .ui-statchip__dot { background: var(--ui-stat-melee); }
   .ui-statchip.is-unavailable { opacity: 0.4; cursor: not-allowed; }
+
+  /* ---------- Inventory ---------- */
+  .ui-inv__sync { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-2); min-height: var(--ui-tap); }
+  .ui-invcols { display: flex; flex-wrap: wrap; gap: var(--ui-space-3); align-items: flex-start; }
+  .ui-invcol { display: flex; flex-direction: column; gap: var(--ui-space-1); }
+  .ui-invperk {
+    position: relative; display: block; width: 40px; height: 40px; border-radius: var(--ui-radius-md);
+    border: 2px solid var(--ui-line); background: var(--ui-surface-1);
+  }
+  .ui-invperk__img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--ui-radius-md) - 2px); opacity: 0.5; }
+  .ui-invperk.is-active { border-color: var(--ui-accent); }
+  .ui-invperk.is-active .ui-invperk__img { opacity: 1; }
+  .ui-invequipped { margin: 0; }
 }

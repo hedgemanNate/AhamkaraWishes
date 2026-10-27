@@ -160,7 +160,7 @@
       nav, store, UI, AWDom: D, addSheet, addScreen,
       toast: UI.toast,
       openSheet,
-      startWish, editWish,
+      startWish, editWish, startFromOwned,
       goClassic: () => setEnabled(false),
       signIn: () => runAction('signin'),
       /** Shows how many new things a tab has (0 hides it). */
@@ -180,13 +180,14 @@
       syncNow: () => root.appManager && root.appManager.syncNow && root.appManager.syncNow(true)
     };
     const wishes = root.AWWishes ? root.AWWishes.create(ctx) : null;
-    // After the Wishes screen: full-screen layers stack in page order, and a builder opened from a wish's detail must sit above it.
+    const inventory = root.AWInventoryScreen ? root.AWInventoryScreen.create(ctx) : null;
+    // After the Wishes and Inventory screens: full-screen layers stack in page order, and a builder opened from a detail screen must sit above it.
     ctx.weaponBuilder = root.AWWeaponBuilderScreen ? root.AWWeaponBuilderScreen.create(ctx) : null;
     ctx.armorBuilder = root.AWArmorBuilderScreen ? root.AWArmorBuilderScreen.create(ctx) : null;
     views.wishes = h('section', { class: 'ui-screen', id: 'ui-screen-wishes', hidden: true }, wishes ? wishes.el : null);
     const drops = root.AWDropsScreen ? root.AWDropsScreen.create(ctx) : null;
     views.drops = h('section', { class: 'ui-screen', id: 'ui-screen-drops', hidden: true }, drops ? drops.el : null);
-    views.inventory = comingSoon('Inventory', 'Inventory search is the next screen to move over.');
+    views.inventory = h('section', { class: 'ui-screen', id: 'ui-screen-inventory', hidden: true }, inventory ? inventory.el : null);
     views.discover = h('section', { class: 'ui-screen', id: 'ui-screen-discover', hidden: true },
       UI.emptyState({
         title: 'Discover', body: 'Community and creator wishlists.',
@@ -238,6 +239,13 @@
     function editWish(p, trigger) {
       if (p && p.kind === 'weapon' && ctx.weaponBuilder) ctx.weaponBuilder.edit(p, trigger);
       else if (p && p.kind === 'armor' && ctx.armorBuilder) ctx.armorBuilder.edit(p, trigger);
+      else builderMissing();
+    }
+
+    /** A new wish that starts from the perks of an owned copy (Inventory). `input` is AWInventory.wishInput's. */
+    function startFromOwned(input, trigger) {
+      if (input && input.kind === 'weapon' && ctx.weaponBuilder) ctx.weaponBuilder.fromOwned(input.hash, input.name, input.activeBySocketIndex, trigger);
+      else if (input && input.kind === 'armor' && ctx.armorBuilder) ctx.armorBuilder.fromOwned(input, trigger);
       else builderMissing();
     }
 

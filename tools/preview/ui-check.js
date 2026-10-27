@@ -274,10 +274,6 @@ async function checkNext(browser, base, width) {
   await page.press('Escape');
   await sleep2(300);
 
-  // tabs that aren't rebuilt yet are honest stubs
-  await ev(() => document.querySelector('.ui-tab[data-tab=inventory]').click());
-  await sleep2(200);
-  check(`${tag}: tabs that are not rebuilt yet say so and offer the classic design`, await ev(() => /Inventory is coming/.test(document.querySelector('#ui-screen-inventory').textContent) && !!document.querySelector('#ui-screen-inventory .ui-btn')));
   await ev(() => document.querySelector('.ui-tab[data-tab=wishes]').click()); // the open tab is remembered between panels
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
   if (width === WIDTHS[0]) await page.screenshot(path.join(OUT, `next-wishes-${width}.png`));
@@ -582,6 +578,113 @@ async function checkNextArmorBuilder(browser, base, width) {
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
+/** Inventory: search what you own, which copies match a wish, and starting a wish from one. */
+async function checkNextInventory(browser, base, width) {
+  const tag = `[${width}] next inventory`;
+  const page = await openPanel(browser, base, 'owned', width, 'ui=next');
+  const ev = (fn, ...args) => page.eval(fn, ...args);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  await wait(1500);
+  await ev(() => document.querySelector('.ui-tab[data-tab=inventory]').click());
+  await wait(500);
+  check(`${tag}: without a sign-in it asks for one`, await ev(() => /Sign in to see your inventory/.test(document.querySelector('#ui-screen-inventory').textContent) && !!document.querySelector('#ui-screen-inventory .ui-btn--primary')));
+
+  // an inventory as a sync would build it: two Fatebringers (one crafted) and a Techsec Helm
+  await ev(async () => {
+    const FB = 4184168210, IDS = ['6917529000000000001', '6917529000000000002'];
+    const sockets = (active) => ({ sockets: [{ plugHash: 1 }].concat(active.map((h) => ({ plugHash: h }))) });
+    const profile = {
+      responseMintedTimestamp: `t${Date.now()}`,
+      profileInventory: { data: { items: [
+        { itemInstanceId: IDS[0], itemHash: FB, state: 8 }, { itemInstanceId: IDS[1], itemHash: FB, state: 0 },
+        { itemInstanceId: '6917529000000000030', itemHash: 517096395, state: 0 }] } },
+      itemComponents: {
+        sockets: { data: {
+          [IDS[0]]: sockets([3661387068, 106909392, 3038247973, 3824105627]),
+          [IDS[1]]: sockets([3250034553, 3142289711, 47981717, 699525795]),
+          '6917529000000000030': { sockets: [{ plugHash: 2 }] } } },
+        reusablePlugs: { data: { [IDS[0]]: { plugs: { 3: [{ plugItemHash: 3038247973 }, { plugItemHash: 47981717 }], 4: [{ plugItemHash: 3824105627 }, { plugItemHash: 699525795 }] } } } }
+      }
+    };
+    await OwnedInventoryIndex.buildOwnedIndex(profile);
+    document.dispatchEvent(new CustomEvent('awSyncChanged'));
+  });
+  await wait(600);
+  check(`${tag}: with an inventory and nothing typed it says how to search`, await ev(() => /Search your inventory/.test(document.querySelector('#ui-screen-inventory .ui-empty__title').textContent)));
+
+  await ev(() => { const i = document.querySelector('#ui-screen-inventory input[type=search]'); i.value = 'fatebringer'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.waitFor(() => document.querySelectorAll('#ui-screen-inventory .ui-itemrow').length > 0, { timeoutMs: 20000 });
+  const row = await ev(() => ({
+    n: document.querySelectorAll('#ui-screen-inventory .ui-itemrow').length,
+    text: document.querySelector('#ui-screen-inventory .ui-itemrow').textContent,
+    wider: document.documentElement.scrollWidth > innerWidth + 1
+  }));
+  check(`${tag}: search finds the item with how many you own and how many match a wish`, row.n === 1 && /Fatebringer/.test(row.text) && /2 owned/.test(row.text) && /2 rolls match a wish/.test(row.text) && !row.wider, JSON.stringify(row));
+
+  // slot chips and "Matches a wish" filter on their own
+  await ev(() => { const i = document.querySelector('#ui-screen-inventory input[type=search]'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await wait(300);
+  await ev(() => [...document.querySelectorAll('#ui-screen-inventory .ui-chip')].find((c) => /Matches a wish/.test(c.textContent)).click());
+  await wait(800);
+  const only = await ev(() => ({ names: [...document.querySelectorAll('#ui-screen-inventory .ui-itemrow__name')].map((n) => n.textContent), pressed: document.querySelector('#ui-screen-inventory .ui-chip.is-selected') && document.querySelector('#ui-screen-inventory .ui-chip.is-selected').getAttribute('aria-pressed') }));
+  check(`${tag}: "Matches a wish" alone lists what you own that matches`, only.names.join() === 'Fatebringer' && only.pressed === 'true', JSON.stringify(only));
+  await ev(() => [...document.querySelectorAll('#ui-screen-inventory .ui-chip')].find((c) => /Matches a wish/.test(c.textContent)).click());
+  const slot = await ev(async () => {
+    const defs = await loadInventoryItemDefsToMemory();
+    const bucket = defs.get('4184168210').inventory.bucketTypeHash;
+    return AWInventory.SLOTS.find((x) => x.bucket === bucket).label;
+  });
+  await ev((label) => [...document.querySelectorAll('#ui-screen-inventory .ui-chip')].find((c) => c.textContent.trim() === label).click(), slot);
+  await wait(800);
+  check(`${tag}: a slot chip alone browses that slot`, await ev(() => /Fatebringer/.test(document.querySelector('#ui-screen-inventory .ui-cardlist').textContent)));
+
+  // detail
+  await ev(() => [...document.querySelectorAll('#ui-screen-inventory .ui-itemrow')].find((r) => /Fatebringer/.test(r.textContent)).click());
+  await page.waitFor(() => document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-rollcard').length === 2, { timeoutMs: 20000 });
+  await wait(400);
+  const d = await ev(() => {
+    const q = (sel) => [...document.querySelectorAll(sel)];
+    const sub = '.ui-subscreen:not([hidden]) ';
+    const head = document.querySelector(`${sub}.ui-detailhead`).getBoundingClientRect();
+    const at = document.elementFromPoint(head.left + 20, head.top + head.height / 2);
+    const cards = q(`${sub}.ui-rollcard`);
+    return {
+      onTop: !!(at && at.closest('.ui-subscreen')),
+      first: cards[0].textContent, second: cards[1].textContent,
+      cols: cards[0].querySelectorAll('.ui-invcol').length, active: cards[0].querySelectorAll('.ui-invperk.is-active').length,
+      options: cards[0].querySelectorAll('.ui-invperk').length,
+      buttons: cards.map((c) => (c.querySelector('.ui-rollcard__foot .ui-btn') || {}).textContent),
+      stray: /\[object|\bnull\b/.test(document.querySelector(`${sub}.ui-subscreen__body`).textContent),
+      wider: document.documentElement.scrollWidth > innerWidth + 1
+    };
+  });
+  check(`${tag}: the detail shows each copy on top, and what it satisfies`, d.onTop && /#1/.test(d.first) && /Crafted/.test(d.first) && /Main Wishlist/.test(d.first) && /#2/.test(d.second) && !/Crafted/.test(d.second), JSON.stringify(d));
+  check(`${tag}: perks show by column with the equipped one marked`, d.cols === 4 && d.active === 4 && d.options > 4 && /Equipped: /.test(d.first), JSON.stringify([d.cols, d.active, d.options]));
+  check(`${tag}: each copy offers to start a wish, nothing stray or too wide`, d.buttons.every((t) => t === 'Start a wish from this roll') && !d.stray && !d.wider);
+  await page.screenshot(path.join(OUT, `next-inventory-${width}.png`));
+
+  // start a wish from copy #1: the builder opens on top with that copy's perks as combo 1
+  await ev(() => document.querySelector('.ui-subscreen:not([hidden]) .ui-rollcard .ui-rollcard__foot .ui-btn').click());
+  await page.waitFor(() => document.querySelectorAll('.ui-builder:not([hidden]) .ui-ptile').length > 0, { timeoutMs: 20000 });
+  await wait(600);
+  const b = await ev(() => {
+    const q = (sel) => [...document.querySelectorAll(sel)];
+    const t = document.querySelector('.ui-builder:not([hidden]) .ui-detailhead').getBoundingClientRect();
+    const at = document.elementFromPoint(t.left + 20, t.top + t.height / 2);
+    const picked = q('.ui-builder:not([hidden]) .ui-ptile.is-picked');
+    return { title: document.querySelector('.ui-builder:not([hidden]) .ui-subscreen__title').textContent, onTop: !!(at && at.closest('.ui-builder')), picked: picked.length, allCombo1: picked.every((p) => p.querySelector('.ui-ptile__combos').textContent.trim() === '1') };
+  });
+  check(`${tag}: Start a wish opens the builder on top, with that copy's perks as combo 1`, b.title === 'New wish' && b.onTop && b.picked === 4 && b.allCombo1, JSON.stringify(b));
+  await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-subscreen__back').click());
+  await wait(400);
+  check(`${tag}: leaving that unsaved wish asks first`, await ev(() => !!document.querySelector('dialog[open]')));
+  await ev(() => [...document.querySelectorAll('dialog[open] .ui-btn')].find((x) => /Discard/.test(x.textContent)).click());
+  await wait(500);
+  check(`${tag}: Discard returns to the item, and nothing was saved`, await ev(() => !document.querySelector('.ui-builder:not([hidden])') && document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-rollcard').length === 2));
+  await ev(() => document.querySelector('.ui-tab[data-tab=wishes]').click()); // the open tab is remembered between panels
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
 /** Lists from other people, shown in the new screens. */
 async function checkNextHostile(browser, base, width) {
   const tag = `[${width}] next hostile`;
@@ -811,6 +914,7 @@ async function checkGallery(browser, base, width) {
       await checkNextDrops(browser, url, width);
       await checkNextBuilder(browser, url, width);
       await checkNextArmorBuilder(browser, url, width);
+      await checkNextInventory(browser, url, width);
 
       // empty
       page = await openPanel(browser, url, 'empty', width);

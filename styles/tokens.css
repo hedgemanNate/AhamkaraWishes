@@ -113,7 +113,7 @@
     --ui-space-5: 20px;
     --ui-space-6: 24px;
     --ui-space-8: 32px;
-    --ui-gutter: var(--ui-space-3);   /* panel side padding */
+    --ui-gutter: var(--ui-space-4);   /* panel side padding */
 
     /* ---- size ---- */
     --ui-tap: 44px;          /* minimum touch target (D2) */
@@ -122,7 +122,9 @@
     --ui-icon-md: 20px;
     --ui-icon-lg: 24px;
     --ui-item-icon: 44px;    /* weapon / armor art */
-    --ui-perk: 28px;         /* perk icon in a list row */
+    --ui-item-icon-lg: 56px; /* list rows and detail headers */
+    --ui-perk: 28px;         /* small perk icon */
+    --ui-perk-lg: 44px;      /* perk icon where the user refines a roll */
 
     /* ---- shape ---- */
     --ui-radius-sm: 6px;

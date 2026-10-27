@@ -46,9 +46,11 @@ The redesigned screens live in `screens/` and are drawn with `AWDom` and `AWUI`.
 | File | Role |
 |---|---|
 | `screens/shell.js` (`AWShell`) | App bar (list name → Lists, sync chip → Sync sheet, **+ Wish**, avatar → Account), banner, tab bar, and the sheets |
-| `screens/wishes.js` (`AWWishes`) | The Wishes tab: weapon cards, armor sets with their set bonus, search, filters, delete with Undo |
+| `screens/wishes.js` (`AWWishes`) | The Wishes tab. The list is calm: one row per weapon or armor set, search, one filter button. Tapping a row opens the detail screen: a weapon's rolls with large, named perks, or an armor set's bonus and pieces. Delete with Undo |
 
-A screen is `create(ctx)` returning `{ el }`. `ctx` gives it `nav`, `toast`, `addSheet(name, title, onOpen)` (a sheet registered with AWNav, outside the inert region), `startWish()` and `goClassic()`. Screens read `chrome.storage.local` and re-render on `chrome.storage.onChanged`; writes go through `AWStore.update`.
+A screen is `create(ctx)` returning `{ el }`. `ctx` gives it `nav`, `toast`, `addSheet(name, title, onOpen, { footer })` (a bottom sheet registered with AWNav, outside the inert region), `addScreen(name, title, onOpen)` (a full screen with a Back button that opens over the tabs), `startWish()` and `goClassic()`.
+
+**Product shape:** this is a companion to Godroll.tv and DIM. Rolls are mostly chosen there and refined here, so the list stays quiet and the detail screen gives perks room. Design for a comfortable 360 to 480px panel (16px side padding, 44px perk icons, 76px rows); 320px must still work but never sets the density. Screens read `chrome.storage.local` and re-render on `chrome.storage.onChanged`; writes go through `AWStore.update`.
 
 Two things the classic stylesheet does that new code has to know about: it styles every bare `<header>` (base.css resets headers inside `.ui-root`), and its `#feed-glow-ring` and loading overlay are hidden by `html.ui-next` rules.
 

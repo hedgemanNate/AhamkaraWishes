@@ -47,9 +47,10 @@ const SCREENS = [
   // The redesigned screens (?ui=next). A third entry is the extra query string.
   ['next-wishes-weapons', async () => { await new Promise((r) => setTimeout(r, 400)); }, 'ui=next'],
   ['next-wishes-armor', async () => { document.querySelector('.ui-seg__opt[data-value=armor]').click(); await new Promise((r) => setTimeout(r, 1200)); }, 'ui=next'],
-  ['next-wishes-owned', async () => { document.querySelectorAll('.ui-wcard')[1].scrollIntoView(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next&fixture=owned'],
-  ['next-lists-sheet', async () => { document.querySelector('.ui-listname').click(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next'],
-  ['next-roll-actions', async () => { document.querySelector('.ui-roll .ui-icon-btn').click(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next']
+  ['next-weapon-detail', async () => { [...document.querySelectorAll('.ui-itemrow')].find((r) => /Fatebringer/.test(r.textContent)).click(); await new Promise((r) => setTimeout(r, 600)); }, 'ui=next&fixture=owned'],
+  ['next-armor-detail', async () => { document.querySelector('.ui-seg__opt[data-value=armor]').click(); await new Promise((r) => setTimeout(r, 1200)); [...document.querySelectorAll('.ui-itemrow')].find((r) => /Techsec/.test(r.textContent)).click(); await new Promise((r) => setTimeout(r, 1200)); }, 'ui=next'],
+  ['next-filters-sheet', async () => { document.querySelector('.ui-filterbtn').click(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next'],
+  ['next-lists-sheet', async () => { document.querySelector('.ui-listname').click(); await new Promise((r) => setTimeout(r, 400)); }, 'ui=next']
 ];
 
 /** Freezes everything that differs between two captures of identical code. */

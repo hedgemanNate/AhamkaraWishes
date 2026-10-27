@@ -131,8 +131,8 @@
     const sheets = {};
     const sheetEls = [];
     let shell = null;
-    function addSheet(name, title, onOpen) {
-      const layer = UI.sheet({ title, body: h('div'), onClose: () => nav.close(name) });
+    function addSheet(name, title, onOpen, opts = {}) {
+      const layer = UI.sheet({ title, body: h('div'), footer: opts.footer ? h('div', { class: 'ui-sheet__footslot' }) : undefined, onClose: () => nav.close(name) });
       sheets[name] = layer;
       nav.addLayer(name, { el: layer, kind: 'sheet', onOpen });
       sheetEls.push(layer);
@@ -140,10 +140,24 @@
       return layer;
     }
 
+    /** A screen that opens over the tabs (weapon detail, builders) with a Back button. */
+    function addScreen(name, title, onOpen) {
+      const titleEl = h('h2', { class: 'ui-subscreen__title' }, title);
+      const body = h('div', { class: 'ui-subscreen__body' });
+      const el = h('section', { class: 'ui-subscreen', hidden: true, aria: { labelledby: `ui-sub-${name}` } },
+        h('div', { class: 'ui-subscreen__head' },
+          UI.iconButton({ label: 'Back', icon: UI.ICON.chevron, className: 'ui-subscreen__back', onClick: () => nav.close(name) }), titleEl), body);
+      titleEl.id = `ui-sub-${name}`;
+      nav.addLayer(name, { el, kind: 'screen', onOpen });
+      sheetEls.push(el);
+      if (shell) shell.appendChild(el);
+      return { el, body, setTitle: (t) => { titleEl.textContent = t; } };
+    }
+
     // --- screens
     const main = h('main', { class: 'ui-main', id: 'ui-main' });
     const ctx = {
-      nav, store, UI, AWDom: D, addSheet,
+      nav, store, UI, AWDom: D, addSheet, addScreen,
       toast: UI.toast,
       openSheet,
       startWish,

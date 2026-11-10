@@ -837,7 +837,7 @@ async function findWeaponSiblingHashes(hash) {
 const INTRINSIC_TRAITS_CATEGORY_HASH = 3956125808; // weapon frame, not user-selectable
 const WEAPON_PERKS_CATEGORY_HASH = 4241085061;     // barrel/mag/trait columns (+ trinkets, filtered below)
 const WEAPON_COSMETICS_CATEGORY_HASH = 2048875504; // ornaments/keepsakes, not needed
-const WEAPON_MODS_CATEGORY_HASH = 2685412949;      // combat mods + masterwork tier, out of scope for now
+const WEAPON_MODS_CATEGORY_HASH = 2685412949;      // combat mods + masterwork (see getWeaponMasterworkOptions)
 
 // Weapon investment stat hashes needed for oracle_engine's setStats() call
 // (list confirmed against oracle_engine's own sample script).
@@ -1170,6 +1170,119 @@ async function getWeaponPerkColumns(def) {
   return columns.filter(Boolean);
 }
 
+// --- WEAPON MASTERWORKS ---
+// A masterwork is one plug per tier ("Tier 1: Handling" ... "Tier 10: Handling")
+// plus "Masterworked: Handling" plugs that fully masterworked drops carry.
+// They all share one plugCategoryIdentifier, so grouping by it gives a wish
+// every hash that means "Handling masterwork" whatever tier the copy is at.
+const MASTERWORK_STAT_CATEGORY = /masterworks\.stat\./;
+const MASTERWORK_NAME_PREFIX = /^(?:Tier \d+|Masterworked):\s*/;
+
+// plugCategoryIdentifier -> every masterwork plug hash in that category. Built
+// once per copy of the item table (the WeakMap is keyed by the Map itself, so
+// a re-downloaded table gets a fresh one).
+const _masterworkPlugsByCategory = new WeakMap();
+function masterworkPlugsByCategory(itemDefs) {
+  let byCategory = _masterworkPlugsByCategory.get(itemDefs);
+  if (byCategory) return byCategory;
+  byCategory = new Map();
+  for (const [h, d] of itemDefs) {
+    const cat = d?.plug?.plugCategoryIdentifier;
+    if (!cat || !MASTERWORK_STAT_CATEGORY.test(cat)) continue;
+    if (!byCategory.has(cat)) byCategory.set(cat, []);
+    byCategory.get(cat).push(Number(h));
+  }
+  _masterworkPlugsByCategory.set(itemDefs, byCategory);
+  return byCategory;
+}
+
+/**
+ * Turns the plugs a weapon's masterwork socket can hold into one option per
+ * masterwork stat. Each option carries every plug in that stat's category,
+ * not just the ones in this weapon's plug set: a weapon that drops fully
+ * masterworked can wear a "Masterworked" variant its plug set never lists.
+ * The socket's plug set lists every masterwork the game has (a hand cannon's
+ * pool includes Draw Time and Charge Time), so options are cut down to the
+ * stats the weapon actually has. A stat that can't be worked out is kept
+ * rather than hidden.
+ * @param {Iterable<number>} poolHashes  plugs the socket can hold
+ * @param {Map<string, object>} itemDefs
+ * @param {object} weaponDef
+ * @returns {Array<{key:string, name:string, icon:string, statHash:number|null, hashes:number[]}>} sorted by name
+ */
+function buildMasterworkOptions(poolHashes, itemDefs, weaponDef) {
+  const byCategory = masterworkPlugsByCategory(itemDefs);
+  const weaponStats = new Set((weaponDef?.investmentStats || []).map((s) => s.statTypeHash));
+  const categories = new Set();
+  for (const h of poolHashes) {
+    const cat = itemDefs.get(String(h))?.plug?.plugCategoryIdentifier;
+    if (cat && MASTERWORK_STAT_CATEGORY.test(cat)) categories.add(cat);
+  }
+
+  const options = [];
+  for (const key of categories) {
+    const hashes = [...byCategory.get(key)].sort((a, b) => a - b);
+    const defs = hashes.map((h) => itemDefs.get(String(h)));
+    // A "Tier N" plug lists the stat it is named for first (Draw Time also
+    // lifts Charge Time, Vent Speed also lifts Reload). The "Masterworked"
+    // plugs list every stat, so only the tier plugs name it.
+    const tierDef = defs.find((d) => /^Tier \d+:/.test(d?.displayProperties?.name || '') && d.investmentStats?.length);
+    const statHash = tierDef ? tierDef.investmentStats[0].statTypeHash : null;
+    if (statHash !== null && !weaponStats.has(statHash)) continue;
+    // The fully masterworked plug has the cleanest icon; any plug will do if
+    // a category somehow lacks one.
+    const iconDef = defs.find((d) => /^Masterworked:/.test(d?.displayProperties?.name || '') && d?.displayProperties?.icon)
+      || defs.find((d) => d?.displayProperties?.icon);
+    const named = defs.find((d) => d?.displayProperties?.name);
+    options.push({
+      key,
+      name: (named?.displayProperties.name || key).replace(MASTERWORK_NAME_PREFIX, ''),
+      icon: iconDef ? `${BUNGIE_ROOT}${iconDef.displayProperties.icon}` : '',
+      statHash,
+      hashes
+    });
+  }
+  return options.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * The masterworks a weapon can be given, for the weapon builder: one option per
+ * stat, each holding every tier's hash. Empty when the weapon has no
+ * stat-masterwork socket (exotics and weapons that no longer drop use their
+ * own plug categories and are left out for now).
+ * @returns {Promise<{socketIndex:number, options:Array<{key:string, name:string, icon:string, statHash:number|null, hashes:number[]}>}>}
+ */
+async function getWeaponMasterworkOptions(def) {
+  const none = { socketIndex: -1, options: [] };
+  if (!def?.sockets?.socketCategories || !def?.sockets?.socketEntries) return none;
+
+  const modsCategory = def.sockets.socketCategories.find(
+    (c) => c.socketCategoryHash === WEAPON_MODS_CATEGORY_HASH
+  );
+  if (!modsCategory) return none;
+
+  await ensurePlugSetDefsReady({ force: false });
+  const itemDefs = await loadInventoryItemDefsToMemory();
+
+  for (const socketIndex of modsCategory.socketIndexes) {
+    const socket = def.sockets.socketEntries[socketIndex];
+    if (!socket) continue;
+
+    const pool = [];
+    if (socket.singleInitialItemHash) pool.push(socket.singleInitialItemHash);
+    for (const p of socket.reusablePlugItems || []) pool.push(p.plugItemHash);
+    const plugSetHash = socket.randomizedPlugSetHash || socket.reusablePlugSetHash;
+    if (plugSetHash) {
+      const plugSetDef = await getPlugSetDef(plugSetHash);
+      for (const p of plugSetDef?.reusablePlugItems || []) pool.push(p.plugItemHash);
+    }
+
+    const options = buildMasterworkOptions(pool, itemDefs, def);
+    if (options.length) return { socketIndex, options };
+  }
+  return none;
+}
+
 // --- EXPORTS ---
 // For use in other modules
 // All functions and constants are globally available:
@@ -1180,6 +1293,7 @@ async function getWeaponPerkColumns(def) {
 // - searchArmorLocally()
 // - searchWeaponsLocally()
 // - getWeaponPerkColumns()
+// - getWeaponMasterworkOptions() / buildMasterworkOptions()
 // - getArmorSetLookup()
 // - getArmorSetName()
 // - getArmorSetBonuses() / describeSetBonuses()

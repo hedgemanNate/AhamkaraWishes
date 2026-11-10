@@ -22,6 +22,7 @@
   const MAX_COLUMNS = 12;
   const MAX_PERKS_PER_COLUMN = 40;
   const MAX_LINKED_HASHES = 50;
+  const MAX_MASTERWORK_HASHES = 40; // one stat has ~13: tiers 1-10 plus the fully masterworked plugs
   const MAX_RAW = 8000;
   const MAX_UINT32 = 4294967295;
   const COMBO_COLORS = ['red', 'blue', 'green', 'orange'];
@@ -119,6 +120,20 @@
     });
   }
 
+  /**
+   * A weapon wish's optional masterwork: the stat it names and every plug hash
+   * that counts as a match. Anything unusable is dropped, which reads as "any
+   * masterwork" — the wish still imports. The key is a Bungie plug category
+   * identifier, so it is held to that character set.
+   */
+  function sanitizeMasterwork(m) {
+    if (!isPlainObject(m)) return null;
+    if (typeof m.key !== 'string' || !/^[A-Za-z0-9_.]{1,80}$/.test(m.key)) return null;
+    const hashes = hashList(m.hashes, MAX_MASTERWORK_HASHES).filter((h) => h > 0);
+    if (!hashes.length) return null;
+    return { key: m.key, name: text(m.name, 40) || '', icon: icon(m.icon) || '', hashes };
+  }
+
   function sanitizeConfig(type, c) {
     if (!isPlainObject(c)) return null;
     if (type === 'armor') {
@@ -143,6 +158,8 @@
     }
     out.perkColumns = sanitizePerkColumns(c.perkColumns);
     out.perkColumnsData = sanitizePerkColumnsData(c.perkColumnsData);
+    const masterwork = sanitizeMasterwork(c.masterwork);
+    if (masterwork) out.masterwork = masterwork;
     return out;
   }
 

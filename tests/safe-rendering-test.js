@@ -74,9 +74,10 @@ const goodList = {
           perkColumnsData: [
             { socketIndex: 3, colIndex: 0, hashes: [1, 2], colors: { red: [1, 11] } },
             { socketIndex: 4, colIndex: 1, hashes: [3] }
-          ]
+          ],
+          masterwork: { key: 'v400.plugs.weapons.masterworks.stat.handling', name: 'Handling', icon: OK, hashes: [101, 102, 103] }
         },
-        raw: '[[1,2],[3]]',
+        raw: '[[1,2],[3]]|mw:v400.plugs.weapons.masterworks.stat.handling',
         added: 1700000000000
       }]
     },
@@ -90,11 +91,30 @@ const cleaned = sanitizeList(goodList);
 check('good list keeps its name', cleaned.name === 'Raid & Dungeon');
 check('good list keeps both items', cleaned.itemCount === 2 && cleaned.droppedItems === 0 && cleaned.droppedWishes === 0);
 const w = cleaned.items['1234567890'].wishes[0];
-check('weapon wish identity (raw) is untouched', w.raw === '[[1,2],[3]]');
+check('weapon wish identity (raw) is untouched', w.raw === '[[1,2],[3]]|mw:v400.plugs.weapons.masterworks.stat.handling');
 check('weapon mode, perks and combos are preserved', w.tags[0] === 'pvp' && JSON.stringify(w.config.perks) === '[[1,2],[3]]' &&
   w.config.perkColumnsData[0].colors.red.join() === '1,11' && w.config.perkColumns[0][0].color === 'red');
 check('weapon static metadata is preserved', cleaned.items['1234567890'].static.linkedHashes.join() === '111,222' &&
   cleaned.items['1234567890'].static.itemTypeDisplayName === 'Hand Cannon');
+check('a masterwork choice survives import whole', JSON.stringify(w.config.masterwork) ===
+  JSON.stringify({ key: 'v400.plugs.weapons.masterworks.stat.handling', name: 'Handling', icon: OK, hashes: [101, 102, 103] }));
+
+// --- masterwork: optional, and hostile values never reach storage ---
+const weaponCfg = (cfg) => sanitizeList({ name: 'x', items: { 5: { static: { name: 'g', type: 'weapon' }, wishes: [{ config: Object.assign({ perks: [[1]] }, cfg), raw: 'r' }] } } }).items[5].wishes[0].config;
+const armorOnlyWith = (cfg) => sanitizeList({ name: 'x', items: { 5: { static: { name: 'h', type: 'armor' }, wishes: [{ config: cfg, raw: 'r' }] } } }).items[5].wishes[0].config;
+const goodMw = { key: 'v400.plugs.weapons.masterworks.stat.range', name: 'Range', icon: OK, hashes: [201, 203] };
+check('a wish with no masterwork imports with none', !('masterwork' in weaponCfg({})));
+check('a masterwork is kept alongside the perks', weaponCfg({ masterwork: goodMw }).masterwork.hashes.join() === '201,203' && weaponCfg({ masterwork: goodMw }).perks[0][0] === 1);
+check('a masterwork on an armor wish is not carried over', !('masterwork' in armorOnlyWith({ archetype: 'GUNNER', masterwork: goodMw })));
+check('a masterwork with no usable key is dropped, the wish stays', !('masterwork' in weaponCfg({ masterwork: { ...goodMw, key: '<img onerror=alert(1)>' } })));
+check('a key with spaces, quotes or markup is refused', ['a b', 'a"b', 'a<b', '', 'x'.repeat(81), 12].every((key) => !('masterwork' in weaponCfg({ masterwork: { ...goodMw, key } }))));
+check('a masterwork with no usable hashes is dropped', !('masterwork' in weaponCfg({ masterwork: { ...goodMw, hashes: ['x', -1, 0, 1.5, null] } })) && !('masterwork' in weaponCfg({ masterwork: { ...goodMw, hashes: 'nope' } })));
+check('only whole positive hashes survive', weaponCfg({ masterwork: { ...goodMw, hashes: [201, 'x', -1, 0, 1.5, 203] } }).masterwork.hashes.join() === '201,203');
+check('an oversized hash list is capped', weaponCfg({ masterwork: { ...goodMw, hashes: Array.from({ length: 500 }, (_, i) => i + 1) } }).masterwork.hashes.length === 40);
+check('an off-site masterwork icon is blanked, the choice kept', (() => { const m = weaponCfg({ masterwork: { ...goodMw, icon: 'https://evil.example/x.png' } }).masterwork; return m.icon === '' && m.hashes.length === 2; })());
+check('masterwork text is cleaned and capped, unknown keys dropped', (() => { const m = weaponCfg({ masterwork: { ...goodMw, name: 'A\u0000'.repeat(60), extra: '<svg>' } }).masterwork; return m.name.length <= 40 && !m.name.includes('\u0000') && !('extra' in m); })());
+check('a masterwork that is not an object is dropped', ['Handling', 7, [1, 2], null].every((masterwork) => !('masterwork' in weaponCfg({ masterwork }))));
+
 const armorCfg = cleaned.items['555'].wishes[0].config;
 check('legacy armor wish (v1: Tertiary saved as spark) imports as tertiary', armorCfg.archetype === 'GUNNER' && armorCfg.tertiary === 'Weapons' && armorCfg.spark === null);
 const armorOnly = (cfg) => sanitizeList({ name: 'x', items: { 5: { static: { name: 'h', type: 'armor' }, wishes: [{ config: cfg, raw: 'r' }] } } }).items[5].wishes[0].config;

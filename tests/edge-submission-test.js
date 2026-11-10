@@ -50,8 +50,18 @@ check('hostile list: unknown fields removed', !/onerror|extra|received/.test(sto
 check('hostile list: non-hash keys removed', !/notahash|__proto__/.test(stored));
 check('hostile list: drops are counted', r.dropped === 3);
 
+// masterwork: kept when it is clean, cleaned when it is not, on the server too
+const MW = { key: 'v400.plugs.weapons.masterworks.stat.handling', name: 'Handling', icon: '/common/destiny2_content/icons/mw.png', hashes: [101, 102, 103] };
+const withMw = (mw) => ({ ...good, payload: { name: 'Mine', items: { 1: { ...weapon, wishes: [{ ...weapon.wishes[0], config: { perks: [[1]], masterwork: mw } }] } } } });
+r = checkSubmission(withMw(MW));
+check('masterwork: a clean choice is stored whole', r.ok === true && JSON.stringify(r.row.payload.items[1].wishes[0].config.masterwork) === JSON.stringify(MW));
+r = checkSubmission(withMw({ ...MW, key: '<script>', icon: 'https://evil.example/x.png', hashes: [1, 'x', -2] }));
+check('masterwork: a hostile key is dropped but the wish is still accepted', r.ok === true && !('masterwork' in r.row.payload.items[1].wishes[0].config));
+r = checkSubmission(withMw({ ...MW, icon: 'https://evil.example/x.png', extra: '<svg onload=1>' }));
+check('masterwork: off-site icon and unknown fields are removed', !/evil\.example|svg/.test(JSON.stringify(r.row.payload)) && r.row.payload.items[1].wishes[0].config.masterwork.hashes.length === 3);
+
 // rejections
-const bad = (patch) => checkSubmission({ ...good, ...patch });
+const bad =(patch) => checkSubmission({ ...good, ...patch });
 check('missing title rejected', bad({ title: '   ' }).error === 'missing_title');
 check('control characters alone are not a title', bad({ title: '\u0000\u0007' }).error === 'missing_title');
 check('long title is cut to 120', checkSubmission({ ...good, title: 'a'.repeat(500) }).row.title.length === 120);

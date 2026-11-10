@@ -23,9 +23,12 @@
    *        the weapon's perk columns (destiny-manifest.js getWeaponPerkColumns)
    * @param {Array<{acceptable:Set<number>, colors:Map<string,number>}>} perkState  one per column
    * @param {string[]} comboColors  combo colour names in click-cycle order
+   * @param {{key:string, name:string, icon?:string, hashes:number[]}|null} [masterwork]
+   *        one option from getWeaponMasterworkOptions(), or null/omitted when the wish
+   *        doesn't care which masterwork a copy has
    * @returns {{hasAny:boolean, rawString:string, config:object}}
    */
-  function buildWeaponWishPayload(columns, perkState, comboColors) {
+  function buildWeaponWishPayload(columns, perkState, comboColors, masterwork) {
     const perksArray = perkState.map((s) => Array.from(s.acceptable));
     const hasAny = perksArray.some((c) => c.length > 0);
 
@@ -88,9 +91,31 @@
     // saved (uncoloured) wish byte-identical to what is already stored.
     const colorSig = perkState.map((s) => comboColors.map((c) => s.colors.get(c) ?? 0));
     const hasColors = colorSig.some((col) => col.some((h) => h !== 0));
-    const rawString = JSON.stringify(perksArray) + (hasColors ? `|${JSON.stringify(colorSig)}` : '');
+    // The masterwork joins the identity the same way, and only when one is
+    // chosen: a wish for "Handling" and one for "Range" with the same perks are
+    // different wishes. Any masterwork at all leaves the string untouched.
+    const mw = cleanMasterwork(masterwork);
+    const rawString = JSON.stringify(perksArray)
+      + (hasColors ? `|${JSON.stringify(colorSig)}` : '')
+      + (mw ? `|mw:${mw.key}` : '');
 
-    return { hasAny, rawString, config: { perks: perksArray, perkColumns, perkColumnsData } };
+    const config = { perks: perksArray, perkColumns, perkColumnsData };
+    if (mw) config.masterwork = mw;
+    return { hasAny, rawString, config };
+  }
+
+  /**
+   * The masterwork a wish stores: its stat (key, name, icon) and every plug hash
+   * that counts as a match — all tiers plus the fully masterworked plugs. Copies
+   * the input so a wish never shares arrays with the builder's state. Returns
+   * null for anything that isn't a usable choice, which means "any masterwork".
+   */
+  function cleanMasterwork(masterwork) {
+    if (!masterwork || typeof masterwork.key !== 'string' || !masterwork.key) return null;
+    const hashes = [...new Set((Array.isArray(masterwork.hashes) ? masterwork.hashes : [])
+      .map(Number).filter((h) => Number.isInteger(h) && h > 0))].sort((a, b) => a - b);
+    if (hashes.length === 0) return null;
+    return { key: masterwork.key, name: String(masterwork.name || ''), icon: String(masterwork.icon || ''), hashes };
   }
 
   /**
@@ -189,5 +214,5 @@
     return changed;
   }
 
-  root.WeaponWish = { ACCEPTABLE_CAP, buildWeaponWishPayload, addWishToList, fillArmorSets };
+  root.WeaponWish = { ACCEPTABLE_CAP, buildWeaponWishPayload, cleanMasterwork, addWishToList, fillArmorSets };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -110,6 +110,49 @@ check('creates items map when missing', W.addWishToList(d, 'a', spec()) === 'add
 
 check('exposes the per-column cap', W.ACCEPTABLE_CAP === 6);
 
+// --- masterwork: optional, and part of the wish's identity only when chosen ---
+const HANDLING_MW = { key: 'v400.plugs.weapons.masterworks.stat.handling', name: 'Handling', icon: 'https://x/h.png', hashes: [103, 101, 102, 101] };
+const RANGE_MW = { key: 'v400.plugs.weapons.masterworks.stat.range', name: 'Range', icon: '', hashes: [201, 203] };
+ps = state();
+ps[0].acceptable.add(1); ps[0].acceptable.add(11);
+ps[2].acceptable.add(5); ps[2].acceptable.add(15);
+const noMw = W.buildWeaponWishPayload(columns, ps, COLORS);
+const withHandling = W.buildWeaponWishPayload(columns, ps, COLORS, HANDLING_MW);
+const withRange = W.buildWeaponWishPayload(columns, ps, COLORS, RANGE_MW);
+check('no masterwork leaves a wish byte-identical to before', noMw.rawString === '[[1,11],[],[5,15]]' && !('masterwork' in noMw.config));
+check('null and undefined both mean "any masterwork"', W.buildWeaponWishPayload(columns, ps, COLORS, null).rawString === noMw.rawString
+  && W.buildWeaponWishPayload(columns, ps, COLORS, undefined).rawString === noMw.rawString);
+check('a masterwork is stored with its stat and every hash, sorted and deduped',
+  JSON.stringify(withHandling.config.masterwork) === JSON.stringify({ key: HANDLING_MW.key, name: 'Handling', icon: 'https://x/h.png', hashes: [101, 102, 103] }));
+check('the masterwork changes the identity', withHandling.rawString !== noMw.rawString && withHandling.rawString.endsWith(`|mw:${HANDLING_MW.key}`));
+check('different masterworks are different wishes', withHandling.rawString !== withRange.rawString);
+check('perks are unaffected by the masterwork', JSON.stringify(withHandling.config.perks) === JSON.stringify(noMw.config.perks)
+  && JSON.stringify(withHandling.config.perkColumnsData) === JSON.stringify(noMw.config.perkColumnsData));
+check('picking only a masterwork does not count as picking perks', W.buildWeaponWishPayload(columns, state(), COLORS, HANDLING_MW).hasAny === false);
+check('the stored masterwork does not share arrays with the builder state', (() => {
+  const mine = { key: 'k', name: 'n', hashes: [5, 6] };
+  const stored = W.buildWeaponWishPayload(columns, ps, COLORS, mine).config.masterwork;
+  mine.hashes.push(7);
+  return stored.hashes.length === 2;
+})());
+const colored2 = (() => { const s = state(); s[0].acceptable.add(1); s[0].colors.set('red', 1); s[2].acceptable.add(5); s[2].colors.set('red', 5); return s; })();
+check('with combos, the masterwork follows the colour signature',
+  /^\[\[1\],\[\],\[5\]\]\|\[\[.*\]\]\|mw:/.test(W.buildWeaponWishPayload(columns, colored2, COLORS, HANDLING_MW).rawString));
+check('hashes that are not positive whole numbers are dropped', JSON.stringify(W.cleanMasterwork({ key: 'k', hashes: [3, 'x', -1, 0, 2.5, '4'] }).hashes) === '[3,4]');
+check('a choice with no usable hashes or no key means any masterwork',
+  W.cleanMasterwork({ key: 'k', hashes: [] }) === null && W.cleanMasterwork({ key: 'k', hashes: 'nope' }) === null
+  && W.cleanMasterwork({ hashes: [1] }) === null && W.cleanMasterwork('Handling') === null);
+
+// duplicate rule and stored shape
+d = freshData();
+const mwSpec = (p, over) => spec(Object.assign({ rawString: p.rawString, config: p.config }, over || {}));
+check('a wish with a masterwork is added', W.addWishToList(d, 'a', mwSpec(withHandling)) === 'added');
+check('the same perks without a masterwork is its own wish', W.addWishToList(d, 'a', mwSpec(noMw)) === 'added');
+check('the same perks with another masterwork is its own wish', W.addWishToList(d, 'a', mwSpec(withRange)) === 'added');
+check('the same perks and masterwork again is a duplicate', W.addWishToList(d, 'a', mwSpec(withHandling)) === 'duplicate' && d.lists.a.items[877384].wishes.length === 3);
+check('the masterwork is saved on the wish config', d.lists.a.items[877384].wishes[0].config.masterwork.hashes.join() === '101,102,103'
+  && d.lists.a.items[877384].wishes[1].config.masterwork === undefined);
+
 if (failures) {
   console.error(`\n${failures} check(s) failed`);
   process.exit(1);

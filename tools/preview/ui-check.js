@@ -517,10 +517,15 @@ async function checkNextArmorBuilder(browser, base, width) {
   }));
   check(`${tag}: Save names how many wishes it makes, and the archetype's stats can't be the Tertiary`, dem.on && dem.label === `Save ${n} wishes` && dem.blocked === 'class,grenade', JSON.stringify(dem));
   const before = count(await items());
+  const t0 = Date.now();
   await ev(() => document.querySelector('.ui-builder:not([hidden]) .ui-builder__actions .ui-btn').click());
-  await wait(1500);
+  // Saves run one after another, each looking up the piece's reissues, so wait for them all
+  // (up to 20s) rather than a fixed pause that a busy machine can overrun.
+  await page.waitFor((want) => Object.values(window.__awPreview.dump().dimData.lists.default.items).reduce((k, it) => k + it.wishes.length, 0) >= want, { args: [before + n], timeoutMs: 20000, intervalMs: 100 }).catch(() => {});
+  const took = Date.now() - t0; if (process.env.UI_CHECK_VERBOSE) console.log(`  (armor save took ${took}ms)`);
+  await wait(600);
   const afterItems = await items();
-  check(`${tag}: Save adds one wish per piece and closes both screens`, count(afterItems) === before + n && await ev(() => !document.querySelector('.ui-builder:not([hidden])') && !document.querySelector('.ui-subscreen:not([hidden])')), `${before} -> ${count(afterItems)}, expected +${n}`);
+  check(`${tag}: Save adds one wish per piece and closes both screens`, count(afterItems) === before + n && await ev(() => !document.querySelector('.ui-builder:not([hidden])') && !document.querySelector('.ui-subscreen:not([hidden])')), `${before} -> ${count(afterItems)}, expected +${n} after ${took}ms`);
   const added = Object.values(afterItems).flatMap((it) => it.wishes).filter((w) => w.config && w.config.archetype === 'DEMOLITIONIST');
   check(`${tag}: the new wishes have the chosen roll and no Tertiary or Spark`, added.length === n && added.every((w) => w.config.tertiary === null && w.config.spark === null), JSON.stringify(added.map((w) => w.config)));
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
@@ -1134,6 +1139,16 @@ async function checkGallery(browser, base, width) {
   const { server, url } = await start(0);
   const browser = await launch();
   try {
+    // --only <name> runs a single group (e.g. --only checkNextArmorBuilder) at one width (--width, default 320).
+    const onlyAt = process.argv.indexOf('--only');
+    if (onlyAt >= 0) {
+      const groups = { checkNext, checkNextOwned, checkNextDrops, checkNextBuilder, checkNextArmorBuilder, checkNextInventory, checkNextLists, checkNextDiscover, checkNextFirstRun, checkNextSites, checkNextHostile, checkNextEmptyAndSwitch };
+      const fn = groups[process.argv[onlyAt + 1]];
+      if (!fn) throw new Error(`Unknown group. Choose one of: ${Object.keys(groups).join(', ')}`);
+      const wAt = process.argv.indexOf('--width');
+      await fn(browser, url, wAt >= 0 ? Number(process.argv[wAt + 1]) : WIDTHS[0]);
+      return;
+    }
     for (const width of [320, 360, 540]) await checkGallery(browser, url, width);
     for (const width of process.argv.includes('--gallery-only') ? [] : WIDTHS) {
       // demo

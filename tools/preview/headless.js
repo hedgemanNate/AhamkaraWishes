@@ -94,10 +94,10 @@ class Page {
     return r.result.value;
   }
   /** Polls `fn` in the page until it returns truthy. */
-  async waitFor(fn, { timeoutMs = 30000, intervalMs = 100 } = {}) {
+  async waitFor(fn, { timeoutMs = 30000, intervalMs = 100, args = [] } = {}) {
     const end = Date.now() + timeoutMs;
     for (;;) {
-      const v = await this.eval(fn);
+      const v = await this.eval(fn, ...args);
       if (v) return v;
       if (Date.now() > end) throw new Error('waitFor timed out: ' + (typeof fn === 'function' ? fn.toString().slice(0, 120) : fn));
       await sleep(intervalMs);

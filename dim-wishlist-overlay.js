@@ -11,7 +11,6 @@
 // trusted here, since instance IDs are unique Bungie int64 strings and won't
 // collide with unrelated ids elsewhere on the page).
 (function () {
-  console.log('[DIM-OVERLAY] content script injected');
   const MATCH_CLASS = 'ahamkara-wish-match';
   let matchedIds = new Set();
 
@@ -36,23 +35,29 @@
     document.querySelectorAll('.' + MATCH_CLASS).forEach((el) => {
       if (!matchedIds.has(el.id)) el.classList.remove(MATCH_CLASS);
     });
-    let tagged = 0;
     matchedIds.forEach((iid) => {
       const el = document.getElementById(iid);
-      if (el) {
-        el.classList.add(MATCH_CLASS);
-        tagged++;
-      }
+      if (el && !el.classList.contains(MATCH_CLASS)) el.classList.add(MATCH_CLASS);
     });
-    console.log('[DIM-OVERLAY] applyBorders: matchedIds=' + matchedIds.size + ' tagged=' + tagged);
+  }
+
+  // DIM changes the DOM in bursts (a scroll or filter can fire hundreds of
+  // mutations in one frame). Coalesce them so the page is scanned once per
+  // frame instead of once per mutation.
+  let applyQueued = false;
+  function scheduleApply() {
+    if (applyQueued) return;
+    applyQueued = true;
+    requestAnimationFrame(() => {
+      applyQueued = false;
+      applyBorders();
+    });
   }
 
   function refreshFromStorage() {
     chrome.storage.local.get(['dimData'], (res) => {
       matchedIds = collectMatchedInstanceIds(res && res.dimData);
-      console.log('[DIM-OVERLAY] refreshFromStorage: dimData present=' + !!(res && res.dimData) +
-        ' matchedIds=' + JSON.stringify([...matchedIds]));
-      applyBorders();
+      scheduleApply();
     });
   }
 
@@ -63,7 +68,7 @@
   // DIM is a React SPA with virtualized/re-rendered item lists, so tiles
   // mount and unmount continuously as the user scrolls, filters, or switches
   // characters — re-tag on every DOM change rather than once at load.
-  const observer = new MutationObserver(() => applyBorders());
+  const observer = new MutationObserver(scheduleApply);
   observer.observe(document.body, { childList: true, subtree: true });
 
   refreshFromStorage();

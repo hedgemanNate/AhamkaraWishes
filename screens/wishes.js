@@ -23,6 +23,11 @@
   const WS = root.WishlistSync;
   const COMBO_COLORS = ['red', 'blue', 'green', 'orange'];
   const CLASS_NAMES = { 0: 'Titan', 1: 'Hunter', 2: 'Warlock' };
+  const AMMO_NAMES = { 1: 'Primary', 2: 'Special', 3: 'Heavy' };
+  const ELEMENT_NAMES = { 3373582085: 'Kinetic', 2303181850: 'Arc', 1847026933: 'Solar', 3454344768: 'Void', 151347233: 'Stasis', 3949783978: 'Strand' };
+  const ELEMENT_ORDER = [3373582085, 2303181850, 1847026933, 3454344768, 151347233, 3949783978]; // as in the game
+  // Which filter groups apply to which list. Mode and Ownership apply to both.
+  const FILTER_KEYS = { weapon: ['modes', 'owned', 'type', 'ammo', 'element'], armor: ['modes', 'owned', 'cls', 'arch'] };
 
   // ---- small helpers -----------------------------------------------------------------
 
@@ -54,7 +59,7 @@
   // ---- the screen ---------------------------------------------------------------------
 
   function create(ctx) {
-    const state = { kind: 'weapon', query: '', modes: new Set(), owned: new Set() };
+    const state = { kind: 'weapon', query: '', f: { modes: new Set(), owned: new Set(), type: new Set(), ammo: new Set(), element: new Set(), cls: new Set(), arch: new Set() } };
     let data = null;              // dimData, kept current from storage
     let queued = false;
     let detail = null;            // { kind: 'weapon', hash } | { kind: 'armor', key }
@@ -73,17 +78,41 @@
 
     // --- filters (one sheet instead of a row of chips)
     const filters = ctx.addSheet('filters', 'Filter wishes', () => fillFilters(), { footer: true });
-    function activeFilterCount() { return state.modes.size + state.owned.size; }
+    function activeFilterCount() { return FILTER_KEYS[state.kind].reduce((n, k) => n + state.f[k].size, 0); }
+
+    /** The filter groups to offer: only values that are actually in this list, and only if there is a choice. */
+    function filterSections() {
+      const its = entries(state.kind);
+      const distinct = (vals) => [...new Set(vals.filter((v) => v !== null && v !== undefined && v !== ''))];
+      const group = (key, title, values, label) => {
+        const opts = values.map((v) => ({ value: String(v), label: label(v) }));
+        return opts.length > 1 ? { key, title, options: opts } : null;
+      };
+      const sections = [
+        { key: 'modes', title: 'Mode', options: [{ value: 'pve', label: 'PvE' }, { value: 'pvp', label: 'PvP' }] },
+        { key: 'owned', title: 'Ownership', options: [{ value: 'owned', label: 'Owned' }, { value: 'missing', label: 'Not owned' }] }
+      ];
+      if (state.kind === 'weapon') {
+        sections.push(
+          group('type', 'Weapon type', distinct(its.map(([, it]) => it.static.itemTypeDisplayName)).sort(byName), (v) => v),
+          group('ammo', 'Ammo', distinct(its.map(([, it]) => it.static.ammoType)).sort(), (v) => AMMO_NAMES[v] || `Ammo ${v}`),
+          group('element', 'Element', distinct(its.map(([, it]) => it.static.damageTypeHash)).sort((x, y) => ELEMENT_ORDER.indexOf(Number(x)) - ELEMENT_ORDER.indexOf(Number(y))), (v) => ELEMENT_NAMES[v] || 'Other'));
+      } else {
+        const archs = distinct(its.flatMap(([, it]) => it.wishes.map((w) => WS.armorFields(w.config).archetype))).sort(byName);
+        sections.push(
+          group('cls', 'Class', distinct(its.map(([, it]) => it.static.classType)).sort(), (v) => CLASS_NAMES[v] || 'Any class'),
+          group('arch', 'Archetype', archs, (v) => v.charAt(0) + v.slice(1).toLowerCase()));
+      }
+      return sections.filter(Boolean);
+    }
+
     function fillFilters() {
       const f = UI.filterSheetBody({
-        sections: [
-          { key: 'modes', title: 'Mode', options: [{ value: 'pve', label: 'PvE' }, { value: 'pvp', label: 'PvP' }] },
-          { key: 'owned', title: 'Ownership', options: [{ value: 'owned', label: 'Owned' }, { value: 'missing', label: 'Not owned' }] }
-        ],
-        selected: { modes: state.modes, owned: state.owned },
+        sections: filterSections(),
+        selected: state.f,
         noun: ['wish', 'wishes'],
-        count: (sel) => countWishes(state.kind, sel.modes, sel.owned),
-        onApply: (sel) => { state.modes = new Set(sel.modes); state.owned = new Set(sel.owned); ctx.nav.close('filters'); render(); },
+        count: (sel) => countWishes(state.kind, sel),
+        onApply: (sel) => { Object.keys(sel).forEach((k) => { state.f[k] = new Set(sel[k]); }); ctx.nav.close('filters'); render(); },
         onReset: () => {}
       });
       filters.querySelector('.ui-sheet__body').replaceChildren(f.body);
@@ -131,21 +160,31 @@
       return (list && list.items) || {};
     }
 
-    function passes(w, modes, owned) {
-      if (modes.size && !modes.has(tagOf(w))) return false;
-      if (owned.size) {
+    /** Does this roll pass the filters (`f` is a map of key -> Set of chosen values)? */
+    function passes(w, f) {
+      if (f.modes && f.modes.size && !f.modes.has(tagOf(w))) return false;
+      if (f.owned && f.owned.size) {
         const isOwned = !!w.received;
-        if (!((owned.has('owned') && isOwned) || (owned.has('missing') && !isOwned))) return false;
+        if (!((f.owned.has('owned') && isOwned) || (f.owned.has('missing') && !isOwned))) return false;
       }
+      if (f.arch && f.arch.size && !f.arch.has(WS.armorFields(w.config).archetype)) return false;
       return true;
+    }
+
+    /** Filters that belong to the item itself (weapon type, ammo, element, class). */
+    function itemPasses(item, f) {
+      const st = item.static;
+      const has = (set, v) => !set || !set.size || set.has(String(v));
+      if (st.type === 'weapon') return has(f.type, st.itemTypeDisplayName) && has(f.ammo, st.ammoType) && has(f.element, st.damageTypeHash);
+      return has(f.cls, st.classType);
     }
 
     function entries(kind) {
       return Object.entries(activeItems()).filter(([, it]) => it && it.static && it.static.type === kind && Array.isArray(it.wishes));
     }
 
-    function countWishes(kind, modes, owned) {
-      return entries(kind).reduce((n, [, it]) => n + it.wishes.filter((w) => passes(w, modes, owned)).length, 0);
+    function countWishes(kind, f) {
+      return entries(kind).filter(([, it]) => itemPasses(it, f)).reduce((n, [, it]) => n + it.wishes.filter((w) => passes(w, f)).length, 0);
     }
 
     // --- list rendering
@@ -195,7 +234,7 @@
     }
 
     function clearFilters() {
-      state.modes = new Set(); state.owned = new Set();
+      Object.keys(state.f).forEach((k) => { state.f[k] = new Set(); });
       const input = search.querySelector('input');
       input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true }));
     }
@@ -215,7 +254,7 @@
       return entries('weapon')
         .sort((a, b) => byName(text(a[1].static.name, ''), text(b[1].static.name, '')))
         .filter(([, item]) => !state.query || text(item.static.name, '').toLowerCase().includes(state.query))
-        .filter(([, item]) => item.wishes.some((w) => passes(w, state.modes, state.owned)))
+        .filter(([, item]) => itemPasses(item, state.f) && item.wishes.some((w) => passes(w, state.f)))
         .map(([hash, item]) => {
           const own = item.wishes.filter((w) => w.received).length;
           const name = text(item.static.name, '(unknown)');
@@ -235,9 +274,10 @@
     }
 
     /** Armor grouped by set. `keep(wish)` filters rolls (the list); the detail keeps all. */
-    function buildSets(keep, query) {
+    function buildSets(keep, query, itemKeep) {
       const sets = new Map();
       entries('armor').forEach(([hash, item]) => {
+        if (itemKeep && !itemKeep(item)) return;
         if (query && !`${text(item.static.name, '')} ${setNameOf(item)}`.toLowerCase().includes(query)) return;
         const rolls = item.wishes.map((w, index) => ({ w, index })).filter((r) => keep(r.w));
         if (!rolls.length) return;
@@ -252,7 +292,7 @@
     }
 
     function armorRows() {
-      return buildSets((w) => passes(w, state.modes, state.owned), state.query).map((set) => {
+      return buildSets((w) => passes(w, state.f), state.query, (item) => itemPasses(item, state.f)).map((set) => {
         const total = set.pieces.reduce((n, p) => n + p.item.wishes.length, 0);
         const own = set.pieces.reduce((n, p) => n + p.item.wishes.filter((w) => w.received).length, 0);
         const sub = `${plural(total, 'wish', 'wishes')} · ${plural(set.pieces.length, 'piece', 'pieces')}`;

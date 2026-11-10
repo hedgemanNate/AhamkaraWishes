@@ -959,6 +959,112 @@ async function checkNextSites(browser, base, width) {
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
+/** The owner's Admin screen: only reachable once admin status is confirmed; every action goes through the engine's API. */
+async function checkNextAdmin(browser, base, width) {
+  const tag = `[${width}] next admin`;
+  const page = await openPanel(browser, base, 'demo', width, 'ui=next');
+  const ev = (fn, ...a) => page.eval(fn, ...a);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  await wait(1200);
+  check(`${tag}: nobody else sees an Admin row`, await ev(async () => {
+    document.querySelector('.ui-avatar').click(); await new Promise((r) => setTimeout(r, 300));
+    const seen = /Admin/.test(document.querySelector('.ui-layer:not([hidden])').textContent);
+    document.querySelector('.ui-layer:not([hidden]) .ui-icon-btn').click(); await new Promise((r) => setTimeout(r, 300));
+    return !seen;
+  }));
+
+  // the engine says this is the owner; its API is faked so nothing touches the server
+  await ev(() => {
+    window.__adminCalls = [];
+    let lists = [{ id: 7, title: 'Datto PvE', submitter_bungie_name: 'Datto#1234', item_count: 12, featured: false }, { id: 8, title: 'Spare', submitter_bungie_name: 'X#1', item_count: 1, featured: true }];
+    Object.assign(window.AWAdmin.api, {
+      creators: async () => [{ bungie_name: 'Datto#1234', display_name: 'Datto' }],
+      addCreator: async (b, d) => { window.__adminCalls.push(['add', b, d]); },
+      removeCreator: async (b) => { window.__adminCalls.push(['removeCreator', b]); },
+      wishlists: async () => lists.slice(),
+      feature: async (id, on) => { window.__adminCalls.push(['feature', id, on]); },
+      remove: async (id) => { window.__adminCalls.push(['remove', id]); lists = lists.filter((l) => l.id !== id); }
+    });
+    document.dispatchEvent(new CustomEvent('ahamkara:adminStatusChanged', { detail: { isAdmin: true } }));
+  });
+  await wait(300);
+  await ev(() => document.querySelector('.ui-avatar').click());
+  await wait(300);
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((r) => /Admin/.test(r.textContent)).click());
+  await wait(600);
+  const first = await ev(() => ({
+    open: !!document.querySelector('.ui-subscreen:not([hidden]) .ui-seg'),
+    creators: [...document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-adminrow')].map((r) => r.textContent.trim().replace(/\s+/g, ' ')),
+    wider: document.documentElement.scrollWidth > innerWidth + 1
+  }));
+  check(`${tag}: the owner reaches Admin from Account and sees the creators`, first.open && first.creators.length === 1 && /Datto/.test(first.creators[0]), JSON.stringify(first));
+  await ev(() => { const f = document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-field-gap input'); f[0].value = 'New#9'; f[1].value = 'Newbie'; [...document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-btn')].find((b) => /Add or update/.test(b.textContent)).click(); });
+  await wait(400);
+  check(`${tag}: adding a creator needs both names and goes through the API`, JSON.stringify(await ev(() => window.__adminCalls)) === '[["add","New#9","Newbie"]]');
+  await ev(() => document.querySelector('.ui-subscreen:not([hidden]) .ui-seg__opt[data-value=wishlists]').click());
+  await wait(500);
+  check(`${tag}: Wishlists lists every submission`, await ev(() => document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-wlcard').length === 2));
+  await ev(() => [...document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-wlcard')][0].querySelector('.ui-btn').click());
+  await wait(400);
+  check(`${tag}: Feature toggles through the API`, JSON.stringify(await ev(() => window.__adminCalls.slice(-1))) === '[["feature",7,true]]' && await ev(() => document.querySelector('.ui-subscreen:not([hidden]) .ui-wlcard').getAttribute('class').includes('is-featured')));
+  await ev(() => [...document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-wlcard')][1].querySelector('.ui-btn--ghost').click());
+  await wait(400);
+  check(`${tag}: Delete asks first (it can't be undone) and Keep it deletes nothing`, await ev(() => !!document.querySelector('dialog[open]')));
+  await ev(() => [...document.querySelectorAll('dialog[open] .ui-btn')].find((b) => /Keep it/.test(b.textContent)).click());
+  await wait(400);
+  check(`${tag}: nothing was deleted`, await ev(() => !window.__adminCalls.some((c) => c[0] === 'remove') && document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-wlcard').length === 2));
+  await ev(() => [...document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-wlcard')][1].querySelector('.ui-btn--ghost').click());
+  await wait(400);
+  await ev(() => [...document.querySelectorAll('dialog[open] .ui-btn')].find((b) => /^Delete$/.test(b.textContent.trim())).click());
+  await wait(500);
+  check(`${tag}: confirming deletes it through the API`, JSON.stringify(await ev(() => window.__adminCalls.slice(-1))) === '[["remove",8]]' && await ev(() => document.querySelectorAll('.ui-subscreen:not([hidden]) .ui-wlcard').length === 1));
+  check(`${tag}: nothing wider than the panel`, !first.wider);
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
+/** The filter sheet: weapon type, ammo, element; armor class and archetype. */
+async function checkNextFilters(browser, base, width) {
+  const tag = `[${width}] next filters`;
+  const page = await openPanel(browser, base, 'variety', width, 'ui=next');
+  const ev = (fn, ...a) => page.eval(fn, ...a);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  await wait(1500);
+  const open = async () => { await ev(() => document.querySelector('.ui-filterbtn').click()); await wait(300); };
+  const sections = () => ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-filter-section')].map((sec) => ({
+    title: sec.querySelector('.ui-filter-section__title').textContent, options: [...sec.querySelectorAll('.ui-chip')].map((c) => c.textContent.trim())
+  })));
+  const chip = (title, label) => ev((t, l) => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-filter-section')].find((s) => s.querySelector('.ui-filter-section__title').textContent === t)
+    .querySelectorAll('.ui-chip').forEach((c) => { if (c.textContent.trim() === l) c.click(); }), title, label);
+  const rows = () => ev(() => [...document.querySelectorAll('.ui-itemrow .ui-itemrow__name')].map((e) => e.textContent));
+  const apply = async () => { await ev(() => document.querySelector('.ui-layer:not([hidden]) .ui-btn--primary').click()); await wait(300); };
+
+  await open();
+  const w = await sections();
+  check(`${tag}: weapons offer Weapon type, Ammo and Element built from what is in the list`, JSON.stringify(w.map((x) => x.title)) === '["Mode","Ownership","Weapon type","Ammo","Element"]'
+    && w[2].options.join() === 'Hand Cannon,Rocket Launcher' && w[3].options.join() === 'Primary,Heavy' && w[4].options.join() === 'Kinetic,Solar,Void', JSON.stringify(w));
+  await chip('Ammo', 'Heavy');
+  check(`${tag}: the live count follows the choice`, await ev(() => /Show 1 wish\b/.test(document.querySelector('.ui-layer:not([hidden]) .ui-btn--primary').textContent)));
+  await apply();
+  check(`${tag}: Heavy ammo keeps only the heavy weapon`, JSON.stringify(await rows()) === '["Service Revolver"]', JSON.stringify(await rows()));
+  await open(); await chip('Ammo', 'Heavy'); await chip('Element', 'Void'); await chip('Weapon type', 'Hand Cannon'); await apply();
+  check(`${tag}: groups combine (Void Hand Cannon)`, JSON.stringify(await rows()) === '["Eyasluna"]', JSON.stringify(await rows()));
+  check(`${tag}: the filter button counts every group that is on`, await ev(() => /2 on/.test(document.querySelector('.ui-filterbtn').getAttribute('aria-label'))));
+  await ev(() => document.querySelector('.ui-seg__opt[data-value=armor]').click()); await wait(800);
+  check(`${tag}: the armor list is not filtered by weapon choices`, (await rows()).length === 2 && await ev(() => /Filters$/.test(document.querySelector('.ui-filterbtn').getAttribute('aria-label'))));
+  await open();
+  const a = await sections();
+  check(`${tag}: armor offers Class and Archetype`, JSON.stringify(a.map((x) => x.title)) === '["Mode","Ownership","Class","Archetype"]' && a[2].options.join() === 'Titan,Hunter' && a[3].options.includes('Bulwark') && a[3].options.includes('Brawler'), JSON.stringify(a));
+  await chip('Class', 'Hunter'); await apply();
+  check(`${tag}: Hunter keeps only the Hunter set`, JSON.stringify(await rows()) === '["Iron Forerunner"]', JSON.stringify(await rows()));
+  await open(); await chip('Class', 'Hunter'); await chip('Archetype', 'Bulwark'); await apply();
+  check(`${tag}: an archetype keeps the sets with a roll of it`, JSON.stringify(await rows()) === '["Techsec"]', JSON.stringify(await rows()));
+  await open();
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-btn')].find((b) => b.textContent.trim() === 'Reset').click());
+  await wait(200); await apply();
+  check(`${tag}: Reset clears them`, (await rows()).length === 2);
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
 /** Lists from other people, shown in the new screens. */
 async function checkNextHostile(browser, base, width) {
   const tag = `[${width}] next hostile`;
@@ -1142,7 +1248,7 @@ async function checkGallery(browser, base, width) {
     // --only <name> runs a single group (e.g. --only checkNextArmorBuilder) at one width (--width, default 320).
     const onlyAt = process.argv.indexOf('--only');
     if (onlyAt >= 0) {
-      const groups = { checkNext, checkNextOwned, checkNextDrops, checkNextBuilder, checkNextArmorBuilder, checkNextInventory, checkNextLists, checkNextDiscover, checkNextFirstRun, checkNextSites, checkNextHostile, checkNextEmptyAndSwitch };
+      const groups = { checkNext, checkNextOwned, checkNextDrops, checkNextBuilder, checkNextArmorBuilder, checkNextInventory, checkNextLists, checkNextDiscover, checkNextFirstRun, checkNextSites, checkNextHostile, checkNextEmptyAndSwitch, checkNextFilters, checkNextAdmin };
       const fn = groups[process.argv[onlyAt + 1]];
       if (!fn) throw new Error(`Unknown group. Choose one of: ${Object.keys(groups).join(', ')}`);
       const wAt = process.argv.indexOf('--width');
@@ -1168,6 +1274,8 @@ async function checkGallery(browser, base, width) {
       }
 
       await checkNextHostile(browser, url, width);
+      await checkNextFilters(browser, url, width);
+      await checkNextAdmin(browser, url, width);
       await checkNextOwned(browser, url, width);
       await checkNextDrops(browser, url, width);
       await checkNextBuilder(browser, url, width);

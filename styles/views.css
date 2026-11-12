@@ -77,14 +77,14 @@
   .ui-banner-slot:empty { display: none; }
 
   /* ---------- screens ---------- */
-  .ui-pad { padding: var(--ui-space-4) var(--ui-gutter); display: flex; flex-direction: column; gap: var(--ui-space-3); }
+  .ui-pad { padding: var(--ui-space-4) var(--ui-edge); display: flex; flex-direction: column; gap: var(--ui-space-3); }
   /* Search and filters scroll away with the list: on a phone-sized panel a
      pinned block this tall would cost a fifth of the screen. */
   .ui-stickytop {
-    padding: var(--ui-space-4) var(--ui-gutter) 0; display: flex; flex-direction: column; gap: var(--ui-space-3);
+    padding: var(--ui-space-4) var(--ui-edge) 0; display: flex; flex-direction: column; gap: var(--ui-space-3);
   }
-  .ui-cardlist { display: flex; flex-direction: column; gap: var(--ui-space-3); padding: var(--ui-space-4) var(--ui-gutter) var(--ui-space-8); flex: 1; }
-  .ui-stub { padding: var(--ui-space-8) var(--ui-gutter); }
+  .ui-cardlist { display: flex; flex-direction: column; gap: var(--ui-space-3); padding: var(--ui-space-4) var(--ui-edge) var(--ui-space-8); flex: 1; }
+  .ui-stub { padding: var(--ui-space-8) var(--ui-edge); }
 
   /* ---------- Wishes list: one calm row per weapon or armor set ---------- */
   .ui-searchrow { display: flex; align-items: center; gap: var(--ui-space-2); }
@@ -128,7 +128,7 @@
   }
   .ui-subscreen__title { flex: 1; min-width: 0; font-size: var(--ui-text-xl); font-weight: var(--ui-weight-bold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ui-subscreen__back svg { transform: rotate(180deg); }
-  .ui-subscreen__body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--ui-space-4) var(--ui-gutter) var(--ui-space-8); display: flex; flex-direction: column; gap: var(--ui-space-4); }
+  .ui-subscreen__body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--ui-space-4) var(--ui-edge) var(--ui-space-8); display: flex; flex-direction: column; gap: var(--ui-space-4); }
 
   .ui-detailhead { display: flex; align-items: center; gap: var(--ui-space-4); }
   .ui-detailhead__name { font-family: var(--ui-font-display); font-weight: var(--ui-weight-bold); font-size: var(--ui-text-2xl); overflow-wrap: anywhere; line-height: var(--ui-leading-tight); }
@@ -158,7 +158,7 @@
   .ui-perk__combos { position: absolute; right: -6px; bottom: -6px; display: flex; }
   .ui-perk__combo {
     width: 18px; height: 18px; margin-left: -3px; border-radius: 50%; border: 2px solid var(--ui-surface-1);
-    display: grid; place-items: center; color: var(--ui-text); font-size: var(--ui-text-xs); font-weight: var(--ui-weight-bold); line-height: 1;
+    display: grid; place-items: center; color: var(--ui-on-accent); font-size: var(--ui-text-xs); font-weight: var(--ui-weight-bold); line-height: 1;
   }
   .ui-perk__combo:first-child { margin-left: 0; }
   .ui-perk__combo[data-combo="1"] { background: var(--ui-combo-1); }
@@ -167,7 +167,7 @@
   .ui-perk__combo[data-combo="4"] { background: var(--ui-combo-4); }
   .ui-combochips { display: inline-flex; gap: var(--ui-space-1); }
   .ui-combochip {
-    font-size: var(--ui-text-xs); font-weight: var(--ui-weight-semibold); color: var(--ui-text);
+    font-size: var(--ui-text-xs); font-weight: var(--ui-weight-semibold); color: var(--ui-on-accent);
     border-radius: var(--ui-radius-sm); padding: 2px 7px; border: 1px solid transparent;
   }
   .ui-combochip[data-combo="1"] { background: var(--ui-combo-1); }
@@ -236,7 +236,7 @@
      brush is always in reach and visible (what a tap will do). */
   .ui-builder__sticky {
     position: sticky; top: calc(var(--ui-space-4) * -1); z-index: var(--ui-z-sticky); background: var(--ui-bg);
-    margin: 0 calc(var(--ui-gutter) * -1); padding: var(--ui-space-2) var(--ui-gutter);
+    margin: 0 calc(var(--ui-edge) * -1); padding: var(--ui-space-2) var(--ui-edge);
     display: flex; flex-direction: column; gap: var(--ui-space-1); border-bottom: var(--ui-border);
   }
   .ui-brush__seg { width: 100%; }
@@ -248,10 +248,10 @@
   .ui-brush .ui-seg__opt.is-selected .ui-seg__badge { color: inherit; }
   .ui-brush__hint { margin: 0; }
   .ui-brush .ui-seg__opt.is-used:not(.is-selected) { font-weight: var(--ui-weight-bold); }
-  .ui-brush .ui-seg__opt[data-value="red"].is-used:not(.is-selected) { color: var(--ui-combo-1); }
-  .ui-brush .ui-seg__opt[data-value="blue"].is-used:not(.is-selected) { color: var(--ui-combo-2); }
-  .ui-brush .ui-seg__opt[data-value="green"].is-used:not(.is-selected) { color: var(--ui-combo-3); }
-  .ui-brush .ui-seg__opt[data-value="orange"].is-used:not(.is-selected) { color: var(--ui-combo-4); }
+  .ui-brush .ui-seg__opt[data-value="red"].is-used:not(.is-selected) { color: var(--ui-combo-1-text); }
+  .ui-brush .ui-seg__opt[data-value="blue"].is-used:not(.is-selected) { color: var(--ui-combo-2-text); }
+  .ui-brush .ui-seg__opt[data-value="green"].is-used:not(.is-selected) { color: var(--ui-combo-3-text); }
+  .ui-brush .ui-seg__opt[data-value="orange"].is-used:not(.is-selected) { color: var(--ui-combo-4-text); }
 
   .ui-cols { display: grid; grid-template-columns: repeat(var(--ui-cols, 5), minmax(0, 1fr)); gap: var(--ui-space-1); }
   .ui-col { display: flex; flex-direction: column; align-items: center; gap: var(--ui-space-2); min-width: 0; }
@@ -307,7 +307,7 @@
   /* Save stays pinned to the bottom while everything above scrolls. */
   .ui-builder__foot {
     position: sticky; bottom: calc(var(--ui-space-8) * -1); z-index: var(--ui-z-sticky); background: var(--ui-bg);
-    margin: 0 calc(var(--ui-gutter) * -1) calc(var(--ui-space-8) * -1); padding: var(--ui-space-2) var(--ui-gutter) var(--ui-space-3);
+    margin: 0 calc(var(--ui-edge) * -1) calc(var(--ui-space-8) * -1); padding: var(--ui-space-2) var(--ui-edge) var(--ui-space-3);
     border-top: var(--ui-border); display: flex; flex-direction: column; gap: var(--ui-space-1);
   }
   .ui-builder__summary { color: var(--ui-text-muted); font-size: var(--ui-text-sm); text-align: center; }

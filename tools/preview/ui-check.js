@@ -1022,6 +1022,66 @@ async function checkNextAdmin(browser, base, width) {
   check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
 }
 
+/**
+ * The width matrix: every main screen and sheet at phone, side-panel and tab-mode
+ * widths. Nothing may overflow sideways, every control keeps a usable size, and in
+ * a wide window the content stays a readable column.
+ */
+async function checkNextWidths(browser, base, width) {
+  const tag = `[${width}] next widths`;
+  const page = await openPanel(browser, base, 'owned', width, 'ui=next');
+  const ev = (fn, ...a) => page.eval(fn, ...a);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  await wait(1500);
+
+  const measure = () => ev(() => {
+    const vis = (e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden' && !e.closest('[hidden]');
+    const scroller = (e) => e.closest('.ui-chip-row');
+    const small = [...document.querySelectorAll('#ui-shell button, #ui-shell input, #ui-shell select')].filter(vis).filter((e) => !scroller(e) || e.classList.contains('ui-chip')).map((e) => {
+      const r = e.getBoundingClientRect();
+      return { what: (e.getAttribute('aria-label') || e.textContent || e.className).trim().slice(0, 28), w: Math.round(r.width), h: Math.round(r.height) };
+    }).filter((b) => b.h < 40 || b.w < 24);
+    const inner = [...document.querySelectorAll('.ui-main, .ui-subscreen__body, .ui-sheet__body')].filter(vis).filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.className.split(' ')[0]);
+    const row = document.querySelector('.ui-itemrow');
+    return { wider: document.documentElement.scrollWidth > innerWidth + 1, inner, small, rowW: row && vis(row) ? Math.round(row.getBoundingClientRect().width) : null };
+  });
+  const results = {};
+  const step = async (name, fn, ...args) => { await ev(fn, ...args); await wait(500); results[name] = await measure(); };
+  const esc = async () => { await page.press('Escape'); await wait(300); };
+
+  await step('weapon list', () => {});
+  await step('armor list', () => document.querySelector('.ui-seg__opt[data-value=armor]').click());
+  await step('armor detail', () => [...document.querySelectorAll('.ui-itemrow')].find((r) => /Techsec/.test(r.textContent)).click());
+  await wait(900); results['armor detail'] = await measure();
+  await esc();
+  await ev(() => document.querySelector('.ui-seg__opt[data-value=weapon]').click()); await wait(300);
+  await step('weapon detail', () => [...document.querySelectorAll('.ui-itemrow')].find((r) => /Fatebringer/.test(r.textContent)).click());
+  await esc();
+  for (const [name, sel] of [['filters sheet', '.ui-filterbtn'], ['lists sheet', '.ui-listname'], ['account sheet', '.ui-avatar'], ['sync sheet', '.ui-syncchip']]) {
+    await step(name, (q) => document.querySelector(q).click(), sel);
+    await esc();
+  }
+  await step('drops', () => document.querySelector('.ui-tab[data-tab=drops]').click());
+  await step('inventory', () => document.querySelector('.ui-tab[data-tab=inventory]').click());
+  await ev(() => document.querySelector('.ui-tab[data-tab=wishes]').click()); await wait(300);
+  await step('weapon builder', () => document.querySelector('.ui-addwish').click());
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((x) => /Weapon wish/.test(x.textContent)).click());
+  await wait(700); results['weapon builder'] = await measure();
+  await esc(); await esc();
+  await ev(() => document.querySelector('.ui-addwish').click()); await wait(400);
+  await ev(() => [...document.querySelectorAll('.ui-layer:not([hidden]) .ui-row')].find((x) => /Armor wish/.test(x.textContent)).click());
+  await wait(700); results['armor builder'] = await measure();
+
+  const names = Object.keys(results);
+  check(`${tag}: ${names.length} screens and sheets measured`, names.length >= 11, names.join());
+  const wide = names.filter((n) => results[n].wider || results[n].inner.length);
+  check(`${tag}: nothing overflows sideways`, wide.length === 0, JSON.stringify(wide.map((n) => [n, results[n].wider, results[n].inner])));
+  const small = names.filter((n) => results[n].small.length);
+  check(`${tag}: every control is at least 40px tall`, small.length === 0, JSON.stringify(small.map((n) => [n, results[n].small])));
+  if (width >= 900) check(`${tag}: in a wide window the list stays a readable column`, results['weapon list'].rowW > 0 && results['weapon list'].rowW <= 760, String(results['weapon list'].rowW));
+  check(`${tag}: no page errors`, page.errors.length === 0, page.errors[0]);
+}
+
 /** The filter sheet: weapon type, ammo, element; armor class and archetype. */
 async function checkNextFilters(browser, base, width) {
   const tag = `[${width}] next filters`;
@@ -1248,7 +1308,7 @@ async function checkGallery(browser, base, width) {
     // --only <name> runs a single group (e.g. --only checkNextArmorBuilder) at one width (--width, default 320).
     const onlyAt = process.argv.indexOf('--only');
     if (onlyAt >= 0) {
-      const groups = { checkNext, checkNextOwned, checkNextDrops, checkNextBuilder, checkNextArmorBuilder, checkNextInventory, checkNextLists, checkNextDiscover, checkNextFirstRun, checkNextSites, checkNextHostile, checkNextEmptyAndSwitch, checkNextFilters, checkNextAdmin };
+      const groups = { checkNext, checkNextOwned, checkNextDrops, checkNextBuilder, checkNextArmorBuilder, checkNextInventory, checkNextLists, checkNextDiscover, checkNextFirstRun, checkNextSites, checkNextHostile, checkNextEmptyAndSwitch, checkNextFilters, checkNextAdmin, checkNextWidths };
       const fn = groups[process.argv[onlyAt + 1]];
       if (!fn) throw new Error(`Unknown group. Choose one of: ${Object.keys(groups).join(', ')}`);
       const wAt = process.argv.indexOf('--width');
@@ -1256,6 +1316,8 @@ async function checkGallery(browser, base, width) {
       return;
     }
     for (const width of [320, 360, 540]) await checkGallery(browser, url, width);
+    // phone, side panel, large phone/narrow window, and Opera GX tab mode
+    for (const width of [320, 375, 430, 500, 1100]) await checkNextWidths(browser, url, width);
     for (const width of process.argv.includes('--gallery-only') ? [] : WIDTHS) {
       // demo
       let page = await openPanel(browser, url, 'demo', width);

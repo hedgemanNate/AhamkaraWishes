@@ -67,6 +67,12 @@
     --ui-combo-2: #4a86c8;
     --ui-combo-3: #5fa860;
     --ui-combo-4: #d98c30;
+    /* The same colours as text. Red and blue need a lighter shade to stay readable on
+       the control surface; lightening the fills instead would break the dark ink on them. */
+    --ui-combo-1-text: #e17572;
+    --ui-combo-2-text: #6e9ed3;
+    --ui-combo-3-text: var(--ui-combo-3);
+    --ui-combo-4-text: var(--ui-combo-4);
     --ui-element-kinetic: #c9c9c9;
     --ui-element-arc: #79bbe8;
     --ui-element-solar: #f0631e;
@@ -113,6 +119,11 @@
     --ui-space-6: 24px;
     --ui-space-8: 32px;
     --ui-gutter: var(--ui-space-4);   /* panel side padding */
+    /* Where content starts from the side. Wider than the gutter once the window is
+       wider than 720px (Opera GX tab mode, a very wide panel), so lists and detail
+       screens stay a readable column instead of stretching edge to edge. */
+    --ui-measure: 720px;
+    --ui-edge: max(var(--ui-gutter), calc((100cqw - var(--ui-measure)) / 2));
 
     /* ---- size ---- */
     --ui-tap: 44px;          /* minimum touch target (D2) */
